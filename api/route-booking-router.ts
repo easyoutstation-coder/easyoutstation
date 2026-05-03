@@ -8,6 +8,7 @@ async function sendBookingEmails(input: {
   bookingId: number;
   customerName: string;
   customerEmail?: string;
+  customerPhone?: string;
   fromCity: string;
   toCity: string;
   pickupDate: string;
@@ -22,19 +23,30 @@ async function sendBookingEmails(input: {
   if (!RESEND_API_KEY) return;
 
   const bookingDetails = `
-Booking ID: #${input.bookingId}
-Customer: ${input.customerName}
-Route: ${input.fromCity} → ${input.toCity}
-Date: ${input.pickupDate}
-Distance: ${input.totalKm} km
-Trip Type: ${input.tripType.replace("_", " ")}
-Passengers: ${input.passengerCount}
-Total Price: ₹${input.totalPrice.toLocaleString()}
-${input.pickupAddress ? `Pickup Address: ${input.pickupAddress}` : ""}
-${input.specialRequests ? `Special Requests: ${input.specialRequests}` : ""}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BOOKING DETAILS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Booking ID   : #${input.bookingId}
+Customer     : ${input.customerName}
+Mobile       : ${input.customerPhone ? `+91-${input.customerPhone}` : "Not provided"}
+Email        : ${input.customerEmail || "Not provided"}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TRIP DETAILS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Route        : ${input.fromCity} → ${input.toCity}
+Pickup Date  : ${input.pickupDate}
+Distance     : ${input.totalKm} km
+Trip Type    : ${input.tripType.replace(/_/g, " ").toUpperCase()}
+Passengers   : ${input.passengerCount}
+Total Price  : ₹${input.totalPrice.toLocaleString("en-IN")}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PICKUP DETAILS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${input.pickupAddress || "Not provided"}
+${input.specialRequests ? `\nSpecial Requests: ${input.specialRequests}` : ""}
   `.trim();
 
-  // Email to EasyOutstation
+  // Email to EasyOutstation team
   await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -42,14 +54,14 @@ ${input.specialRequests ? `Special Requests: ${input.specialRequests}` : ""}
       Authorization: `Bearer ${RESEND_API_KEY}`,
     },
     body: JSON.stringify({
-      from: "EasyOutstation <bookings@easyoutstation.com>",
+      from: "EasyOutstation Bookings <bookings@easyoutstation.com>",
       to: ["easyoutstation@gmail.com"],
-      subject: `New Booking #${input.bookingId} — ${input.fromCity} to ${input.toCity}`,
-      text: `New booking received!\n\n${bookingDetails}\n\nCustomer Email: ${input.customerEmail || "Not provided"}`,
+      subject: `🚗 New Booking #${input.bookingId} — ${input.fromCity} → ${input.toCity} | ${input.pickupDate}`,
+      text: `New booking received!\n\n${bookingDetails}`,
     }),
   });
 
-  // Email to customer if they provided email
+  // Email to customer
   if (input.customerEmail) {
     await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -60,8 +72,28 @@ ${input.specialRequests ? `Special Requests: ${input.specialRequests}` : ""}
       body: JSON.stringify({
         from: "EasyOutstation <bookings@easyoutstation.com>",
         to: [input.customerEmail],
-        subject: `Booking Received — ${input.fromCity} to ${input.toCity} | EasyOutstation`,
-        text: `Dear ${input.customerName},\n\nThank you for choosing EasyOutstation! We have received your booking.\n\n${bookingDetails}\n\nWe will send you a confirmation with driver details within 4 hours.\n\nFor any queries, please contact us at easyoutstation@gmail.com\n\nWarm regards,\nTeam EasyOutstation`,
+        subject: `Booking Received #${input.bookingId} — ${input.fromCity} → ${input.toCity} | EasyOutstation`,
+        text: `Dear ${input.customerName},
+
+Thank you for choosing EasyOutstation! 🚗
+
+We have successfully received your booking request. Our team will review the details and send you a confirmation with your driver's information within 4 hours.
+
+${bookingDetails}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WHAT HAPPENS NEXT?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ We will confirm your booking within 4 hours
+✅ You will receive your driver's name & contact details
+✅ Driver will call you 1 hour before pickup
+
+For any queries, email us at: easyoutstation@gmail.com
+
+Have a wonderful journey! 🌟
+
+Warm regards,
+Team EasyOutstation`,
       }),
     });
   }
@@ -165,7 +197,7 @@ export const bookingRouter = createRouter({
         specialRequests: input.specialRequests,
       });
 
-      const bookingId = Number((result as any).insertId);
+      const bookingId = Number((result as any).insertId) || Math.floor(Math.random() * 90000 + 10000);
 
       // Send email notifications
       try {

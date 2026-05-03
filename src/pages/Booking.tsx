@@ -44,13 +44,23 @@ export default function BookingPage() {
   // Form state
   const [tripType, setTripType] = useState("one_way");
   const [pickupDate, setPickupDate] = useState<Date>();
+  const [pickupTime, setPickupTime] = useState("08:00");
   const [returnDate, setReturnDate] = useState<Date>();
   const [passengerCount, setPassengerCount] = useState("4");
   const [pickupAddress, setPickupAddress] = useState("");
+  const [pickupPincode, setPickupPincode] = useState("");
   const [specialRequests, setSpecialRequests] = useState("");
   const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [agreeTerms, setAgreeTerms] = useState(false);
+
+  // OTP state
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [otpInput, setOtpInput] = useState("");
+  const [otpError, setOtpError] = useState("");
 
   const carId = parseInt(searchParams.get("carId") || "0");
   const fromCity = searchParams.get("from") || "Delhi";
@@ -79,7 +89,40 @@ export default function BookingPage() {
   const basePrice = pricePerKm * distance;
   const totalPrice = basePrice + driverCharges;
 
+  const sendOtp = () => {
+    if (!customerPhone || customerPhone.length < 10) {
+      alert("Please enter a valid 10-digit mobile number.");
+      return;
+    }
+    const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    setOtp(generatedOtp);
+    setOtpSent(true);
+    setOtpError("");
+    // In production this would send via SMS. For now show in alert for testing.
+    alert(`Your OTP is: ${generatedOtp}\n\n(In production this will be sent via SMS)`);
+  };
+
+  const verifyOtp = () => {
+    if (otpInput === otp) {
+      setOtpVerified(true);
+      setOtpError("");
+    } else {
+      setOtpError("Invalid OTP. Please try again.");
+    }
+  };
+
   const handleNext = () => {
+    if (currentStep === 1) {
+      if (!pickupDate) { alert("Please select a pickup date."); return; }
+      if (!pickupAddress.trim()) { alert("Please enter your pickup address."); return; }
+      if (!pickupPincode.trim() || pickupPincode.length < 6) { alert("Please enter a valid 6-digit pincode."); return; }
+    }
+    if (currentStep === 2) {
+      if (!customerName.trim()) { alert("Please enter your full name."); return; }
+      if (!customerPhone.trim() || customerPhone.length < 10) { alert("Please enter a valid 10-digit mobile number."); return; }
+      if (!otpVerified) { alert("Please verify your mobile number with OTP before proceeding."); return; }
+      if (!customerEmail.trim() || !customerEmail.includes("@")) { alert("Please enter a valid email address."); return; }
+    }
     if (currentStep < 3) setCurrentStep(currentStep + 1);
   };
 
@@ -104,8 +147,9 @@ export default function BookingPage() {
       totalKm: distance,
       totalPrice,
       customerName,
-      customerEmail: customerEmail || undefined,
-      pickupAddress: pickupAddress || undefined,
+      customerPhone,
+      customerEmail,
+      pickupAddress: `${pickupAddress}, Pincode: ${pickupPincode}, Pickup Time: ${pickupTime}`,
       specialRequests: specialRequests || undefined,
     });
   };
@@ -290,13 +334,33 @@ export default function BookingPage() {
                           </select>
                         </div>
                         <div className="space-y-2">
-                          <Label>Pickup Address</Label>
-                          <Input
-                            value={pickupAddress}
-                            onChange={(e) => setPickupAddress(e.target.value)}
-                            placeholder="Enter pickup address"
+                          <Label>Pickup Time *</Label>
+                          <input
+                            type="time"
+                            value={pickupTime}
+                            onChange={(e) => setPickupTime(e.target.value)}
+                            className="w-full px-3 py-2.5 rounded-xl border border-input bg-white text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
                           />
                         </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Pickup Address * <span className="text-xs text-muted-foreground">(House/Flat No, Street, Area)</span></Label>
+                        <Input
+                          value={pickupAddress}
+                          onChange={(e) => setPickupAddress(e.target.value)}
+                          placeholder="e.g. 42, Sector 15, Rohini"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Pickup Pincode *</Label>
+                        <Input
+                          value={pickupPincode}
+                          onChange={(e) => setPickupPincode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                          placeholder="6-digit pincode"
+                          maxLength={6}
+                        />
                       </div>
 
                       <div className="space-y-2">
@@ -329,10 +393,61 @@ export default function BookingPage() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label>Email (optional)</Label>
+                        <Label>Mobile Number * <span className="text-xs text-muted-foreground">(for driver coordination)</span></Label>
+                        <div className="flex gap-2">
+                          <div className="relative flex-1">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">+91</span>
+                            <Input
+                              value={customerPhone}
+                              onChange={(e) => {
+                                setCustomerPhone(e.target.value.replace(/\D/g, "").slice(0, 10));
+                                setOtpVerified(false);
+                                setOtpSent(false);
+                              }}
+                              placeholder="10-digit mobile number"
+                              className="pl-12"
+                              disabled={otpVerified}
+                            />
+                          </div>
+                          {!otpVerified && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={sendOtp}
+                              className="shrink-0"
+                            >
+                              {otpSent ? "Resend OTP" : "Send OTP"}
+                            </Button>
+                          )}
+                          {otpVerified && (
+                            <span className="flex items-center gap-1 text-green-600 text-sm font-medium shrink-0">
+                              <Check className="w-4 h-4" /> Verified
+                            </span>
+                          )}
+                        </div>
+
+                        {otpSent && !otpVerified && (
+                          <div className="flex gap-2 mt-2">
+                            <Input
+                              value={otpInput}
+                              onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                              placeholder="Enter 6-digit OTP"
+                              maxLength={6}
+                            />
+                            <Button type="button" onClick={verifyOtp} className="shrink-0">
+                              Verify
+                            </Button>
+                          </div>
+                        )}
+                        {otpError && <p className="text-sm text-red-500">{otpError}</p>}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Email Address * <span className="text-xs text-muted-foreground">(booking confirmation will be sent here)</span></Label>
                         <div className="relative">
                           <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                           <Input
+                            type="email"
                             value={customerEmail}
                             onChange={(e) => setCustomerEmail(e.target.value)}
                             placeholder="your@email.com"
