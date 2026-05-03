@@ -73,7 +73,7 @@ export const bookingRouter = createRouter({
         totalKm: z.number(),
         totalPrice: z.number(),
         customerName: z.string(),
-        customerPhone: z.string(),
+        customerPhone: z.string().optional(),
         customerEmail: z.string().optional(),
         pickupAddress: z.string().optional(),
         specialRequests: z.string().optional(),

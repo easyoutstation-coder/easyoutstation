@@ -9,11 +9,14 @@ function required(name: string): string {
 }
 
 export const env = {
-  appId: required("APP_ID"),
-  appSecret: required("APP_SECRET"),
   isProduction: process.env.NODE_ENV === "production",
   databaseUrl: required("DATABASE_URL"),
-  kimiAuthUrl: required("KIMI_AUTH_URL"),
-  kimiOpenUrl: required("KIMI_OPEN_URL"),
+  jwtSecret: process.env.JWT_SECRET || "easyoutstation_jwt_secret_change_in_prod",
+  passwordSalt: process.env.PASSWORD_SALT || "easyoutstation_salt",
+  // Legacy - kept to avoid breaking imports
+  appId: process.env.APP_ID ?? "",
+  appSecret: process.env.APP_SECRET ?? "",
+  kimiAuthUrl: process.env.KIMI_AUTH_URL ?? "",
+  kimiOpenUrl: process.env.KIMI_OPEN_URL ?? "",
   ownerUnionId: process.env.OWNER_UNION_ID ?? "",
 };
