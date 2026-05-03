@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from "react-router";
 import { trpc } from "@/providers/trpc";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import AddressAutocomplete from "@/components/AddressAutocomplete";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,6 +50,8 @@ export default function BookingPage() {
   const [passengerCount, setPassengerCount] = useState("4");
   const [pickupAddress, setPickupAddress] = useState("");
   const [pickupPincode, setPickupPincode] = useState("");
+  const [pickupLat, setPickupLat] = useState<number>();
+  const [pickupLng, setPickupLng] = useState<number>();
   const [specialRequests, setSpecialRequests] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
@@ -149,7 +152,7 @@ export default function BookingPage() {
       customerName,
       customerPhone,
       customerEmail,
-      pickupAddress: `${pickupAddress}, Pincode: ${pickupPincode}, Pickup Time: ${pickupTime}`,
+      pickupAddress: `${pickupAddress}, Pincode: ${pickupPincode}, Pickup Time: ${pickupTime}${pickupLat ? `, Coordinates: ${pickupLat},${pickupLng}` : ""}`,
       specialRequests: specialRequests || undefined,
     });
   };
@@ -346,10 +349,15 @@ export default function BookingPage() {
 
                       <div className="space-y-2">
                         <Label>Pickup Address * <span className="text-xs text-muted-foreground">(House/Flat No, Street, Area)</span></Label>
-                        <Input
+                        <AddressAutocomplete
                           value={pickupAddress}
-                          onChange={(e) => setPickupAddress(e.target.value)}
-                          placeholder="e.g. 42, Sector 15, Rohini"
+                          onChange={(address, pincode, lat, lng) => {
+                            setPickupAddress(address);
+                            if (pincode) setPickupPincode(pincode);
+                            if (lat) setPickupLat(lat);
+                            if (lng) setPickupLng(lng);
+                          }}
+                          placeholder="Start typing your pickup address..."
                         />
                       </div>
 
@@ -358,7 +366,7 @@ export default function BookingPage() {
                         <Input
                           value={pickupPincode}
                           onChange={(e) => setPickupPincode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                          placeholder="6-digit pincode"
+                          placeholder="Auto-filled or enter 6-digit pincode"
                           maxLength={6}
                         />
                       </div>
