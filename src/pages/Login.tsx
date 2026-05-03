@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { useAuth } from "@/hooks/useAuth";
 import { trpc } from "@/providers/trpc";
@@ -18,6 +18,28 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      navigate("/dashboard");
+    }
+  }, [isAuthenticated, isLoading, navigate]);
+
+  const loginMutation = trpc.auth.login.useMutation({
+    onSuccess: async () => {
+      await refresh();
+      navigate("/dashboard");
+    },
+    onError: (e) => setError(e.message),
+  });
+
+  const signupMutation = trpc.auth.signup.useMutation({
+    onSuccess: async () => {
+      await refresh();
+      navigate("/dashboard");
+    },
+    onError: (e) => setError(e.message),
+  });
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -26,20 +48,7 @@ export default function Login() {
     );
   }
 
-  if (isAuthenticated) {
-    navigate("/dashboard");
-    return null;
-  }
-
-  const loginMutation = trpc.auth.login.useMutation({
-    onSuccess: async () => { await refresh(); navigate("/dashboard"); },
-    onError: (e) => setError(e.message),
-  });
-
-  const signupMutation = trpc.auth.signup.useMutation({
-    onSuccess: async () => { await refresh(); navigate("/dashboard"); },
-    onError: (e) => setError(e.message),
-  });
+  if (isAuthenticated) return null;
 
   const handleSubmit = () => {
     setError("");

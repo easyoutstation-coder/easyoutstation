@@ -20,7 +20,6 @@ import {
   ArrowLeft,
   MapPin,
   CalendarDays,
-  Phone,
   Mail,
   Users,
   Shield,
@@ -50,7 +49,6 @@ export default function BookingPage() {
   const [pickupAddress, setPickupAddress] = useState("");
   const [specialRequests, setSpecialRequests] = useState("");
   const [customerName, setCustomerName] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [agreeTerms, setAgreeTerms] = useState(false);
 
@@ -106,7 +104,6 @@ export default function BookingPage() {
       totalKm: distance,
       totalPrice,
       customerName,
-      customerPhone,
       customerEmail: customerEmail || undefined,
       pickupAddress: pickupAddress || undefined,
       specialRequests: specialRequests || undefined,
@@ -326,19 +323,6 @@ export default function BookingPage() {
                             value={customerName}
                             onChange={(e) => setCustomerName(e.target.value)}
                             placeholder="Enter your full name"
-                            className="pl-10"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label>Phone Number *</Label>
-                        <div className="relative">
-                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <Input
-                            value={customerPhone}
-                            onChange={(e) => setCustomerPhone(e.target.value)}
-                            placeholder="+91-XXXXXXXXXX"
                             className="pl-10"
                           />
                         </div>
