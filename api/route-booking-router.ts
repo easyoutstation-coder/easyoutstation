@@ -42,7 +42,7 @@ ${input.specialRequests ? `Special Requests: ${input.specialRequests}` : ""}
       Authorization: `Bearer ${RESEND_API_KEY}`,
     },
     body: JSON.stringify({
-      from: "EasyOutstation <bookings@easyoutstation.com>",
+      from: "EasyOutstation <onboarding@resend.dev>",
       to: ["easyoutstation@gmail.com"],
       subject: `New Booking #${input.bookingId} — ${input.fromCity} to ${input.toCity}`,
       text: `New booking received!\n\n${bookingDetails}\n\nCustomer Email: ${input.customerEmail || "Not provided"}`,
@@ -58,7 +58,7 @@ ${input.specialRequests ? `Special Requests: ${input.specialRequests}` : ""}
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "EasyOutstation <bookings@easyoutstation.com>",
+        from: "EasyOutstation <onboarding@resend.dev>",
         to: [input.customerEmail],
         subject: `Booking Received — ${input.fromCity} to ${input.toCity} | EasyOutstation`,
         text: `Dear ${input.customerName},\n\nThank you for choosing EasyOutstation! We have received your booking.\n\n${bookingDetails}\n\nWe will send you a confirmation with driver details within 4 hours.\n\nFor any queries, please contact us at easyoutstation@gmail.com\n\nWarm regards,\nTeam EasyOutstation`,
