@@ -39,7 +39,7 @@ export const authRouter = createRouter({
         unionId,
         name: input.name,
         email: input.email,
-        phone: passwordHash,
+        passwordHash: passwordHash,
         role: "user",
         lastSignInAt: new Date(),
       });
@@ -65,7 +65,7 @@ export const authRouter = createRouter({
       if (!user) throw new Error("Invalid email or password.");
 
       const passwordHash = await hashPassword(input.password);
-      if (user.phone !== passwordHash) throw new Error("Invalid email or password.");
+      if (user.passwordHash !== passwordHash) throw new Error("Invalid email or password.");
 
       await db.update(users).set({ lastSignInAt: new Date() }).where(eq(users.id, user.id));
 
