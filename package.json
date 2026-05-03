@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:server": "esbuild api/boot.ts --platform=node --bundle --format=esm --outdir=dist --banner:js=\"import { createRequire } from 'module';const require = createRequire(import.meta.url);\" --alias:@contracts=./contracts --alias:@db=./db",
+    "build:server": "npm run build && esbuild api/boot.ts --platform=node --bundle --format=esm --outdir=dist --banner:js=\"import { createRequire } from 'module';const require = createRequire(import.meta.url);\" --alias:@contracts=./contracts --alias:@db=./db",
     "build:all": "npm run build && npm run build:server",
     "lint": "eslint .",
     "preview": "vite preview",
