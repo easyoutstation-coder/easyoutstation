@@ -4,6 +4,69 @@ import { getDb } from "./queries/connection";
 import { routes, bookings, userSearches } from "@db/schema";
 import { eq, and, like, desc, sql } from "drizzle-orm";
 
+async function sendBookingEmails(input: {
+  bookingId: number;
+  customerName: string;
+  customerEmail?: string;
+  fromCity: string;
+  toCity: string;
+  pickupDate: string;
+  totalKm: number;
+  totalPrice: number;
+  tripType: string;
+  passengerCount: number;
+  pickupAddress?: string;
+  specialRequests?: string;
+}) {
+  const RESEND_API_KEY = process.env.RESEND_API_KEY;
+  if (!RESEND_API_KEY) return;
+
+  const bookingDetails = `
+Booking ID: #${input.bookingId}
+Customer: ${input.customerName}
+Route: ${input.fromCity} → ${input.toCity}
+Date: ${input.pickupDate}
+Distance: ${input.totalKm} km
+Trip Type: ${input.tripType.replace("_", " ")}
+Passengers: ${input.passengerCount}
+Total Price: ₹${input.totalPrice.toLocaleString()}
+${input.pickupAddress ? `Pickup Address: ${input.pickupAddress}` : ""}
+${input.specialRequests ? `Special Requests: ${input.specialRequests}` : ""}
+  `.trim();
+
+  // Email to EasyOutstation
+  await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${RESEND_API_KEY}`,
+    },
+    body: JSON.stringify({
+      from: "EasyOutstation <bookings@easyoutstation.com>",
+      to: ["easyoutstation@gmail.com"],
+      subject: `New Booking #${input.bookingId} — ${input.fromCity} to ${input.toCity}`,
+      text: `New booking received!\n\n${bookingDetails}\n\nCustomer Email: ${input.customerEmail || "Not provided"}`,
+    }),
+  });
+
+  // Email to customer if they provided email
+  if (input.customerEmail) {
+    await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+      },
+      body: JSON.stringify({
+        from: "EasyOutstation <bookings@easyoutstation.com>",
+        to: [input.customerEmail],
+        subject: `Booking Received — ${input.fromCity} to ${input.toCity} | EasyOutstation`,
+        text: `Dear ${input.customerName},\n\nThank you for choosing EasyOutstation! We have received your booking.\n\n${bookingDetails}\n\nWe will send you a confirmation with driver details within 4 hours.\n\nFor any queries, please contact us at easyoutstation@gmail.com\n\nWarm regards,\nTeam EasyOutstation`,
+      }),
+    });
+  }
+}
+
 export const routeRouter = createRouter({
   list: publicQuery.query(async () => {
     const db = getDb();
@@ -102,7 +165,16 @@ export const bookingRouter = createRouter({
         specialRequests: input.specialRequests,
       });
 
-      return { success: true, bookingId: Number((result as any).insertId) };
+      const bookingId = Number((result as any).insertId);
+
+      // Send email notifications
+      try {
+        await sendBookingEmails({ ...input, bookingId });
+      } catch (e) {
+        console.error("Email send failed:", e);
+      }
+
+      return { success: true, bookingId };
     }),
 
   getMyBookings: authedQuery.query(async ({ ctx }) => {
