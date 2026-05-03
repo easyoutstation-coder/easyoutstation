@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router";
 import { trpc } from "@/providers/trpc";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import AddressAutocomplete from "@/components/AddressAutocomplete";
+import MapPreview from "@/components/MapPreview";
+import { useDistanceCalculator } from "@/hooks/useDistanceCalculator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,20 +14,12 @@ import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import {
-  User,
-  CreditCard,
-  Check,
-  ArrowRight,
-  ArrowLeft,
-  MapPin,
-  CalendarDays,
-  Mail,
-  Users,
-  Shield,
-  Clock,
-  Route,
+  User, CreditCard, Check, ArrowRight, ArrowLeft,
+  MapPin, CalendarDays, Mail, Users, Shield, Clock,
+  Route, Loader2, AlertCircle,
 } from "lucide-react";
 
 const steps = [
@@ -42,55 +36,70 @@ export default function BookingPage() {
   const [bookingComplete, setBookingComplete] = useState(false);
   const [bookingId, setBookingId] = useState<number | null>(null);
 
-  // Form state
+  // Trip details
   const [tripType, setTripType] = useState("one_way");
   const [pickupDate, setPickupDate] = useState<Date>();
   const [pickupTime, setPickupTime] = useState("08:00");
   const [returnDate, setReturnDate] = useState<Date>();
   const [passengerCount, setPassengerCount] = useState("4");
+  const [specialRequests, setSpecialRequests] = useState("");
+
+  // Pickup location
   const [pickupAddress, setPickupAddress] = useState("");
   const [pickupPincode, setPickupPincode] = useState("");
   const [pickupLat, setPickupLat] = useState<number>();
   const [pickupLng, setPickupLng] = useState<number>();
-  const [specialRequests, setSpecialRequests] = useState("");
+
+  // Drop location
+  const [dropAddress, setDropAddress] = useState("");
+  const [dropPincode, setDropPincode] = useState("");
+  const [dropLat, setDropLat] = useState<number>();
+  const [dropLng, setDropLng] = useState<number>();
+
+  // Customer info
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [agreeTerms, setAgreeTerms] = useState(false);
 
-  // OTP state
+  // OTP
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState("");
   const [otpVerified, setOtpVerified] = useState(false);
   const [otpInput, setOtpInput] = useState("");
   const [otpError, setOtpError] = useState("");
 
+  // Route params
   const carId = parseInt(searchParams.get("carId") || "0");
   const fromCity = searchParams.get("from") || "Delhi";
-  const toCity = searchParams.get("to") || "Manali";
-  const distance = parseInt(searchParams.get("distance") || "540");
+  const toCity = searchParams.get("to") || "";
+  const defaultDistance = parseInt(searchParams.get("distance") || "0");
 
-  const { data: car } = trpc.car.getById.useQuery(
-    { id: carId },
-    { enabled: carId > 0 }
-  );
+  const { data: car } = trpc.car.getById.useQuery({ id: carId }, { enabled: carId > 0 });
 
-  const createBooking = trpc.booking.create.useMutation({
-    onSuccess: (data) => {
-      setBookingId(data.bookingId);
-      setBookingComplete(true);
-      setIsSubmitting(false);
-    },
-    onError: () => {
-      setIsSubmitting(false);
-      alert("Booking failed. Please try again or email us at easyoutstation@gmail.com.");
-    },
-  });
+  // Distance calculation
+  const { distanceKm, durationText, isLoading: isCalcDistance, calculateDistance } = useDistanceCalculator();
+  const [manualDistance, setManualDistance] = useState(defaultDistance);
+  const finalDistance = distanceKm || manualDistance;
 
   const pricePerKm = parseFloat(car?.pricePerKm || "20");
   const driverCharges = parseFloat(car?.driverCharges || "400");
-  const basePrice = pricePerKm * distance;
+  const basePrice = pricePerKm * finalDistance;
   const totalPrice = basePrice + driverCharges;
+
+  // Auto-calculate distance when both locations are selected
+  useEffect(() => {
+    if (pickupLat && pickupLng && dropLat && dropLng) {
+      calculateDistance(pickupLat, pickupLng, dropLat, dropLng);
+    }
+  }, [pickupLat, pickupLng, dropLat, dropLng]);
+
+  // Pre-fill drop address from route
+  useEffect(() => {
+    if (toCity && !dropAddress) {
+      setDropAddress(toCity + ", India");
+    }
+  }, [toCity]);
 
   const sendOtp = () => {
     if (!customerPhone || customerPhone.length < 10) {
@@ -101,7 +110,6 @@ export default function BookingPage() {
     setOtp(generatedOtp);
     setOtpSent(true);
     setOtpError("");
-    // In production this would send via SMS. For now show in alert for testing.
     alert(`Your OTP is: ${generatedOtp}\n\n(In production this will be sent via SMS)`);
   };
 
@@ -118,7 +126,8 @@ export default function BookingPage() {
     if (currentStep === 1) {
       if (!pickupDate) { alert("Please select a pickup date."); return; }
       if (!pickupAddress.trim()) { alert("Please enter your pickup address."); return; }
-      if (!pickupPincode.trim() || pickupPincode.length < 6) { alert("Please enter a valid 6-digit pincode."); return; }
+      if (!pickupPincode.trim() || pickupPincode.length < 6) { alert("Please enter a valid 6-digit pickup pincode."); return; }
+      if (!dropAddress.trim()) { alert("Please enter your drop-off address."); return; }
     }
     if (currentStep === 2) {
       if (!customerName.trim()) { alert("Please enter your full name."); return; }
@@ -133,27 +142,36 @@ export default function BookingPage() {
     if (currentStep > 1) setCurrentStep(currentStep - 1);
   };
 
+  const createBooking = trpc.booking.create.useMutation({
+    onSuccess: (data) => {
+      setBookingId(data.bookingId);
+      setBookingComplete(true);
+      setIsSubmitting(false);
+    },
+    onError: () => {
+      setIsSubmitting(false);
+      alert("Booking failed. Please try again or email us at easyoutstation@gmail.com.");
+    },
+  });
+
   const handleSubmit = () => {
-    if (!agreeTerms) {
-      alert("Please agree to the terms and conditions");
-      return;
-    }
+    if (!agreeTerms) { alert("Please agree to the terms and conditions"); return; }
     setIsSubmitting(true);
     createBooking.mutate({
       carId,
-      fromCity,
-      toCity,
+      fromCity: fromCity || pickupAddress.split(",")[0],
+      toCity: toCity || dropAddress.split(",")[0],
       pickupDate: pickupDate ? format(pickupDate, "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
       returnDate: returnDate ? format(returnDate, "yyyy-MM-dd") : undefined,
       tripType: tripType as "one_way" | "round_trip" | "multi_day",
       passengerCount: parseInt(passengerCount),
-      totalKm: distance,
+      totalKm: finalDistance,
       totalPrice,
       customerName,
       customerPhone,
       customerEmail,
-      pickupAddress: `${pickupAddress}, Pincode: ${pickupPincode}, Pickup Time: ${pickupTime}${pickupLat ? `, Coordinates: ${pickupLat},${pickupLng}` : ""}`,
-      specialRequests: specialRequests || undefined,
+      pickupAddress: `${pickupAddress}, Pincode: ${pickupPincode}, Time: ${pickupTime}${pickupLat ? `, GPS: ${pickupLat},${pickupLng}` : ""}`,
+      specialRequests: dropAddress ? `Drop: ${dropAddress}${dropPincode ? ` (${dropPincode})` : ""}${specialRequests ? `. Notes: ${specialRequests}` : ""}` : specialRequests || undefined,
     });
   };
 
@@ -163,27 +181,26 @@ export default function BookingPage() {
         <Navbar />
         <main className="pt-20">
           <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-16">
-            <Card className="text-center p-8">
+            <Card className="text-center p-8 shadow-xl border-0">
               <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
                 <Check className="w-10 h-10 text-green-600" />
               </div>
-              <h1 className="text-2xl font-bold mb-2">Booking Confirmed!</h1>
-              <p className="text-muted-foreground mb-6">
-                Your booking has been received. Our team will contact you shortly to confirm the details.
+              <h1 className="text-3xl font-bold font-['Playfair_Display'] mb-2">Booking Confirmed!</h1>
+              <p className="text-muted-foreground mb-2">Booking ID: <span className="font-bold text-primary">#{bookingId}</span></p>
+              <p className="text-sm text-muted-foreground mb-6">
+                A confirmation email has been sent to <strong>{customerEmail}</strong>.<br />
+                Our team will share driver details within <strong>4 hours</strong>.
               </p>
-              <div className="bg-muted rounded-xl p-4 mb-6 text-left">
-                <p className="text-sm"><strong>Booking ID:</strong> #{bookingId}</p>
-                <p className="text-sm"><strong>Car:</strong> {car?.name || "Toyota Innova Crysta"}</p>
-                <p className="text-sm"><strong>Route:</strong> {fromCity} to {toCity}</p>
-                <p className="text-sm"><strong>Amount:</strong> ₹{totalPrice.toLocaleString()}</p>
+              <div className="bg-slate-50 rounded-xl p-4 text-sm text-left space-y-2 mb-6">
+                <div className="flex justify-between"><span className="text-muted-foreground">Route</span><span className="font-medium">{fromCity} → {toCity}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Pickup</span><span className="font-medium">{pickupDate ? format(pickupDate, "dd MMM yyyy") : ""} at {pickupTime}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Distance</span><span className="font-medium">{finalDistance} km {durationText && `(${durationText})`}</span></div>
+                <Separator />
+                <div className="flex justify-between font-bold"><span>Total Fare</span><span className="text-primary">₹{totalPrice.toLocaleString("en-IN")}</span></div>
               </div>
-              <div className="flex gap-3 justify-center">
-                <Button onClick={() => navigate("/")} className="bg-primary hover:bg-primary/90">
-                  Back to Home
-                </Button>
-                <Button variant="outline" onClick={() => navigate("/dashboard")}>
-                  View My Bookings
-                </Button>
+              <div className="flex gap-3">
+                <Button variant="outline" className="flex-1" onClick={() => navigate("/")}>Back to Home</Button>
+                <Button className="flex-1 bg-primary" onClick={() => navigate("/dashboard")}>View Bookings</Button>
               </div>
             </Card>
           </div>
@@ -197,91 +214,44 @@ export default function BookingPage() {
     <div className="min-h-screen bg-slate-50">
       <Navbar />
       <main className="pt-20">
-        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-8">
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-foreground font-['Playfair_Display']">
-              Book Your Ride
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Complete your booking in 3 simple steps
-            </p>
-          </div>
-
-          {/* Stepper */}
-          <div className="flex items-center justify-between mb-8">
-            {steps.map((step, i) => (
-              <div key={step.id} className="flex items-center flex-1">
-                <div className="flex flex-col items-center">
-                  <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
-                      currentStep >= step.id
-                        ? "bg-primary text-white"
-                        : "bg-muted text-muted-foreground"
-                    }`}
-                  >
-                    {currentStep > step.id ? (
-                      <Check className="w-5 h-5" />
-                    ) : (
-                      <step.icon className="w-5 h-5" />
-                    )}
-                  </div>
-                  <span
-                    className={`text-xs mt-2 font-medium ${
-                      currentStep >= step.id ? "text-primary" : "text-muted-foreground"
-                    }`}
-                  >
-                    {step.label}
-                  </span>
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8">
+          {/* Steps */}
+          <div className="flex items-center justify-center gap-2 mb-8">
+            {steps.map((step, idx) => (
+              <div key={step.id} className="flex items-center gap-2">
+                <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  currentStep === step.id ? "bg-primary text-white shadow-md" :
+                  currentStep > step.id ? "bg-green-100 text-green-700" : "bg-white text-muted-foreground border"
+                }`}>
+                  {currentStep > step.id ? <Check className="w-4 h-4" /> : <step.icon className="w-4 h-4" />}
+                  <span className="hidden sm:inline">{step.label}</span>
                 </div>
-                {i < steps.length - 1 && (
-                  <div
-                    className={`flex-1 h-0.5 mx-4 ${
-                      currentStep > step.id ? "bg-primary" : "bg-muted"
-                    }`}
-                  />
-                )}
+                {idx < steps.length - 1 && <div className={`w-8 h-0.5 ${currentStep > step.id ? "bg-green-400" : "bg-slate-200"}`} />}
               </div>
             ))}
           </div>
 
-          <div className="grid lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Main Form */}
             <div className="lg:col-span-2">
-              <Card>
+              <Card className="shadow-sm border-0">
                 <CardContent className="p-6">
+
+                  {/* STEP 1 */}
                   {currentStep === 1 && (
-                    <div className="space-y-6">
+                    <div className="space-y-5">
                       <h2 className="text-xl font-semibold">Trip Details</h2>
 
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label>From</Label>
-                          <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-input bg-muted">
-                            <MapPin className="w-4 h-4 text-primary" />
-                            <span className="font-medium">{fromCity}</span>
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <Label>To</Label>
-                          <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-input bg-muted">
-                            <MapPin className="w-4 h-4 text-primary" />
-                            <span className="font-medium">{toCity}</span>
-                          </div>
-                        </div>
-                      </div>
-
+                      {/* Trip Type */}
                       <div className="space-y-2">
                         <Label>Trip Type</Label>
-                        <div className="grid grid-cols-3 gap-2">
+                        <div className="flex gap-2">
                           {["one_way", "round_trip", "multi_day"].map((type) => (
                             <button
                               key={type}
                               onClick={() => setTripType(type)}
-                              className={`py-2.5 px-3 rounded-xl text-sm font-medium border transition-all ${
-                                tripType === type
-                                  ? "bg-primary text-white border-primary"
-                                  : "bg-white text-foreground border-input hover:border-primary"
+                              className={`flex-1 py-2 px-3 rounded-xl text-sm font-medium border transition-all ${
+                                tripType === type ? "bg-primary text-white border-primary" : "bg-white border-input hover:border-primary"
                               }`}
                             >
                               {type === "one_way" ? "One Way" : type === "round_trip" ? "Round Trip" : "Multi Day"}
@@ -290,9 +260,10 @@ export default function BookingPage() {
                         </div>
                       </div>
 
+                      {/* Date & Time */}
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label>Pickup Date</Label>
+                          <Label>Pickup Date *</Label>
                           <Popover>
                             <PopoverTrigger asChild>
                               <button className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl border border-input bg-white text-sm hover:border-primary transition-colors">
@@ -305,37 +276,6 @@ export default function BookingPage() {
                             </PopoverContent>
                           </Popover>
                         </div>
-                        {tripType !== "one_way" && (
-                          <div className="space-y-2">
-                            <Label>Return Date</Label>
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <button className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl border border-input bg-white text-sm hover:border-primary transition-colors">
-                                  <CalendarDays className="w-4 h-4 text-muted-foreground" />
-                                  <span>{returnDate ? format(returnDate, "dd MMM yyyy") : "Select date"}</span>
-                                </button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0">
-                                <Calendar mode="single" selected={returnDate} onSelect={setReturnDate} disabled={(d) => d < (pickupDate || new Date())} />
-                              </PopoverContent>
-                            </Popover>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label>Passengers</Label>
-                          <select
-                            value={passengerCount}
-                            onChange={(e) => setPassengerCount(e.target.value)}
-                            className="w-full px-3 py-2.5 rounded-xl border border-input bg-white text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
-                          >
-                            {[2, 3, 4, 5, 6, 7, 8].map((n) => (
-                              <option key={n} value={n}>{n} Passengers</option>
-                            ))}
-                          </select>
-                        </div>
                         <div className="space-y-2">
                           <Label>Pickup Time *</Label>
                           <input
@@ -347,6 +287,38 @@ export default function BookingPage() {
                         </div>
                       </div>
 
+                      {tripType !== "one_way" && (
+                        <div className="space-y-2">
+                          <Label>Return Date *</Label>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <button className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl border border-input bg-white text-sm hover:border-primary transition-colors">
+                                <CalendarDays className="w-4 h-4 text-muted-foreground" />
+                                <span>{returnDate ? format(returnDate, "dd MMM yyyy") : "Select return date"}</span>
+                              </button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                              <Calendar mode="single" selected={returnDate} onSelect={setReturnDate} disabled={(d) => d < (pickupDate || new Date())} />
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                      )}
+
+                      {/* Passengers */}
+                      <div className="space-y-2">
+                        <Label>Passengers</Label>
+                        <select
+                          value={passengerCount}
+                          onChange={(e) => setPassengerCount(e.target.value)}
+                          className="w-full px-3 py-2.5 rounded-xl border border-input bg-white text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                        >
+                          {[1,2,3,4,5,6,7,8].map((n) => (
+                            <option key={n} value={n}>{n} Passenger{n > 1 ? "s" : ""}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Pickup Address */}
                       <div className="space-y-2">
                         <Label>Pickup Address * <span className="text-xs text-muted-foreground">(House/Flat No, Street, Area)</span></Label>
                         <AddressAutocomplete
@@ -359,8 +331,12 @@ export default function BookingPage() {
                           }}
                           placeholder="Start typing your pickup address..."
                         />
+                        {pickupLat && pickupLng && (
+                          <MapPreview lat={pickupLat} lng={pickupLng} label={pickupAddress} />
+                        )}
                       </div>
 
+                      {/* Pickup Pincode */}
                       <div className="space-y-2">
                         <Label>Pickup Pincode *</Label>
                         <Input
@@ -371,32 +347,62 @@ export default function BookingPage() {
                         />
                       </div>
 
+                      {/* Drop Address */}
                       <div className="space-y-2">
-                        <Label>Special Requests</Label>
+                        <Label>Drop-off Address * <span className="text-xs text-muted-foreground">(Destination address)</span></Label>
+                        <AddressAutocomplete
+                          value={dropAddress}
+                          onChange={(address, pincode, lat, lng) => {
+                            setDropAddress(address);
+                            if (pincode) setDropPincode(pincode);
+                            if (lat) setDropLat(lat);
+                            if (lng) setDropLng(lng);
+                          }}
+                          placeholder="Enter your destination address..."
+                        />
+                        {dropLat && dropLng && (
+                          <MapPreview lat={dropLat} lng={dropLng} label={dropAddress} />
+                        )}
+                      </div>
+
+                      {/* Distance Result */}
+                      {(pickupLat && dropLat) && (
+                        <div className={`flex items-center gap-3 p-3 rounded-xl ${isCalcDistance ? "bg-slate-50" : "bg-green-50 border border-green-200"}`}>
+                          {isCalcDistance ? (
+                            <><Loader2 className="w-4 h-4 animate-spin text-primary" /><span className="text-sm text-muted-foreground">Calculating distance...</span></>
+                          ) : (
+                            <><Route className="w-4 h-4 text-green-600" />
+                            <span className="text-sm font-medium text-green-800">
+                              Distance: <strong>{finalDistance} km</strong>
+                              {durationText && <span className="text-green-600 ml-2">({durationText})</span>}
+                            </span></>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Special Requests */}
+                      <div className="space-y-2">
+                        <Label>Special Requests <span className="text-xs text-muted-foreground">(Optional)</span></Label>
                         <textarea
                           value={specialRequests}
                           onChange={(e) => setSpecialRequests(e.target.value)}
-                          placeholder="Any special requirements..."
+                          placeholder="Any special requirements, preferred route, stops, etc..."
                           className="w-full px-3 py-2.5 rounded-xl border border-input bg-white text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none min-h-[80px] resize-none"
                         />
                       </div>
                     </div>
                   )}
 
+                  {/* STEP 2 */}
                   {currentStep === 2 && (
-                    <div className="space-y-6">
+                    <div className="space-y-5">
                       <h2 className="text-xl font-semibold">Personal Information</h2>
 
                       <div className="space-y-2">
                         <Label>Full Name *</Label>
                         <div className="relative">
                           <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <Input
-                            value={customerName}
-                            onChange={(e) => setCustomerName(e.target.value)}
-                            placeholder="Enter your full name"
-                            className="pl-10"
-                          />
+                          <Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Enter your full name" className="pl-10" />
                         </div>
                       </div>
 
@@ -404,145 +410,100 @@ export default function BookingPage() {
                         <Label>Mobile Number * <span className="text-xs text-muted-foreground">(for driver coordination)</span></Label>
                         <div className="flex gap-2">
                           <div className="relative flex-1">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">+91</span>
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-medium">+91</span>
                             <Input
                               value={customerPhone}
-                              onChange={(e) => {
-                                setCustomerPhone(e.target.value.replace(/\D/g, "").slice(0, 10));
-                                setOtpVerified(false);
-                                setOtpSent(false);
-                              }}
+                              onChange={(e) => { setCustomerPhone(e.target.value.replace(/\D/g, "").slice(0, 10)); setOtpVerified(false); setOtpSent(false); }}
                               placeholder="10-digit mobile number"
                               className="pl-12"
                               disabled={otpVerified}
                             />
                           </div>
                           {!otpVerified && (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={sendOtp}
-                              className="shrink-0"
-                            >
-                              {otpSent ? "Resend OTP" : "Send OTP"}
+                            <Button type="button" variant="outline" onClick={sendOtp} className="shrink-0">
+                              {otpSent ? "Resend" : "Send OTP"}
                             </Button>
                           )}
                           {otpVerified && (
-                            <span className="flex items-center gap-1 text-green-600 text-sm font-medium shrink-0">
+                            <span className="flex items-center gap-1 text-green-600 text-sm font-medium shrink-0 px-2">
                               <Check className="w-4 h-4" /> Verified
                             </span>
                           )}
                         </div>
-
                         {otpSent && !otpVerified && (
                           <div className="flex gap-2 mt-2">
-                            <Input
-                              value={otpInput}
-                              onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                              placeholder="Enter 6-digit OTP"
-                              maxLength={6}
-                            />
-                            <Button type="button" onClick={verifyOtp} className="shrink-0">
-                              Verify
-                            </Button>
+                            <Input value={otpInput} onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="Enter 6-digit OTP" maxLength={6} />
+                            <Button type="button" onClick={verifyOtp} className="shrink-0">Verify</Button>
                           </div>
                         )}
-                        {otpError && <p className="text-sm text-red-500">{otpError}</p>}
+                        {otpError && <p className="text-sm text-red-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{otpError}</p>}
                       </div>
 
                       <div className="space-y-2">
-                        <Label>Email Address * <span className="text-xs text-muted-foreground">(booking confirmation will be sent here)</span></Label>
+                        <Label>Email Address * <span className="text-xs text-muted-foreground">(confirmation will be sent here)</span></Label>
                         <div className="relative">
                           <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <Input
-                            type="email"
-                            value={customerEmail}
-                            onChange={(e) => setCustomerEmail(e.target.value)}
-                            placeholder="your@email.com"
-                            className="pl-10"
-                          />
+                          <Input type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} placeholder="your@email.com" className="pl-10" />
                         </div>
                       </div>
                     </div>
                   )}
 
+                  {/* STEP 3 */}
                   {currentStep === 3 && (
-                    <div className="space-y-6">
+                    <div className="space-y-5">
                       <h2 className="text-xl font-semibold">Review & Confirm</h2>
 
                       <div className="bg-muted rounded-xl p-4 space-y-3">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Car</span>
-                          <span className="font-medium">{car?.name || "Toyota Innova Crysta"}</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Route</span>
-                          <span className="font-medium">{fromCity} → {toCity}</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Distance</span>
-                          <span className="font-medium">{distance} km</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Pickup Date</span>
-                          <span className="font-medium">{pickupDate ? format(pickupDate, "dd MMM yyyy") : "Not selected"}</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Passengers</span>
-                          <span className="font-medium">{passengerCount}</span>
-                        </div>
+                        <div className="flex justify-between text-sm"><span className="text-muted-foreground">Car</span><span className="font-medium">{car?.name}</span></div>
+                        <div className="flex justify-between text-sm"><span className="text-muted-foreground">Route</span><span className="font-medium">{fromCity} → {toCity}</span></div>
+                        <div className="flex justify-between text-sm"><span className="text-muted-foreground">Pickup Address</span><span className="font-medium text-right max-w-[200px]">{pickupAddress}</span></div>
+                        <div className="flex justify-between text-sm"><span className="text-muted-foreground">Drop Address</span><span className="font-medium text-right max-w-[200px]">{dropAddress}</span></div>
+                        <div className="flex justify-between text-sm"><span className="text-muted-foreground">Date & Time</span><span className="font-medium">{pickupDate ? format(pickupDate, "dd MMM yyyy") : ""} at {pickupTime}</span></div>
+                        <div className="flex justify-between text-sm"><span className="text-muted-foreground">Passengers</span><span className="font-medium">{passengerCount}</span></div>
+                        <div className="flex justify-between text-sm"><span className="text-muted-foreground">Distance</span><span className="font-medium">{finalDistance} km {durationText && `(${durationText})`}</span></div>
                         <Separator />
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Base Price ({distance} km × ₹{pricePerKm})</span>
-                          <span>₹{basePrice.toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Driver Charges</span>
-                          <span>₹{driverCharges}</span>
-                        </div>
+                        <div className="flex justify-between text-sm"><span className="text-muted-foreground">Base ({finalDistance} km × ₹{pricePerKm})</span><span>₹{basePrice.toLocaleString("en-IN")}</span></div>
+                        <div className="flex justify-between text-sm"><span className="text-muted-foreground">Driver Charges</span><span>₹{driverCharges}</span></div>
                         <Separator />
-                        <div className="flex justify-between text-base font-bold">
-                          <span>Total Amount</span>
-                          <span className="text-primary">₹{totalPrice.toLocaleString()}</span>
+                        <div className="flex justify-between font-bold text-base"><span>Total Fare</span><span className="text-primary">₹{totalPrice.toLocaleString("en-IN")}</span></div>
+                      </div>
+
+                      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                        <h3 className="text-sm font-semibold text-blue-800 mb-2">Customer Details</h3>
+                        <div className="text-sm space-y-1 text-blue-700">
+                          <div>{customerName}</div>
+                          <div>+91-{customerPhone}</div>
+                          <div>{customerEmail}</div>
                         </div>
                       </div>
 
+                      <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex gap-2 text-sm text-amber-800">
+                        <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                        <span>Payment will be collected by the driver. A confirmation with driver details will be sent within 4 hours.</span>
+                      </div>
+
                       <div className="flex items-start gap-3">
-                        <Checkbox
-                          id="terms"
-                          checked={agreeTerms}
-                          onCheckedChange={(c) => setAgreeTerms(c as boolean)}
-                        />
-                        <label htmlFor="terms" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
-                          I agree to the terms and conditions. I understand that toll tax, parking, and state permits are extra. 
-                          Free cancellation up to 24 hours before pickup.
+                        <Checkbox id="terms" checked={agreeTerms} onCheckedChange={(v) => setAgreeTerms(v as boolean)} className="mt-0.5" />
+                        <label htmlFor="terms" className="text-sm text-muted-foreground cursor-pointer">
+                          I agree to the <span className="text-primary underline">Terms & Conditions</span> and <span className="text-primary underline">Cancellation Policy</span>
                         </label>
                       </div>
                     </div>
                   )}
 
                   {/* Navigation */}
-                  <div className="flex gap-3 mt-8">
-                    {currentStep > 1 && (
-                      <Button variant="outline" onClick={handleBack} className="gap-2">
-                        <ArrowLeft className="w-4 h-4" />
-                        Back
-                      </Button>
-                    )}
-                    <div className="flex-1" />
+                  <div className="flex justify-between mt-6 pt-4 border-t">
+                    <Button variant="outline" onClick={handleBack} disabled={currentStep === 1} className="gap-2">
+                      <ArrowLeft className="w-4 h-4" /> Back
+                    </Button>
                     {currentStep < 3 ? (
-                      <Button onClick={handleNext} className="bg-primary hover:bg-primary/90 gap-2">
-                        Continue
-                        <ArrowRight className="w-4 h-4" />
+                      <Button onClick={handleNext} className="bg-primary gap-2">
+                        Continue <ArrowRight className="w-4 h-4" />
                       </Button>
                     ) : (
-                      <Button
-                        onClick={handleSubmit}
-                        disabled={isSubmitting}
-                        className="bg-primary hover:bg-primary/90 gap-2"
-                      >
-                        {isSubmitting ? "Processing..." : "Confirm Booking"}
-                        <Check className="w-4 h-4" />
+                      <Button onClick={handleSubmit} disabled={isSubmitting} className="bg-primary gap-2">
+                        {isSubmitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</> : <>Confirm Booking <Check className="w-4 h-4" /></>}
                       </Button>
                     )}
                   </div>
@@ -550,55 +511,36 @@ export default function BookingPage() {
               </Card>
             </div>
 
-            {/* Sidebar Summary */}
-            <div className="lg:col-span-1">
-              <Card className="sticky top-24">
-                <CardContent className="p-6 space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-16 h-16 rounded-xl overflow-hidden bg-muted">
-                      <img
-                        src={car?.imageUrl || "/cars/toyota-innova-crysta.jpg"}
-                        alt={car?.name}
-                        className="w-full h-full object-cover"
-                      />
+            {/* Sidebar */}
+            <div className="space-y-4">
+              <Card className="shadow-sm border-0 sticky top-24">
+                <CardContent className="p-5 space-y-4">
+                  {car && (
+                    <div className="flex gap-3 items-center">
+                      {car.imageUrl && <img src={car.imageUrl} alt={car.name} className="w-16 h-12 object-cover rounded-lg" />}
+                      <div>
+                        <div className="font-semibold text-sm">{car.name}</div>
+                        <div className="text-xs text-muted-foreground">{car.brand} · {car.seats} seats</div>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-semibold">{car?.name || "Toyota Innova Crysta"}</h3>
-                      <p className="text-xs text-muted-foreground">{car?.brand || "Toyota"}</p>
-                    </div>
-                  </div>
-
+                  )}
                   <Separator />
-
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Route className="w-4 h-4" />
-                      {fromCity} to {toCity}
-                    </div>
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Clock className="w-4 h-4" />
-                      ~12 hours journey
-                    </div>
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Users className="w-4 h-4" />
-                      {car?.seats || 6} seats
-                    </div>
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Shield className="w-4 h-4" />
-                      Professional driver included
-                    </div>
+                  <div className="space-y-1.5 text-sm">
+                    <div className="flex justify-between"><span className="text-muted-foreground">Route</span><span className="font-medium">{fromCity} → {toCity || "Custom"}</span></div>
+                    {finalDistance > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Distance</span><span className="font-medium">{finalDistance} km</span></div>}
+                    {durationText && <div className="flex justify-between"><span className="text-muted-foreground">Duration</span><span className="font-medium">{durationText}</span></div>}
+                    <div className="flex justify-between"><span className="text-muted-foreground">Rate</span><span className="font-medium">₹{pricePerKm}/km</span></div>
                   </div>
-
                   <Separator />
-
-                  <div className="bg-slate-900 rounded-xl p-4 text-white">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm text-slate-400">Estimated Total</span>
-                      <span className="text-2xl font-bold text-primary">₹{totalPrice.toLocaleString()}</span>
-                    </div>
-                    <p className="text-xs text-slate-500">
-                      {distance} km × ₹{pricePerKm} + ₹{driverCharges} driver
-                    </p>
+                  <div className="bg-primary/5 rounded-xl p-3">
+                    <div className="text-xs text-muted-foreground mb-1">Estimated Total</div>
+                    <div className="text-2xl font-bold text-primary">₹{totalPrice.toLocaleString("en-IN")}</div>
+                    <div className="text-xs text-muted-foreground">{finalDistance} km × ₹{pricePerKm} + ₹{driverCharges} driver</div>
+                  </div>
+                  <div className="space-y-2 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2"><Shield className="w-3 h-3 text-green-500" /> Verified professional driver</div>
+                    <div className="flex items-center gap-2"><Clock className="w-3 h-3 text-green-500" /> Confirmation within 4 hours</div>
+                    <div className="flex items-center gap-2"><Users className="w-3 h-3 text-green-500" /> 24/7 customer support</div>
                   </div>
                 </CardContent>
               </Card>
