@@ -20,8 +20,7 @@ import {
   Share2,
   ArrowRight,
   Check,
-  Phone,
-  MessageCircle,
+  Mail,
 } from "lucide-react";
 
 const featureIcons: Record<string, React.ReactNode> = {
@@ -259,16 +258,10 @@ export default function CarDetailPage() {
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
                 <div className="flex gap-2 mt-3">
-                  <a href="tel:+917011911252" className="flex-1">
+                  <a href="mailto:easyoutstation@gmail.com" className="flex-1">
                     <Button variant="outline" className="w-full border-white/30 text-white hover:bg-white/10 h-10">
-                      <Phone className="w-4 h-4 mr-2" />
-                      Call
-                    </Button>
-                  </a>
-                  <a href="https://api.whatsapp.com/send/?phone=917011911252" target="_blank" rel="noopener noreferrer" className="flex-1">
-                    <Button variant="outline" className="w-full border-white/30 text-white hover:bg-white/10 h-10">
-                      <MessageCircle className="w-4 h-4 mr-2" />
-                      WhatsApp
+                      <Mail className="w-4 h-4 mr-2" />
+                      Email Us
                     </Button>
                   </a>
                 </div>

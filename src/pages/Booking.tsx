@@ -72,7 +72,7 @@ export default function BookingPage() {
     },
     onError: () => {
       setIsSubmitting(false);
-      alert("Booking failed. Please try again or call us at +91-7011911252.");
+      alert("Booking failed. Please try again or email us at easyoutstation@gmail.com.");
     },
   });
 

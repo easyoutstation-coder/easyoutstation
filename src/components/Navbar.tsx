@@ -21,7 +21,6 @@ import {
   LogOut,
   Car,
   MapPin,
-  Phone,
   ChevronDown,
   History,
   LayoutDashboard,
@@ -90,16 +89,6 @@ export default function Navbar() {
 
           {/* Right Section */}
           <div className="hidden lg:flex items-center gap-4">
-            <a
-              href="tel:+917011911252"
-              className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-                scrolled ? "text-foreground/80" : "text-white/90"
-              }`}
-            >
-              <Phone className="w-4 h-4" />
-              +91-7011911252
-            </a>
-
             {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -182,13 +171,6 @@ export default function Navbar() {
                   ))}
                 </nav>
                 <div className="p-6 border-t space-y-3">
-                  <a
-                    href="tel:+917011911252"
-                    className="flex items-center gap-2 text-sm text-muted-foreground"
-                  >
-                    <Phone className="w-4 h-4" />
-                    +91-7011911252
-                  </a>
                   {isAuthenticated ? (
                     <>
                       <Button

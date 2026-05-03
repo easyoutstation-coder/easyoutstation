@@ -14,7 +14,6 @@ import {
   Car,
   ChevronRight,
   User,
-  Phone,
   Mail,
   Search,
   TrendingUp,
@@ -91,10 +90,6 @@ export default function DashboardPage() {
                   <div className="mt-6 pt-6 border-t">
                     <div className="text-xs text-muted-foreground mb-2">Contact</div>
                     <div className="space-y-2 text-sm">
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Phone className="w-4 h-4" />
-                        +91-7011911252
-                      </div>
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <Mail className="w-4 h-4" />
                         easyoutstation@gmail.com

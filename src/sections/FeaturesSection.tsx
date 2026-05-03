@@ -19,7 +19,7 @@ const features = [
   {
     icon: Headphones,
     title: "Dedicated Support",
-    description: "Our travel support team is with you throughout the journey. Just a call away at +91-7011911252.",
+    description: "Our travel support team is with you throughout the journey. Reach us anytime at easyoutstation@gmail.com.",
   },
   {
     icon: Wallet,

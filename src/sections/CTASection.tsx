@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Phone, MessageCircle } from "lucide-react";
+import { ArrowRight, Mail } from "lucide-react";
 
 export default function CTASection() {
   const navigate = useNavigate();
@@ -33,24 +33,14 @@ export default function CTASection() {
             Book Now
             <ArrowRight className="w-5 h-5" />
           </Button>
-          <a href="https://api.whatsapp.com/send/?phone=917011911252" target="_blank" rel="noopener noreferrer">
+          <a href="mailto:easyoutstation@gmail.com">
             <Button
               size="lg"
               variant="outline"
               className="border-white/30 text-white hover:bg-white/10 gap-2 px-8 h-14 text-base"
             >
-              <MessageCircle className="w-5 h-5" />
-              WhatsApp Us
-            </Button>
-          </a>
-          <a href="tel:+917011911252">
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-white/30 text-white hover:bg-white/10 gap-2 px-8 h-14 text-base"
-            >
-              <Phone className="w-5 h-5" />
-              Call Now
+              <Mail className="w-5 h-5" />
+              Email Us
             </Button>
           </a>
         </div>

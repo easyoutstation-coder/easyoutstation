@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { Car, Phone, Mail, MapPin } from "lucide-react";
+import { Car, Mail, MapPin } from "lucide-react";
 
 const footerLinks = {
   services: [
@@ -50,10 +50,7 @@ export default function Footer() {
               Premium chauffeur-driven car rentals since 2015.
             </p>
             <div className="space-y-3">
-              <a href="tel:+917011911252" className="flex items-center gap-3 text-sm hover:text-primary transition-colors">
-                <Phone className="w-4 h-4 text-primary" />
-                +91-7011911252
-              </a>
+
               <a href="mailto:easyoutstation@gmail.com" className="flex items-center gap-3 text-sm hover:text-primary transition-colors">
                 <Mail className="w-4 h-4 text-primary" />
                 easyoutstation@gmail.com
