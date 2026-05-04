@@ -80,6 +80,8 @@ export default function CarsPage() {
   const distanceKm = parseInt(searchParams.get("distance") || "0");
   const DRIVER_CHARGE = 400;
 
+  const recommendations: { carId: number; reason: string; confidence: number }[] = [];
+
   const calcFare = (pricePerKm: string) => {
     if (!distanceKm) return null;
     return Math.round(parseFloat(pricePerKm) * distanceKm + DRIVER_CHARGE);
