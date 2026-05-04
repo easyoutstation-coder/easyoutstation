@@ -259,7 +259,7 @@ export default function CarDetailPage() {
                 </Button>
                 <div className="flex gap-2 mt-3">
                   <a href="mailto:easyoutstation@gmail.com" className="flex-1">
-                    <Button variant="outline" className="w-full border-white/30 text-white hover:bg-white/10 h-10">
+                    <Button variant="outline" className="w-full border-slate-600 text-slate-200 hover:bg-slate-700 hover:text-white h-10">
                       <Mail className="w-4 h-4 mr-2" />
                       Email Us
                     </Button>
