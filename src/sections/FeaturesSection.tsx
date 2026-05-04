@@ -1,67 +1,113 @@
-import { Shield, Clock, MapPin, Headphones, Wallet, Award } from "lucide-react";
+import { Shield, Clock, MapPin, Headphones, Wallet, Award, CheckCircle, Star } from "lucide-react";
 
 const features = [
   {
     icon: Shield,
-    title: "Safe & Secure",
-    description: "Verified professional drivers with background checks. All vehicles insured and regularly maintained.",
-  },
-  {
-    icon: Clock,
-    title: "24/7 Availability",
-    description: "Book anytime, anywhere. Our service is available round the clock with instant confirmation.",
-  },
-  {
-    icon: MapPin,
-    title: "Door-to-Door Service",
-    description: "Pickup from your home, hotel, airport, or railway station. We come to you, always.",
-  },
-  {
-    icon: Headphones,
-    title: "Dedicated Support",
-    description: "Our travel support team is with you throughout the journey. Reach us anytime at easyoutstation@gmail.com.",
+    title: "Police-Verified Drivers",
+    description: "Every driver undergoes background verification, drug tests, and defensive driving training. Your safety is our obsession.",
+    stat: "100%",
+    statLabel: "Verified",
   },
   {
     icon: Wallet,
-    title: "Transparent Pricing",
-    description: "No hidden charges. Clear per-km pricing with all costs explained upfront before booking.",
+    title: "Zero Hidden Charges",
+    description: "The price you see is the price you pay. Toll, parking, and driver allowance — all shown upfront. No bill shock at destination.",
+    stat: "₹0",
+    statLabel: "Hidden Fees",
+  },
+  {
+    icon: Clock,
+    title: "On-Time or Compensated",
+    description: "If your driver is late beyond 30 minutes with no prior notice, you get compensation. We put our money where our mouth is.",
+    stat: "30 min",
+    statLabel: "Guarantee",
+  },
+  {
+    icon: MapPin,
+    title: "Door-to-Door Pickup",
+    description: "We come to your exact location — home, hotel, airport, or office. You don't move until your car arrives.",
+    stat: "24/7",
+    statLabel: "Available",
+  },
+  {
+    icon: Headphones,
+    title: "Dedicated Trip Support",
+    description: "A dedicated support contact stays available throughout your journey. Breakdown? Detour? We handle it instantly.",
+    stat: "< 2 min",
+    statLabel: "Response",
   },
   {
     icon: Award,
-    title: "Premium Experience",
-    description: "Well-maintained vehicles, courteous drivers, and complimentary amenities for a luxury journey.",
+    title: "Premium Fleet Only",
+    description: "No old, worn-out taxis. Our fleet is maintained to hotel-grade standards — clean, air-conditioned, and comfort-first.",
+    stat: "5★",
+    statLabel: "Fleet Rating",
   },
 ];
 
 export default function FeaturesSection() {
   return (
-    <section className="py-20 bg-slate-900 text-white">
+    <section className="py-24 bg-[#0B0B0B] relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#D4AF37]/30 to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#D4AF37]/30 to-transparent" />
+
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-16">
-          <h2 className="text-3xl lg:text-4xl font-bold mb-4 font-['Playfair_Display']">
-            Why Choose EasyOutstation
+          <div className="inline-flex items-center gap-2 mb-4">
+            <Star className="w-4 h-4 text-[#D4AF37] fill-[#D4AF37]" />
+            <span className="text-[10px] font-bold uppercase tracking-widest text-[#D4AF37]">Why 15,000+ Travelers Choose Us</span>
+            <Star className="w-4 h-4 text-[#D4AF37] fill-[#D4AF37]" />
+          </div>
+          <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4 font-['Playfair_Display']">
+            We Fix What Others Get Wrong
           </h2>
-          <p className="text-slate-400">
-            We go the extra mile to ensure your journey is comfortable, safe, and memorable. 
-            Here's what sets us apart.
+          <p className="text-[#BFBFBF] leading-relaxed">
+            Hidden charges, unverified drivers, and last-minute cancellations have ruined too many trips.
+            We built EasyOutstation to be the cab service <em className="text-[#D4AF37] not-italic">you actually deserve.</em>
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {features.map((feature, i) => (
-            <div
-              key={i}
-              className="group p-6 rounded-2xl bg-slate-800/50 border border-slate-700/50 hover:bg-slate-800 hover:border-primary/30 transition-all duration-300"
-            >
-              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                <feature.icon className="w-6 h-6 text-primary" />
+            <div key={i}
+              className="group p-6 rounded-2xl bg-[#1C1C1C] border border-[#2A2A2A] hover:border-[#D4AF37]/30 transition-all duration-300 hover:shadow-[0_8px_32px_rgba(0,0,0,0.5)] hover:-translate-y-1">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-[#D4AF37]/10 flex items-center justify-center shrink-0 group-hover:bg-[#D4AF37]/20 transition-colors">
+                  <feature.icon className="w-6 h-6 text-[#D4AF37]" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-base font-semibold text-white">{feature.title}</h3>
+                    <div className="text-right shrink-0 ml-2">
+                      <div className="text-sm font-bold text-[#D4AF37]">{feature.stat}</div>
+                      <div className="text-[10px] text-[#737373]">{feature.statLabel}</div>
+                    </div>
+                  </div>
+                  <p className="text-sm text-[#BFBFBF] leading-relaxed">{feature.description}</p>
+                </div>
               </div>
-              <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
-              <p className="text-sm text-slate-400 leading-relaxed">
-                {feature.description}
-              </p>
             </div>
           ))}
+        </div>
+
+        {/* Trust bar */}
+        <div className="mt-16 p-6 rounded-2xl bg-[#1C1C1C] border border-[#D4AF37]/20">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+            {[
+              { emoji: "🏆", text: "\"Best Outstation Cab Delhi\"", sub: "Traveler's Choice 2024" },
+              { emoji: "🛡️", text: "100% Insured Vehicles", sub: "Every trip, every time" },
+              { emoji: "📱", text: "Booking in 30 Seconds", sub: "Instant confirmation" },
+              { emoji: "🔄", text: "Free Cancellation", sub: "Up to 24hrs before trip" },
+            ].map((item, i) => (
+              <div key={i} className="space-y-1">
+                <div className="text-2xl">{item.emoji}</div>
+                <div className="text-sm font-semibold text-white">{item.text}</div>
+                <div className="text-xs text-[#737373]">{item.sub}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>
