@@ -3,14 +3,7 @@ import { cn } from "@/lib/utils"
 
 const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div
-      ref={ref}
-      className={cn(
-        "rounded-2xl border border-[#2A2A2A] bg-[#1C1C1C] shadow-[0_4px_24px_rgba(0,0,0,0.4)] transition-all duration-300",
-        className
-      )}
-      {...props}
-    />
+    <div ref={ref} className={cn("rounded-2xl border border-slate-100 bg-white shadow-sm transition-all duration-300", className)} {...props} />
   )
 )
 Card.displayName = "Card"
@@ -24,14 +17,14 @@ CardHeader.displayName = "CardHeader"
 
 const CardTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLHeadingElement>>(
   ({ className, ...props }, ref) => (
-    <h3 ref={ref} className={cn("text-xl font-semibold leading-none tracking-tight text-white font-['Playfair_Display']", className)} {...props} />
+    <h3 ref={ref} className={cn("text-xl font-semibold leading-none tracking-tight text-slate-900 font-['Playfair_Display']", className)} {...props} />
   )
 )
 CardTitle.displayName = "CardTitle"
 
 const CardDescription = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>(
   ({ className, ...props }, ref) => (
-    <p ref={ref} className={cn("text-sm text-[#BFBFBF]", className)} {...props} />
+    <p ref={ref} className={cn("text-sm text-slate-500", className)} {...props} />
   )
 )
 CardDescription.displayName = "CardDescription"
