@@ -35,8 +35,9 @@ function isWithinRadius(lat: number, lng: number): boolean {
   return ANCHOR_CITIES.some(city => haversineKm(lat, lng, city.lat, city.lng) <= RADIUS_KM);
 }
 
-// Default per-km rates (used for fare estimate when car not selected)
-const BASE_RATE = 14; // avg rate
+// Fare range based on actual fleet rates
+const MIN_RATE = 12; // Swift Dzire
+const MAX_RATE = 22; // Innova Hycross
 const DRIVER_CHARGE = 400;
 
 declare global {
@@ -156,14 +157,15 @@ export default function HeroSection() {
 
   const [distanceKm, setDistanceKm] = useState<number | null>(null);
   const [durationText, setDurationText] = useState("");
-  const [fareEstimate, setFareEstimate] = useState<number | null>(null);
+  const [fareMin, setFareMin] = useState<number | null>(null);
+  const [fareMax, setFareMax] = useState<number | null>(null);
   const [calcError, setCalcError] = useState("");
   const [isCalc, setIsCalc] = useState(false);
   const [formError, setFormError] = useState("");
 
   // Calculate distance whenever both locations are set
   useEffect(() => {
-    if (!fromLat || !fromLng || !toLat || !toLng) { setDistanceKm(null); setFareEstimate(null); return; }
+    if (!fromLat || !fromLng || !toLat || !toLng) { setDistanceKm(null); setFareMin(null); setFareMax(null); return; }
     setIsCalc(true);
     setCalcError("");
     // Use OSRM for accurate road distance
@@ -177,19 +179,19 @@ export default function HeroSection() {
           const mins = Math.floor((secs % 3600) / 60);
           setDistanceKm(km);
           setDurationText(`~${hrs}h ${mins}m`);
-          setFareEstimate(km * BASE_RATE + DRIVER_CHARGE);
+          setFareMin(km * MIN_RATE + DRIVER_CHARGE); setFareMax(km * MAX_RATE + DRIVER_CHARGE);
         } else {
           // Haversine fallback
           const km = Math.round(haversineKm(fromLat, fromLng, toLat, toLng) * 1.3);
           setDistanceKm(km);
           setDurationText("Estimated");
-          setFareEstimate(km * BASE_RATE + DRIVER_CHARGE);
+          setFareMin(km * MIN_RATE + DRIVER_CHARGE); setFareMax(km * MAX_RATE + DRIVER_CHARGE);
         }
       })
       .catch(() => {
         const km = Math.round(haversineKm(fromLat, fromLng, toLat, toLng) * 1.3);
         setDistanceKm(km);
-        setFareEstimate(km * BASE_RATE + DRIVER_CHARGE);
+        setFareMin(km * MIN_RATE + DRIVER_CHARGE); setFareMax(km * MAX_RATE + DRIVER_CHARGE);
       })
       .finally(() => setIsCalc(false));
   }, [fromLat, fromLng, toLat, toLng]);
@@ -324,7 +326,7 @@ export default function HeroSection() {
 
                 {/* Distance + Fare result */}
                 {(isCalc || distanceKm) && (
-                  <div className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
+                  <div className={`p-3 rounded-xl border transition-all ${
                     isCalc ? "bg-slate-50 border-slate-200" : "bg-blue-50 border-blue-200"
                   }`}>
                     {isCalc ? (
@@ -333,17 +335,19 @@ export default function HeroSection() {
                         Calculating distance & fare...
                       </div>
                     ) : (
-                      <>
+                      <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 text-sm text-blue-800">
                           <Route className="w-4 h-4 text-blue-500" />
                           <span className="font-medium">{distanceKm} km</span>
                           {durationText && <span className="text-blue-500 text-xs">({durationText})</span>}
                         </div>
                         <div className="text-right">
-                          <div className="text-xs text-blue-500">Est. Fare</div>
-                          <div className="font-bold text-blue-800 text-sm">₹{fareEstimate?.toLocaleString("en-IN")}</div>
+                          <div className="font-bold text-blue-800 text-sm">
+                            ₹{fareMin?.toLocaleString("en-IN")} – ₹{fareMax?.toLocaleString("en-IN")}
+                          </div>
+                          <div className="text-[10px] text-blue-500">depends on car selected</div>
                         </div>
-                      </>
+                      </div>
                     )}
                   </div>
                 )}
@@ -392,7 +396,7 @@ export default function HeroSection() {
                 <Button onClick={handleSearch}
                   className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm gap-2 shadow-sm transition-all">
                   {distanceKm
-                    ? `See Cars for ${distanceKm}km · Est. ₹${fareEstimate?.toLocaleString("en-IN")}`
+                    ? `See Cars for ${distanceKm}km · ₹${fareMin?.toLocaleString("en-IN")}–₹${fareMax?.toLocaleString("en-IN")}`
                     : "See Available Cars & Fares"}
                   <ArrowRight className="w-4 h-4" />
                 </Button>

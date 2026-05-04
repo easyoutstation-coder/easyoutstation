@@ -28,6 +28,7 @@ import {
   Check,
   Mic,
   Sparkles,
+  MapPin,
 } from "lucide-react";
 
 const categories = [
@@ -74,11 +75,15 @@ export default function CarsPage() {
     search: searchQuery || undefined,
   });
 
-  const { data: recommendations } = trpc.ai.recommend.useQuery({
-    fromCity: searchParams.get("from") || undefined,
-    toCity: searchParams.get("to") || undefined,
-    passengers: parseInt(searchParams.get("passengers") || "4"),
-  });
+  const fromCity = searchParams.get("from") || "";
+  const toCity = searchParams.get("to") || "";
+  const distanceKm = parseInt(searchParams.get("distance") || "0");
+  const DRIVER_CHARGE = 400;
+
+  const calcFare = (pricePerKm: string) => {
+    if (!distanceKm) return null;
+    return Math.round(parseFloat(pricePerKm) * distanceKm + DRIVER_CHARGE);
+  };
 
   const handleVoiceSearch = () => {
     if (!("webkitSpeechRecognition" in window) && !("SpeechRecognition" in window)) {
@@ -133,15 +138,28 @@ export default function CarsPage() {
       <Navbar />
       <main className="pt-20">
         {/* Header */}
-        <div className="bg-white border-b border-border">
+        <div className="bg-white border-b border-slate-200">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+            {/* Route banner when coming from search */}
+            {fromCity && toCity && distanceKm > 0 && (
+              <div className="mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-blue-50 border border-blue-200">
+                <div className="flex items-center gap-3 text-blue-800">
+                  <MapPin className="w-4 h-4 text-blue-500 shrink-0" />
+                  <span className="font-semibold">{fromCity} → {toCity}</span>
+                  <span className="text-sm text-blue-500">· {distanceKm} km</span>
+                </div>
+                <div className="text-sm text-blue-700 font-medium">
+                  Fares from <span className="font-bold">₹{(distanceKm * 12 + 400).toLocaleString("en-IN")}</span> to <span className="font-bold">₹{(distanceKm * 22 + 400).toLocaleString("en-IN")}</span> depending on car
+                </div>
+              </div>
+            )}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
-                <h1 className="text-3xl font-bold text-foreground font-['Playfair_Display']">
-                  Our Fleet
+                <h1 className="text-3xl font-bold text-slate-900 font-['Playfair_Display']">
+                  {fromCity && toCity ? `Cars for ${fromCity} → ${toCity}` : "Our Fleet"}
                 </h1>
-                <p className="text-muted-foreground mt-1">
-                  {displayCars.length} vehicles available for your journey
+                <p className="text-slate-500 mt-1">
+                  {displayCars.length} vehicles available{distanceKm > 0 ? ` · Prices shown for ${distanceKm}km` : " for your journey"}
                 </p>
               </div>
               <div className="flex gap-2">
@@ -350,17 +368,31 @@ export default function CarsPage() {
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between mb-2">
                       <div>
-                        <h3 className="font-semibold text-foreground text-base">{car.name}</h3>
-                        <p className="text-xs text-muted-foreground">{car.brand}</p>
+                        <h3 className="font-semibold text-slate-900 text-base">{car.name}</h3>
+                        <p className="text-xs text-slate-500">{car.brand}</p>
                       </div>
                       <div className="text-right">
-                        <div className="text-lg font-bold text-primary">₹{car.pricePerKm}</div>
-                        <div className="text-xs text-muted-foreground">/km</div>
+                        {calcFare(car.pricePerKm) ? (
+                          <>
+                            <div className="text-lg font-bold text-blue-700">
+                              ₹{calcFare(car.pricePerKm)?.toLocaleString("en-IN")}
+                            </div>
+                            <div className="text-[10px] text-slate-400">total · {distanceKm}km</div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="text-lg font-bold text-blue-700">₹{car.pricePerKm}</div>
+                            <div className="text-xs text-slate-400">/km</div>
+                          </>
+                        )}
                       </div>
                     </div>
-                    <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                      {car.description}
-                    </p>
+                    <p className="text-sm text-slate-500 line-clamp-2 mb-3">{car.description}</p>
+                    {calcFare(car.pricePerKm) && (
+                      <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mb-3 bg-slate-50 rounded-lg px-2.5 py-1.5">
+                        <span>₹{car.pricePerKm}/km × {distanceKm}km + ₹400 driver</span>
+                      </div>
+                    )}
                     <div className="flex items-center gap-3 text-xs text-muted-foreground mb-4">
                       <span className="flex items-center gap-1">
                         <Users className="w-3.5 h-3.5" />

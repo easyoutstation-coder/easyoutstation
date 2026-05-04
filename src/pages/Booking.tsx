@@ -83,9 +83,38 @@ export default function BookingPage() {
   const finalDistance = distanceKm || manualDistance;
 
   const pricePerKm = parseFloat(car?.pricePerKm || "20");
-  const driverCharges = parseFloat(car?.driverCharges || "400");
-  const basePrice = pricePerKm * finalDistance;
-  const totalPrice = basePrice + driverCharges;
+  const driverChargePerDay = parseFloat(car?.driverCharges || "400");
+
+  // Trip type pricing logic
+  const tripDays = tripType === "multi_day" && returnDate && pickupDate
+    ? Math.max(1, Math.ceil((returnDate.getTime() - pickupDate.getTime()) / (1000 * 60 * 60 * 24)))
+    : 1;
+
+  const totalKmForTrip = tripType === "round_trip"
+    ? finalDistance * 2   // Round trip = double distance
+    : tripType === "multi_day"
+    ? finalDistance * tripDays  // Multi day = distance × days
+    : finalDistance;      // One way = single distance
+
+  const basePrice = pricePerKm * totalKmForTrip;
+  const totalDriverCharges = driverChargePerDay * (tripType === "one_way" ? 1 : tripDays);
+
+  // Toll charges based on known routes (approximate actuals)
+  const tollCharges = (() => {
+    const route = `${fromCity}-${toCity}`.toLowerCase();
+    const tolls: Record<string, number> = {
+      "delhi-manali": 850, "delhi-shimla": 650, "delhi-chandigarh": 380,
+      "delhi-dehradun": 420, "delhi-rishikesh": 450, "delhi-haridwar": 430,
+      "delhi-jaipur": 350, "delhi-agra": 290, "delhi-mathura": 220,
+    };
+    const key = Object.keys(tolls).find(k =>
+      route.includes(k.split("-")[0]) && route.includes(k.split("-")[1])
+    );
+    const oneway = key ? tolls[key] : Math.round(finalDistance * 1.2); // ~₹1.2/km estimate
+    return tripType === "round_trip" ? oneway * 2 : oneway;
+  })();
+
+  const totalPrice = basePrice + totalDriverCharges + tollCharges;
 
   // Auto-calculate distance when both locations are selected
   useEffect(() => {
@@ -165,7 +194,7 @@ export default function BookingPage() {
       returnDate: returnDate ? format(returnDate, "yyyy-MM-dd") : undefined,
       tripType: tripType as "one_way" | "round_trip" | "multi_day",
       passengerCount: parseInt(passengerCount),
-      totalKm: finalDistance,
+      totalKm: totalKmForTrip,
       totalPrice,
       customerName,
       customerPhone,
@@ -457,16 +486,36 @@ export default function BookingPage() {
                       <div className="bg-muted rounded-xl p-4 space-y-3">
                         <div className="flex justify-between text-sm"><span className="text-muted-foreground">Car</span><span className="font-medium">{car?.name}</span></div>
                         <div className="flex justify-between text-sm"><span className="text-muted-foreground">Route</span><span className="font-medium">{fromCity} → {toCity}</span></div>
+                        <div className="flex justify-between text-sm"><span className="text-muted-foreground">Trip Type</span><span className="font-medium capitalize">{tripType.replace("_", " ")}</span></div>
                         <div className="flex justify-between text-sm"><span className="text-muted-foreground">Pickup Address</span><span className="font-medium text-right max-w-[200px]">{pickupAddress}</span></div>
                         <div className="flex justify-between text-sm"><span className="text-muted-foreground">Drop Address</span><span className="font-medium text-right max-w-[200px]">{dropAddress}</span></div>
                         <div className="flex justify-between text-sm"><span className="text-muted-foreground">Date & Time</span><span className="font-medium">{pickupDate ? format(pickupDate, "dd MMM yyyy") : ""} at {pickupTime}</span></div>
                         <div className="flex justify-between text-sm"><span className="text-muted-foreground">Passengers</span><span className="font-medium">{passengerCount}</span></div>
-                        <div className="flex justify-between text-sm"><span className="text-muted-foreground">Distance</span><span className="font-medium">{finalDistance} km {durationText && `(${durationText})`}</span></div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Distance</span>
+                          <span className="font-medium">
+                            {tripType === "round_trip" ? `${finalDistance} km × 2 = ${totalKmForTrip} km` :
+                             tripType === "multi_day" ? `${finalDistance} km × ${tripDays} days = ${totalKmForTrip} km` :
+                             `${finalDistance} km`}
+                            {durationText && ` (${durationText})`}
+                          </span>
+                        </div>
                         <Separator />
-                        <div className="flex justify-between text-sm"><span className="text-muted-foreground">Base ({finalDistance} km × ₹{pricePerKm})</span><span>₹{basePrice.toLocaleString("en-IN")}</span></div>
-                        <div className="flex justify-between text-sm"><span className="text-muted-foreground">Driver Charges</span><span>₹{driverCharges}</span></div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Distance Fare ({totalKmForTrip} km × ₹{pricePerKm})</span>
+                          <span>₹{basePrice.toLocaleString("en-IN")}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Driver Charges (₹{driverChargePerDay}/day × {tripType === "one_way" ? 1 : tripDays} day{tripDays > 1 ? "s" : ""})</span>
+                          <span>₹{totalDriverCharges.toLocaleString("en-IN")}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Toll Charges ({tripType === "round_trip" ? "both ways" : "one way"})</span>
+                          <span>₹{tollCharges.toLocaleString("en-IN")}</span>
+                        </div>
                         <Separator />
                         <div className="flex justify-between font-bold text-base"><span>Total Fare</span><span className="text-primary">₹{totalPrice.toLocaleString("en-IN")}</span></div>
+                        <p className="text-[10px] text-muted-foreground">Parking charges paid at actuals. No other hidden fees.</p>
                       </div>
 
                       <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
@@ -533,9 +582,15 @@ export default function BookingPage() {
                   </div>
                   <Separator />
                   <div className="bg-primary/5 rounded-xl p-3">
-                    <div className="text-xs text-muted-foreground mb-1">Estimated Total</div>
+                    <div className="text-xs text-muted-foreground mb-1">
+                      {tripType === "round_trip" ? "Round Trip Total" :
+                       tripType === "multi_day" ? `${tripDays}-Day Total` : "One Way Total"}
+                    </div>
                     <div className="text-2xl font-bold text-primary">₹{totalPrice.toLocaleString("en-IN")}</div>
-                    <div className="text-xs text-muted-foreground">{finalDistance} km × ₹{pricePerKm} + ₹{driverCharges} driver</div>
+                    <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                      <div>₹{pricePerKm}/km × {totalKmForTrip}km = ₹{basePrice.toLocaleString("en-IN")}</div>
+                      <div>Driver: ₹{totalDriverCharges} · Toll: ₹{tollCharges}</div>
+                    </div>
                   </div>
                   <div className="space-y-2 text-xs text-muted-foreground">
                     <div className="flex items-center gap-2"><Shield className="w-3 h-3 text-green-500" /> Verified professional driver</div>
