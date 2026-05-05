@@ -96,10 +96,7 @@ export default function CarDetailPage() {
 
   const driverCharge = parseFloat(displayCar.driverCharges || "400");
   const estimatedPrice = parseFloat(displayCar.pricePerKm) * distance + driverCharge + tollCharges;
-  const minPrice = parseFloat(displayCar.pricePerKm) * 250 + driverCharge;
-  const driverCost = parseFloat(displayCar.driverCharges);
-  const minKm = displayCar.minKmPerDay;
-  const minPrice = parseFloat(displayCar.pricePerKm) * minKm + driverCost;
+  const minPrice = parseFloat(displayCar.pricePerKm) * (displayCar.minKmPerDay || 250) + driverCharge;
 
   const handleBookNow = () => {
     const params = new URLSearchParams();
