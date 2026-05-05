@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { MapPin, CalendarDays, Users, ArrowRight, MessageCircle, Shield, Clock, CheckCircle, Loader2, AlertCircle, Route } from "lucide-react";
+import { MapPin, CalendarDays, Users, ArrowRight, MessageCircle, Shield, Clock, CheckCircle, Loader2, AlertCircle, Route, History } from "lucide-react";
+import { saveRecentSearch, getRecentSearches, type RecentSearch } from "@/hooks/useRecentSearches";
 
 // 9 anchor cities with coordinates for 100km radius restriction
 const ANCHOR_CITIES = [
@@ -148,6 +149,11 @@ function PlaceInput({ label, placeholder, onSelect, error }: PlaceInputProps) {
 
 export default function HeroSection() {
   const navigate = useNavigate();
+  const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([]);
+
+  useEffect(() => {
+    setRecentSearches(getRecentSearches());
+  }, []);
 
   const [fromAddress, setFromAddress] = useState("");
   const [fromLat, setFromLat] = useState<number>();
@@ -225,6 +231,15 @@ export default function HeroSection() {
     if (toPincode) params.set("toPincode", toPincode);
     if (fromLat && fromLng) { params.set("fromLat", String(fromLat)); params.set("fromLng", String(fromLng)); }
     if (toLat && toLng) { params.set("toLat", String(toLat)); params.set("toLng", String(toLng)); }
+    // Save to recent searches
+    saveRecentSearch({
+      from: fromAddress.split(",")[0],
+      to: toAddress.split(",")[0],
+      fromFull: fromAddress,
+      toFull: toAddress,
+      distance: distanceKm || undefined,
+    });
+
     navigate(`/cars?${params.toString()}`);
   };
 
@@ -426,6 +441,28 @@ export default function HeroSection() {
                     </div>
                   ))}
                 </div>
+                {/* Recent Searches */}
+                {recentSearches.length > 0 && (
+                  <div className="pt-1 border-t border-slate-100">
+                    <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1">
+                      <History className="w-3 h-3" /> Recent Searches
+                    </p>
+                    <div className="space-y-1">
+                      {recentSearches.map((s, i) => (
+                        <button key={i} onClick={() => navigate(`/cars?from=${s.from}&to=${s.to}&fromFull=${encodeURIComponent(s.fromFull)}&toFull=${encodeURIComponent(s.toFull)}${s.distance ? `&distance=${s.distance}` : ""}`)}
+                          className="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors text-left group">
+                          <div className="flex items-center gap-2 text-xs text-slate-600">
+                            <MapPin className="w-3 h-3 text-blue-500 shrink-0" />
+                            <span>{s.from}</span>
+                            <ArrowRight className="w-3 h-3 text-slate-400" />
+                            <span>{s.to}</span>
+                          </div>
+                          {s.distance && <span className="text-[10px] text-slate-400">{s.distance} km</span>}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

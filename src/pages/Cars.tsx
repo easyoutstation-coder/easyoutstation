@@ -339,14 +339,21 @@ export default function CarsPage() {
           {isLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {Array.from({ length: 8 }).map((_, i) => (
-                <Card key={i} className="animate-pulse">
-                  <div className="aspect-[4/3] bg-muted" />
-                  <CardContent className="p-4 space-y-3">
-                    <div className="h-5 bg-muted rounded w-2/3" />
-                    <div className="h-4 bg-muted rounded w-full" />
-                    <div className="h-4 bg-muted rounded w-1/2" />
-                  </CardContent>
-                </Card>
+                <div key={i} className="bg-white rounded-2xl border border-slate-100 overflow-hidden animate-pulse">
+                  <div className="aspect-[4/3] bg-slate-200" />
+                  <div className="p-4 space-y-3">
+                    <div className="flex justify-between">
+                      <div className="h-4 bg-slate-200 rounded w-2/3" />
+                      <div className="h-4 bg-slate-200 rounded w-1/4" />
+                    </div>
+                    <div className="h-3 bg-slate-100 rounded w-full" />
+                    <div className="h-3 bg-slate-100 rounded w-3/4" />
+                    <div className="flex justify-between items-center pt-2 border-t border-slate-100">
+                      <div className="h-5 bg-slate-200 rounded w-1/3" />
+                      <div className="h-7 bg-slate-200 rounded w-1/4" />
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
           ) : displayCars.length === 0 ? (
@@ -360,7 +367,18 @@ export default function CarsPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {displayCars.map((car) => (
+              {displayCars.map((car, carIndex) => {
+                // Urgency signals — rotated per car for variety
+                const urgencyMessages = [
+                  "🔥 3 bookings this week",
+                  "⚡ Popular choice",
+                  "👥 2 people viewing now",
+                  "✅ Available today",
+                  "🏆 Top rated",
+                ];
+                const urgency = urgencyMessages[carIndex % urgencyMessages.length];
+
+                return (
                 <Card
                   key={car.id}
                   className="group overflow-hidden border-0 shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer bg-white"
@@ -382,11 +400,13 @@ export default function CarsPage() {
                       <Star className="w-3 h-3 text-primary fill-primary" />
                       <span className="text-xs font-medium">{car.rating}</span>
                     </div>
+                    {/* Urgency signal */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-3 py-2">
+                      <span className="text-white text-[10px] font-medium">{urgency}</span>
+                    </div>
                     {!car.isAvailable && (
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                        <Badge variant="destructive" className="text-sm">
-                          Not Available
-                        </Badge>
+                        <Badge variant="destructive" className="text-sm">Not Available</Badge>
                       </div>
                     )}
                   </div>
@@ -444,7 +464,8 @@ export default function CarsPage() {
                     </Button>
                   </CardContent>
                 </Card>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

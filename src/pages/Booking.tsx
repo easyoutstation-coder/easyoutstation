@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router";
 import { trpc } from "@/providers/trpc";
 import { useAuth } from "@/hooks/useAuth";
+import { saveBookingDraft, loadBookingDraft, clearBookingDraft } from "@/hooks/useBookingDraft";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import AddressAutocomplete from "@/components/AddressAutocomplete";
@@ -20,7 +21,7 @@ import { format } from "date-fns";
 import {
   User, CreditCard, Check, ArrowRight, ArrowLeft,
   MapPin, CalendarDays, Mail, Users, Shield, Clock,
-  Route, Loader2, AlertCircle, LogIn,
+  Route, Loader2, AlertCircle, LogIn, MessageCircle, Share2,
 } from "lucide-react";
 
 const steps = [
@@ -100,6 +101,18 @@ export default function BookingPage() {
       calculateDistance(pickupLat, pickupLng, dropLat, dropLng);
     }
   }, [pickupLat, pickupLng, dropLat, dropLng]);
+
+  // Save draft on every change
+  useEffect(() => {
+    if (!bookingComplete) {
+      saveBookingDraft({
+        tripType, pickupTime, passengerCount, specialRequests,
+        pickupAddress, pickupPincode, dropAddress, dropPincode,
+        currentStep,
+        pickupDate: pickupDate ? format(pickupDate, "yyyy-MM-dd") : undefined,
+      });
+    }
+  }, [tripType, pickupDate, pickupTime, passengerCount, pickupAddress, pickupPincode, dropAddress, dropPincode, currentStep, bookingComplete]);
 
   // Auth gate - AFTER all hooks
   if (authLoading) {
@@ -292,6 +305,22 @@ export default function BookingPage() {
   };
 
   if (bookingComplete) {
+    // Estimate arrival: pickup time + 30 min prep
+    const estimatedArrival = (() => {
+      if (!pickupTime) return null;
+      const [h, m] = pickupTime.split(":").map(Number);
+      const d = new Date();
+      d.setHours(h, m - 30, 0);
+      if (d.getMinutes() < 0) { d.setHours(d.getHours() - 1); d.setMinutes(d.getMinutes() + 60); }
+      return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+    })();
+
+    const whatsappShareText = encodeURIComponent(
+      `🚗 My EasyOutstation trip is confirmed!\n\n📍 ${fromCity} → ${toCity}\n📅 ${pickupDate ? format(pickupDate, "dd MMM yyyy") : ""} at ${pickupTime}\n💰 ₹${totalPrice.toLocaleString("en-IN")}\n\nBooking ID: #${bookingId}\n\nBook your cab at easyoutstation.com`
+    );
+
+    clearBookingDraft();
+
     return (
       <div className="min-h-screen bg-slate-50">
         <Navbar />
@@ -308,7 +337,7 @@ export default function BookingPage() {
                   <Check className="w-4 h-4" /> ₹100 Advance Paid Successfully
                 </div>
               )}
-              <p className="text-sm text-muted-foreground mb-6">
+              <p className="text-sm text-muted-foreground mb-4">
                 A confirmation email has been sent to <strong>{customerEmail}</strong>.<br />
                 Driver details will be shared within <strong>60 minutes</strong>.<br />
                 {advancePaid
@@ -316,6 +345,18 @@ export default function BookingPage() {
                   : <>Full amount of <strong>₹{totalPrice.toLocaleString("en-IN")}</strong> payable to driver at pickup.</>
                 }
               </p>
+
+              {/* Estimated arrival */}
+              {estimatedArrival && (
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-4 flex items-center gap-3">
+                  <Clock className="w-5 h-5 text-blue-600 shrink-0" />
+                  <div className="text-left">
+                    <div className="text-xs text-blue-500 font-medium uppercase tracking-wide">Estimated Driver Arrival</div>
+                    <div className="text-sm font-bold text-blue-800">Your driver will be ready by {estimatedArrival}</div>
+                  </div>
+                </div>
+              )}
+
               <div className="bg-slate-50 rounded-xl p-4 text-sm text-left space-y-2 mb-6">
                 <div className="flex justify-between"><span className="text-muted-foreground">Route</span><span className="font-medium">{fromCity} → {toCity}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Pickup</span><span className="font-medium">{pickupDate ? format(pickupDate, "dd MMM yyyy") : ""} at {pickupTime}</span></div>
@@ -323,9 +364,19 @@ export default function BookingPage() {
                 <Separator />
                 <div className="flex justify-between font-bold"><span>Total Fare</span><span className="text-primary">₹{totalPrice.toLocaleString("en-IN")}</span></div>
               </div>
-              <div className="flex gap-3">
-                <Button variant="outline" className="flex-1" onClick={() => navigate("/")}>Back to Home</Button>
-                <Button className="flex-1 bg-primary" onClick={() => navigate("/dashboard")}>View Bookings</Button>
+
+              <div className="flex flex-col gap-3">
+                {/* WhatsApp Share */}
+                <a href={`https://wa.me/?text=${whatsappShareText}`} target="_blank" rel="noopener noreferrer">
+                  <Button className="w-full bg-[#25D366] hover:bg-[#22c55e] text-white gap-2">
+                    <MessageCircle className="w-4 h-4" />
+                    Share Trip on WhatsApp
+                  </Button>
+                </a>
+                <div className="flex gap-3">
+                  <Button variant="outline" className="flex-1" onClick={() => navigate("/")}>Back to Home</Button>
+                  <Button className="flex-1 bg-primary" onClick={() => navigate("/dashboard")}>View Bookings</Button>
+                </div>
               </div>
             </Card>
           </div>
@@ -339,7 +390,22 @@ export default function BookingPage() {
     <div className="min-h-screen bg-slate-50">
       <Navbar />
       <main className="pt-20">
+        {/* Sticky mobile price bar */}
+        <div className="sticky top-16 z-30 lg:hidden bg-white border-b border-slate-200 px-4 py-2 flex items-center justify-between shadow-sm">
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-slate-500">{car?.name || "Selected Car"}</span>
+            <span className="text-slate-300">·</span>
+            <span className="text-slate-500">{fromCity} → {toCity}</span>
+          </div>
+          <div className="text-base font-bold text-blue-700">₹{totalPrice.toLocaleString("en-IN")}</div>
+        </div>
+
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8">
+          {/* Change Car link */}
+          <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-blue-600 mb-4 transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+            Change car or route
+          </button>
           {/* Steps */}
           <div className="flex items-center justify-center gap-2 mb-8">
             {steps.map((step, idx) => (
