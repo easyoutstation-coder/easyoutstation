@@ -5,7 +5,9 @@ export default function WhatsAppFloat() {
   const [showTooltip, setShowTooltip] = useState(true);
 
   return (
-    <div className="fixed bottom-24 right-5 z-40 flex flex-col items-end gap-2 md:bottom-6 md:right-6">
+    // On mobile: above the chatbot (bottom-24)
+    // On desktop: next to chatbot — offset right by 72px (chatbot width + gap)
+    <div className="fixed bottom-6 right-20 z-40 flex flex-col items-end gap-2">
       {showTooltip && (
         <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-4 py-2.5 shadow-lg">
           <span className="text-sm text-slate-700 font-medium">Book in 30 sec!</span>

@@ -40,21 +40,23 @@ export default function BookingPage() {
   const [advancePaid, setAdvancePaid] = useState(false);
 
   // Trip details
-  const [tripType, setTripType] = useState("one_way");
-  const [pickupDate, setPickupDate] = useState<Date>();
+  const [tripType, setTripType] = useState(paramTripType);
+  const [pickupDate, setPickupDate] = useState<Date | undefined>(
+    paramDate ? (() => { const d = new Date(paramDate); return isNaN(d.getTime()) ? undefined : d; })() : undefined
+  );
   const [pickupTime, setPickupTime] = useState("08:00");
   const [returnDate, setReturnDate] = useState<Date>();
-  const [passengerCount, setPassengerCount] = useState("4");
+  const [passengerCount, setPassengerCount] = useState(paramPassengers || "4");
   const [specialRequests, setSpecialRequests] = useState("");
 
-  // Pickup location
-  const [pickupAddress, setPickupAddress] = useState("");
+  // Pickup location - pre-filled from search
+  const [pickupAddress, setPickupAddress] = useState(paramFromFull);
   const [pickupPincode, setPickupPincode] = useState("");
   const [pickupLat, setPickupLat] = useState<number>();
   const [pickupLng, setPickupLng] = useState<number>();
 
-  // Drop location
-  const [dropAddress, setDropAddress] = useState("");
+  // Drop location - pre-filled from search
+  const [dropAddress, setDropAddress] = useState(paramToFull);
   const [dropPincode, setDropPincode] = useState("");
   const [dropLat, setDropLat] = useState<number>();
   const [dropLng, setDropLng] = useState<number>();
@@ -75,6 +77,13 @@ export default function BookingPage() {
   const fromCity = searchParams.get("from") || "Delhi";
   const toCity = searchParams.get("to") || "";
   const defaultDistance = parseInt(searchParams.get("distance") || "0");
+
+  // Auto-populate from search context
+  const paramFromFull = searchParams.get("fromFull") || "";
+  const paramToFull = searchParams.get("toFull") || "";
+  const paramDate = searchParams.get("date") || "";
+  const paramTripType = searchParams.get("tripType") || "one_way";
+  const paramPassengers = searchParams.get("passengers") || "";
 
   const { data: car } = trpc.car.getById.useQuery({ id: carId }, { enabled: carId > 0 });
 
@@ -161,12 +170,19 @@ export default function BookingPage() {
     }
   }, [pickupLat, pickupLng, dropLat, dropLng]);
 
-  // Pre-fill drop address from route
+  // Pre-fill drop address from route — use full address if available, else city name
   useEffect(() => {
-    if (toCity && !dropAddress) {
-      setDropAddress(toCity + ", India");
+    if (!dropAddress) {
+      if (paramToFull) {
+        setDropAddress(paramToFull);
+      } else if (toCity) {
+        setDropAddress(toCity + ", India");
+      }
     }
-  }, [toCity]);
+    if (!pickupAddress && paramFromFull) {
+      setPickupAddress(paramFromFull);
+    }
+  }, [toCity, paramToFull, paramFromFull]);
 
   // OTP via MSG91 Widget
   const sendOtpMutation = trpc.sms.sendOtp.useMutation({
@@ -390,7 +406,14 @@ export default function BookingPage() {
                   {/* STEP 1 */}
                   {currentStep === 1 && (
                     <div className="space-y-5">
-                      <h2 className="text-xl font-semibold">Trip Details</h2>
+                      <div className="flex items-center justify-between">
+                        <h2 className="text-xl font-semibold">Trip Details</h2>
+                        {(paramFromFull || paramDate || paramTripType !== "one_way") && (
+                          <span className="text-xs bg-green-50 text-green-700 border border-green-200 px-3 py-1 rounded-full flex items-center gap-1">
+                            <Check className="w-3 h-3" /> Pre-filled from your search
+                          </span>
+                        )}
+                      </div>
 
                       {/* Trip Type */}
                       <div className="space-y-2">

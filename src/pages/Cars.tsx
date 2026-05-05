@@ -80,6 +80,25 @@ export default function CarsPage() {
   const distanceKm = parseInt(searchParams.get("distance") || "0");
   const DRIVER_CHARGE = 400;
 
+  // Build passthrough params to preserve user's selections across pages
+  const passthroughParams = () => {
+    const p = new URLSearchParams();
+    if (fromCity) p.set("from", fromCity);
+    if (toCity) p.set("to", toCity);
+    if (distanceKm) p.set("distance", distanceKm.toString());
+    const fromFull = searchParams.get("fromFull");
+    const toFull = searchParams.get("toFull");
+    const date = searchParams.get("date");
+    const tripType = searchParams.get("tripType");
+    const passengers = searchParams.get("passengers");
+    if (fromFull) p.set("fromFull", fromFull);
+    if (toFull) p.set("toFull", toFull);
+    if (date) p.set("date", date);
+    if (tripType) p.set("tripType", tripType);
+    if (passengers) p.set("passengers", passengers);
+    return p.toString();
+  };
+
   const recommendations: { carId: number; reason: string; confidence: number }[] = [];
 
   const calcFare = (pricePerKm: string) => {
@@ -210,7 +229,7 @@ export default function CarsPage() {
                     return (
                       <button
                         key={rec.carId}
-                        onClick={() => navigate(`/cars/${rec.carId}`)}
+                        onClick={() => navigate(`/cars/${rec.carId}?${passthroughParams()}`)}
                         className="px-3 py-1.5 bg-white rounded-full text-sm border border-primary/30 hover:bg-primary hover:text-white transition-colors"
                       >
                         {car.name} - {rec.reason}
@@ -341,7 +360,7 @@ export default function CarsPage() {
                 <Card
                   key={car.id}
                   className="group overflow-hidden border-0 shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer bg-white"
-                  onClick={() => navigate(`/cars/${car.id}`)}
+                  onClick={() => navigate(`/cars/${car.id}?${passthroughParams()}`)}
                 >
                   <div className="relative aspect-[4/3] overflow-hidden">
                     <img
@@ -413,7 +432,7 @@ export default function CarsPage() {
                       className="w-full bg-primary hover:bg-primary/90 text-white"
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate(`/cars/${car.id}`);
+                        navigate(`/cars/${car.id}?${passthroughParams()}`);
                       }}
                     >
                       View Details

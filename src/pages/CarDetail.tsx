@@ -104,6 +104,17 @@ export default function CarDetailPage() {
     params.set("from", fromCity);
     params.set("to", toCity);
     params.set("distance", distance.toString());
+    // Pass through any additional params from previous steps
+    const fromFull = searchParams.get("fromFull");
+    const toFull = searchParams.get("toFull");
+    const date = searchParams.get("date");
+    const tripType = searchParams.get("tripType");
+    const passengers = searchParams.get("passengers");
+    if (fromFull) params.set("fromFull", fromFull);
+    if (toFull) params.set("toFull", toFull);
+    if (date) params.set("date", date);
+    if (tripType) params.set("tripType", tripType);
+    if (passengers) params.set("passengers", passengers);
     navigate(`/booking?${params.toString()}`);
   };
 
