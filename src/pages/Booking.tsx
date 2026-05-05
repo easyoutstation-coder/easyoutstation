@@ -168,16 +168,11 @@ export default function BookingPage() {
     }
   }, [toCity]);
 
+  // OTP via MSG91 Widget
   const sendOtpMutation = trpc.sms.sendOtp.useMutation({
-    onSuccess: (data) => {
+    onSuccess: () => {
       setOtpSent(true);
       setOtpError("");
-      if (data.dev && data.otp) {
-        // Dev mode - show OTP in alert
-        alert(`[DEV MODE] Your OTP is: ${data.otp}`);
-      } else {
-        alert(`OTP sent to +91-${customerPhone}. Please check your SMS.`);
-      }
     },
     onError: (e) => setOtpError(e.message),
   });
@@ -187,22 +182,24 @@ export default function BookingPage() {
       setOtpVerified(true);
       setOtpError("");
     },
-    onError: () => setOtpError("Invalid OTP. Please try again."),
+    onError: () => setOtpError("Invalid OTP. Please check and try again."),
   });
 
   const sendOtp = () => {
-    if (!customerPhone || customerPhone.length < 10) {
-      alert("Please enter a valid 10-digit mobile number.");
+    if (!customerPhone || customerPhone.length !== 10) {
+      setOtpError("Please enter a valid 10-digit mobile number.");
       return;
     }
+    setOtpError("");
     sendOtpMutation.mutate({ phone: customerPhone });
   };
 
   const verifyOtp = () => {
-    if (!otpInput || otpInput.length < 6) {
-      setOtpError("Please enter the 6-digit OTP.");
+    if (!otpInput || otpInput.length !== 6) {
+      setOtpError("Please enter the 6-digit OTP sent to your phone.");
       return;
     }
+    setOtpError("");
     verifyOtpMutation.mutate({ phone: customerPhone, otp: otpInput });
   };
 
@@ -573,8 +570,12 @@ export default function BookingPage() {
                             />
                           </div>
                           {!otpVerified && (
-                            <Button type="button" variant="outline" onClick={sendOtp} className="shrink-0">
-                              {otpSent ? "Resend" : "Send OTP"}
+                            <Button type="button" variant="outline" onClick={sendOtp}
+                              disabled={sendOtpMutation.isPending}
+                              className="shrink-0">
+                              {sendOtpMutation.isPending
+                                ? <><Loader2 className="w-3 h-3 animate-spin mr-1" />Sending...</>
+                                : otpSent ? "Resend OTP" : "Send OTP"}
                             </Button>
                           )}
                           {otpVerified && (
@@ -584,9 +585,19 @@ export default function BookingPage() {
                           )}
                         </div>
                         {otpSent && !otpVerified && (
-                          <div className="flex gap-2 mt-2">
-                            <Input value={otpInput} onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="Enter 6-digit OTP" maxLength={6} />
-                            <Button type="button" onClick={verifyOtp} className="shrink-0">Verify</Button>
+                          <div className="space-y-1.5">
+                            <p className="text-xs text-slate-500">OTP sent to +91-{customerPhone} via SMS</p>
+                            <div className="flex gap-2 mt-1">
+                              <Input value={otpInput} onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                                placeholder="Enter 6-digit OTP" maxLength={6} />
+                              <Button type="button" onClick={verifyOtp}
+                                disabled={verifyOtpMutation.isPending}
+                                className="shrink-0">
+                                {verifyOtpMutation.isPending
+                                  ? <><Loader2 className="w-3 h-3 animate-spin mr-1" />Verifying...</>
+                                  : "Verify"}
+                              </Button>
+                            </div>
                           </div>
                         )}
                         {otpError && <p className="text-sm text-red-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{otpError}</p>}
