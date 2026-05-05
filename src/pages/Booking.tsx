@@ -44,6 +44,8 @@ export default function BookingPage() {
   const paramDate = searchParams.get("date") || "";
   const paramTripType = searchParams.get("tripType") || "one_way";
   const paramPassengers = searchParams.get("passengers") || "";
+  const paramFromPincode = searchParams.get("fromPincode") || "";
+  const paramToPincode = searchParams.get("toPincode") || "";
 
   // ALL useState hooks
   const [currentStep, setCurrentStep] = useState(1);
@@ -60,11 +62,11 @@ export default function BookingPage() {
   const [passengerCount, setPassengerCount] = useState(paramPassengers || "4");
   const [specialRequests, setSpecialRequests] = useState("");
   const [pickupAddress, setPickupAddress] = useState(paramFromFull);
-  const [pickupPincode, setPickupPincode] = useState("");
+  const [pickupPincode, setPickupPincode] = useState(paramFromPincode);
   const [pickupLat, setPickupLat] = useState<number>();
   const [pickupLng, setPickupLng] = useState<number>();
   const [dropAddress, setDropAddress] = useState(paramToFull || (toCity ? toCity + ", India" : ""));
-  const [dropPincode, setDropPincode] = useState("");
+  const [dropPincode, setDropPincode] = useState(paramToPincode);
   const [dropLat, setDropLat] = useState<number>();
   const [dropLng, setDropLng] = useState<number>();
   const [customerName, setCustomerName] = useState(user?.name || "");
@@ -186,7 +188,6 @@ export default function BookingPage() {
     if (currentStep === 1) {
       if (!pickupDate) { alert("Please select a pickup date."); return; }
       if (!pickupAddress.trim()) { alert("Please enter your pickup address."); return; }
-      if (!pickupPincode.trim() || pickupPincode.length < 6) { alert("Please enter a valid 6-digit pickup pincode."); return; }
       if (!dropAddress.trim()) { alert("Please enter your drop-off address."); return; }
     }
     if (currentStep === 2) {
@@ -462,20 +463,21 @@ export default function BookingPage() {
                           }}
                           placeholder="Start typing your pickup address..."
                         />
+                        {pickupPincode && (
+                          <p className="text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-1.5 flex items-center gap-1">
+                            <Check className="w-3 h-3" /> Pincode auto-detected: <strong>{pickupPincode}</strong>
+                          </p>
+                        )}
+                        {!pickupPincode && pickupAddress && (
+                          <div className="space-y-1">
+                            <Label className="text-xs">Pickup Pincode *</Label>
+                            <Input value={pickupPincode} onChange={(e) => setPickupPincode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                              placeholder="Enter 6-digit pincode" maxLength={6} />
+                          </div>
+                        )}
                         {pickupLat && pickupLng && (
                           <MapPreview lat={pickupLat} lng={pickupLng} label={pickupAddress} />
                         )}
-                      </div>
-
-                      {/* Pickup Pincode */}
-                      <div className="space-y-2">
-                        <Label>Pickup Pincode *</Label>
-                        <Input
-                          value={pickupPincode}
-                          onChange={(e) => setPickupPincode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                          placeholder="Auto-filled or enter 6-digit pincode"
-                          maxLength={6}
-                        />
                       </div>
 
                       {/* Drop Address */}
@@ -491,6 +493,18 @@ export default function BookingPage() {
                           }}
                           placeholder="Enter your destination address..."
                         />
+                        {dropPincode && (
+                          <p className="text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-1.5 flex items-center gap-1">
+                            <Check className="w-3 h-3" /> Pincode auto-detected: <strong>{dropPincode}</strong>
+                          </p>
+                        )}
+                        {!dropPincode && dropAddress && (
+                          <div className="space-y-1">
+                            <Label className="text-xs">Drop Pincode *</Label>
+                            <Input value={dropPincode} onChange={(e) => setDropPincode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                              placeholder="Enter 6-digit pincode" maxLength={6} />
+                          </div>
+                        )}
                         {dropLat && dropLng && (
                           <MapPreview lat={dropLat} lng={dropLng} label={dropAddress} />
                         )}

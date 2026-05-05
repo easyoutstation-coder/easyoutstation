@@ -91,11 +91,15 @@ export default function CarsPage() {
     const date = searchParams.get("date");
     const tripType = searchParams.get("tripType");
     const passengers = searchParams.get("passengers");
+    const fromPincode = searchParams.get("fromPincode");
+    const toPincode = searchParams.get("toPincode");
     if (fromFull) p.set("fromFull", fromFull);
     if (toFull) p.set("toFull", toFull);
     if (date) p.set("date", date);
     if (tripType) p.set("tripType", tripType);
     if (passengers) p.set("passengers", passengers);
+    if (fromPincode) p.set("fromPincode", fromPincode);
+    if (toPincode) p.set("toPincode", toPincode);
     return p.toString();
   };
 

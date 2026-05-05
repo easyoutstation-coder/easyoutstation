@@ -110,11 +110,15 @@ export default function CarDetailPage() {
     const date = searchParams.get("date");
     const tripType = searchParams.get("tripType");
     const passengers = searchParams.get("passengers");
+    const fromPincode = searchParams.get("fromPincode");
+    const toPincode = searchParams.get("toPincode");
     if (fromFull) params.set("fromFull", fromFull);
     if (toFull) params.set("toFull", toFull);
     if (date) params.set("date", date);
     if (tripType) params.set("tripType", tripType);
     if (passengers) params.set("passengers", passengers);
+    if (fromPincode) params.set("fromPincode", fromPincode);
+    if (toPincode) params.set("toPincode", toPincode);
     navigate(`/booking?${params.toString()}`);
   };
 

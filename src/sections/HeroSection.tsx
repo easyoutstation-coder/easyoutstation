@@ -65,7 +65,7 @@ function loadGoogleMaps(): Promise<void> {
 interface PlaceInputProps {
   label: string;
   placeholder: string;
-  onSelect: (address: string, lat: number, lng: number) => void;
+  onSelect: (address: string, lat: number, lng: number, pincode: string) => void;
   error?: string;
 }
 
@@ -83,7 +83,7 @@ function PlaceInput({ label, placeholder, onSelect, error }: PlaceInputProps) {
       if (!inputRef.current) return;
       autocompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
         componentRestrictions: { country: "in" },
-        fields: ["formatted_address", "geometry", "name"],
+        fields: ["formatted_address", "geometry", "name", "address_components"],
         types: ["geocode", "establishment"],
       });
       autocompleteRef.current.addListener("place_changed", () => {
@@ -92,6 +92,12 @@ function PlaceInput({ label, placeholder, onSelect, error }: PlaceInputProps) {
         const lat = place.geometry.location.lat();
         const lng = place.geometry.location.lng();
         const address = place.formatted_address || place.name || "";
+
+        // Extract pincode from address_components
+        const pincode = place.address_components
+          ?.find((c: any) => c.types.includes("postal_code"))
+          ?.long_name || "";
+
         setValidating(true);
         setLocalError("");
         if (!isWithinRadius(lat, lng)) {
@@ -101,7 +107,7 @@ function PlaceInput({ label, placeholder, onSelect, error }: PlaceInputProps) {
           return;
         }
         setValue(address);
-        onSelect(address, lat, lng);
+        onSelect(address, lat, lng, pincode);
         setValidating(false);
       });
     });
@@ -146,10 +152,12 @@ export default function HeroSection() {
   const [fromAddress, setFromAddress] = useState("");
   const [fromLat, setFromLat] = useState<number>();
   const [fromLng, setFromLng] = useState<number>();
+  const [fromPincode, setFromPincode] = useState("");
 
   const [toAddress, setToAddress] = useState("");
   const [toLat, setToLat] = useState<number>();
   const [toLng, setToLng] = useState<number>();
+  const [toPincode, setToPincode] = useState("");
 
   const [pickupDate, setPickupDate] = useState<Date>();
   const [passengers, setPassengers] = useState("");
@@ -213,6 +221,10 @@ export default function HeroSection() {
     });
     if (pickupDate) params.set("date", format(pickupDate, "yyyy-MM-dd"));
     if (distanceKm) params.set("distance", String(distanceKm));
+    if (fromPincode) params.set("fromPincode", fromPincode);
+    if (toPincode) params.set("toPincode", toPincode);
+    if (fromLat && fromLng) { params.set("fromLat", String(fromLat)); params.set("fromLng", String(fromLng)); }
+    if (toLat && toLng) { params.set("toLat", String(toLat)); params.set("toLng", String(toLng)); }
     navigate(`/cars?${params.toString()}`);
   };
 
@@ -314,14 +326,14 @@ export default function HeroSection() {
                 <PlaceInput
                   label="PICKUP LOCATION"
                   placeholder="Enter pickup address or city"
-                  onSelect={(addr, lat, lng) => { setFromAddress(addr); setFromLat(lat); setFromLng(lng); }}
+                  onSelect={(addr, lat, lng, pincode) => { setFromAddress(addr); setFromLat(lat); setFromLng(lng); setFromPincode(pincode); }}
                 />
 
                 {/* To location */}
                 <PlaceInput
                   label="DROP-OFF LOCATION"
                   placeholder="Enter destination address or city"
-                  onSelect={(addr, lat, lng) => { setToAddress(addr); setToLat(lat); setToLng(lng); }}
+                  onSelect={(addr, lat, lng, pincode) => { setToAddress(addr); setToLat(lat); setToLng(lng); setToPincode(pincode); }}
                 />
 
                 {/* Distance + Fare result */}
