@@ -33,13 +33,24 @@ export default function BookingPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
+
+  // Read ALL URL params first before any useState
+  const carId = parseInt(searchParams.get("carId") || "0");
+  const fromCity = searchParams.get("from") || "Delhi";
+  const toCity = searchParams.get("to") || "";
+  const defaultDistance = parseInt(searchParams.get("distance") || "0");
+  const paramFromFull = searchParams.get("fromFull") || "";
+  const paramToFull = searchParams.get("toFull") || "";
+  const paramDate = searchParams.get("date") || "";
+  const paramTripType = searchParams.get("tripType") || "one_way";
+  const paramPassengers = searchParams.get("passengers") || "";
+
+  // ALL useState hooks
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookingComplete, setBookingComplete] = useState(false);
   const [bookingId, setBookingId] = useState<number | null>(null);
   const [advancePaid, setAdvancePaid] = useState(false);
-
-  // Trip details
   const [tripType, setTripType] = useState(paramTripType);
   const [pickupDate, setPickupDate] = useState<Date | undefined>(
     paramDate ? (() => { const d = new Date(paramDate); return isNaN(d.getTime()) ? undefined : d; })() : undefined
@@ -48,78 +59,47 @@ export default function BookingPage() {
   const [returnDate, setReturnDate] = useState<Date>();
   const [passengerCount, setPassengerCount] = useState(paramPassengers || "4");
   const [specialRequests, setSpecialRequests] = useState("");
-
-  // Pickup location - pre-filled from search
   const [pickupAddress, setPickupAddress] = useState(paramFromFull);
   const [pickupPincode, setPickupPincode] = useState("");
   const [pickupLat, setPickupLat] = useState<number>();
   const [pickupLng, setPickupLng] = useState<number>();
-
-  // Drop location - pre-filled from search
-  const [dropAddress, setDropAddress] = useState(paramToFull);
+  const [dropAddress, setDropAddress] = useState(paramToFull || (toCity ? toCity + ", India" : ""));
   const [dropPincode, setDropPincode] = useState("");
   const [dropLat, setDropLat] = useState<number>();
   const [dropLng, setDropLng] = useState<number>();
-
-  // Customer info - pre-filled from auth
   const [customerName, setCustomerName] = useState(user?.name || "");
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerEmail, setCustomerEmail] = useState(user?.email || "");
   const [agreeTerms, setAgreeTerms] = useState(false);
-
-  // OTP
   const [otpSent, setOtpSent] = useState(false);
   const [otpVerified, setOtpVerified] = useState(false);
   const [otpInput, setOtpInput] = useState("");
   const [otpError, setOtpError] = useState("");
 
-  const carId = parseInt(searchParams.get("carId") || "0");
-  const fromCity = searchParams.get("from") || "Delhi";
-  const toCity = searchParams.get("to") || "";
-  const defaultDistance = parseInt(searchParams.get("distance") || "0");
-
-  // Auto-populate from search context
-  const paramFromFull = searchParams.get("fromFull") || "";
-  const paramToFull = searchParams.get("toFull") || "";
-  const paramDate = searchParams.get("date") || "";
-  const paramTripType = searchParams.get("tripType") || "one_way";
-  const paramPassengers = searchParams.get("passengers") || "";
-
+  // ALL trpc hooks
   const { data: car } = trpc.car.getById.useQuery({ id: carId }, { enabled: carId > 0 });
-
-  // ALL hooks must be before any conditional returns (React rules of hooks)
   const { distanceKm, durationText, isLoading: isCalcDistance, calculateDistance } = useDistanceCalculator();
   const [manualDistance, setManualDistance] = useState(defaultDistance);
-
   const sendOtpMutation = trpc.sms.sendOtp.useMutation({
     onSuccess: () => { setOtpSent(true); setOtpError(""); },
     onError: (e) => setOtpError(e.message),
   });
-
   const verifyOtpMutation = trpc.sms.verifyOtp.useMutation({
     onSuccess: () => { setOtpVerified(true); setOtpError(""); },
     onError: () => setOtpError("Invalid OTP. Please check and try again."),
   });
-
   const createBookingMutation = trpc.booking.create.useMutation();
   const createOrderMutation = trpc.payment.createOrder.useMutation();
   const verifyPaymentMutation = trpc.payment.verifyPayment.useMutation();
 
+  // ALL useEffects
   useEffect(() => {
     if (pickupLat && pickupLng && dropLat && dropLng) {
       calculateDistance(pickupLat, pickupLng, dropLat, dropLng);
     }
   }, [pickupLat, pickupLng, dropLat, dropLng]);
 
-  useEffect(() => {
-    if (!dropAddress) {
-      if (paramToFull) setDropAddress(paramToFull);
-      else if (toCity) setDropAddress(toCity + ", India");
-    }
-    if (!pickupAddress && paramFromFull) setPickupAddress(paramFromFull);
-  }, [toCity, paramToFull, paramFromFull]);
-
-  // Auth gate - must be logged in to book (after all hooks)
+  // Auth gate - AFTER all hooks
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -153,7 +133,7 @@ export default function BookingPage() {
     );
   }
 
-  // Derived values (after auth gate)
+  // Derived values - after auth gate, no hooks below this line
   const finalDistance = distanceKm || manualDistance;
   const pricePerKm = parseFloat(car?.pricePerKm || "20");
   const driverChargePerDay = parseFloat(car?.driverCharges || "400");
