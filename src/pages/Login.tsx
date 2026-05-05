@@ -25,7 +25,6 @@ export default function Login() {
     }
   }, [isAuthenticated, isLoading, navigate]);
 
-  const [searchParams] = useSearchParams();
   const redirectUrl = searchParams.get("redirect");
 
   const loginMutation = trpc.auth.login.useMutation({
