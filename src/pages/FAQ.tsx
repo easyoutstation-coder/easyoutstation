@@ -13,7 +13,7 @@ const faqs = [
   { q: "Can I book a round trip?", a: "Yes. Round trips are calculated as double the one-way distance. Select 'Round Trip' during booking and the fare is shown transparently." },
   { q: "What types of cars are available?", a: "We offer Swift Dzire (sedan), Toyota Etios (sedan), Maruti Ertiga (MUV), Mahindra Xylo (SUV), Kia Carens (premium), Toyota Innova, Innova Crysta, and Innova Hycross (luxury)." },
   { q: "Is it safe for solo women travelers?", a: "Yes. All our drivers are verified and rated. We share the driver's name, photo, and vehicle number before every trip. Our support team is available 24/7." },
-  { q: "How quickly will I get a confirmation?", a: "Booking confirmation with driver details is sent within 4 hours of booking. For same-day bookings, contact us on WhatsApp for fastest response." },
+  { q: "How quickly will I get a confirmation?", a: "Booking confirmation with driver details is sent within 60 minutes of booking. For same-day bookings, contact us on WhatsApp for fastest response." },
 ];
 
 export default function FAQ() {

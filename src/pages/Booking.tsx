@@ -310,7 +310,7 @@ export default function BookingPage() {
               )}
               <p className="text-sm text-muted-foreground mb-6">
                 A confirmation email has been sent to <strong>{customerEmail}</strong>.<br />
-                Driver details will be shared within <strong>4 hours</strong>.<br />
+                Driver details will be shared within <strong>60 minutes</strong>.<br />
                 {advancePaid
                   ? <>Balance of <strong>₹{(totalPrice - 100).toLocaleString("en-IN")}</strong> payable to driver at pickup.</>
                   : <>Full amount of <strong>₹{totalPrice.toLocaleString("en-IN")}</strong> payable to driver at pickup.</>
@@ -675,7 +675,7 @@ export default function BookingPage() {
 
                       <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex gap-2 text-sm text-amber-800">
                         <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                        <span>Driver details will be shared within 4 hours of booking confirmation.</span>
+                        <span>Driver details will be shared within 60 minutes of booking confirmation.</span>
                       </div>
 
                       <div className="flex items-start gap-3">
@@ -740,7 +740,7 @@ export default function BookingPage() {
                   </div>
                   <div className="space-y-2 text-xs text-muted-foreground">
                     <div className="flex items-center gap-2"><Shield className="w-3 h-3 text-green-500" /> Verified professional driver</div>
-                    <div className="flex items-center gap-2"><Clock className="w-3 h-3 text-green-500" /> Confirmation within 4 hours</div>
+                    <div className="flex items-center gap-2"><Clock className="w-3 h-3 text-green-500" /> Confirmation within 60 minutes</div>
                     <div className="flex items-center gap-2"><Users className="w-3 h-3 text-green-500" /> 24/7 customer support</div>
                   </div>
                 </CardContent>

@@ -2,6 +2,8 @@ import { z } from "zod";
 import { createRouter, publicQuery } from "./middleware";
 
 const EMAIL = "easyoutstation@gmail.com";
+const WHATSAPP = "+91-99585 56011";
+const PHONE = "+91-99585 56011";
 
 function getRuleBasedResponse(msg: string): string {
   // Greetings
@@ -16,7 +18,7 @@ function getRuleBasedResponse(msg: string): string {
 
   // Booking
   if (msg.match(/book|reserve|hire|rent|how to book|booking process|steps/)) {
-    return `Booking with EasyOutstation is simple:\n\n1️⃣ Browse available cars\n2️⃣ Select your route & travel date\n3️⃣ Fill in your details\n4️⃣ Confirm your booking\n\nYour booking gets a unique confirmation ID instantly. Click **Book Now** on any car to get started! 🚀`;
+    return `Booking with EasyOutstation is simple:\n\n1️⃣ Browse available cars\n2️⃣ Select your route & travel date\n3️⃣ Fill in your details\n4️⃣ Confirm your booking\n\nYou will receive a booking confirmation email within 60 minutes with your driver details. Pay just ₹100 advance to confirm. Click **Book Now** on any car to get started! 🚀`;
   }
 
   // Manali
@@ -71,12 +73,12 @@ function getRuleBasedResponse(msg: string): string {
 
   // Payment
   if (msg.match(/pay|payment|upi|gpay|card|cash|advance|online payment/)) {
-    return `Payment options:\n\n💳 Credit/Debit Cards\n🏦 Net Banking\n📱 UPI (GPay, PhonePe, Paytm)\n💵 Cash to driver (advance required)\n\nA 20% advance confirms your booking. Balance is paid to the driver at pickup. All payments are secured with SSL encryption.`;
+    return `Payment options:\n\n💳 Credit/Debit Cards\n🏦 Net Banking\n📱 UPI (GPay, PhonePe, Paytm)\n💵 Cash to driver (advance required)\n\nA ₹100 advance confirms your booking via Razorpay (UPI, cards, netbanking). The balance amount is paid directly to the driver at pickup.`;
   }
 
   // Insurance / Safety
   if (msg.match(/insurance|safe|accident|emergency|breakdown/)) {
-    return `Safety & Insurance 🛡️\n\n✅ All vehicles fully insured\n✅ GPS tracked for your safety\n✅ Emergency support available\n✅ Well-maintained & regularly serviced cars\n✅ Medical kit & safety equipment in every car\n\nFor emergencies during your trip, email: ${EMAIL}`;
+    return `Safety & Insurance 🛡️\n\n✅ All vehicles fully insured\n✅ Emergency support available 24/7\n✅ Well-maintained & regularly serviced cars\n✅ Police-verified professional drivers\n\nFor emergencies during your trip, email: ${EMAIL}`;
   }
 
   // Toll / Extra charges
@@ -86,12 +88,12 @@ function getRuleBasedResponse(msg: string): string {
 
   // Contact / Support
   if (msg.match(/contact|support|help|email|reach|talk|connect|complaint|feedback/)) {
-    return `We're here to help! 🙋\n\n📧 Email: ${EMAIL}\n\nOur support team responds within 1-2 hours during business hours. For urgent booking help, email us and we'll prioritise your query.`;
+    return `We're here to help! 🙋\n\n📱 WhatsApp: ${WHATSAPP} (Fastest — usually replies in minutes)\n📧 Email: ${EMAIL}\n📞 Call: ${PHONE}\n\nOur support team is available 24/7. WhatsApp is the fastest way to reach us for urgent booking help.`;
   }
 
   // About EasyOutstation
   if (msg.match(/about|who are you|company|easyoutstation|service|what do you/)) {
-    return `About EasyOutstation 🚗\n\nWe are a premium outstation cab service based in Delhi, specialising in comfortable, reliable and affordable cab rentals for intercity travel across North India.\n\n✅ Professional drivers\n✅ Well-maintained fleet\n✅ Transparent pricing\n✅ 24/7 customer support\n✅ Booking confirmation in minutes\n\nYour trusted travel partner for every journey!`;
+    return `About EasyOutstation 🚗\n\nWe are a premium outstation cab service based in Delhi, specialising in comfortable, reliable and affordable cab rentals for intercity travel across North India.\n\n✅ Police-verified professional drivers\n✅ Well-maintained fleet (under 3 years old)\n✅ Transparent pricing — no hidden charges\n✅ 24/7 customer support\n✅ Driver details shared within 60 minutes of booking\n✅ Free cancellation up to 24 hours before pickup\n\nYour trusted travel partner for every journey!`;
   }
 
   // Thank you
@@ -99,8 +101,8 @@ function getRuleBasedResponse(msg: string): string {
     return `You're welcome! 😊 Happy to help.\n\nIf you have any more questions or need help booking, feel free to ask. Have a wonderful trip! 🚗✨`;
   }
 
-  // Default fallback — direct to email
-  return `I'm not sure I have the right answer for that, but I don't want to leave you stuck! 😊\n\nFor specific queries, our team can help you better:\n\n📧 Email us at: ${EMAIL}\n\nWe typically respond within 1-2 hours. You can also browse our cars and routes directly on the website!`;
+  // Default fallback
+  return `I'm not sure I have the right answer for that, but I don't want to leave you stuck! 😊\n\nFor specific queries, our team can help you better:\n\n📱 WhatsApp: ${WHATSAPP} (fastest response)\n📧 Email: ${EMAIL}\n\nWe are available 24/7. You can also browse our cars and routes directly on the website!`;
 }
 
 export const aiRouter = createRouter({

@@ -170,7 +170,7 @@ export default function BookingDetail() {
         <Card className="mb-6 bg-blue-50 border-blue-200">
           <CardContent className="p-4">
             <p className="text-sm text-blue-800">
-              📧 A confirmation email will be sent to you within <strong>4 hours</strong> of booking. For queries, contact <strong>easyoutstation@gmail.com</strong>
+              📧 A confirmation email will be sent to you within <strong>60 minutes</strong> of booking. For queries, contact <strong>easyoutstation@gmail.com</strong>
             </p>
           </CardContent>
         </Card>

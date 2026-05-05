@@ -82,14 +82,14 @@ ${input.specialRequests ? `\nNotes: ${input.specialRequests}` : ""}
 
 Thank you for choosing EasyOutstation! 🚗
 
-We have successfully received your booking request. Our team will review the details and send you a confirmation with your driver's information within 4 hours.
+We have successfully received your booking request. Our team will review the details and send you a confirmation with your driver's information within 60 minutes.
 
 ${bookingDetails}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 WHAT HAPPENS NEXT?
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-✅ We will confirm your booking within 4 hours
+✅ We will confirm your booking within 60 minutes
 ✅ You will receive your driver's name & contact details
 ✅ Driver will call you 1 hour before pickup
 
