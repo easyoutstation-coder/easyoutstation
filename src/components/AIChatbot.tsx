@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from "react";
 import { trpc } from "@/providers/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageCircle, X, Send, Bot, User, Sparkles, Mic, MicOff } from "lucide-react";
 
 interface Message {
@@ -20,7 +19,8 @@ export default function AIChatbot() {
     },
   ]);
   const [isListening, setIsListening] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const chatMutation = trpc.ai.chat.useMutation({
@@ -32,11 +32,23 @@ export default function AIChatbot() {
     },
   });
 
+  // Scroll to bottom whenever messages change
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, chatMutation.isPending]);
+
+  // Also scroll when chat opens
+  useEffect(() => {
+    if (open) {
+      setTimeout(() => {
+        if (messagesContainerRef.current) {
+          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        }
+      }, 100);
+    }
+  }, [open]);
 
   const handleSend = () => {
     if (!input.trim() || chatMutation.isPending) return;
@@ -51,26 +63,19 @@ export default function AIChatbot() {
       alert("Voice search is not supported in your browser.");
       return;
     }
-
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
     recognition.lang = "en-IN";
     recognition.continuous = false;
     recognition.interimResults = false;
-
     recognition.onstart = () => setIsListening(true);
     recognition.onend = () => setIsListening(false);
     recognition.onresult = (event: any) => {
       const transcript = event.results[0][0].transcript;
       setInput(transcript);
-      setTimeout(() => {
-        if (inputRef.current) {
-          handleSend();
-        }
-      }, 100);
+      setTimeout(() => handleSend(), 100);
     };
     recognition.onerror = () => setIsListening(false);
-
     recognition.start();
   };
 
@@ -80,9 +85,7 @@ export default function AIChatbot() {
       <button
         onClick={() => setOpen(!open)}
         className={`fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-110 ${
-          open
-            ? "bg-destructive text-white rotate-90"
-            : "bg-primary text-white"
+          open ? "bg-red-500 text-white rotate-90" : "bg-blue-600 text-white"
         }`}
       >
         {open ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
@@ -90,74 +93,84 @@ export default function AIChatbot() {
 
       {/* Chat Window */}
       {open && (
-        <div className="fixed bottom-24 right-6 z-50 w-[380px] max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-2xl border border-border overflow-hidden animate-scale-in flex flex-col"
-          style={{ height: "500px", maxHeight: "calc(100vh - 120px)" }}
+        <div
+          className="fixed bottom-24 right-6 z-50 w-[380px] max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-scale-in"
+          style={{ height: "600px", maxHeight: "calc(100vh - 110px)", display: "flex", flexDirection: "column" }}
         >
           {/* Header */}
-          <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-4 flex items-center gap-3 shrink-0">
-            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-              <Bot className="w-5 h-5 text-primary" />
+          <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-4 flex items-center gap-3 flex-shrink-0">
+            <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+              <Bot className="w-5 h-5 text-blue-400" />
             </div>
             <div className="flex-1">
               <h3 className="text-white font-semibold text-sm">EasyOutstation AI Assistant</h3>
               <div className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                <span className="text-xs text-slate-400">Online</span>
+                <span className="text-xs text-slate-400">Online · Replies instantly</span>
               </div>
             </div>
-            <Sparkles className="w-5 h-5 text-primary" />
+            <Sparkles className="w-5 h-5 text-blue-400" />
           </div>
 
-          {/* Messages */}
-          <ScrollArea className="flex-1 p-4">
-            <div ref={scrollRef} className="space-y-4">
-              {messages.map((msg, i) => (
+          {/* Messages — native scrollable div */}
+          <div
+            ref={messagesContainerRef}
+            style={{
+              flex: 1,
+              overflowY: "scroll",
+              WebkitOverflowScrolling: "touch",
+              padding: "16px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "16px",
+              minHeight: 0,
+            }}
+          >
+            {messages.map((msg, i) => (
+              <div
+                key={i}
+                className={`flex gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+              >
+                {msg.role === "assistant" && (
+                  <div className="w-7 h-7 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0 mt-1">
+                    <Bot className="w-3.5 h-3.5 text-blue-600" />
+                  </div>
+                )}
                 <div
-                  key={i}
-                  className={`flex gap-2 ${
-                    msg.role === "user" ? "justify-end" : "justify-start"
+                  className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-line ${
+                    msg.role === "user"
+                      ? "bg-blue-600 text-white rounded-br-md"
+                      : "bg-slate-100 text-slate-800 rounded-bl-md"
                   }`}
                 >
-                  {msg.role === "assistant" && (
-                    <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-1">
-                      <Bot className="w-3.5 h-3.5 text-primary" />
-                    </div>
-                  )}
-                  <div
-                    className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-line ${
-                      msg.role === "user"
-                        ? "bg-primary text-white rounded-br-md"
-                        : "bg-slate-100 text-foreground rounded-bl-md"
-                    }`}
-                  >
-                    {msg.content}
-                  </div>
-                  {msg.role === "user" && (
-                    <div className="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center shrink-0 mt-1">
-                      <User className="w-3.5 h-3.5 text-slate-600" />
-                    </div>
-                  )}
+                  {msg.content}
                 </div>
-              ))}
-              {chatMutation.isPending && (
-                <div className="flex gap-2 justify-start">
-                  <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                    <Bot className="w-3.5 h-3.5 text-primary animate-bounce" />
+                {msg.role === "user" && (
+                  <div className="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center shrink-0 mt-1">
+                    <User className="w-3.5 h-3.5 text-slate-600" />
                   </div>
-                  <div className="bg-slate-100 rounded-2xl rounded-bl-md px-4 py-3">
-                    <div className="flex gap-1">
-                      <span className="w-2 h-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: "0ms" }} />
-                      <span className="w-2 h-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: "150ms" }} />
-                      <span className="w-2 h-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: "300ms" }} />
-                    </div>
+                )}
+              </div>
+            ))}
+            {chatMutation.isPending && (
+              <div className="flex gap-2 justify-start">
+                <div className="w-7 h-7 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0">
+                  <Bot className="w-3.5 h-3.5 text-blue-600 animate-bounce" />
+                </div>
+                <div className="bg-slate-100 rounded-2xl rounded-bl-md px-4 py-3">
+                  <div className="flex gap-1">
+                    <span className="w-2 h-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <span className="w-2 h-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <span className="w-2 h-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: "300ms" }} />
                   </div>
                 </div>
-              )}
-            </div>
-          </ScrollArea>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
 
           {/* Input */}
-          <div className="p-3 border-t bg-white shrink-0">
+          <div className="p-3 border-t border-slate-100 bg-white flex-shrink-0">
             <div className="flex gap-2">
               <Input
                 ref={inputRef}
@@ -165,7 +178,7 @@ export default function AIChatbot() {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSend()}
                 placeholder="Ask about cars, prices, routes..."
-                className="flex-1"
+                className="flex-1 text-sm"
               />
               <Button
                 size="icon"
@@ -179,7 +192,7 @@ export default function AIChatbot() {
                 size="icon"
                 onClick={handleSend}
                 disabled={chatMutation.isPending || !input.trim()}
-                className="bg-primary hover:bg-primary/90"
+                className="bg-blue-600 hover:bg-blue-700"
               >
                 <Send className="w-4 h-4" />
               </Button>
