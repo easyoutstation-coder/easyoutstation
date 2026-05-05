@@ -28,14 +28,8 @@ export default function Footer() {
   return (
     <footer className="bg-slate-900 border-t border-slate-800">
       <div className="border-b border-slate-800">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-sm text-slate-400">🌟 Delhi's Trusted Outstation Cab Service Since 2015</p>
-          <a href="https://wa.me/919958556011?text=Hi%2C%20I%20want%20to%20book%20a%20cab" target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-2 px-4 py-2 rounded-full bg-green-900/30 border border-green-800/50 text-green-400 text-sm font-medium hover:bg-green-900/50 transition-all">
-            <MessageCircle className="w-4 h-4" />
-            Book on WhatsApp
-            <ArrowRight className="w-3 h-3" />
-          </a>
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-center gap-3">
+          <p className="text-sm text-slate-400">🌟 Delhi's Most Trusted Outstation Cab Service Since 2015 · Available 24/7</p>
         </div>
       </div>
 
