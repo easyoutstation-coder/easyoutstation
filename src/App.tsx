@@ -11,6 +11,7 @@ import FAQ from './pages/FAQ'
 import CancellationPolicy from './pages/CancellationPolicy'
 import Terms from './pages/Terms'
 import Privacy from './pages/Privacy'
+import RoutesPage from './pages/Routes'
 import NotFound from './pages/NotFound'
 
 export default function App() {
@@ -28,7 +29,7 @@ export default function App() {
       <Route path="/cancellation" element={<CancellationPolicy />} />
       <Route path="/terms" element={<Terms />} />
       <Route path="/privacy" element={<Privacy />} />
-      {/* Catch-all for /routes, /help etc */}
+      <Route path="/routes" element={<RoutesPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   )
