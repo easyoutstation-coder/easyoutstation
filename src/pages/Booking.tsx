@@ -37,6 +37,7 @@ export default function BookingPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookingComplete, setBookingComplete] = useState(false);
   const [bookingId, setBookingId] = useState<number | null>(null);
+  const [advancePaid, setAdvancePaid] = useState(false);
 
   // Trip details
   const [tripType, setTripType] = useState("one_way");
@@ -66,7 +67,6 @@ export default function BookingPage() {
 
   // OTP
   const [otpSent, setOtpSent] = useState(false);
-  const [otp, setOtp] = useState("");
   const [otpVerified, setOtpVerified] = useState(false);
   const [otpInput, setOtpInput] = useState("");
   const [otpError, setOtpError] = useState("");
@@ -168,25 +168,42 @@ export default function BookingPage() {
     }
   }, [toCity]);
 
+  const sendOtpMutation = trpc.sms.sendOtp.useMutation({
+    onSuccess: (data) => {
+      setOtpSent(true);
+      setOtpError("");
+      if (data.dev && data.otp) {
+        // Dev mode - show OTP in alert
+        alert(`[DEV MODE] Your OTP is: ${data.otp}`);
+      } else {
+        alert(`OTP sent to +91-${customerPhone}. Please check your SMS.`);
+      }
+    },
+    onError: (e) => setOtpError(e.message),
+  });
+
+  const verifyOtpMutation = trpc.sms.verifyOtp.useMutation({
+    onSuccess: () => {
+      setOtpVerified(true);
+      setOtpError("");
+    },
+    onError: () => setOtpError("Invalid OTP. Please try again."),
+  });
+
   const sendOtp = () => {
     if (!customerPhone || customerPhone.length < 10) {
       alert("Please enter a valid 10-digit mobile number.");
       return;
     }
-    const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
-    setOtp(generatedOtp);
-    setOtpSent(true);
-    setOtpError("");
-    alert(`Your OTP is: ${generatedOtp}\n\n(In production this will be sent via SMS)`);
+    sendOtpMutation.mutate({ phone: customerPhone });
   };
 
   const verifyOtp = () => {
-    if (otpInput === otp) {
-      setOtpVerified(true);
-      setOtpError("");
-    } else {
-      setOtpError("Invalid OTP. Please try again.");
+    if (!otpInput || otpInput.length < 6) {
+      setOtpError("Please enter the 6-digit OTP.");
+      return;
     }
+    verifyOtpMutation.mutate({ phone: customerPhone, otp: otpInput });
   };
 
   const handleNext = () => {
@@ -209,37 +226,97 @@ export default function BookingPage() {
     if (currentStep > 1) setCurrentStep(currentStep - 1);
   };
 
-  const createBooking = trpc.booking.create.useMutation({
-    onSuccess: (data) => {
-      setBookingId(data.bookingId);
-      setBookingComplete(true);
-      setIsSubmitting(false);
-    },
-    onError: () => {
-      setIsSubmitting(false);
-      alert("Booking failed. Please try again or email us at easyoutstation@gmail.com.");
-    },
-  });
+  const createBooking = trpc.booking.create.useMutation();
 
-  const handleSubmit = () => {
+  const createOrderMutation = trpc.payment.createOrder.useMutation();
+  const verifyPaymentMutation = trpc.payment.verifyPayment.useMutation();
+
+  const handleSubmit = async () => {
     if (!agreeTerms) { alert("Please agree to the terms and conditions"); return; }
     setIsSubmitting(true);
-    createBooking.mutate({
-      carId,
-      fromCity: fromCity || pickupAddress.split(",")[0],
-      toCity: toCity || dropAddress.split(",")[0],
-      pickupDate: pickupDate ? format(pickupDate, "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
-      returnDate: returnDate ? format(returnDate, "yyyy-MM-dd") : undefined,
-      tripType: tripType as "one_way" | "round_trip" | "multi_day",
-      passengerCount: parseInt(passengerCount),
-      totalKm: totalKmForTrip,
-      totalPrice,
-      customerName,
-      customerPhone,
-      customerEmail,
-      pickupAddress: `${pickupAddress}, Pincode: ${pickupPincode}, Time: ${pickupTime}${pickupLat ? `, GPS: ${pickupLat},${pickupLng}` : ""}`,
-      specialRequests: dropAddress ? `Drop: ${dropAddress}${dropPincode ? ` (${dropPincode})` : ""}${specialRequests ? `. Notes: ${specialRequests}` : ""}` : specialRequests || undefined,
-    });
+
+    try {
+      // Step 1: Create booking first to get bookingId
+      const bookingResult = await createBooking.mutateAsync({
+        carId,
+        fromCity: fromCity || pickupAddress.split(",")[0],
+        toCity: toCity || dropAddress.split(",")[0],
+        pickupDate: pickupDate ? format(pickupDate, "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
+        returnDate: returnDate ? format(returnDate, "yyyy-MM-dd") : undefined,
+        tripType: tripType as "one_way" | "round_trip" | "multi_day",
+        passengerCount: parseInt(passengerCount),
+        totalKm: totalKmForTrip,
+        totalPrice,
+        customerName,
+        customerPhone,
+        customerEmail,
+        pickupAddress: `${pickupAddress}, Pincode: ${pickupPincode}, Time: ${pickupTime}${pickupLat ? `, GPS: ${pickupLat},${pickupLng}` : ""}`,
+        specialRequests: dropAddress ? `Drop: ${dropAddress}${dropPincode ? ` (${dropPincode})` : ""}${specialRequests ? `. Notes: ${specialRequests}` : ""}` : specialRequests || undefined,
+      });
+
+      const bookingId = bookingResult.bookingId;
+
+      // Step 2: Try to create Razorpay order for ₹100 advance
+      try {
+        const order = await createOrderMutation.mutateAsync({ bookingId });
+
+        // Step 3: Open Razorpay checkout
+        const razorpayOptions = {
+          key: order.keyId,
+          amount: order.amount,
+          currency: order.currency,
+          name: "EasyOutstation",
+          description: `Booking #${bookingId} — Advance Payment`,
+          order_id: order.orderId,
+          prefill: {
+            name: customerName,
+            email: customerEmail,
+            contact: `+91${customerPhone}`,
+          },
+          theme: { color: "#2563EB" },
+          handler: async (response: any) => {
+            // Step 4: Verify payment
+            await verifyPaymentMutation.mutateAsync({
+              razorpayOrderId: response.razorpay_order_id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature,
+              bookingId,
+            });
+            setAdvancePaid(true);
+            setBookingId(bookingId);
+            setBookingComplete(true);
+            setIsSubmitting(false);
+          },
+          modal: {
+            ondismiss: () => {
+              // Payment dismissed — booking still created, mark as pending
+              setBookingId(bookingId);
+              setBookingComplete(true);
+              setIsSubmitting(false);
+            },
+          },
+        };
+
+        const Razorpay = (window as any).Razorpay;
+        if (Razorpay) {
+          const rzp = new Razorpay(razorpayOptions);
+          rzp.open();
+        } else {
+          // Razorpay script not loaded — complete booking without payment
+          setBookingId(bookingId);
+          setBookingComplete(true);
+          setIsSubmitting(false);
+        }
+      } catch {
+        // Razorpay not configured — complete booking without advance payment
+        setBookingId(bookingId);
+        setBookingComplete(true);
+        setIsSubmitting(false);
+      }
+    } catch {
+      setIsSubmitting(false);
+      alert("Booking failed. Please try again or email us at easyoutstation@gmail.com.");
+    }
   };
 
   if (bookingComplete) {
@@ -254,9 +331,18 @@ export default function BookingPage() {
               </div>
               <h1 className="text-3xl font-bold font-['Playfair_Display'] mb-2">Booking Confirmed!</h1>
               <p className="text-muted-foreground mb-2">Booking ID: <span className="font-bold text-primary">#{bookingId}</span></p>
+              {advancePaid && (
+                <div className="inline-flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 text-sm font-medium px-4 py-2 rounded-full mb-3">
+                  <Check className="w-4 h-4" /> ₹100 Advance Paid Successfully
+                </div>
+              )}
               <p className="text-sm text-muted-foreground mb-6">
                 A confirmation email has been sent to <strong>{customerEmail}</strong>.<br />
-                Our team will share driver details within <strong>4 hours</strong>.
+                Driver details will be shared within <strong>4 hours</strong>.<br />
+                {advancePaid
+                  ? <>Balance of <strong>₹{(totalPrice - 100).toLocaleString("en-IN")}</strong> payable to driver at pickup.</>
+                  : <>Full amount of <strong>₹{totalPrice.toLocaleString("en-IN")}</strong> payable to driver at pickup.</>
+                }
               </p>
               <div className="bg-slate-50 rounded-xl p-4 text-sm text-left space-y-2 mb-6">
                 <div className="flex justify-between"><span className="text-muted-foreground">Route</span><span className="font-medium">{fromCity} → {toCity}</span></div>
@@ -567,9 +653,23 @@ export default function BookingPage() {
                         </div>
                       </div>
 
+                      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-semibold text-blue-800">Advance Payment (Now)</span>
+                          <span className="text-lg font-bold text-blue-700">₹100</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm text-blue-600">
+                          <span>Balance Payment (To driver at pickup)</span>
+                          <span>₹{(totalPrice - 100).toLocaleString("en-IN")}</span>
+                        </div>
+                        <p className="text-[10px] text-blue-500">
+                          ₹100 advance confirms your booking. 100% refundable on cancellation 24hrs before pickup.
+                        </p>
+                      </div>
+
                       <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex gap-2 text-sm text-amber-800">
                         <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                        <span>Payment will be collected by the driver. A confirmation with driver details will be sent within 4 hours.</span>
+                        <span>Driver details will be shared within 4 hours of booking confirmation.</span>
                       </div>
 
                       <div className="flex items-start gap-3">
@@ -592,7 +692,7 @@ export default function BookingPage() {
                       </Button>
                     ) : (
                       <Button onClick={handleSubmit} disabled={isSubmitting} className="bg-primary gap-2">
-                        {isSubmitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</> : <>Confirm Booking <Check className="w-4 h-4" /></>}
+                        {isSubmitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</> : <>Pay ₹100 & Confirm Booking <Check className="w-4 h-4" /></>}
                       </Button>
                     )}
                   </div>
