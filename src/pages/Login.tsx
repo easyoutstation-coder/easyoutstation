@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { useAuth } from "@/hooks/useAuth";
 import { trpc } from "@/providers/trpc";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Car, ArrowLeft, Shield, Clock, Headphones, Eye, EyeOff } from "lucide-r
 
 export default function Login() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { isAuthenticated, isLoading, refresh } = useAuth();
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [name, setName] = useState("");
@@ -24,10 +25,17 @@ export default function Login() {
     }
   }, [isAuthenticated, isLoading, navigate]);
 
+  const [searchParams] = useSearchParams();
+  const redirectUrl = searchParams.get("redirect");
+
   const loginMutation = trpc.auth.login.useMutation({
     onSuccess: async () => {
       await refresh();
-      navigate("/dashboard");
+      if (redirectUrl) {
+        window.location.href = redirectUrl;
+      } else {
+        navigate("/dashboard");
+      }
     },
     onError: (e) => setError(e.message),
   });
@@ -35,7 +43,11 @@ export default function Login() {
   const signupMutation = trpc.auth.signup.useMutation({
     onSuccess: async () => {
       await refresh();
-      navigate("/dashboard");
+      if (redirectUrl) {
+        window.location.href = redirectUrl;
+      } else {
+        navigate("/dashboard");
+      }
     },
     onError: (e) => setError(e.message),
   });

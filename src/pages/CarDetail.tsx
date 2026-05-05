@@ -277,7 +277,7 @@ export default function CarDetailPage() {
                     <span>₹{minPrice.toLocaleString("en-IN")}</span>
                   </div>
                   <p className="text-xs text-slate-500 bg-slate-800 rounded-lg px-3 py-2">
-                    ✓ Toll included above · Parking charged at actuals only
+                    ✓ Toll included above · If actual toll differs, final bill adjusted accordingly · Parking charged at actuals only
                   </p>
                 </div>
                 <Button

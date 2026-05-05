@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router";
 import { trpc } from "@/providers/trpc";
+import { useAuth } from "@/hooks/useAuth";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import AddressAutocomplete from "@/components/AddressAutocomplete";
@@ -19,7 +20,7 @@ import { format } from "date-fns";
 import {
   User, CreditCard, Check, ArrowRight, ArrowLeft,
   MapPin, CalendarDays, Mail, Users, Shield, Clock,
-  Route, Loader2, AlertCircle,
+  Route, Loader2, AlertCircle, LogIn,
 } from "lucide-react";
 
 const steps = [
@@ -31,6 +32,7 @@ const steps = [
 export default function BookingPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookingComplete, setBookingComplete] = useState(false);
@@ -56,10 +58,10 @@ export default function BookingPage() {
   const [dropLat, setDropLat] = useState<number>();
   const [dropLng, setDropLng] = useState<number>();
 
-  // Customer info
-  const [customerName, setCustomerName] = useState("");
+  // Customer info - pre-filled from auth
+  const [customerName, setCustomerName] = useState(user?.name || "");
   const [customerPhone, setCustomerPhone] = useState("");
-  const [customerEmail, setCustomerEmail] = useState("");
+  const [customerEmail, setCustomerEmail] = useState(user?.email || "");
   const [agreeTerms, setAgreeTerms] = useState(false);
 
   // OTP
@@ -69,13 +71,48 @@ export default function BookingPage() {
   const [otpInput, setOtpInput] = useState("");
   const [otpError, setOtpError] = useState("");
 
-  // Route params
   const carId = parseInt(searchParams.get("carId") || "0");
   const fromCity = searchParams.get("from") || "Delhi";
   const toCity = searchParams.get("to") || "";
   const defaultDistance = parseInt(searchParams.get("distance") || "0");
 
   const { data: car } = trpc.car.getById.useQuery({ id: carId }, { enabled: carId > 0 });
+
+  // Auth gate - must be logged in to book
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <Navbar />
+        <div className="flex items-center justify-center min-h-screen px-4">
+          <div className="max-w-md w-full text-center bg-white rounded-2xl border border-slate-100 shadow-sm p-8">
+            <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <LogIn className="w-8 h-8 text-blue-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-slate-900 font-['Playfair_Display'] mb-2">Sign in to Book</h2>
+            <p className="text-slate-500 mb-6 text-sm">You need an account to complete your booking. It only takes 30 seconds.</p>
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={() => navigate(-1)} className="flex-1">
+                Go Back
+              </Button>
+              <Button onClick={() => navigate(`/login?redirect=${encodeURIComponent(window.location.href)}`)}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">
+                Sign In / Sign Up
+              </Button>
+            </div>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   // Distance calculation
   const { distanceKm, durationText, isLoading: isCalcDistance, calculateDistance } = useDistanceCalculator();
@@ -87,17 +124,18 @@ export default function BookingPage() {
 
   // Trip type pricing logic
   const tripDays = tripType === "multi_day" && returnDate && pickupDate
-    ? Math.max(1, Math.ceil((returnDate.getTime() - pickupDate.getTime()) / (1000 * 60 * 60 * 24)))
+    ? Math.max(2, Math.ceil((returnDate.getTime() - pickupDate.getTime()) / (1000 * 60 * 60 * 24)))
+    : tripType === "round_trip" ? 2  // Round trip always minimum 2 driver days
     : 1;
 
   const totalKmForTrip = tripType === "round_trip"
-    ? finalDistance * 2   // Round trip = double distance
+    ? finalDistance * 2
     : tripType === "multi_day"
-    ? finalDistance * tripDays  // Multi day = distance × days
-    : finalDistance;      // One way = single distance
+    ? finalDistance * tripDays
+    : finalDistance;
 
   const basePrice = pricePerKm * totalKmForTrip;
-  const totalDriverCharges = driverChargePerDay * (tripType === "one_way" ? 1 : tripDays);
+  const totalDriverCharges = driverChargePerDay * tripDays;
 
   // Toll charges based on known routes (approximate actuals)
   const tollCharges = (() => {
@@ -515,7 +553,9 @@ export default function BookingPage() {
                         </div>
                         <Separator />
                         <div className="flex justify-between font-bold text-base"><span>Total Fare</span><span className="text-primary">₹{totalPrice.toLocaleString("en-IN")}</span></div>
-                        <p className="text-[10px] text-muted-foreground">Parking charges paid at actuals. No other hidden fees.</p>
+                        <p className="text-[10px] text-muted-foreground bg-slate-50 rounded-lg px-3 py-2">
+                          ⚠️ Toll shown is estimated. If actual toll differs, the final bill will be adjusted accordingly. Parking charges are paid at actuals. No other hidden fees.
+                        </p>
                       </div>
 
                       <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
