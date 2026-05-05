@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { MapPin, CalendarDays, Users, ArrowRight, MessageCircle, Shield, Clock, CheckCircle, Loader2, AlertCircle, Route, History } from "lucide-react";
+import { MapPin, CalendarDays, Users, ArrowRight, Shield, Clock, CheckCircle, Loader2, AlertCircle, Route, History } from "lucide-react";
 import { saveRecentSearch, getRecentSearches, type RecentSearch } from "@/hooks/useRecentSearches";
 
 // 9 anchor cities with coordinates for 100km radius restriction
@@ -285,13 +285,6 @@ export default function HeroSection() {
                 className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-7 h-12 gap-2 shadow-lg shadow-blue-900/30">
                 See Available Cars <ArrowRight className="w-4 h-4" />
               </Button>
-              <a href="https://wa.me/919958556011?text=Hi%2C%20I%20want%20to%20book%20a%20cab%20from%20Delhi" target="_blank" rel="noopener noreferrer">
-                <Button size="lg" variant="outline"
-                  className="border-white/30 text-white hover:bg-white/10 h-12 px-6 gap-2 backdrop-blur-sm">
-                  <MessageCircle className="w-4 h-4 text-green-400" />
-                  WhatsApp Us
-                </Button>
-              </a>
             </div>
             <div className="flex gap-8 pt-4 border-t border-white/10">
               {[{ num: "15K+", label: "Happy Travelers" }, { num: "4.9★", label: "Average Rating" }, { num: "8+", label: "Premium Cars" }].map((s, i) => (

@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Menu, User, LogOut, Car, ChevronDown, History, LayoutDashboard, MessageCircle } from "lucide-react";
+import { Menu, User, LogOut, Car, ChevronDown, History, LayoutDashboard } from "lucide-react";
 
 const navLinks = [
   { label: "Home", href: "/" },
@@ -69,16 +69,6 @@ export default function Navbar() {
 
           {/* Right */}
           <div className="hidden lg:flex items-center gap-3">
-            <a href="https://wa.me/919958556011?text=Hi%2C%20I%20want%20to%20book%20a%20cab"
-              target="_blank" rel="noopener noreferrer"
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                isLight
-                  ? "text-green-700 hover:bg-green-50 border border-green-200"
-                  : "text-white/90 hover:text-white border border-white/20 hover:border-white/40"
-              }`}>
-              <MessageCircle className="w-4 h-4" />
-              WhatsApp
-            </a>
 
             {isAuthenticated ? (
               <DropdownMenu>
@@ -114,12 +104,6 @@ export default function Navbar() {
 
           {/* Mobile */}
           <div className="flex lg:hidden items-center gap-2">
-            <a href="https://wa.me/919958556011" target="_blank" rel="noopener noreferrer"
-              className={`w-9 h-9 rounded-lg flex items-center justify-center ${
-                isLight ? "bg-green-50 border border-green-200 text-green-700" : "bg-white/10 text-white"
-              }`}>
-              <MessageCircle className="w-4 h-4" />
-            </a>
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon"
