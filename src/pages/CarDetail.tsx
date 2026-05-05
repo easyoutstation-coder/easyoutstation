@@ -78,8 +78,25 @@ export default function CarDetailPage() {
 
   const fromCity = searchParams.get("from") || "Delhi";
   const toCity = searchParams.get("to") || "Manali";
-  const distance = 540; // Default Delhi-Manali
-  const estimatedPrice = parseFloat(displayCar.pricePerKm) * distance;
+  const distance = parseInt(searchParams.get("distance") || "540");
+
+  // Toll charges per route
+  const tollCharges = (() => {
+    const route = `${fromCity}-${toCity}`.toLowerCase();
+    const tolls: Record<string, number> = {
+      "delhi-manali": 850, "delhi-shimla": 650, "delhi-chandigarh": 380,
+      "delhi-dehradun": 420, "delhi-rishikesh": 450, "delhi-haridwar": 430,
+      "delhi-jaipur": 350, "delhi-agra": 290,
+    };
+    const key = Object.keys(tolls).find(k =>
+      route.includes(k.split("-")[0]) && route.includes(k.split("-")[1])
+    );
+    return key ? tolls[key] : Math.round(distance * 1.2);
+  })();
+
+  const driverCharge = parseFloat(displayCar.driverCharges || "400");
+  const estimatedPrice = parseFloat(displayCar.pricePerKm) * distance + driverCharge + tollCharges;
+  const minPrice = parseFloat(displayCar.pricePerKm) * 250 + driverCharge;
   const driverCost = parseFloat(displayCar.driverCharges);
   const minKm = displayCar.minKmPerDay;
   const minPrice = parseFloat(displayCar.pricePerKm) * minKm + driverCost;
@@ -238,16 +255,29 @@ export default function CarDetailPage() {
                     <span>{displayCar.minKmPerDay} km</span>
                   </div>
                   <Separator className="bg-slate-700" />
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-400">Distance fare ({distance} km × ₹{displayCar.pricePerKm})</span>
+                    <span>₹{(parseFloat(displayCar.pricePerKm) * distance).toLocaleString("en-IN")}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-400">Driver charges</span>
+                    <span>₹{driverCharge}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-400">Toll ({fromCity}→{toCity})</span>
+                    <span>₹{tollCharges}</span>
+                  </div>
+                  <Separator className="bg-slate-700" />
                   <div className="flex justify-between text-base">
-                    <span className="text-slate-400">Estimated for {distance} km</span>
-                    <span className="font-bold text-primary">₹{estimatedPrice.toLocaleString()}</span>
+                    <span className="text-slate-300 font-medium">Total Estimate</span>
+                    <span className="font-bold text-blue-400">₹{estimatedPrice.toLocaleString("en-IN")}</span>
                   </div>
                   <div className="flex justify-between text-xs text-slate-500">
                     <span>Minimum charge (250 km)</span>
-                    <span>₹{minPrice.toLocaleString()}</span>
+                    <span>₹{minPrice.toLocaleString("en-IN")}</span>
                   </div>
-                  <p className="text-xs text-slate-500">
-                    * Extra charges: Road tax, toll, parking as applicable
+                  <p className="text-xs text-slate-500 bg-slate-800 rounded-lg px-3 py-2">
+                    ✓ Toll included above · Parking charged at actuals only
                   </p>
                 </div>
                 <Button
