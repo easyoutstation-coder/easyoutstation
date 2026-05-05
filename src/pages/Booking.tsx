@@ -87,7 +87,39 @@ export default function BookingPage() {
 
   const { data: car } = trpc.car.getById.useQuery({ id: carId }, { enabled: carId > 0 });
 
-  // Auth gate - must be logged in to book
+  // ALL hooks must be before any conditional returns (React rules of hooks)
+  const { distanceKm, durationText, isLoading: isCalcDistance, calculateDistance } = useDistanceCalculator();
+  const [manualDistance, setManualDistance] = useState(defaultDistance);
+
+  const sendOtpMutation = trpc.sms.sendOtp.useMutation({
+    onSuccess: () => { setOtpSent(true); setOtpError(""); },
+    onError: (e) => setOtpError(e.message),
+  });
+
+  const verifyOtpMutation = trpc.sms.verifyOtp.useMutation({
+    onSuccess: () => { setOtpVerified(true); setOtpError(""); },
+    onError: () => setOtpError("Invalid OTP. Please check and try again."),
+  });
+
+  const createBookingMutation = trpc.booking.create.useMutation();
+  const createOrderMutation = trpc.payment.createOrder.useMutation();
+  const verifyPaymentMutation = trpc.payment.verifyPayment.useMutation();
+
+  useEffect(() => {
+    if (pickupLat && pickupLng && dropLat && dropLng) {
+      calculateDistance(pickupLat, pickupLng, dropLat, dropLng);
+    }
+  }, [pickupLat, pickupLng, dropLat, dropLng]);
+
+  useEffect(() => {
+    if (!dropAddress) {
+      if (paramToFull) setDropAddress(paramToFull);
+      else if (toCity) setDropAddress(toCity + ", India");
+    }
+    if (!pickupAddress && paramFromFull) setPickupAddress(paramFromFull);
+  }, [toCity, paramToFull, paramFromFull]);
+
+  // Auth gate - must be logged in to book (after all hooks)
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -108,9 +140,7 @@ export default function BookingPage() {
             <h2 className="text-2xl font-bold text-slate-900 font-['Playfair_Display'] mb-2">Sign in to Book</h2>
             <p className="text-slate-500 mb-6 text-sm">You need an account to complete your booking. It only takes 30 seconds.</p>
             <div className="flex gap-3">
-              <Button variant="outline" onClick={() => navigate(-1)} className="flex-1">
-                Go Back
-              </Button>
+              <Button variant="outline" onClick={() => navigate(-1)} className="flex-1">Go Back</Button>
               <Button onClick={() => navigate(`/login?redirect=${encodeURIComponent(window.location.href)}`)}
                 className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">
                 Sign In / Sign Up
@@ -123,30 +153,21 @@ export default function BookingPage() {
     );
   }
 
-  // Distance calculation
-  const { distanceKm, durationText, isLoading: isCalcDistance, calculateDistance } = useDistanceCalculator();
-  const [manualDistance, setManualDistance] = useState(defaultDistance);
+  // Derived values (after auth gate)
   const finalDistance = distanceKm || manualDistance;
-
   const pricePerKm = parseFloat(car?.pricePerKm || "20");
   const driverChargePerDay = parseFloat(car?.driverCharges || "400");
 
-  // Trip type pricing logic
   const tripDays = tripType === "multi_day" && returnDate && pickupDate
     ? Math.max(2, Math.ceil((returnDate.getTime() - pickupDate.getTime()) / (1000 * 60 * 60 * 24)))
-    : tripType === "round_trip" ? 2  // Round trip always minimum 2 driver days
-    : 1;
+    : tripType === "round_trip" ? 2 : 1;
 
-  const totalKmForTrip = tripType === "round_trip"
-    ? finalDistance * 2
-    : tripType === "multi_day"
-    ? finalDistance * tripDays
-    : finalDistance;
+  const totalKmForTrip = tripType === "round_trip" ? finalDistance * 2
+    : tripType === "multi_day" ? finalDistance * tripDays : finalDistance;
 
   const basePrice = pricePerKm * totalKmForTrip;
   const totalDriverCharges = driverChargePerDay * tripDays;
 
-  // Toll charges based on known routes (approximate actuals)
   const tollCharges = (() => {
     const route = `${fromCity}-${toCity}`.toLowerCase();
     const tolls: Record<string, number> = {
@@ -157,49 +178,11 @@ export default function BookingPage() {
     const key = Object.keys(tolls).find(k =>
       route.includes(k.split("-")[0]) && route.includes(k.split("-")[1])
     );
-    const oneway = key ? tolls[key] : Math.round(finalDistance * 1.2); // ~₹1.2/km estimate
+    const oneway = key ? tolls[key] : Math.round(finalDistance * 1.2);
     return tripType === "round_trip" ? oneway * 2 : oneway;
   })();
 
   const totalPrice = basePrice + totalDriverCharges + tollCharges;
-
-  // Auto-calculate distance when both locations are selected
-  useEffect(() => {
-    if (pickupLat && pickupLng && dropLat && dropLng) {
-      calculateDistance(pickupLat, pickupLng, dropLat, dropLng);
-    }
-  }, [pickupLat, pickupLng, dropLat, dropLng]);
-
-  // Pre-fill drop address from route — use full address if available, else city name
-  useEffect(() => {
-    if (!dropAddress) {
-      if (paramToFull) {
-        setDropAddress(paramToFull);
-      } else if (toCity) {
-        setDropAddress(toCity + ", India");
-      }
-    }
-    if (!pickupAddress && paramFromFull) {
-      setPickupAddress(paramFromFull);
-    }
-  }, [toCity, paramToFull, paramFromFull]);
-
-  // OTP via MSG91 Widget
-  const sendOtpMutation = trpc.sms.sendOtp.useMutation({
-    onSuccess: () => {
-      setOtpSent(true);
-      setOtpError("");
-    },
-    onError: (e) => setOtpError(e.message),
-  });
-
-  const verifyOtpMutation = trpc.sms.verifyOtp.useMutation({
-    onSuccess: () => {
-      setOtpVerified(true);
-      setOtpError("");
-    },
-    onError: () => setOtpError("Invalid OTP. Please check and try again."),
-  });
 
   const sendOtp = () => {
     if (!customerPhone || customerPhone.length !== 10) {
@@ -239,18 +222,13 @@ export default function BookingPage() {
     if (currentStep > 1) setCurrentStep(currentStep - 1);
   };
 
-  const createBooking = trpc.booking.create.useMutation();
-
-  const createOrderMutation = trpc.payment.createOrder.useMutation();
-  const verifyPaymentMutation = trpc.payment.verifyPayment.useMutation();
-
   const handleSubmit = async () => {
     if (!agreeTerms) { alert("Please agree to the terms and conditions"); return; }
     setIsSubmitting(true);
 
     try {
       // Step 1: Create booking first to get bookingId
-      const bookingResult = await createBooking.mutateAsync({
+      const bookingResult = await createBookingMutation.mutateAsync({
         carId,
         fromCity: fromCity || pickupAddress.split(",")[0],
         toCity: toCity || dropAddress.split(",")[0],
