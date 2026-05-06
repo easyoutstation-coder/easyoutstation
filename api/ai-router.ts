@@ -18,7 +18,7 @@ function getRuleBasedResponse(msg: string): string {
 
   // Booking
   if (msg.match(/book|reserve|hire|rent|how to book|booking process|steps/)) {
-    return `Booking with EasyOutstation is simple:\n\n1️⃣ Browse available cars\n2️⃣ Select your route & travel date\n3️⃣ Fill in your details\n4️⃣ Confirm your booking\n\nYou will receive a booking confirmation email within 60 minutes with your driver details. Pay just ₹100 advance to confirm. Click **Book Now** on any car to get started! 🚀`;
+    return `Booking with EasyOutstation is simple:\n\n1️⃣ Browse available cars\n2️⃣ Select your route & travel date\n3️⃣ Fill in your details\n4️⃣ Confirm your booking\n\nYou will receive a booking confirmation email within 60 minutes with your driver details. Pay just 10% advance to confirm your booking. Click **Book Now** on any car to get started! 🚀`;
   }
 
   // Manali
@@ -73,7 +73,7 @@ function getRuleBasedResponse(msg: string): string {
 
   // Payment
   if (msg.match(/pay|payment|upi|gpay|card|cash|advance|online payment/)) {
-    return `Payment options:\n\n💳 Credit/Debit Cards\n🏦 Net Banking\n📱 UPI (GPay, PhonePe, Paytm)\n💵 Cash to driver (advance required)\n\nA ₹100 advance confirms your booking via Razorpay (UPI, cards, netbanking). The balance amount is paid directly to the driver at pickup.`;
+    return `Payment options:\n\n💳 Credit/Debit Cards\n🏦 Net Banking\n📱 UPI (GPay, PhonePe, Paytm)\n💵 Cash to driver (advance required)\n\nA 10% advance confirms your booking via Razorpay (UPI, cards, netbanking). The balance amount is paid directly to the driver at pickup.`;
   }
 
   // Insurance / Safety

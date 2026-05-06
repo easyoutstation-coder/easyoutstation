@@ -240,10 +240,11 @@ export default function BookingPage() {
       });
 
       const bookingId = bookingResult.bookingId;
+      const advanceAmount = Math.max(100, Math.round(totalPrice * 0.1));
 
-      // Step 2: Try to create Razorpay order for ₹100 advance
+      // Step 2: Try to create Razorpay order for 10% advance
       try {
-        const order = await createOrderMutation.mutateAsync({ bookingId });
+        const order = await createOrderMutation.mutateAsync({ bookingId, totalPrice });
 
         // Step 3: Open Razorpay checkout
         const razorpayOptions = {
@@ -334,14 +335,14 @@ export default function BookingPage() {
               <p className="text-muted-foreground mb-2">Booking ID: <span className="font-bold text-primary">#{bookingId}</span></p>
               {advancePaid && (
                 <div className="inline-flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 text-sm font-medium px-4 py-2 rounded-full mb-3">
-                  <Check className="w-4 h-4" /> ₹100 Advance Paid Successfully
+                  <Check className="w-4 h-4" /> Advance Paid Successfully
                 </div>
               )}
               <p className="text-sm text-muted-foreground mb-4">
                 A confirmation email has been sent to <strong>{customerEmail}</strong>.<br />
                 Driver details will be shared within <strong>60 minutes</strong>.<br />
                 {advancePaid
-                  ? <>Balance of <strong>₹{(totalPrice - 100).toLocaleString("en-IN")}</strong> payable to driver at pickup.</>
+                  ? <>Balance of <strong>₹{(totalPrice - advanceAmount).toLocaleString("en-IN")}</strong> payable to driver at pickup.</>
                   : <>Full amount of <strong>₹{totalPrice.toLocaleString("en-IN")}</strong> payable to driver at pickup.</>
                 }
               </p>
@@ -714,15 +715,15 @@ export default function BookingPage() {
 
                       <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-semibold text-blue-800">Advance Payment (Now)</span>
-                          <span className="text-lg font-bold text-blue-700">₹100</span>
+                          <span className="text-sm font-semibold text-blue-800">Advance Payment Now (10%)</span>
+                          <span className="text-lg font-bold text-blue-700">₹{Math.max(100, Math.round(totalPrice * 0.1)).toLocaleString("en-IN")}</span>
                         </div>
                         <div className="flex items-center justify-between text-sm text-blue-600">
                           <span>Balance Payment (To driver at pickup)</span>
-                          <span>₹{(totalPrice - 100).toLocaleString("en-IN")}</span>
+                          <span>₹{(totalPrice - Math.max(100, Math.round(totalPrice * 0.1))).toLocaleString("en-IN")}</span>
                         </div>
                         <p className="text-[10px] text-blue-500">
-                          ₹100 advance confirms your booking. 100% refundable on cancellation 24hrs before pickup.
+                          10% advance confirms your booking. 100% refundable on cancellation 24hrs before pickup.
                         </p>
                       </div>
 
@@ -751,7 +752,7 @@ export default function BookingPage() {
                       </Button>
                     ) : (
                       <Button onClick={handleSubmit} disabled={isSubmitting} className="bg-primary gap-2">
-                        {isSubmitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</> : <>Pay ₹100 & Confirm Booking <Check className="w-4 h-4" /></>}
+                        {isSubmitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</> : <>Pay ₹{Math.max(100, Math.round(totalPrice * 0.1)).toLocaleString("en-IN")} & Confirm Booking <Check className="w-4 h-4" /></>}
                       </Button>
                     )}
                   </div>

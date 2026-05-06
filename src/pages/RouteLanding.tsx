@@ -187,7 +187,7 @@ export default function RouteLanding() {
               {[...data.highlights,
                 "Driver details shared within 60 minutes",
                 "Free cancellation 24 hours before pickup",
-                "Pay just ₹100 to confirm booking",
+                "Pay just 10% advance to confirm booking",
                 "24/7 customer support on WhatsApp"
               ].map((h, i) => (
                 <div key={i} className="flex items-start gap-3 bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
@@ -219,7 +219,7 @@ export default function RouteLanding() {
         {/* CTA */}
         <div className="bg-blue-600 py-12 px-4 text-center text-white">
           <h2 className="text-2xl font-bold font-['Playfair_Display'] mb-3">Ready to Book Your {data.from} to {data.to} Cab?</h2>
-          <p className="text-blue-100 mb-6">Confirm with just ₹100. Driver details within 60 minutes.</p>
+          <p className="text-blue-100 mb-6">Confirm with just 10% advance. Driver details within 60 minutes.</p>
           <Button size="lg" onClick={() => navigate(`/cars?from=${data.from}&to=${data.to}&distance=${data.distance}`)}
             className="bg-white text-blue-700 hover:bg-blue-50 px-8 h-12 text-base gap-2 font-semibold">
             Book Now — From ₹{data.fare.min.toLocaleString("en-IN")} <ArrowRight className="w-4 h-4" />
