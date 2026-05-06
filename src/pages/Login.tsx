@@ -7,48 +7,51 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Car, ArrowLeft, Shield, Clock, Headphones, Eye, EyeOff } from "lucide-react";
+import FirebaseOTP from "@/components/FirebaseOTP";
 
 export default function Login() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { isAuthenticated, isLoading, refresh } = useAuth();
-  const [mode, setMode] = useState<"login" | "signup">("login");
+  const { isAuthenticated, isLoading } = useAuth();
+
+  const [phone, setPhone] = useState("");
+  const [phoneVerified, setPhoneVerified] = useState(false);
+
+  const [showEmailForm, setShowEmailForm] = useState(false);
+  const [emailMode, setEmailMode] = useState<"login" | "signup">("login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (!isLoading && isAuthenticated) {
-      navigate("/dashboard");
-    }
-  }, [isAuthenticated, isLoading, navigate]);
+  const [error, setError] = useState("");
 
   const redirectUrl = searchParams.get("redirect");
 
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) navigate("/dashboard");
+  }, [isAuthenticated, isLoading, navigate]);
+
+  const loginWithPhoneMutation = trpc.auth.loginWithPhone.useMutation({
+    onSuccess: () => { window.location.href = redirectUrl || "/dashboard"; },
+    onError: (e) => setError(e.message),
+  });
+
   const loginMutation = trpc.auth.login.useMutation({
-    onSuccess: () => {
-      // Hard redirect — browser will pick up fresh auth cookie
-      if (redirectUrl) {
-        window.location.href = redirectUrl;
-      } else {
-        window.location.href = "/dashboard";
-      }
-    },
+    onSuccess: () => { window.location.href = redirectUrl || "/dashboard"; },
     onError: (e) => setError(e.message),
   });
 
   const signupMutation = trpc.auth.signup.useMutation({
-    onSuccess: () => {
-      if (redirectUrl) {
-        window.location.href = redirectUrl;
-      } else {
-        window.location.href = "/dashboard";
-      }
-    },
+    onSuccess: () => { window.location.href = redirectUrl || "/dashboard"; },
     onError: (e) => setError(e.message),
   });
+
+  useEffect(() => {
+    if (phoneVerified) {
+      loginWithPhoneMutation.mutate({ phone });
+    }
+  }, [phoneVerified]);
 
   if (isLoading) {
     return (
@@ -60,9 +63,9 @@ export default function Login() {
 
   if (isAuthenticated) return null;
 
-  const handleSubmit = () => {
+  const handleEmailSubmit = () => {
     setError("");
-    if (mode === "login") {
+    if (emailMode === "login") {
       loginMutation.mutate({ email, password });
     } else {
       if (!name.trim()) { setError("Please enter your name."); return; }
@@ -70,7 +73,7 @@ export default function Login() {
     }
   };
 
-  const isPending = loginMutation.isPending || signupMutation.isPending;
+  const isPending = loginWithPhoneMutation.isPending || loginMutation.isPending || signupMutation.isPending;
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
@@ -90,97 +93,142 @@ export default function Login() {
                 <Car className="w-8 h-8 text-primary" />
               </div>
               <h1 className="text-2xl font-bold font-['Playfair_Display']">
-                {mode === "login" ? "Welcome Back" : "Create Account"}
+                {showEmailForm ? (emailMode === "login" ? "Welcome Back" : "Create Account") : "Login / Sign Up"}
               </h1>
               <p className="text-sm text-muted-foreground mt-1">
-                {mode === "login" ? "Sign in to manage your bookings" : "Join EasyOutstation today"}
+                {showEmailForm ? "Use your email and password" : "Enter your mobile number to get OTP"}
               </p>
             </div>
 
-            <div className="space-y-4">
-              {mode === "signup" && (
+            {!showEmailForm ? (
+              <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <Label>Full Name</Label>
-                  <Input
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Enter your full name"
-                  />
+                  <Label>Mobile Number</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-medium select-none">+91</span>
+                    <Input
+                      type="tel"
+                      inputMode="numeric"
+                      value={phone}
+                      onChange={(e) => {
+                        setPhone(e.target.value.replace(/\D/g, "").slice(0, 10));
+                        setPhoneVerified(false);
+                      }}
+                      placeholder="10-digit mobile number"
+                      className="pl-12 h-12 text-base tracking-wide"
+                      disabled={phoneVerified}
+                      autoFocus
+                    />
+                  </div>
                 </div>
-              )}
 
-              <div className="space-y-1.5">
-                <Label>Email Address</Label>
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="your@email.com"
-                  onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+                <FirebaseOTP
+                  phone={phone}
+                  onVerified={() => setPhoneVerified(true)}
+                  onError={(msg) => setError(msg)}
                 />
-              </div>
 
-              <div className="space-y-1.5">
-                <Label>Password</Label>
-                <div className="relative">
-                  <Input
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder={mode === "signup" ? "Minimum 6 characters" : "Enter your password"}
-                    className="pr-10"
-                    onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-
-              {error && (
-                <div className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-lg">
-                  {error}
-                </div>
-              )}
-
-              <Button
-                onClick={handleSubmit}
-                disabled={isPending}
-                className="w-full h-12 bg-primary hover:bg-primary/90 text-white text-base"
-              >
-                {isPending ? "Please wait..." : mode === "login" ? "Sign In" : "Create Account"}
-              </Button>
-
-              <div className="text-center text-sm text-muted-foreground">
-                {mode === "login" ? (
-                  <>Don't have an account?{" "}
-                    <button onClick={() => { setMode("signup"); setError(""); }} className="text-primary font-medium hover:underline">
-                      Sign up
-                    </button>
-                  </>
-                ) : (
-                  <>Already have an account?{" "}
-                    <button onClick={() => { setMode("login"); setError(""); }} className="text-primary font-medium hover:underline">
-                      Sign in
-                    </button>
-                  </>
+                {error && (
+                  <div className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-lg">{error}</div>
                 )}
+
+                {isPending && (
+                  <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground py-1">
+                    <div className="animate-spin w-4 h-4 border-2 border-primary border-t-transparent rounded-full" />
+                    Signing you in...
+                  </div>
+                )}
+
+                <div className="relative flex items-center gap-3 py-1">
+                  <div className="flex-1 border-t border-muted" />
+                  <span className="text-xs text-muted-foreground">or</span>
+                  <div className="flex-1 border-t border-muted" />
+                </div>
+
+                <button
+                  onClick={() => { setShowEmailForm(true); setError(""); }}
+                  className="w-full text-sm text-muted-foreground hover:text-foreground text-center py-1 transition-colors"
+                >
+                  Sign in with email & password
+                </button>
               </div>
-            </div>
+            ) : (
+              <div className="space-y-4">
+                {emailMode === "signup" && (
+                  <div className="space-y-1.5">
+                    <Label>Full Name</Label>
+                    <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter your full name" />
+                  </div>
+                )}
+                <div className="space-y-1.5">
+                  <Label>Email Address</Label>
+                  <Input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="your@email.com"
+                    onKeyDown={(e) => e.key === "Enter" && handleEmailSubmit()}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Password</Label>
+                  <div className="relative">
+                    <Input
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder={emailMode === "signup" ? "Minimum 6 characters" : "Enter your password"}
+                      className="pr-10"
+                      onKeyDown={(e) => e.key === "Enter" && handleEmailSubmit()}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {error && (
+                  <div className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-lg">{error}</div>
+                )}
+
+                <Button onClick={handleEmailSubmit} disabled={isPending} className="w-full h-12 text-base">
+                  {isPending ? "Please wait..." : emailMode === "login" ? "Sign In" : "Create Account"}
+                </Button>
+
+                <div className="text-center text-sm text-muted-foreground">
+                  {emailMode === "login" ? (
+                    <>Don't have an account?{" "}
+                      <button onClick={() => { setEmailMode("signup"); setError(""); }} className="text-primary font-medium hover:underline">Sign up</button>
+                    </>
+                  ) : (
+                    <>Already have an account?{" "}
+                      <button onClick={() => { setEmailMode("login"); setError(""); }} className="text-primary font-medium hover:underline">Sign in</button>
+                    </>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => { setShowEmailForm(false); setError(""); }}
+                  className="w-full text-sm text-primary hover:underline text-center"
+                >
+                  ← Use mobile OTP instead
+                </button>
+              </div>
+            )}
 
             <div className="mt-6 pt-6 border-t">
               <div className="grid grid-cols-3 gap-3">
                 <div className="text-center">
                   <Shield className="w-5 h-5 text-primary mx-auto mb-1" />
-                  <div className="text-xs text-muted-foreground">Secure Bookings</div>
+                  <div className="text-xs text-muted-foreground">Secure Login</div>
                 </div>
                 <div className="text-center">
                   <Clock className="w-5 h-5 text-primary mx-auto mb-1" />
-                  <div className="text-xs text-muted-foreground">Quick Checkout</div>
+                  <div className="text-xs text-muted-foreground">30-sec OTP</div>
                 </div>
                 <div className="text-center">
                   <Headphones className="w-5 h-5 text-primary mx-auto mb-1" />

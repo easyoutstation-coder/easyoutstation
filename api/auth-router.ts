@@ -9,6 +9,7 @@ import { eq } from "drizzle-orm";
 import { signSessionToken } from "./kimi/session";
 import { nanoid } from "nanoid";
 
+
 async function hashPassword(password: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(password + (process.env.PASSWORD_SALT || "easyoutstation_salt"));
@@ -68,6 +69,35 @@ export const authRouter = createRouter({
       if (user.passwordHash !== passwordHash) throw new Error("Invalid email or password.");
 
       await db.update(users).set({ lastSignInAt: new Date() }).where(eq(users.id, user.id));
+
+      const token = await signSessionToken({ unionId: user.unionId, clientId: "easyoutstation" });
+      const cookieOpts = getSessionCookieOptions(ctx.req.headers);
+      ctx.resHeaders.append("set-cookie", cookie.serialize(Session.cookieName, token, {
+        httpOnly: cookieOpts.httpOnly,
+        path: cookieOpts.path,
+        sameSite: (cookieOpts.sameSite?.toLowerCase() as "lax" | "none") ?? "lax",
+        secure: cookieOpts.secure,
+        maxAge: Session.maxAgeMs / 1000,
+      }));
+      return { success: true };
+    }),
+
+  loginWithPhone: publicQuery
+    .input(z.object({ phone: z.string().min(10).max(15) }))
+    .mutation(async ({ input, ctx }) => {
+      // Firebase OTP is verified client-side before this is called
+      const db = getDb();
+      let userRows = await db.select().from(users).where(eq(users.phone, input.phone)).limit(1);
+      let user = userRows[0];
+
+      if (!user) {
+        const unionId = nanoid();
+        await db.insert(users).values({ unionId, phone: input.phone, role: "user", lastSignInAt: new Date() });
+        userRows = await db.select().from(users).where(eq(users.phone, input.phone)).limit(1);
+        user = userRows[0];
+      } else {
+        await db.update(users).set({ lastSignInAt: new Date() }).where(eq(users.id, user.id));
+      }
 
       const token = await signSessionToken({ unionId: user.unionId, clientId: "easyoutstation" });
       const cookieOpts = getSessionCookieOptions(ctx.req.headers);
