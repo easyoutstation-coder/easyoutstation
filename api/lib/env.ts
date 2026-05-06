@@ -16,7 +16,6 @@ export const env = {
   databaseUrl: required("DATABASE_URL"),
   jwtSecret: process.env.JWT_SECRET || "easyoutstation_jwt_secret_change_in_prod",
   passwordSalt: process.env.PASSWORD_SALT || "easyoutstation_salt",
-  // Legacy - kept to avoid breaking imports
   appId: process.env.APP_ID ?? "",
   appSecret: process.env.APP_SECRET ?? "",
   kimiAuthUrl: process.env.KIMI_AUTH_URL ?? "",
