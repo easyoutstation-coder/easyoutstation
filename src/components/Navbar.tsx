@@ -77,7 +77,7 @@ export default function Navbar() {
                     <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
                       <User className="w-4 h-4 text-blue-700" />
                     </div>
-                    <span className="text-sm">{user?.name?.split(" ")[0]}</span>
+                    <span className="text-sm">{user?.name?.split(" ")[0] || "Guest"}</span>
                     <ChevronDown className="w-4 h-4 opacity-60" />
                   </Button>
                 </DropdownMenuTrigger>
