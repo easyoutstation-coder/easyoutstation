@@ -157,8 +157,8 @@
     <style>
       body { -webkit-user-select: none; -moz-user-select: none; user-select: none; }
       input, textarea, [contenteditable] { -webkit-user-select: text; -moz-user-select: text; user-select: text; }
-      img { -webkit-user-drag: none; user-drag: none; pointer-events: none; }
-      a img, button img { pointer-events: auto; }
+      img { -webkit-user-drag: none; user-drag: none; }
+      a img, button img, a *, button *, [role="button"] *, .cursor-pointer * { pointer-events: auto; }
     </style>
   </head>
   <body>
@@ -229,14 +229,13 @@
         -ms-user-select: text;
         user-select: text;
       }
-      /* Disable image dragging */
+      /* Disable image dragging only */
       img {
         -webkit-user-drag: none;
         user-drag: none;
-        pointer-events: none;
       }
-      /* Re-enable pointer events for clickable images */
-      a img, button img {
+      /* Ensure all children of clickable elements work on mobile */
+      a *, button *, [role="button"] *, .cursor-pointer * {
         pointer-events: auto;
       }
     </style>

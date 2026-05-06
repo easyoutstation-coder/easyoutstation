@@ -111,8 +111,8 @@ export default function FirebaseOTP({ phone, onVerified, onError }: FirebaseOTPP
 
   return (
     <div className="space-y-3">
-      {/* Invisible recaptcha container */}
-      <div id="recaptcha-container" ref={recaptchaContainerRef} />
+      {/* Invisible recaptcha container - must be in DOM */}
+      <div id="recaptcha-container" ref={recaptchaContainerRef} style={{ position: "absolute", bottom: 0, left: 0, zIndex: -1 }} />
 
       {!otpSent ? (
         <Button

@@ -116,8 +116,9 @@ export default function BookingPage() {
   }, [tripType, pickupDate, pickupTime, passengerCount, pickupAddress, pickupPincode, dropAddress, dropPincode, currentStep, bookingComplete]);
 
   // Auth gate - AFTER all hooks
-  // Show spinner max 3 seconds, then proceed
-  if (authLoading) {
+  // Only show spinner on FIRST load (no cached data)
+  // If we have cached data, show page immediately
+  if (authLoading && !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center">
