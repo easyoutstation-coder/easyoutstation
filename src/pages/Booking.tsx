@@ -195,44 +195,51 @@ export default function BookingPage() {
               </div>
 
               <div className="space-y-4">
+
                 {/* Name */}
-                <div>
+                <div className="space-y-1.5">
                   <Label className="text-sm font-medium text-slate-700">Full Name *</Label>
-                  <div className="relative mt-1">
+                  <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <Input value={quickName} onChange={e => setQuickName(e.target.value)}
                       placeholder="Your full name" className="pl-10" disabled={quickOtpVerified} />
                   </div>
                 </div>
 
-                {/* Phone + OTP */}
-                <div>
+                {/* Phone */}
+                <div className="space-y-1.5">
                   <Label className="text-sm font-medium text-slate-700">Mobile Number *</Label>
-                  <div className="flex gap-2 mt-1">
-                    <div className="relative flex-1">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-500">+91</span>
-                      <Input value={quickPhone} onChange={e => { setQuickPhone(e.target.value.replace(/\D/g, "").slice(0, 10)); setQuickOtpSent(false); setQuickOtpVerified(false); }}
-                        placeholder="10-digit number" className="pl-12" disabled={quickOtpVerified} />
-                    </div>
-                    {!quickOtpVerified && (
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-500 font-medium">+91</span>
+                    <Input value={quickPhone}
+                      onChange={e => { setQuickPhone(e.target.value.replace(/\D/g, "").slice(0, 10)); setQuickOtpVerified(false); }}
+                      placeholder="10-digit mobile number" className="pl-12"
+                      disabled={quickOtpVerified} maxLength={10} />
+                    {quickOtpVerified && (
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-green-600 text-xs font-medium">
+                        <Check className="w-3.5 h-3.5" /> Verified
+                      </span>
+                    )}
+                  </div>
+                  {/* OTP section below phone */}
+                  {!quickOtpVerified && quickPhone.length === 10 && (
+                    <div className="pt-1">
                       <FirebaseOTP
                         phone={quickPhone}
                         onVerified={() => { setQuickOtpVerified(true); setQuickError(""); }}
                         onError={msg => setQuickError(msg)}
                       />
-                    )}
-                    {quickOtpVerified && (
-                      <span className="flex items-center gap-1 text-green-600 text-sm font-medium px-2 shrink-0">
-                        <Check className="w-4 h-4" /> Verified
-                      </span>
-                    )}
-                  </div>
+                    </div>
+                  )}
+                  {!quickOtpVerified && quickPhone.length < 10 && (
+                    <p className="text-xs text-slate-400">Enter 10 digits to receive OTP</p>
+                  )}
                 </div>
 
                 {/* Email */}
-                <div>
+                <div className="space-y-1.5">
                   <Label className="text-sm font-medium text-slate-700">Email Address *</Label>
-                  <div className="relative mt-1">
+                  <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <Input value={quickEmail} onChange={e => setQuickEmail(e.target.value)}
                       placeholder="your@email.com" type="email" className="pl-10" />

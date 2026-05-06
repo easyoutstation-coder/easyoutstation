@@ -24,5 +24,19 @@ export default defineConfig({
   build: {
     outDir: path.resolve(__dirname, "dist/public"),
     emptyOutDir: true,
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Split vendor chunks for better caching
+          "react-vendor": ["react", "react-dom"],
+          "router": ["react-router"],
+          "ui": ["@radix-ui/react-dialog", "@radix-ui/react-popover", "@radix-ui/react-select"],
+          "firebase": ["firebase/app", "firebase/auth"],
+          "maps": ["@vis.gl/react-google-maps"],
+          "query": ["@tanstack/react-query", "@trpc/react-query", "@trpc/client"],
+        },
+      },
+    },
   },
 });
