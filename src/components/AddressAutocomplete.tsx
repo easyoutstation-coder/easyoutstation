@@ -1,18 +1,31 @@
 import { useState, useRef, useEffect } from "react";
 import { MapPin, Loader2 } from "lucide-react";
 
-interface Suggestion {
-  display_name: string;
-  address: {
-    postcode?: string;
-    state?: string;
-    city?: string;
-    town?: string;
-    suburb?: string;
-    road?: string;
-  };
-  lat: string;
-  lon: string;
+// Shared Google Maps loader
+let mapsLoaded = false;
+let mapsLoadingPromise: Promise<void> | null = null;
+
+function loadGoogleMaps(): Promise<void> {
+  if (mapsLoaded) return Promise.resolve();
+  if (mapsLoadingPromise) return mapsLoadingPromise;
+  // If already loaded by HeroSection
+  if (window.google?.maps?.places) { mapsLoaded = true; return Promise.resolve(); }
+  mapsLoadingPromise = new Promise((resolve) => {
+    if (window.initGoogleMaps) {
+      // Already being loaded
+      const orig = window.initGoogleMaps;
+      window.initGoogleMaps = () => { orig(); mapsLoaded = true; resolve(); };
+    } else {
+      window.initGoogleMaps = () => { mapsLoaded = true; resolve(); };
+      const script = document.createElement("script");
+      const key = import.meta.env.VITE_GOOGLE_MAPS_KEY;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places,geometry&callback=initGoogleMaps`;
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+    }
+  });
+  return mapsLoadingPromise;
 }
 
 interface AddressAutocompleteProps {
@@ -22,92 +35,67 @@ interface AddressAutocompleteProps {
 }
 
 export default function AddressAutocomplete({ value, onChange, placeholder }: AddressAutocompleteProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const autocompleteRef = useRef<any>(null);
   const [inputValue, setInputValue] = useState(value);
-  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
-  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Sync external value changes
+  useEffect(() => {
+    setInputValue(value);
+  }, [value]);
 
   useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
-        setShowSuggestions(false);
+    loadGoogleMaps().then(() => {
+      setIsLoading(false);
+      if (!inputRef.current) return;
+      autocompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
+        componentRestrictions: { country: "in" },
+        fields: ["formatted_address", "geometry", "address_components", "name"],
+        types: ["geocode", "establishment"],
+      });
+
+      autocompleteRef.current.addListener("place_changed", () => {
+        const place = autocompleteRef.current.getPlace();
+        if (!place?.geometry?.location) return;
+
+        const lat = place.geometry.location.lat();
+        const lng = place.geometry.location.lng();
+        const address = place.formatted_address || place.name || "";
+
+        // Extract pincode from address_components
+        const pincode = place.address_components
+          ?.find((c: any) => c.types.includes("postal_code"))
+          ?.long_name || "";
+
+        setInputValue(address);
+        onChange(address, pincode, lat, lng);
+      });
+    });
+
+    return () => {
+      if (autocompleteRef.current) {
+        window.google?.maps?.event?.clearInstanceListeners(autocompleteRef.current);
       }
     };
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  const fetchSuggestions = async (query: string) => {
-    if (query.length < 3) { setSuggestions([]); return; }
-    setIsLoading(true);
-    try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=5&countrycodes=in`,
-        { headers: { "Accept-Language": "en" } }
-      );
-      const data = await res.json();
-      setSuggestions(data);
-      setShowSuggestions(true);
-    } catch {
-      setSuggestions([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setInputValue(val);
-    clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => fetchSuggestions(val), 400);
-  };
-
-  const handleSelect = (s: Suggestion) => {
-    const pincode = s.address?.postcode || "";
-    const displayName = s.display_name;
-    setInputValue(displayName);
-    setSuggestions([]);
-    setShowSuggestions(false);
-    onChange(displayName, pincode, parseFloat(s.lat), parseFloat(s.lon));
-  };
-
   return (
-    <div ref={wrapperRef} className="relative">
+    <div className="relative">
       <div className="relative">
         {isLoading
           ? <Loader2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground animate-spin" />
           : <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" />
         }
         <input
+          ref={inputRef}
           value={inputValue}
-          onChange={handleInput}
-          onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-          onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+          onChange={(e) => setInputValue(e.target.value)}
           placeholder={placeholder || "Start typing your address..."}
           className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-input bg-white text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+          autoComplete="off"
         />
       </div>
-
-      {showSuggestions && suggestions.length > 0 && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-input rounded-xl shadow-lg overflow-hidden">
-          {suggestions.map((s, i) => (
-            <button
-              key={i}
-              type="button"
-              onMouseDown={(e) => {
-                e.preventDefault();
-                handleSelect(s);
-              }}
-              className="w-full text-left px-4 py-3 text-sm hover:bg-slate-50 border-b border-input last:border-0 flex items-start gap-2"
-            >
-              <MapPin className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-              <span className="line-clamp-2">{s.display_name}</span>
-            </button>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
