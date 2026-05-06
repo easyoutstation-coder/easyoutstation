@@ -79,6 +79,7 @@ export default function BookingPage() {
   const [otpVerified, setOtpVerified] = useState(false);
   const [otpInput, setOtpInput] = useState("");
   const [otpError, setOtpError] = useState("");
+  const [formError, setFormError] = useState("");
 
   // ALL trpc hooks
   const { data: car } = trpc.car.getById.useQuery({ id: carId }, { enabled: carId > 0 });
@@ -202,16 +203,41 @@ export default function BookingPage() {
   };
 
   const handleNext = () => {
+    setFormError("");
     if (currentStep === 1) {
-      if (!pickupDate) { alert("Please select a pickup date."); return; }
-      if (!pickupAddress.trim()) { alert("Please enter your pickup address."); return; }
-      if (!dropAddress.trim()) { alert("Please enter your drop-off address."); return; }
+      if (!pickupDate) {
+        setFormError("Please select a pickup date."); return;
+      }
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      if (pickupDate < today) {
+        setFormError("Pickup date cannot be in the past."); return;
+      }
+      if (!pickupAddress.trim() || pickupAddress.trim().length < 5) {
+        setFormError("Please enter a valid pickup address."); return;
+      }
+      if (!dropAddress.trim() || dropAddress.trim().length < 5) {
+        setFormError("Please enter a valid drop-off address."); return;
+      }
+      if (pickupAddress.trim().toLowerCase() === dropAddress.trim().toLowerCase()) {
+        setFormError("Pickup and drop-off addresses cannot be the same."); return;
+      }
+      if (!passengerCount) {
+        setFormError("Please select number of passengers."); return;
+      }
     }
     if (currentStep === 2) {
-      if (!customerName.trim()) { alert("Please enter your full name."); return; }
-      if (!customerPhone.trim() || customerPhone.length < 10) { alert("Please enter a valid 10-digit mobile number."); return; }
-      if (!otpVerified) { alert("Please verify your mobile number with OTP before proceeding."); return; }
-      if (!customerEmail.trim() || !customerEmail.includes("@")) { alert("Please enter a valid email address."); return; }
+      if (!customerName.trim() || customerName.trim().length < 2) {
+        setFormError("Please enter your full name."); return;
+      }
+      if (!customerPhone.trim() || customerPhone.length !== 10) {
+        setFormError("Please enter a valid 10-digit mobile number."); return;
+      }
+      if (!otpVerified) {
+        setFormError("Please verify your mobile number with OTP before proceeding."); return;
+      }
+      if (!customerEmail.trim() || !customerEmail.includes("@")) {
+        setFormError("Please enter a valid email address."); return;
+      }
     }
     if (currentStep < 3) setCurrentStep(currentStep + 1);
   };
@@ -746,10 +772,17 @@ export default function BookingPage() {
                   )}
 
                   {/* Navigation */}
-                  <div className="flex justify-between mt-6 pt-4 border-t">
-                    <Button variant="outline" onClick={handleBack} disabled={currentStep === 1} className="gap-2">
-                      <ArrowLeft className="w-4 h-4" /> Back
-                    </Button>
+                  <div className="flex flex-col gap-3 mt-6 pt-4 border-t">
+                    {formError && (
+                      <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">
+                        <AlertCircle className="w-4 h-4 shrink-0" />
+                        {formError}
+                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <Button variant="outline" onClick={handleBack} disabled={currentStep === 1} className="gap-2">
+                        <ArrowLeft className="w-4 h-4" /> Back
+                      </Button>
                     {currentStep < 3 ? (
                       <Button onClick={handleNext} className="bg-primary gap-2">
                         Continue <ArrowRight className="w-4 h-4" />
@@ -759,6 +792,7 @@ export default function BookingPage() {
                         {isSubmitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</> : <>Pay ₹{Math.max(100, Math.round(totalPrice * 0.1)).toLocaleString("en-IN")} & Confirm Booking <Check className="w-4 h-4" /></>}
                       </Button>
                     )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
