@@ -808,7 +808,7 @@ export default function BookingPage() {
                         {!otpVerified && customerPhone.length === 10 && (
                           <FirebaseOTP
                             phone={customerPhone}
-                            onVerified={() => { setOtpVerified(true); setOtpError(""); }}
+                            onVerified={() => { setOtpVerified(true); setOtpError(""); setFormError(""); }}
                             onError={(msg) => setOtpError(msg)}
                           />
                         )}
