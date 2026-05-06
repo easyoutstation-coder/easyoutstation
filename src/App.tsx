@@ -12,6 +12,7 @@ import CancellationPolicy from './pages/CancellationPolicy'
 import Terms from './pages/Terms'
 import Privacy from './pages/Privacy'
 import RoutesPage from './pages/Routes'
+import RouteLanding from './pages/RouteLanding'
 import NotFound from './pages/NotFound'
 
 export default function App() {
@@ -30,6 +31,7 @@ export default function App() {
       <Route path="/terms" element={<Terms />} />
       <Route path="/privacy" element={<Privacy />} />
       <Route path="/routes" element={<RoutesPage />} />
+      <Route path="/cab/:route" element={<RouteLanding />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   )
