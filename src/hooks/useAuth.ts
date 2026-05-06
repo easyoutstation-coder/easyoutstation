@@ -22,15 +22,16 @@ export function useAuth(options?: UseAuthOptions) {
     error,
     refetch,
   } = trpc.auth.me.useQuery(undefined, {
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 2, // 2 min cache
     retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnMount: true,
   });
 
   const logoutMutation = trpc.auth.logout.useMutation({
-    onSuccess: async () => {
-      await utils.auth.me.reset();
-      await utils.invalidate();
-      navigate("/");
+    onSuccess: () => {
+      // Hard redirect to clear all React Query cache and state
+      window.location.href = "/";
     },
   });
 
