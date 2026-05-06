@@ -1,4 +1,7 @@
-import "dotenv/config";
+// Load env vars in development only — Railway injects them in production
+if (process.env.NODE_ENV !== "production") {
+  try { require("dotenv").config(); } catch {}
+}
 
 function required(name: string): string {
   const value = process.env[name];
