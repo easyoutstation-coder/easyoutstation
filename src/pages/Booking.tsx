@@ -128,6 +128,32 @@ export default function BookingPage() {
     }
   }, [tripType, pickupDate, pickupTime, passengerCount, pickupAddress, pickupPincode, dropAddress, dropPincode, currentStep, bookingComplete]);
 
+  // Inline quick auth state — must be before any conditional returns
+  const [quickName, setQuickName] = useState("");
+  const [quickPhone, setQuickPhone] = useState("");
+  const [quickEmail, setQuickEmail] = useState("");
+  const [quickOtpVerified, setQuickOtpVerified] = useState(false);
+  const [quickError, setQuickError] = useState("");
+  const [quickMode, setQuickMode] = useState<"signup" | "login">("signup");
+
+  const quickSignupMutation = trpc.auth.signup.useMutation({
+    onSuccess: () => { window.location.reload(); },
+    onError: (e) => {
+      if (e.message.includes("exist") || e.message.includes("taken")) {
+        setQuickMode("login");
+        setQuickError("Account exists. Signing you in...");
+        quickLoginMutation.mutate({ email: quickEmail, password: quickPhone });
+      } else {
+        setQuickError(e.message);
+      }
+    },
+  });
+
+  const quickLoginMutation = trpc.auth.login.useMutation({
+    onSuccess: () => { window.location.reload(); },
+    onError: () => setQuickError("Sign in failed. Please try again."),
+  });
+
   // Auth gate - AFTER all hooks
   // Only show spinner on FIRST load (no cached data), max 2 seconds
   if (authLoading && !user && !authTimedOut) {
@@ -145,22 +171,112 @@ export default function BookingPage() {
     return (
       <div className="min-h-screen bg-slate-50">
         <Navbar />
-        <div className="flex items-center justify-center min-h-screen px-4">
-          <div className="max-w-md w-full text-center bg-white rounded-2xl border border-slate-100 shadow-sm p-8">
-            <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <LogIn className="w-8 h-8 text-blue-600" />
-            </div>
-            <h2 className="text-2xl font-bold text-slate-900 font-['Playfair_Display'] mb-2">Sign in to Book</h2>
-            <p className="text-slate-500 mb-6 text-sm">You need an account to complete your booking. It only takes 30 seconds.</p>
-            <div className="flex gap-3">
-              <Button variant="outline" onClick={() => navigate(-1)} className="flex-1">Go Back</Button>
-              <Button onClick={() => navigate(`/login?redirect=${encodeURIComponent(window.location.href)}`)}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">
-                Sign In / Sign Up
-              </Button>
+        <main className="pt-20">
+          <div className="mx-auto max-w-lg px-4 py-12">
+            {/* Car summary at top */}
+            {car && (
+              <div className="flex items-center gap-3 bg-white rounded-2xl border border-slate-100 shadow-sm p-4 mb-6">
+                {car.imageUrl && <img src={car.imageUrl} alt={car.name} className="w-16 h-12 object-cover rounded-lg" />}
+                <div className="flex-1">
+                  <div className="font-semibold text-slate-900">{car.name}</div>
+                  <div className="text-sm text-slate-500">{fromCity} → {toCity} · ₹{((parseFloat(car?.pricePerKm || "20") * defaultDistance) + 400).toLocaleString("en-IN")}</div>
+                </div>
+                <button onClick={() => navigate(-1)} className="text-xs text-blue-600 hover:underline">Change</button>
+              </div>
+            )}
+
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+              <div className="text-center mb-6">
+                <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                  <LogIn className="w-7 h-7 text-blue-600" />
+                </div>
+                <h2 className="text-2xl font-bold font-['Playfair_Display'] text-slate-900">Quick Sign Up to Book</h2>
+                <p className="text-slate-500 text-sm mt-1">Takes 30 seconds. Verify your number and you're in!</p>
+              </div>
+
+              <div className="space-y-4">
+                {/* Name */}
+                <div>
+                  <Label className="text-sm font-medium text-slate-700">Full Name *</Label>
+                  <div className="relative mt-1">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Input value={quickName} onChange={e => setQuickName(e.target.value)}
+                      placeholder="Your full name" className="pl-10" disabled={quickOtpVerified} />
+                  </div>
+                </div>
+
+                {/* Phone + OTP */}
+                <div>
+                  <Label className="text-sm font-medium text-slate-700">Mobile Number *</Label>
+                  <div className="flex gap-2 mt-1">
+                    <div className="relative flex-1">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-500">+91</span>
+                      <Input value={quickPhone} onChange={e => { setQuickPhone(e.target.value.replace(/\D/g, "").slice(0, 10)); setQuickOtpSent(false); setQuickOtpVerified(false); }}
+                        placeholder="10-digit number" className="pl-12" disabled={quickOtpVerified} />
+                    </div>
+                    {!quickOtpVerified && (
+                      <FirebaseOTP
+                        phone={quickPhone}
+                        onVerified={() => { setQuickOtpVerified(true); setQuickError(""); }}
+                        onError={msg => setQuickError(msg)}
+                      />
+                    )}
+                    {quickOtpVerified && (
+                      <span className="flex items-center gap-1 text-green-600 text-sm font-medium px-2 shrink-0">
+                        <Check className="w-4 h-4" /> Verified
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Email */}
+                <div>
+                  <Label className="text-sm font-medium text-slate-700">Email Address *</Label>
+                  <div className="relative mt-1">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Input value={quickEmail} onChange={e => setQuickEmail(e.target.value)}
+                      placeholder="your@email.com" type="email" className="pl-10" />
+                  </div>
+                </div>
+
+                {quickError && (
+                  <p className="text-sm text-red-500 flex items-center gap-1.5 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />{quickError}
+                  </p>
+                )}
+
+                <Button
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white h-12 text-base font-semibold gap-2"
+                  disabled={!quickOtpVerified || quickSignupMutation.isPending || quickLoginMutation.isPending}
+                  onClick={() => {
+                    setQuickError("");
+                    if (!quickName.trim()) { setQuickError("Please enter your name."); return; }
+                    if (!quickEmail.trim() || !quickEmail.includes("@")) { setQuickError("Please enter a valid email."); return; }
+                    if (!quickOtpVerified) { setQuickError("Please verify your mobile number first."); return; }
+                    quickSignupMutation.mutate({
+                      name: quickName.trim(),
+                      email: quickEmail.trim(),
+                      password: quickPhone, // Use phone as password
+                    });
+                  }}
+                >
+                  {quickSignupMutation.isPending || quickLoginMutation.isPending
+                    ? <><Loader2 className="w-4 h-4 animate-spin" /> Setting up your account...</>
+                    : <>Continue to Booking <ArrowRight className="w-4 h-4" /></>
+                  }
+                </Button>
+
+                <p className="text-center text-xs text-slate-400">
+                  Already have an account?{" "}
+                  <button onClick={() => navigate(`/login?redirect=${encodeURIComponent(window.location.href)}`)}
+                    className="text-blue-600 hover:underline font-medium">
+                    Sign in instead
+                  </button>
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        </main>
         <Footer />
       </div>
     );
