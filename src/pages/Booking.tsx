@@ -35,6 +35,13 @@ export default function BookingPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
+  const [authTimedOut, setAuthTimedOut] = useState(false);
+
+  // Never block the page more than 2 seconds waiting for auth
+  useEffect(() => {
+    const timer = setTimeout(() => setAuthTimedOut(true), 2000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Read ALL URL params first before any useState
   const carId = parseInt(searchParams.get("carId") || "0");
@@ -74,6 +81,12 @@ export default function BookingPage() {
   const [customerName, setCustomerName] = useState(user?.name || "");
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerEmail, setCustomerEmail] = useState(user?.email || "");
+
+  // Update customer info when user data loads
+  useEffect(() => {
+    if (user?.name && !customerName) setCustomerName(user.name);
+    if (user?.email && !customerEmail) setCustomerEmail(user.email);
+  }, [user]);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [otpVerified, setOtpVerified] = useState(false);
@@ -116,9 +129,8 @@ export default function BookingPage() {
   }, [tripType, pickupDate, pickupTime, passengerCount, pickupAddress, pickupPincode, dropAddress, dropPincode, currentStep, bookingComplete]);
 
   // Auth gate - AFTER all hooks
-  // Only show spinner on FIRST load (no cached data)
-  // If we have cached data, show page immediately
-  if (authLoading && !user) {
+  // Only show spinner on FIRST load (no cached data), max 2 seconds
+  if (authLoading && !user && !authTimedOut) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center">

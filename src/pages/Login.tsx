@@ -28,24 +28,23 @@ export default function Login() {
   const redirectUrl = searchParams.get("redirect");
 
   const loginMutation = trpc.auth.login.useMutation({
-    onSuccess: async () => {
-      await refresh();
+    onSuccess: () => {
+      // Hard redirect — browser will pick up fresh auth cookie
       if (redirectUrl) {
         window.location.href = redirectUrl;
       } else {
-        navigate("/dashboard");
+        window.location.href = "/dashboard";
       }
     },
     onError: (e) => setError(e.message),
   });
 
   const signupMutation = trpc.auth.signup.useMutation({
-    onSuccess: async () => {
-      await refresh();
+    onSuccess: () => {
       if (redirectUrl) {
         window.location.href = redirectUrl;
       } else {
-        navigate("/dashboard");
+        window.location.href = "/dashboard";
       }
     },
     onError: (e) => setError(e.message),
