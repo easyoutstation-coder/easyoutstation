@@ -35,17 +35,22 @@ export default function FirebaseOTP({ phone, onVerified, onError }: FirebaseOTPP
   }, [countdown]);
 
   const setupRecaptcha = () => {
-    if (!window.recaptchaVerifier) {
-      window.recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {
-        size: "invisible",
-        callback: () => {},
-        "expired-callback": () => {
-          window.recaptchaVerifier?.clear();
-          // @ts-ignore
-          window.recaptchaVerifier = null;
-        },
-      });
+    // Clear any existing verifier first
+    if (window.recaptchaVerifier) {
+      try {
+        window.recaptchaVerifier.clear();
+      } catch {}
+      // @ts-ignore
+      window.recaptchaVerifier = null;
     }
+    window.recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {
+      size: "invisible",
+      callback: () => {},
+      "expired-callback": () => {
+        // @ts-ignore
+        window.recaptchaVerifier = null;
+      },
+    });
     return window.recaptchaVerifier;
   };
 
