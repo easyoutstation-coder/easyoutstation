@@ -57,6 +57,7 @@ export default function CarsPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [showFilters, setShowFilters] = useState(false);
+  const [sortBy, setSortBy] = useState<"price_asc" | "price_desc" | "rating" | "popular">("price_asc");
   const [searchQuery, setSearchQuery] = useState("");
   const [category, setCategory] = useState(searchParams.get("category") || "all");
   const [fuelType, setFuelType] = useState("all");
@@ -156,7 +157,15 @@ export default function CarsPage() {
     { id: 8, name: "Toyota Innova Hycross", brand: "Toyota", category: "luxury", seats: 6, pricePerKm: "22.00", rating: "4.95", reviewCount: 67, imageUrl: "/cars/toyota-innova-hycross.jpg", isAvailable: true, description: "Flagship luxury hybrid MPV", fuelType: "hybrid", transmission: "automatic" },
   ];
 
-  const displayCars = cars?.length ? cars : fallbackCars;
+  const displayCars = (cars?.length ? cars : fallbackCars)
+    .slice()
+    .sort((a, b) => {
+      if (sortBy === "price_asc") return parseFloat(a.pricePerKm) - parseFloat(b.pricePerKm);
+      if (sortBy === "price_desc") return parseFloat(b.pricePerKm) - parseFloat(a.pricePerKm);
+      if (sortBy === "rating") return parseFloat(b.rating) - parseFloat(a.rating);
+      if (sortBy === "popular") return (b.reviewCount || 0) - (a.reviewCount || 0);
+      return 0;
+    });
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -216,6 +225,18 @@ export default function CarsPage() {
                     </span>
                   )}
                 </Button>
+
+                {/* Sort dropdown */}
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                  className="h-10 px-3 rounded-lg border border-input bg-white text-sm text-slate-700 cursor-pointer hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                >
+                  <option value="price_asc">💰 Price: Low to High</option>
+                  <option value="price_desc">💰 Price: High to Low</option>
+                  <option value="rating">⭐ Top Rated</option>
+                  <option value="popular">🔥 Most Popular</option>
+                </select>
               </div>
             </div>
 
