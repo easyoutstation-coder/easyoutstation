@@ -20,7 +20,7 @@ export const users = mysqlTable("users", {
   avatar: text("avatar"),
   phone: varchar("phone", { length: 20 }),
   passwordHash: varchar("passwordHash", { length: 255 }),
-  role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+  role: mysqlEnum("role", ["user", "admin", "super_admin"]).default("user").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt")
     .defaultNow()
@@ -113,6 +113,16 @@ export const carReviews = mysqlTable("carReviews", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
+export const expenses = mysqlTable("expenses", {
+  id: serial("id").primaryKey(),
+  category: varchar("category", { length: 100 }).notNull(),
+  description: text("description"),
+  amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
+  date: date("date").notNull(),
+  bookingId: bigint("bookingId", { mode: "number", unsigned: true }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
 export const drivers = mysqlTable("drivers", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
@@ -147,6 +157,8 @@ export type UserSearch = typeof userSearches.$inferSelect;
 export type InsertUserSearch = typeof userSearches.$inferInsert;
 export type CarReview = typeof carReviews.$inferSelect;
 export type InsertCarReview = typeof carReviews.$inferInsert;
+export type Expense = typeof expenses.$inferSelect;
+export type InsertExpense = typeof expenses.$inferInsert;
 export type Driver = typeof drivers.$inferSelect;
 export type InsertDriver = typeof drivers.$inferInsert;
 export type Subscription = typeof subscriptions.$inferSelect;

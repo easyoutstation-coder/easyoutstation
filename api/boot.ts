@@ -19,6 +19,12 @@ async function runStartupMigrations() {
     ]) {
       try { await db.execute(sql.raw(col)); } catch { /* column already exists */ }
     }
+    // Extend role enum to include super_admin
+    try {
+      await db.execute(sql.raw(
+        `ALTER TABLE users MODIFY COLUMN role ENUM('user','admin','super_admin') NOT NULL DEFAULT 'user'`
+      ));
+    } catch { /* already updated */ }
     try {
       await db.execute(sql.raw(`
         CREATE TABLE IF NOT EXISTS drivers (
@@ -31,8 +37,22 @@ async function runStartupMigrations() {
         )
       `));
     } catch { /* table already exists */ }
+    try {
+      await db.execute(sql.raw(`
+        CREATE TABLE IF NOT EXISTS expenses (
+          id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+          category VARCHAR(100) NOT NULL,
+          description TEXT,
+          amount DECIMAL(12,2) NOT NULL,
+          date DATE NOT NULL,
+          bookingId BIGINT UNSIGNED,
+          createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+      `));
+    } catch { /* table already exists */ }
+    // Master accounts always get super_admin
     await db.execute(sql.raw(
-      `UPDATE users SET role = 'admin' WHERE phone = '9958556011' OR email = 'parmindersinghtalwar@gmail.com'`
+      `UPDATE users SET role = 'super_admin' WHERE phone = '9958556011' OR email = 'parmindersinghtalwar@gmail.com'`
     ));
     console.log("[startup] Migrations applied, admin role set.");
   } catch (e) {

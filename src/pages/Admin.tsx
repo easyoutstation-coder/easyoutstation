@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   LayoutDashboard, Users, Car, IndianRupee, Clock, CheckCircle, XCircle,
   Phone, UserCog, StickyNote, CheckCheck, X, Plus, Pencil, Trash2,
-  MessageCircle, Mail, AlertTriangle,
+  MessageCircle, Mail, AlertTriangle, TrendingUp, MapPin, Wallet, ShieldCheck,
 } from "lucide-react";
 
 type BookingStatus = "pending" | "confirmed" | "completed" | "cancelled";
@@ -31,12 +31,10 @@ const paymentColors: Record<PaymentStatus, string> = {
   refunded: "bg-orange-100 text-orange-700",
 };
 
-const MASTER_PHONES = ["9958556011"];
-const MASTER_EMAILS = ["parmindersinghtalwar@gmail.com"];
-function isMasterUser(user: { phone?: string | null; email?: string | null } | undefined) {
-  if (!user) return false;
-  return MASTER_PHONES.includes(user.phone ?? "") || MASTER_EMAILS.includes(user.email ?? "");
-}
+const EXPENSE_CATEGORIES = [
+  "Driver Payout", "Fuel", "Toll / Parking", "Marketing / Ads",
+  "Platform Fees", "Maintenance", "Salary", "Insurance", "Other",
+];
 
 function StatCard({ icon: Icon, label, value, sub }: { icon: any; label: string; value: string | number; sub?: string }) {
   return (
@@ -112,15 +110,23 @@ export default function AdminPage() {
   const [editingDriver, setEditingDriver] = useState<{ id: number } & DriverForm | null>(null);
   const [newDriver, setNewDriver] = useState<DriverForm>({ name: "", phone: "", vehicleInfo: "" });
 
+  // Expense form state
+  const [expenseForm, setExpenseForm] = useState({ category: "", description: "", amount: "", date: new Date().toISOString().slice(0, 10), bookingId: "" });
+  const [showExpenseForm, setShowExpenseForm] = useState(false);
+
   const utils = trpc.useUtils();
+  const isAdmin = isAuthenticated && (user?.role === "admin" || user?.role === "super_admin");
+  const isSuperAdmin = isAuthenticated && user?.role === "super_admin";
   const invalidateBookings = () => { utils.admin.getBookings.invalidate(); utils.admin.getStats.invalidate(); };
 
-  const { data: stats } = trpc.admin.getStats.useQuery(undefined, { enabled: isAuthenticated && user?.role === "admin" });
+  const { data: stats } = trpc.admin.getStats.useQuery(undefined, { enabled: isAdmin });
   const { data: bookingsList, isLoading: bookingsLoading } = trpc.admin.getBookings.useQuery(
-    { status: statusFilter }, { enabled: isAuthenticated && user?.role === "admin" }
+    { status: statusFilter }, { enabled: isAdmin }
   );
-  const { data: driversList } = trpc.admin.getDrivers.useQuery(undefined, { enabled: isAuthenticated && user?.role === "admin" });
-  const { data: customers } = trpc.admin.getCustomers.useQuery(undefined, { enabled: isAuthenticated && user?.role === "admin" });
+  const { data: driversList } = trpc.admin.getDrivers.useQuery(undefined, { enabled: isAdmin });
+  const { data: customers } = trpc.admin.getCustomers.useQuery(undefined, { enabled: isAdmin });
+  const { data: financials } = trpc.admin.getFinancials.useQuery(undefined, { enabled: isSuperAdmin });
+  const { data: expensesList } = trpc.admin.getExpenses.useQuery(undefined, { enabled: isSuperAdmin });
 
   const confirmBooking = trpc.admin.confirmBooking.useMutation({
     onSuccess: (res) => {
@@ -150,6 +156,17 @@ export default function AdminPage() {
   });
   const removeDriver = trpc.admin.removeDriver.useMutation({ onSuccess: () => utils.admin.getDrivers.invalidate() });
   const setUserRole = trpc.admin.setUserRole.useMutation({ onSuccess: () => utils.admin.getCustomers.invalidate() });
+  const addExpense = trpc.admin.addExpense.useMutation({
+    onSuccess: () => {
+      setShowExpenseForm(false);
+      setExpenseForm({ category: "", description: "", amount: "", date: new Date().toISOString().slice(0, 10), bookingId: "" });
+      utils.admin.getExpenses.invalidate();
+      utils.admin.getFinancials.invalidate();
+    },
+  });
+  const deleteExpense = trpc.admin.deleteExpense.useMutation({
+    onSuccess: () => { utils.admin.getExpenses.invalidate(); utils.admin.getFinancials.invalidate(); },
+  });
 
   function openConfirmModal(b: any) {
     const booking = b as typeof b & { driverName?: string; driverPhone?: string };
@@ -182,7 +199,7 @@ export default function AdminPage() {
   if (authLoading) {
     return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" /></div>;
   }
-  if (!isAuthenticated || user?.role !== "admin") {
+  if (!isAuthenticated || (user?.role !== "admin" && user?.role !== "super_admin")) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4">
         <p className="text-lg font-semibold text-muted-foreground">Admin access only.</p>
@@ -190,8 +207,6 @@ export default function AdminPage() {
       </div>
     );
   }
-
-  const masterAdmin = isMasterUser(user);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -257,7 +272,7 @@ export default function AdminPage() {
         )}
 
         <Tabs defaultValue="bookings">
-          <TabsList className="mb-6">
+          <TabsList className="mb-6 flex-wrap h-auto gap-1">
             <TabsTrigger value="overview" className="gap-1.5"><LayoutDashboard className="w-4 h-4" />Overview</TabsTrigger>
             <TabsTrigger value="bookings" className="gap-1.5">
               <Car className="w-4 h-4" />Bookings
@@ -265,6 +280,7 @@ export default function AdminPage() {
             </TabsTrigger>
             <TabsTrigger value="drivers" className="gap-1.5"><Car className="w-4 h-4" />Drivers</TabsTrigger>
             <TabsTrigger value="customers" className="gap-1.5"><Users className="w-4 h-4" />Customers</TabsTrigger>
+            {isSuperAdmin && <TabsTrigger value="financials" className="gap-1.5 text-emerald-700"><TrendingUp className="w-4 h-4" />Financials</TabsTrigger>}
           </TabsList>
 
           {/* ── Overview ────────────────────────────────────────────── */}
@@ -496,7 +512,8 @@ export default function AdminPage() {
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
                           <h4 className="font-semibold text-sm">{c.name || "No Name"}</h4>
-                          {c.role === "admin" && <Badge className="bg-purple-100 text-purple-700 text-xs border-0">Admin</Badge>}
+                          {c.role === "admin" && <Badge className="bg-blue-100 text-blue-700 text-xs border-0">Admin</Badge>}
+                          {c.role === "super_admin" && <Badge className="bg-purple-100 text-purple-700 text-xs border-0">Super Admin</Badge>}
                         </div>
                         <div className="flex items-center gap-3 mt-0.5 flex-wrap">
                           {c.phone && (
@@ -510,21 +527,34 @@ export default function AdminPage() {
                           {Number(c.bookingCount)} booking{Number(c.bookingCount) !== 1 ? "s" : ""} · Joined {new Date(c.createdAt).toLocaleDateString("en-IN")}
                         </p>
                       </div>
-                      {/* Only master admin can grant/revoke admin access */}
-                      {masterAdmin && (
-                        c.role !== "admin" ? (
-                          <Button size="sm" variant="outline" className="h-8 text-xs gap-1"
-                            onClick={() => setUserRole.mutate({ userId: Number(c.id), role: "admin" })}>
-                            <UserCog className="w-3 h-3" /> Give Admin Access
-                          </Button>
-                        ) : (
-                          !MASTER_PHONES.includes(c.phone ?? "") && !MASTER_EMAILS.includes(c.email ?? "") && (
-                            <Button size="sm" variant="ghost" className="h-8 text-xs text-muted-foreground"
-                              onClick={() => setUserRole.mutate({ userId: Number(c.id), role: "user" })}>
-                              Remove Admin
-                            </Button>
-                          )
-                        )
+                      {/* Only super_admin can grant/revoke roles */}
+                      {isSuperAdmin && c.role !== "super_admin" && (
+                        <div className="flex gap-1">
+                          {c.role === "user" && (
+                            <>
+                              <Button size="sm" variant="outline" className="h-7 text-xs gap-1"
+                                onClick={() => setUserRole.mutate({ userId: Number(c.id), role: "admin" })}>
+                                <UserCog className="w-3 h-3" /> Make Admin
+                              </Button>
+                              <Button size="sm" variant="outline" className="h-7 text-xs gap-1 border-purple-200 text-purple-700 hover:bg-purple-50"
+                                onClick={() => setUserRole.mutate({ userId: Number(c.id), role: "super_admin" })}>
+                                <ShieldCheck className="w-3 h-3" /> Super Admin
+                              </Button>
+                            </>
+                          )}
+                          {c.role === "admin" && (
+                            <>
+                              <Button size="sm" variant="outline" className="h-7 text-xs gap-1 border-purple-200 text-purple-700 hover:bg-purple-50"
+                                onClick={() => setUserRole.mutate({ userId: Number(c.id), role: "super_admin" })}>
+                                <ShieldCheck className="w-3 h-3" /> Upgrade to Super
+                              </Button>
+                              <Button size="sm" variant="ghost" className="h-7 text-xs text-red-500 hover:bg-red-50"
+                                onClick={() => setUserRole.mutate({ userId: Number(c.id), role: "user" })}>
+                                Remove
+                              </Button>
+                            </>
+                          )}
+                        </div>
                       )}
                     </div>
                   </CardContent>
@@ -532,6 +562,258 @@ export default function AdminPage() {
               ))}
             </div>
           </TabsContent>
+
+          {/* ── Financials (super_admin only) ─────────────────────── */}
+          {isSuperAdmin && (
+            <TabsContent value="financials" className="space-y-6">
+              {/* Summary */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <Card className="border-emerald-200 bg-emerald-50">
+                  <CardContent className="p-4">
+                    <p className="text-xs text-emerald-700 font-medium">Gross Revenue</p>
+                    <p className="text-2xl font-bold text-emerald-800">₹{(financials?.totals.grossRevenue ?? 0).toLocaleString("en-IN")}</p>
+                    <p className="text-xs text-emerald-600">{financials?.totals.totalBookings ?? 0} active bookings</p>
+                  </CardContent>
+                </Card>
+                <Card className="border-blue-200 bg-blue-50">
+                  <CardContent className="p-4">
+                    <p className="text-xs text-blue-700 font-medium">Collected</p>
+                    <p className="text-2xl font-bold text-blue-800">₹{(financials?.totals.collected ?? 0).toLocaleString("en-IN")}</p>
+                    <p className="text-xs text-blue-600">Payments received</p>
+                  </CardContent>
+                </Card>
+                <Card className="border-red-200 bg-red-50">
+                  <CardContent className="p-4">
+                    <p className="text-xs text-red-700 font-medium">Total Expenses</p>
+                    <p className="text-2xl font-bold text-red-800">₹{(financials?.totals.totalExpenses ?? 0).toLocaleString("en-IN")}</p>
+                    <p className="text-xs text-red-600">Logged expenses</p>
+                  </CardContent>
+                </Card>
+                <Card className={`border-2 ${(financials?.totals.profit ?? 0) >= 0 ? "border-emerald-300 bg-emerald-50" : "border-red-300 bg-red-50"}`}>
+                  <CardContent className="p-4">
+                    <p className={`text-xs font-medium ${(financials?.totals.profit ?? 0) >= 0 ? "text-emerald-700" : "text-red-700"}`}>Net Profit</p>
+                    <p className={`text-2xl font-bold ${(financials?.totals.profit ?? 0) >= 0 ? "text-emerald-800" : "text-red-800"}`}>
+                      ₹{Math.abs(financials?.totals.profit ?? 0).toLocaleString("en-IN")}
+                      {(financials?.totals.profit ?? 0) < 0 ? " loss" : ""}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Collected − Expenses</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <Card>
+                  <CardContent className="p-4">
+                    <p className="text-xs text-muted-foreground">Outstanding</p>
+                    <p className="text-xl font-bold text-amber-600">₹{(financials?.totals.outstanding ?? 0).toLocaleString("en-IN")}</p>
+                    <p className="text-xs text-muted-foreground">Confirmed but unpaid</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4">
+                    <p className="text-xs text-muted-foreground">Lost (Cancelled)</p>
+                    <p className="text-xl font-bold text-slate-500">₹{(financials?.totals.lostRevenue ?? 0).toLocaleString("en-IN")}</p>
+                    <p className="text-xs text-muted-foreground">Value of cancelled bookings</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Monthly Trend */}
+              {(financials?.monthly?.length ?? 0) > 0 && (
+                <Card>
+                  <CardContent className="p-4">
+                    <h3 className="font-semibold text-sm mb-3 flex items-center gap-2"><TrendingUp className="w-4 h-4 text-primary" />Monthly Trend (Last 6 Months)</h3>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs">
+                        <thead><tr className="border-b">
+                          <th className="text-left py-1 pr-4 text-muted-foreground font-medium">Month</th>
+                          <th className="text-right py-1 pr-4 text-muted-foreground font-medium">Bookings</th>
+                          <th className="text-right py-1 pr-4 text-muted-foreground font-medium">Revenue</th>
+                          <th className="text-right py-1 text-muted-foreground font-medium">Collected</th>
+                        </tr></thead>
+                        <tbody>
+                          {financials!.monthly.map((m: any) => (
+                            <tr key={m.month} className="border-b last:border-0">
+                              <td className="py-1.5 pr-4 font-medium">{m.label}</td>
+                              <td className="py-1.5 pr-4 text-right">{m.bookingCount}</td>
+                              <td className="py-1.5 pr-4 text-right">₹{parseFloat(m.revenue).toLocaleString("en-IN")}</td>
+                              <td className="py-1.5 text-right text-emerald-700">₹{parseFloat(m.collected).toLocaleString("en-IN")}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              <div className="grid lg:grid-cols-2 gap-4">
+                {/* Revenue by Route */}
+                {(financials?.byRoute?.length ?? 0) > 0 && (
+                  <Card>
+                    <CardContent className="p-4">
+                      <h3 className="font-semibold text-sm mb-3 flex items-center gap-2"><MapPin className="w-4 h-4 text-primary" />Revenue by Route</h3>
+                      <div className="space-y-2">
+                        {financials!.byRoute.map((r: any, i: number) => (
+                          <div key={i} className="flex items-center justify-between text-xs">
+                            <div>
+                              <span className="font-medium">{r.fromCity} → {r.toCity}</span>
+                              <span className="text-muted-foreground ml-2">{r.trips} trips · avg ₹{Math.round(parseFloat(r.avgFare)).toLocaleString("en-IN")}</span>
+                            </div>
+                            <span className="font-semibold text-primary">₹{parseFloat(r.revenue).toLocaleString("en-IN")}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Driver Performance */}
+                {(financials?.byDriver?.length ?? 0) > 0 && (
+                  <Card>
+                    <CardContent className="p-4">
+                      <h3 className="font-semibold text-sm mb-3 flex items-center gap-2"><Car className="w-4 h-4 text-primary" />Driver Performance</h3>
+                      <div className="space-y-2">
+                        {financials!.byDriver.map((d: any, i: number) => (
+                          <div key={i} className="flex items-center justify-between text-xs">
+                            <div>
+                              <span className="font-medium">{d.driverName}</span>
+                              <span className="text-muted-foreground ml-2">{d.trips} trips</span>
+                            </div>
+                            <span className="font-semibold text-primary">₹{parseFloat(d.revenue).toLocaleString("en-IN")}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+
+              {/* Top Customers */}
+              {(financials?.topCustomers?.length ?? 0) > 0 && (
+                <Card>
+                  <CardContent className="p-4">
+                    <h3 className="font-semibold text-sm mb-3 flex items-center gap-2"><Users className="w-4 h-4 text-primary" />Top Customers by Revenue</h3>
+                    <div className="space-y-2">
+                      {financials!.topCustomers.map((c: any, i: number) => (
+                        <div key={i} className="flex items-center justify-between text-xs">
+                          <div className="flex items-center gap-2">
+                            <span className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-500">{i + 1}</span>
+                            <div>
+                              <span className="font-medium">{c.customerName}</span>
+                              {c.customerPhone && (
+                                <a href={`tel:+91${c.customerPhone}`} className="text-muted-foreground hover:text-primary ml-2">{c.customerPhone}</a>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <span className="font-semibold text-primary">₹{parseFloat(c.totalSpend).toLocaleString("en-IN")}</span>
+                            <span className="text-muted-foreground ml-2">{c.trips} trips</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Expense Tracker */}
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold text-sm flex items-center gap-2"><Wallet className="w-4 h-4 text-primary" />Expense Tracker</h3>
+                    <Button size="sm" className="gap-1 h-8 text-xs" onClick={() => setShowExpenseForm(v => !v)}>
+                      <Plus className="w-3 h-3" /> Add Expense
+                    </Button>
+                  </div>
+
+                  {showExpenseForm && (
+                    <div className="mb-4 p-3 bg-slate-50 rounded-lg space-y-2 border border-slate-200">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-xs font-medium mb-1 block">Category *</label>
+                          <Select value={expenseForm.category} onValueChange={v => setExpenseForm(f => ({ ...f, category: v }))}>
+                            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Select…" /></SelectTrigger>
+                            <SelectContent>
+                              {EXPENSE_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <label className="text-xs font-medium mb-1 block">Amount (₹) *</label>
+                          <Input type="number" placeholder="0" className="h-8 text-xs" value={expenseForm.amount}
+                            onChange={e => setExpenseForm(f => ({ ...f, amount: e.target.value }))} />
+                        </div>
+                        <div>
+                          <label className="text-xs font-medium mb-1 block">Date *</label>
+                          <Input type="date" className="h-8 text-xs" value={expenseForm.date}
+                            onChange={e => setExpenseForm(f => ({ ...f, date: e.target.value }))} />
+                        </div>
+                        <div>
+                          <label className="text-xs font-medium mb-1 block">Booking ID (optional)</label>
+                          <Input placeholder="e.g. 42" className="h-8 text-xs" value={expenseForm.bookingId}
+                            onChange={e => setExpenseForm(f => ({ ...f, bookingId: e.target.value }))} />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium mb-1 block">Description</label>
+                        <Input placeholder="Notes…" className="h-8 text-xs" value={expenseForm.description}
+                          onChange={e => setExpenseForm(f => ({ ...f, description: e.target.value }))} />
+                      </div>
+                      <div className="flex gap-2 pt-1">
+                        <Button size="sm" className="h-7 text-xs" disabled={!expenseForm.category || !expenseForm.amount || !expenseForm.date || addExpense.isPending}
+                          onClick={() => addExpense.mutate({
+                            category: expenseForm.category,
+                            description: expenseForm.description || undefined,
+                            amount: parseFloat(expenseForm.amount),
+                            date: expenseForm.date,
+                            bookingId: expenseForm.bookingId ? parseInt(expenseForm.bookingId) : undefined,
+                          })}>
+                          {addExpense.isPending ? "Saving…" : "Save"}
+                        </Button>
+                        <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setShowExpenseForm(false)}>Cancel</Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Expense category summary */}
+                  {(financials?.byExpenseCategory?.length ?? 0) > 0 && (
+                    <div className="mb-4 grid grid-cols-2 gap-2">
+                      {financials!.byExpenseCategory.map((e: any) => (
+                        <div key={e.category} className="flex justify-between text-xs bg-red-50 rounded px-2 py-1.5">
+                          <span className="text-red-700">{e.category}</span>
+                          <span className="font-semibold text-red-800">₹{parseFloat(e.total).toLocaleString("en-IN")}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Expense list */}
+                  {!expensesList?.length ? (
+                    <p className="text-xs text-muted-foreground text-center py-4">No expenses logged yet.</p>
+                  ) : (
+                    <div className="space-y-1.5 max-h-64 overflow-y-auto">
+                      {expensesList.map(e => (
+                        <div key={e.id} className="flex items-center justify-between text-xs py-1.5 border-b last:border-0">
+                          <div>
+                            <span className="font-medium">{e.category}</span>
+                            {e.description && <span className="text-muted-foreground ml-1">· {e.description}</span>}
+                            <div className="text-muted-foreground">{new Date(e.date).toLocaleDateString("en-IN")}{e.bookingId ? ` · Booking #${e.bookingId}` : ""}</div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-red-700">₹{parseFloat(e.amount.toString()).toLocaleString("en-IN")}</span>
+                            <button onClick={() => deleteExpense.mutate({ id: Number(e.id) })} className="text-muted-foreground hover:text-red-500">
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
         </Tabs>
       </div>
 

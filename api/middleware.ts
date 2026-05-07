@@ -26,8 +26,13 @@ const requireAuth = t.middleware(async (opts) => {
 function requireRole(role: string) {
   return t.middleware(async (opts) => {
     const { ctx, next } = opts;
+    const userRole = ctx.user?.role;
+    // super_admin passes any role check; for super_admin-only checks, exact match required
+    const passes = role === "super_admin"
+      ? userRole === "super_admin"
+      : userRole === role || userRole === "super_admin";
 
-    if (!ctx.user || ctx.user.role !== role) {
+    if (!ctx.user || !passes) {
       throw new TRPCError({
         code: "FORBIDDEN",
         message: ErrorMessages.insufficientRole,
@@ -40,3 +45,4 @@ function requireRole(role: string) {
 
 export const authedQuery = t.procedure.use(requireAuth);
 export const adminQuery = authedQuery.use(requireRole("admin"));
+export const superAdminQuery = authedQuery.use(requireRole("super_admin"));
