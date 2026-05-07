@@ -166,6 +166,7 @@ export default function HeroSection() {
   const [toPincode, setToPincode] = useState("");
 
   const [pickupDate, setPickupDate] = useState<Date>();
+  const [returnDate, setReturnDate] = useState<Date>();
   const [passengers, setPassengers] = useState("");
   const [tripType, setTripType] = useState("one_way");
 
@@ -210,11 +211,21 @@ export default function HeroSection() {
       .finally(() => setIsCalc(false));
   }, [fromLat, fromLng, toLat, toLng]);
 
+  const isMultiDate = tripType === "round_trip" || tripType === "multi_day";
+
+  const tripDays = isMultiDate && returnDate && pickupDate
+    ? Math.max(1, Math.ceil((returnDate.getTime() - pickupDate.getTime()) / (1000 * 60 * 60 * 24)))
+    : 1;
+  const kmMultiplier = tripType === "round_trip" ? 2 : tripType === "multi_day" ? tripDays : 1;
+  const displayFareMin = distanceKm ? Math.round(distanceKm * kmMultiplier * MIN_RATE + DRIVER_CHARGE * tripDays) : null;
+  const displayFareMax = distanceKm ? Math.round(distanceKm * kmMultiplier * MAX_RATE + DRIVER_CHARGE * tripDays) : null;
+
   const handleSearch = () => {
     setFormError("");
     if (!fromAddress) { setFormError("Please enter a pickup location."); return; }
     if (!toAddress) { setFormError("Please enter a drop-off location."); return; }
-    if (!pickupDate) { setFormError("Please select a travel date."); return; }
+    if (!pickupDate) { setFormError("Please select a departure date."); return; }
+    if (isMultiDate && !returnDate) { setFormError("Please select a return date."); return; }
     if (!passengers) { setFormError("Please select number of passengers."); return; }
 
     const params = new URLSearchParams({
@@ -226,6 +237,7 @@ export default function HeroSection() {
       tripType,
     });
     if (pickupDate) params.set("date", format(pickupDate, "yyyy-MM-dd"));
+    if (returnDate) params.set("returnDate", format(returnDate, "yyyy-MM-dd"));
     if (distanceKm) params.set("distance", String(distanceKm));
     if (fromPincode) params.set("fromPincode", fromPincode);
     if (toPincode) params.set("toPincode", toPincode);
@@ -319,7 +331,10 @@ export default function HeroSection() {
                     { value: "round_trip", label: "Round Trip" },
                     { value: "multi_day", label: "Multi Day" },
                   ].map((type) => (
-                    <button key={type.value} onClick={() => setTripType(type.value)}
+                    <button key={type.value} onClick={() => {
+                      setTripType(type.value);
+                      if (type.value === "one_way") setReturnDate(undefined);
+                    }}
                       className={`py-2 px-2 rounded-lg text-xs font-semibold transition-all ${
                         tripType === type.value
                           ? "bg-white text-blue-700 shadow-sm"
@@ -358,24 +373,28 @@ export default function HeroSection() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 text-sm text-blue-800">
                           <Route className="w-4 h-4 text-blue-500" />
-                          <span className="font-medium">{distanceKm} km</span>
+                          <span className="font-medium">{distanceKm} km{kmMultiplier > 1 ? ` × ${kmMultiplier}` : ""}</span>
                           {durationText && <span className="text-blue-500 text-xs">({durationText})</span>}
                         </div>
                         <div className="text-right">
                           <div className="font-bold text-blue-800 text-sm">
-                            ₹{fareMin?.toLocaleString("en-IN")} – ₹{fareMax?.toLocaleString("en-IN")}
+                            ₹{displayFareMin?.toLocaleString("en-IN")} – ₹{displayFareMax?.toLocaleString("en-IN")}
                           </div>
-                          <div className="text-[10px] text-blue-500">depends on car selected</div>
+                          <div className="text-[10px] text-blue-500">
+                            {tripDays > 1 ? `${tripDays}-day total · ` : ""}depends on car
+                          </div>
                         </div>
                       </div>
                     )}
                   </div>
                 )}
 
-                {/* Date & Passengers */}
+                {/* Date & Passengers — layout shifts for round/multi-day */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">DATE</label>
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                      {isMultiDate ? "DEPARTURE" : "DATE"}
+                    </label>
                     <Popover>
                       <PopoverTrigger asChild>
                         <button className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-white text-sm flex items-center gap-2 hover:border-blue-400 transition-colors">
@@ -386,11 +405,54 @@ export default function HeroSection() {
                         </button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0 bg-white border-slate-200" align="start">
-                        <Calendar mode="single" selected={pickupDate} onSelect={setPickupDate}
+                        <Calendar mode="single" selected={pickupDate} onSelect={(d) => {
+                          setPickupDate(d);
+                          if (returnDate && d && returnDate <= d) setReturnDate(undefined);
+                        }}
                           disabled={(date) => date < new Date()} initialFocus />
                       </PopoverContent>
                     </Popover>
                   </div>
+
+                  {isMultiDate ? (
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">RETURN DATE</label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button className={`w-full h-11 px-3 rounded-xl border bg-white text-sm flex items-center gap-2 hover:border-blue-400 transition-colors ${
+                            returnDate ? "border-slate-200" : "border-blue-300 border-dashed"
+                          }`}>
+                            <CalendarDays className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                            <span className={returnDate ? "text-slate-900" : "text-blue-400"}>
+                              {returnDate ? format(returnDate, "dd MMM") : "Return date"}
+                            </span>
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0 bg-white border-slate-200" align="start">
+                          <Calendar mode="single" selected={returnDate} onSelect={setReturnDate}
+                            disabled={(date) => date <= (pickupDate || new Date())} initialFocus />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  ) : (
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">PASSENGERS</label>
+                      <div className="relative">
+                        <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-blue-600" />
+                        <select value={passengers} onChange={(e) => setPassengers(e.target.value)}
+                          className="w-full h-11 pl-9 pr-3 rounded-xl border border-slate-200 bg-white text-slate-900 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none appearance-none cursor-pointer">
+                          <option value="" disabled>Select</option>
+                          {[1,2,3,4,5,6].map((n) => (
+                            <option key={n} value={n}>{n} {n === 1 ? "Person" : "People"}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Passengers row — shown below when round/multi-day */}
+                {isMultiDate && (
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">PASSENGERS</label>
                     <div className="relative">
@@ -404,7 +466,7 @@ export default function HeroSection() {
                       </select>
                     </div>
                   </div>
-                </div>
+                )}
 
                 {formError && (
                   <p className="text-xs text-red-500 flex items-center gap-1.5 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
@@ -415,8 +477,8 @@ export default function HeroSection() {
 
                 <Button onClick={handleSearch}
                   className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm gap-2 shadow-sm transition-all">
-                  {distanceKm
-                    ? `See Cars for ${distanceKm}km · ₹${fareMin?.toLocaleString("en-IN")}–₹${fareMax?.toLocaleString("en-IN")}`
+                  {displayFareMin
+                    ? `See Cars · ₹${displayFareMin.toLocaleString("en-IN")}–₹${displayFareMax?.toLocaleString("en-IN")}${tripDays > 1 ? ` (${tripDays}d)` : ""}`
                     : "See Available Cars & Fares"}
                   <ArrowRight className="w-4 h-4" />
                 </Button>

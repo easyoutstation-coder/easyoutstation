@@ -81,6 +81,23 @@ export default function CarsPage() {
   const distanceKm = parseInt(searchParams.get("distance") || "0");
   const DRIVER_CHARGE = 400;
 
+  const tripTypeParam = searchParams.get("tripType") || "one_way";
+  const dateParam = searchParams.get("date") || "";
+  const returnDateParam = searchParams.get("returnDate") || "";
+
+  const tripDays = (() => {
+    if ((tripTypeParam === "round_trip" || tripTypeParam === "multi_day") && dateParam && returnDateParam) {
+      const d1 = new Date(dateParam);
+      const d2 = new Date(returnDateParam);
+      if (!isNaN(d1.getTime()) && !isNaN(d2.getTime())) {
+        return Math.max(1, Math.ceil((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24)));
+      }
+    }
+    return 1;
+  })();
+  const kmMultiplier = tripTypeParam === "round_trip" ? 2 : tripTypeParam === "multi_day" ? tripDays : 1;
+  const effectiveKm = distanceKm * kmMultiplier;
+
   // Build passthrough params to preserve user's selections across pages
   const passthroughParams = () => {
     const p = new URLSearchParams();
@@ -89,15 +106,14 @@ export default function CarsPage() {
     if (distanceKm) p.set("distance", distanceKm.toString());
     const fromFull = searchParams.get("fromFull");
     const toFull = searchParams.get("toFull");
-    const date = searchParams.get("date");
-    const tripType = searchParams.get("tripType");
     const passengers = searchParams.get("passengers");
     const fromPincode = searchParams.get("fromPincode");
     const toPincode = searchParams.get("toPincode");
     if (fromFull) p.set("fromFull", fromFull);
     if (toFull) p.set("toFull", toFull);
-    if (date) p.set("date", date);
-    if (tripType) p.set("tripType", tripType);
+    if (dateParam) p.set("date", dateParam);
+    if (returnDateParam) p.set("returnDate", returnDateParam);
+    if (tripTypeParam) p.set("tripType", tripTypeParam);
     if (passengers) p.set("passengers", passengers);
     if (fromPincode) p.set("fromPincode", fromPincode);
     if (toPincode) p.set("toPincode", toPincode);
@@ -108,7 +124,7 @@ export default function CarsPage() {
 
   const calcFare = (pricePerKm: string) => {
     if (!distanceKm) return null;
-    return Math.round(parseFloat(pricePerKm) * distanceKm + DRIVER_CHARGE);
+    return Math.round(parseFloat(pricePerKm) * effectiveKm + DRIVER_CHARGE * tripDays);
   };
 
   const handleVoiceSearch = () => {
@@ -183,7 +199,8 @@ export default function CarsPage() {
                   <span className="text-sm text-blue-500">· {distanceKm} km</span>
                 </div>
                 <div className="text-sm text-blue-700 font-medium">
-                  Fares from <span className="font-bold">₹{(distanceKm * 12 + 400).toLocaleString("en-IN")}</span> to <span className="font-bold">₹{(distanceKm * 22 + 400).toLocaleString("en-IN")}</span> depending on car
+                  Fares from <span className="font-bold">₹{(effectiveKm * 12 + DRIVER_CHARGE * tripDays).toLocaleString("en-IN")}</span> to <span className="font-bold">₹{(effectiveKm * 22 + DRIVER_CHARGE * tripDays).toLocaleString("en-IN")}</span>
+                  {tripDays > 1 ? <span className="text-blue-500 text-xs ml-1">({tripDays}-day total)</span> : " depending on car"}
                 </div>
               </div>
             )}
@@ -193,7 +210,7 @@ export default function CarsPage() {
                   {fromCity && toCity ? `Cars for ${fromCity} → ${toCity}` : "Our Fleet"}
                 </h1>
                 <p className="text-slate-500 mt-1">
-                  {displayCars.length} vehicles available{distanceKm > 0 ? ` · Prices shown for ${distanceKm}km` : " for your journey"}
+                  {displayCars.length} vehicles available{distanceKm > 0 ? ` · Prices shown for ${effectiveKm}km${tripDays > 1 ? ` (${tripDays} days)` : ""}` : " for your journey"}
                 </p>
               </div>
               <div className="flex gap-2">
@@ -443,7 +460,7 @@ export default function CarsPage() {
                             <div className="text-lg font-bold text-blue-700">
                               ₹{calcFare(car.pricePerKm)?.toLocaleString("en-IN")}
                             </div>
-                            <div className="text-[10px] text-slate-400">total · {distanceKm}km</div>
+                            <div className="text-[10px] text-slate-400">total · {effectiveKm}km{tripDays > 1 ? ` · ${tripDays}d` : ""}</div>
                           </>
                         ) : (
                           <>
@@ -456,7 +473,7 @@ export default function CarsPage() {
                     <p className="text-sm text-slate-500 line-clamp-2 mb-3">{car.description}</p>
                     {calcFare(car.pricePerKm) && (
                       <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mb-3 bg-slate-50 rounded-lg px-2.5 py-1.5">
-                        <span>₹{car.pricePerKm}/km × {distanceKm}km + ₹400 driver</span>
+                        <span>₹{car.pricePerKm}/km × {effectiveKm}km + ₹{DRIVER_CHARGE * tripDays} driver</span>
                       </div>
                     )}
                     <div className="flex items-center gap-3 text-xs text-muted-foreground mb-4">

@@ -51,6 +51,7 @@ export default function BookingPage() {
   const paramFromFull = searchParams.get("fromFull") || "";
   const paramToFull = searchParams.get("toFull") || "";
   const paramDate = searchParams.get("date") || "";
+  const paramReturnDate = searchParams.get("returnDate") || "";
   const paramTripType = searchParams.get("tripType") || "one_way";
   const paramPassengers = searchParams.get("passengers") || "";
   const paramFromPincode = searchParams.get("fromPincode") || "";
@@ -67,7 +68,9 @@ export default function BookingPage() {
     paramDate ? (() => { const d = new Date(paramDate); return isNaN(d.getTime()) ? undefined : d; })() : undefined
   );
   const [pickupTime, setPickupTime] = useState("08:00");
-  const [returnDate, setReturnDate] = useState<Date>();
+  const [returnDate, setReturnDate] = useState<Date | undefined>(
+    paramReturnDate ? (() => { const d = new Date(paramReturnDate); return isNaN(d.getTime()) ? undefined : d; })() : undefined
+  );
   const [passengerCount, setPassengerCount] = useState(paramPassengers || "4");
   const [specialRequests, setSpecialRequests] = useState("");
   const [pickupAddress, setPickupAddress] = useState(paramFromFull);
