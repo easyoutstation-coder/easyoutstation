@@ -79,7 +79,7 @@ interface CancelModal {
   date: string;
 }
 interface NoteModal { open: boolean; bookingId: number; currentNote: string }
-interface ActionResult { whatsappLink: string | null; emailSent: boolean; customerPhone: string | null }
+interface ActionResult { whatsappLink: string | null; emailSent: boolean; customerPhone: string | null; bookingId?: number; action?: "confirmed" | "cancelled" }
 interface DriverForm { name: string; phone: string; vehicleInfo: string }
 
 export default function AdminPage() {
@@ -125,7 +125,7 @@ export default function AdminPage() {
   const confirmBooking = trpc.admin.confirmBooking.useMutation({
     onSuccess: (res) => {
       setConfirmModal(m => ({ ...m, open: false }));
-      setActionResult(res);
+      setActionResult({ ...res, bookingId: confirmModal.bookingId, action: "confirmed" });
       setSelectedDriverId(""); setDriverName(""); setDriverPhone("");
       invalidateBookings();
     },
@@ -134,7 +134,7 @@ export default function AdminPage() {
     onSuccess: (res) => {
       setCancelModal(m => ({ ...m, open: false }));
       setCancelReason("");
-      setActionResult(res);
+      setActionResult({ ...res, bookingId: cancelModal.bookingId, action: "cancelled" });
       invalidateBookings();
     },
   });
@@ -210,36 +210,47 @@ export default function AdminPage() {
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
 
-        {/* Action result toast */}
+        {/* Action result banner */}
         {actionResult && (
-          <div className="mb-4 bg-white border border-green-200 rounded-xl p-4 flex items-start justify-between gap-3 shadow-sm">
-            <div className="flex items-start gap-3">
-              <CheckCheck className="w-5 h-5 text-green-600 mt-0.5 shrink-0" />
-              <div>
-                <p className="font-medium text-sm text-green-800">Done!</p>
+          <div className={`mb-4 rounded-xl p-4 flex items-start justify-between gap-3 shadow-sm border ${
+            actionResult.action === "cancelled"
+              ? "bg-red-50 border-red-200"
+              : "bg-green-50 border-green-200"
+          }`}>
+            <div className="flex items-start gap-3 flex-1">
+              <CheckCheck className={`w-5 h-5 mt-0.5 shrink-0 ${actionResult.action === "cancelled" ? "text-red-600" : "text-green-600"}`} />
+              <div className="flex-1">
+                <p className={`font-semibold text-sm ${actionResult.action === "cancelled" ? "text-red-800" : "text-green-800"}`}>
+                  Booking #{actionResult.bookingId} {actionResult.action === "cancelled" ? "cancelled" : "confirmed"}!
+                </p>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {actionResult.emailSent && (
-                    <span className="flex items-center gap-1 text-xs bg-green-50 text-green-700 px-2 py-1 rounded-full">
-                      <Mail className="w-3 h-3" /> Email sent
+                  {actionResult.emailSent ? (
+                    <span className="flex items-center gap-1 text-xs bg-white/70 text-green-700 border border-green-200 px-2 py-1 rounded-full">
+                      <Mail className="w-3 h-3" /> Confirmation email sent ✓
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1 text-xs bg-white/70 text-amber-700 border border-amber-200 px-2 py-1 rounded-full">
+                      <Mail className="w-3 h-3" /> No email on file
                     </span>
                   )}
-                  {actionResult.whatsappLink && (
+                  {actionResult.whatsappLink ? (
                     <a
                       href={actionResult.whatsappLink}
                       target="_blank"
                       rel="noreferrer"
-                      className="flex items-center gap-1 text-xs bg-[#25D366] text-white px-3 py-1 rounded-full hover:opacity-90"
+                      className="flex items-center gap-1.5 text-xs font-semibold bg-[#25D366] text-white px-3 py-1 rounded-full hover:bg-[#1ebe5d] transition-colors"
                     >
-                      <MessageCircle className="w-3 h-3" /> Send on WhatsApp
+                      <MessageCircle className="w-3 h-3" /> Tap to send WhatsApp →
                     </a>
-                  )}
-                  {!actionResult.emailSent && !actionResult.whatsappLink && (
-                    <span className="text-xs text-muted-foreground">No contact info on file — notify customer manually.</span>
+                  ) : (
+                    <span className="flex items-center gap-1 text-xs bg-white/70 text-amber-700 border border-amber-200 px-2 py-1 rounded-full">
+                      No phone on file — call customer manually
+                    </span>
                   )}
                 </div>
               </div>
             </div>
-            <button onClick={() => setActionResult(null)} className="text-muted-foreground hover:text-foreground shrink-0">
+            <button onClick={() => setActionResult(null)} className="text-muted-foreground hover:text-foreground shrink-0 mt-0.5">
               <X className="w-4 h-4" />
             </button>
           </div>

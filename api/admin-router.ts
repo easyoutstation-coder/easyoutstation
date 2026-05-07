@@ -22,13 +22,48 @@ async function sendEmail(to: string, subject: string, text: string) {
   });
 }
 
+// Strip country code, keep only 10-digit mobile number
+function normalizePhone(phone: string | null | undefined): string | null {
+  if (!phone) return null;
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length === 12 && digits.startsWith("91")) return digits.slice(2);
+  if (digits.length === 11 && digits.startsWith("0")) return digits.slice(1);
+  if (digits.length === 10) return digits;
+  return digits.length > 0 ? digits : null;
+}
+
 function waLink(phone: string, message: string) {
-  return `https://wa.me/91${phone}?text=${encodeURIComponent(message)}`;
+  const clean = normalizePhone(phone) ?? phone;
+  return `https://wa.me/91${clean}?text=${encodeURIComponent(message)}`;
 }
 
 function formatDate(d: Date | string | null) {
   if (!d) return "";
   return new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+}
+
+// Fetch booking + fall back to user account for missing phone/email
+async function getBookingWithContact(bookingId: number) {
+  const db = getDb();
+  const booking = await db.query.bookings.findFirst({
+    where: eq(bookings.id, bookingId),
+    with: { car: true },
+  });
+  if (!booking) return null;
+
+  let phone = normalizePhone(booking.customerPhone);
+  let email = booking.customerEmail ?? null;
+
+  // Fall back to user account if contact info missing from booking
+  if ((!phone || !email) && booking.userId) {
+    const userRows = await db.select({ phone: users.phone, email: users.email })
+      .from(users).where(eq(users.id, booking.userId)).limit(1);
+    const u = userRows[0];
+    if (!phone && u?.phone) phone = normalizePhone(u.phone);
+    if (!email && u?.email) email = u.email;
+  }
+
+  return { ...booking, resolvedPhone: phone, resolvedEmail: email };
 }
 
 export const adminRouter = createRouter({
@@ -85,16 +120,13 @@ export const adminRouter = createRouter({
         driverPhone: input.driverPhone,
       } as any).where(eq(bookings.id, input.id));
 
-      const booking = await db.query.bookings.findFirst({
-        where: eq(bookings.id, input.id),
-        with: { car: true },
-      });
-
+      const booking = await getBookingWithContact(input.id);
       const date = formatDate(booking?.pickupDate ?? null);
       const route = `${booking?.fromCity} → ${booking?.toCity}`;
       const car = booking?.car?.name ?? "your booked car";
+      const name = booking?.customerName ?? "Customer";
 
-      const emailBody = `Dear ${booking?.customerName},
+      const emailBody = `Dear ${name},
 
 Your EasyOutstation booking is CONFIRMED! 🎉
 
@@ -118,12 +150,15 @@ Email: easyoutstation@gmail.com
 Have a safe and comfortable journey!
 Team EasyOutstation`;
 
-      if (booking?.customerEmail) {
-        try { await sendEmail(booking.customerEmail, `Booking Confirmed #${input.id} — ${route} | EasyOutstation`, emailBody); }
-        catch (e) { console.error("Email failed:", e); }
+      let emailSent = false;
+      if (booking?.resolvedEmail) {
+        try {
+          await sendEmail(booking.resolvedEmail, `Booking Confirmed #${input.id} — ${route} | EasyOutstation`, emailBody);
+          emailSent = true;
+        } catch (e) { console.error("Confirm email failed:", e); }
       }
 
-      const waMsg = `Hello ${booking?.customerName}! 👋
+      const waMsg = `Hello ${name}! 👋
 
 Your EasyOutstation booking is *CONFIRMED* ✅
 
@@ -141,9 +176,9 @@ Have a wonderful journey! 🌟`;
 
       return {
         success: true,
-        whatsappLink: booking?.customerPhone ? waLink(booking.customerPhone, waMsg) : null,
-        customerPhone: booking?.customerPhone ?? null,
-        emailSent: !!booking?.customerEmail,
+        whatsappLink: booking?.resolvedPhone ? waLink(booking.resolvedPhone, waMsg) : null,
+        customerPhone: booking?.resolvedPhone ?? null,
+        emailSent,
       };
     }),
 
@@ -157,11 +192,12 @@ Have a wonderful journey! 🌟`;
       const db = getDb();
       await db.update(bookings).set({ status: "cancelled" }).where(eq(bookings.id, input.id));
 
-      const booking = await db.query.bookings.findFirst({ where: eq(bookings.id, input.id) });
+      const booking = await getBookingWithContact(input.id);
       const date = formatDate(booking?.pickupDate ?? null);
       const route = `${booking?.fromCity} → ${booking?.toCity}`;
+      const name = booking?.customerName ?? "Customer";
 
-      const emailBody = `Dear ${booking?.customerName},
+      const emailBody = `Dear ${name},
 
 We're sorry to inform you that your booking has been cancelled.
 
@@ -181,12 +217,15 @@ We apologize for the inconvenience. To rebook or for any queries:
 Thank you for choosing EasyOutstation.
 Team EasyOutstation`;
 
-      if (booking?.customerEmail) {
-        try { await sendEmail(booking.customerEmail, `Booking Cancelled #${input.id} — EasyOutstation`, emailBody); }
-        catch (e) { console.error("Email failed:", e); }
+      let emailSent = false;
+      if (booking?.resolvedEmail) {
+        try {
+          await sendEmail(booking.resolvedEmail, `Booking Cancelled #${input.id} — EasyOutstation`, emailBody);
+          emailSent = true;
+        } catch (e) { console.error("Cancel email failed:", e); }
       }
 
-      const waMsg = `Hello ${booking?.customerName},
+      const waMsg = `Hello ${name},
 
 We regret to inform you that your EasyOutstation booking *#${input.id}* (${route} on ${date}) has been *cancelled*.${input.reason ? `\n\nReason: ${input.reason}` : ""}
 
@@ -197,9 +236,9 @@ Thank you for choosing EasyOutstation.`;
 
       return {
         success: true,
-        whatsappLink: booking?.customerPhone ? waLink(booking.customerPhone, waMsg) : null,
-        customerPhone: booking?.customerPhone ?? null,
-        emailSent: !!booking?.customerEmail,
+        whatsappLink: booking?.resolvedPhone ? waLink(booking.resolvedPhone, waMsg) : null,
+        customerPhone: booking?.resolvedPhone ?? null,
+        emailSent,
       };
     }),
 
