@@ -8,30 +8,12 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  LayoutDashboard,
-  Users,
-  Car,
-  IndianRupee,
-  Clock,
-  CheckCircle,
-  XCircle,
-  Phone,
-  UserCog,
-  StickyNote,
+  LayoutDashboard, Users, Car, IndianRupee, Clock, CheckCircle, XCircle,
+  Phone, UserCog, StickyNote, CheckCheck, X, Plus, Pencil, Trash2,
+  MessageCircle, Mail, AlertTriangle,
 } from "lucide-react";
 
 type BookingStatus = "pending" | "confirmed" | "completed" | "cancelled";
@@ -43,12 +25,18 @@ const statusColors: Record<BookingStatus, string> = {
   completed: "bg-blue-100 text-blue-700",
   cancelled: "bg-red-100 text-red-700",
 };
-
 const paymentColors: Record<PaymentStatus, string> = {
   pending: "bg-slate-100 text-slate-600",
   paid: "bg-emerald-100 text-emerald-700",
   refunded: "bg-orange-100 text-orange-700",
 };
+
+const MASTER_PHONES = ["9958556011"];
+const MASTER_EMAILS = ["parmindersinghtalwar@gmail.com"];
+function isMasterUser(user: { phone?: string | null; email?: string | null } | undefined) {
+  if (!user) return false;
+  return MASTER_PHONES.includes(user.phone ?? "") || MASTER_EMAILS.includes(user.email ?? "");
+}
 
 function StatCard({ icon: Icon, label, value, sub }: { icon: any; label: string; value: string | number; sub?: string }) {
   return (
@@ -69,71 +57,131 @@ function StatCard({ icon: Icon, label, value, sub }: { icon: any; label: string;
   );
 }
 
-interface DriverModalState {
+// ── Types ──────────────────────────────────────────────────────────────────
+interface ConfirmModal {
   open: boolean;
   bookingId: number;
+  customerName: string;
   customerPhone: string;
+  customerEmail: string;
   route: string;
   date: string;
-  currentDriverName: string;
-  currentDriverPhone: string;
+  carName: string;
+  pickupAddress: string;
 }
-
-interface NoteModalState {
+interface CancelModal {
   open: boolean;
   bookingId: number;
-  currentNote: string;
+  customerName: string;
+  customerPhone: string;
+  customerEmail: string;
+  route: string;
+  date: string;
 }
+interface NoteModal { open: boolean; bookingId: number; currentNote: string }
+interface ActionResult { whatsappLink: string | null; emailSent: boolean; customerPhone: string | null }
+interface DriverForm { name: string; phone: string; vehicleInfo: string }
 
 export default function AdminPage() {
   const navigate = useNavigate();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth({ redirectOnUnauthenticated: true });
 
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [driverModal, setDriverModal] = useState<DriverModalState>({
-    open: false, bookingId: 0, customerPhone: "", route: "", date: "", currentDriverName: "", currentDriverPhone: "",
+  const [statusFilter, setStatusFilter] = useState("pending");
+  const [confirmModal, setConfirmModal] = useState<ConfirmModal>({
+    open: false, bookingId: 0, customerName: "", customerPhone: "", customerEmail: "",
+    route: "", date: "", carName: "", pickupAddress: "",
   });
-  const [driverName, setDriverName] = useState("");
-  const [driverPhone, setDriverPhone] = useState("");
-  const [noteModal, setNoteModal] = useState<NoteModalState>({ open: false, bookingId: 0, currentNote: "" });
+  const [cancelModal, setCancelModal] = useState<CancelModal>({
+    open: false, bookingId: 0, customerName: "", customerPhone: "", customerEmail: "",
+    route: "", date: "",
+  });
+  const [cancelReason, setCancelReason] = useState("");
+  const [noteModal, setNoteModal] = useState<NoteModal>({ open: false, bookingId: 0, currentNote: "" });
   const [noteText, setNoteText] = useState("");
 
+  // Driver selection in confirm modal
+  const [selectedDriverId, setSelectedDriverId] = useState(""); // "" = custom
+  const [driverName, setDriverName] = useState("");
+  const [driverPhone, setDriverPhone] = useState("");
+
+  // Result shown after confirm/cancel
+  const [actionResult, setActionResult] = useState<ActionResult | null>(null);
+
+  // Driver management
+  const [addDriverOpen, setAddDriverOpen] = useState(false);
+  const [editingDriver, setEditingDriver] = useState<{ id: number } & DriverForm | null>(null);
+  const [newDriver, setNewDriver] = useState<DriverForm>({ name: "", phone: "", vehicleInfo: "" });
+
   const utils = trpc.useUtils();
+  const invalidateBookings = () => { utils.admin.getBookings.invalidate(); utils.admin.getStats.invalidate(); };
 
   const { data: stats } = trpc.admin.getStats.useQuery(undefined, { enabled: isAuthenticated && user?.role === "admin" });
   const { data: bookingsList, isLoading: bookingsLoading } = trpc.admin.getBookings.useQuery(
-    { status: statusFilter },
-    { enabled: isAuthenticated && user?.role === "admin" }
+    { status: statusFilter }, { enabled: isAuthenticated && user?.role === "admin" }
   );
+  const { data: driversList } = trpc.admin.getDrivers.useQuery(undefined, { enabled: isAuthenticated && user?.role === "admin" });
   const { data: customers } = trpc.admin.getCustomers.useQuery(undefined, { enabled: isAuthenticated && user?.role === "admin" });
 
-  const invalidate = () => {
-    utils.admin.getBookings.invalidate();
-    utils.admin.getStats.invalidate();
-  };
-
-  const updateStatus = trpc.admin.updateStatus.useMutation({ onSuccess: invalidate });
-  const updatePayment = trpc.admin.updatePayment.useMutation({ onSuccess: invalidate });
-  const assignDriver = trpc.admin.assignDriver.useMutation({
-    onSuccess: () => {
-      setDriverModal(m => ({ ...m, open: false }));
-      setDriverName(""); setDriverPhone("");
-      invalidate();
+  const confirmBooking = trpc.admin.confirmBooking.useMutation({
+    onSuccess: (res) => {
+      setConfirmModal(m => ({ ...m, open: false }));
+      setActionResult(res);
+      setSelectedDriverId(""); setDriverName(""); setDriverPhone("");
+      invalidateBookings();
     },
   });
-  const addNote = trpc.admin.addNote.useMutation({
-    onSuccess: () => { setNoteModal(m => ({ ...m, open: false })); setNoteText(""); invalidate(); },
+  const cancelBooking = trpc.admin.cancelBooking.useMutation({
+    onSuccess: (res) => {
+      setCancelModal(m => ({ ...m, open: false }));
+      setCancelReason("");
+      setActionResult(res);
+      invalidateBookings();
+    },
   });
+  const updatePayment = trpc.admin.updatePayment.useMutation({ onSuccess: invalidateBookings });
+  const addNote = trpc.admin.addNote.useMutation({
+    onSuccess: () => { setNoteModal(m => ({ ...m, open: false })); setNoteText(""); invalidateBookings(); },
+  });
+  const addDriver = trpc.admin.addDriver.useMutation({
+    onSuccess: () => { setAddDriverOpen(false); setNewDriver({ name: "", phone: "", vehicleInfo: "" }); utils.admin.getDrivers.invalidate(); },
+  });
+  const updateDriver = trpc.admin.updateDriver.useMutation({
+    onSuccess: () => { setEditingDriver(null); utils.admin.getDrivers.invalidate(); },
+  });
+  const removeDriver = trpc.admin.removeDriver.useMutation({ onSuccess: () => utils.admin.getDrivers.invalidate() });
   const setUserRole = trpc.admin.setUserRole.useMutation({ onSuccess: () => utils.admin.getCustomers.invalidate() });
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
-      </div>
-    );
+  function openConfirmModal(b: any) {
+    const booking = b as typeof b & { driverName?: string; driverPhone?: string };
+    setDriverName(booking.driverName ?? "");
+    setDriverPhone(booking.driverPhone ?? "");
+    setSelectedDriverId("");
+    setConfirmModal({
+      open: true,
+      bookingId: Number(b.id),
+      customerName: b.customerName,
+      customerPhone: b.customerPhone ?? "",
+      customerEmail: b.customerEmail ?? "",
+      route: `${b.fromCity} → ${b.toCity}`,
+      date: new Date(b.pickupDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
+      carName: b.car?.name ?? "",
+      pickupAddress: b.pickupAddress ?? "",
+    });
   }
 
+  function selectDriver(driverId: string) {
+    setSelectedDriverId(driverId);
+    if (driverId && driverId !== "custom") {
+      const d = driversList?.find(d => String(d.id) === driverId);
+      if (d) { setDriverName(d.name); setDriverPhone(d.phone); }
+    } else if (driverId === "custom") {
+      setDriverName(""); setDriverPhone("");
+    }
+  }
+
+  if (authLoading) {
+    return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" /></div>;
+  }
   if (!isAuthenticated || user?.role !== "admin") {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4">
@@ -142,6 +190,8 @@ export default function AdminPage() {
       </div>
     );
   }
+
+  const masterAdmin = isMasterUser(user);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -159,14 +209,54 @@ export default function AdminPage() {
       </div>
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
-        <Tabs defaultValue="overview">
+
+        {/* Action result toast */}
+        {actionResult && (
+          <div className="mb-4 bg-white border border-green-200 rounded-xl p-4 flex items-start justify-between gap-3 shadow-sm">
+            <div className="flex items-start gap-3">
+              <CheckCheck className="w-5 h-5 text-green-600 mt-0.5 shrink-0" />
+              <div>
+                <p className="font-medium text-sm text-green-800">Done!</p>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {actionResult.emailSent && (
+                    <span className="flex items-center gap-1 text-xs bg-green-50 text-green-700 px-2 py-1 rounded-full">
+                      <Mail className="w-3 h-3" /> Email sent
+                    </span>
+                  )}
+                  {actionResult.whatsappLink && (
+                    <a
+                      href={actionResult.whatsappLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-1 text-xs bg-[#25D366] text-white px-3 py-1 rounded-full hover:opacity-90"
+                    >
+                      <MessageCircle className="w-3 h-3" /> Send on WhatsApp
+                    </a>
+                  )}
+                  {!actionResult.emailSent && !actionResult.whatsappLink && (
+                    <span className="text-xs text-muted-foreground">No contact info on file — notify customer manually.</span>
+                  )}
+                </div>
+              </div>
+            </div>
+            <button onClick={() => setActionResult(null)} className="text-muted-foreground hover:text-foreground shrink-0">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
+        <Tabs defaultValue="bookings">
           <TabsList className="mb-6">
             <TabsTrigger value="overview" className="gap-1.5"><LayoutDashboard className="w-4 h-4" />Overview</TabsTrigger>
-            <TabsTrigger value="bookings" className="gap-1.5"><Car className="w-4 h-4" />Bookings {stats?.pending ? `(${stats.pending})` : ""}</TabsTrigger>
+            <TabsTrigger value="bookings" className="gap-1.5">
+              <Car className="w-4 h-4" />Bookings
+              {(stats?.pending ?? 0) > 0 && <span className="ml-1 bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{stats!.pending}</span>}
+            </TabsTrigger>
+            <TabsTrigger value="drivers" className="gap-1.5"><Car className="w-4 h-4" />Drivers</TabsTrigger>
             <TabsTrigger value="customers" className="gap-1.5"><Users className="w-4 h-4" />Customers</TabsTrigger>
           </TabsList>
 
-          {/* Overview Tab */}
+          {/* ── Overview ────────────────────────────────────────────── */}
           <TabsContent value="overview">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <StatCard icon={Clock} label="Pending" value={stats?.pending ?? "—"} />
@@ -180,48 +270,39 @@ export default function AdminPage() {
             </div>
           </TabsContent>
 
-          {/* Bookings Tab */}
+          {/* ── Bookings ─────────────────────────────────────────────── */}
           <TabsContent value="bookings">
             <div className="flex flex-wrap gap-2 mb-4">
-              {(["all", "pending", "confirmed", "completed", "cancelled"] as const).map(s => (
-                <Button
-                  key={s}
-                  variant={statusFilter === s ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setStatusFilter(s)}
-                  className="capitalize"
-                >
-                  {s}
-                  {s === "pending" && stats?.pending ? ` (${stats.pending})` : ""}
+              {(["pending", "confirmed", "all", "completed", "cancelled"] as const).map(s => (
+                <Button key={s} variant={statusFilter === s ? "default" : "outline"} size="sm"
+                  onClick={() => setStatusFilter(s)} className="capitalize">
+                  {s}{s === "pending" && (stats?.pending ?? 0) > 0 ? ` (${stats!.pending})` : ""}
                 </Button>
               ))}
             </div>
 
             {bookingsLoading ? (
-              <div className="flex justify-center py-16">
-                <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
-              </div>
+              <div className="flex justify-center py-16"><div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" /></div>
             ) : !bookingsList?.length ? (
               <Card><CardContent className="p-8 text-center text-muted-foreground">No bookings found.</CardContent></Card>
             ) : (
               <div className="space-y-3">
                 {bookingsList.map(b => {
-                  const booking = b as typeof b & { driverName?: string; driverPhone?: string; adminNotes?: string };
+                  const bx = b as typeof b & { driverName?: string; driverPhone?: string; adminNotes?: string };
+                  const isCancelled = b.status === "cancelled";
+                  const isCompleted = b.status === "completed";
                   return (
                     <Card key={b.id} className="overflow-hidden">
                       <CardContent className="p-0">
                         <div className="p-4 space-y-3">
-                          {/* Header */}
+                          {/* Top */}
                           <div className="flex items-start justify-between gap-2 flex-wrap">
-                            <div>
+                            <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <span className="text-xs text-muted-foreground font-mono">#{b.id}</span>
                                 <h4 className="font-semibold text-sm">{b.customerName}</h4>
                                 {b.customerPhone && (
-                                  <a
-                                    href={`tel:+91${b.customerPhone}`}
-                                    className="flex items-center gap-1 text-xs text-primary hover:underline"
-                                  >
+                                  <a href={`tel:+91${b.customerPhone}`} className="flex items-center gap-1 text-xs text-primary hover:underline">
                                     <Phone className="w-3 h-3" />{b.customerPhone}
                                   </a>
                                 )}
@@ -229,15 +310,9 @@ export default function AdminPage() {
                               <p className="text-xs text-muted-foreground mt-0.5">
                                 {b.fromCity} → {b.toCity} · {new Date(b.pickupDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                               </p>
-                              <p className="text-xs text-muted-foreground">
-                                {b.car?.name} · {b.totalKm} km · {b.tripType.replace("_", " ")}
-                              </p>
-                              {b.pickupAddress && (
-                                <p className="text-xs text-muted-foreground">Pickup: {b.pickupAddress}</p>
-                              )}
-                              {b.specialRequests && (
-                                <p className="text-xs text-muted-foreground italic">"{b.specialRequests}"</p>
-                              )}
+                              <p className="text-xs text-muted-foreground">{b.car?.name} · {b.totalKm} km · {b.tripType.replace("_", " ")}</p>
+                              {b.pickupAddress && <p className="text-xs text-muted-foreground">📍 {b.pickupAddress}</p>}
+                              {b.specialRequests && <p className="text-xs text-muted-foreground italic">"{b.specialRequests}"</p>}
                             </div>
                             <div className="flex flex-col items-end gap-1 shrink-0">
                               <span className="font-bold text-primary">₹{parseFloat(b.totalPrice.toString()).toLocaleString("en-IN")}</span>
@@ -245,87 +320,72 @@ export default function AdminPage() {
                                 {b.status.charAt(0).toUpperCase() + b.status.slice(1)}
                               </Badge>
                               <Badge className={`${paymentColors[b.paymentStatus as PaymentStatus]} text-xs border-0`}>
-                                {b.paymentStatus === "paid" ? "Paid" : b.paymentStatus === "refunded" ? "Refunded" : "Unpaid"}
+                                {b.paymentStatus === "paid" ? "Paid ✓" : b.paymentStatus === "refunded" ? "Refunded" : "Unpaid"}
                               </Badge>
                             </div>
                           </div>
 
                           {/* Driver / Note banners */}
-                          {(booking.driverName || booking.driverPhone) && (
+                          {(bx.driverName || bx.driverPhone) && (
                             <div className="bg-green-50 border border-green-100 rounded-lg px-3 py-2 text-xs text-green-800">
-                              Driver assigned: <strong>{booking.driverName}</strong>
-                              {booking.driverPhone && (
-                                <> · <a href={`tel:+91${booking.driverPhone}`} className="hover:underline">+91-{booking.driverPhone}</a></>
-                              )}
+                              👨‍✈️ <strong>{bx.driverName}</strong>
+                              {bx.driverPhone && <> · <a href={`tel:+91${bx.driverPhone}`} className="hover:underline">+91-{bx.driverPhone}</a></>}
                             </div>
                           )}
-                          {booking.adminNotes && (
+                          {bx.adminNotes && (
                             <div className="bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 text-xs text-amber-800">
-                              Note: {booking.adminNotes}
+                              📝 {bx.adminNotes}
                             </div>
                           )}
 
-                          {/* Actions */}
+                          {/* Action buttons */}
                           <div className="flex flex-wrap gap-2 pt-1 border-t border-slate-100">
-                            <Select
-                              value={b.status}
-                              onValueChange={v => updateStatus.mutate({ id: Number(b.id), status: v as BookingStatus })}
-                            >
-                              <SelectTrigger className="h-8 text-xs w-36">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="pending">Pending</SelectItem>
-                                <SelectItem value="confirmed">Confirmed</SelectItem>
-                                <SelectItem value="completed">Completed</SelectItem>
-                                <SelectItem value="cancelled">Cancelled</SelectItem>
-                              </SelectContent>
-                            </Select>
+                            {/* Confirm — only for pending/confirmed */}
+                            {!isCancelled && !isCompleted && (
+                              <Button
+                                size="sm"
+                                className="h-8 text-xs gap-1 bg-green-600 hover:bg-green-700 text-white"
+                                onClick={() => openConfirmModal(b)}
+                              >
+                                <CheckCheck className="w-3 h-3" />
+                                {b.status === "confirmed" ? "Re-assign Driver" : "Confirm"}
+                              </Button>
+                            )}
 
-                            <Select
-                              value={b.paymentStatus}
-                              onValueChange={v => updatePayment.mutate({ id: Number(b.id), paymentStatus: v as PaymentStatus })}
-                            >
-                              <SelectTrigger className="h-8 text-xs w-28">
-                                <SelectValue />
-                              </SelectTrigger>
+                            {/* Cancel — only if not already cancelled */}
+                            {!isCancelled && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-8 text-xs gap-1 border-red-200 text-red-600 hover:bg-red-50"
+                                onClick={() => setCancelModal({
+                                  open: true,
+                                  bookingId: Number(b.id),
+                                  customerName: b.customerName,
+                                  customerPhone: b.customerPhone ?? "",
+                                  customerEmail: b.customerEmail ?? "",
+                                  route: `${b.fromCity} → ${b.toCity}`,
+                                  date: new Date(b.pickupDate).toLocaleDateString("en-IN"),
+                                })}
+                              >
+                                <X className="w-3 h-3" /> Cancel
+                              </Button>
+                            )}
+
+                            {/* Payment */}
+                            <Select value={b.paymentStatus}
+                              onValueChange={v => updatePayment.mutate({ id: Number(b.id), paymentStatus: v as PaymentStatus })}>
+                              <SelectTrigger className="h-8 text-xs w-28"><SelectValue /></SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="pending">Unpaid</SelectItem>
-                                <SelectItem value="paid">Paid</SelectItem>
+                                <SelectItem value="paid">Mark Paid</SelectItem>
                                 <SelectItem value="refunded">Refunded</SelectItem>
                               </SelectContent>
                             </Select>
 
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-8 text-xs gap-1"
-                              onClick={() => {
-                                setDriverModal({
-                                  open: true,
-                                  bookingId: Number(b.id),
-                                  customerPhone: b.customerPhone ?? "",
-                                  route: `${b.fromCity} → ${b.toCity}`,
-                                  date: new Date(b.pickupDate).toLocaleDateString("en-IN"),
-                                  currentDriverName: booking.driverName ?? "",
-                                  currentDriverPhone: booking.driverPhone ?? "",
-                                });
-                                setDriverName(booking.driverName ?? "");
-                                setDriverPhone(booking.driverPhone ?? "");
-                              }}
-                            >
-                              <Car className="w-3 h-3" /> Driver
-                            </Button>
-
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-8 text-xs gap-1"
-                              onClick={() => {
-                                setNoteModal({ open: true, bookingId: Number(b.id), currentNote: booking.adminNotes ?? "" });
-                                setNoteText(booking.adminNotes ?? "");
-                              }}
-                            >
+                            {/* Note */}
+                            <Button size="sm" variant="outline" className="h-8 text-xs gap-1"
+                              onClick={() => { setNoteModal({ open: true, bookingId: Number(b.id), currentNote: bx.adminNotes ?? "" }); setNoteText(bx.adminNotes ?? ""); }}>
                               <StickyNote className="w-3 h-3" /> Note
                             </Button>
                           </div>
@@ -338,9 +398,84 @@ export default function AdminPage() {
             )}
           </TabsContent>
 
-          {/* Customers Tab */}
+          {/* ── Drivers ──────────────────────────────────────────────── */}
+          <TabsContent value="drivers">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold">Driver Roster</h2>
+              <Button size="sm" className="gap-1" onClick={() => setAddDriverOpen(true)}>
+                <Plus className="w-4 h-4" /> Add Driver
+              </Button>
+            </div>
+            {!driversList?.length ? (
+              <Card><CardContent className="p-8 text-center text-muted-foreground">No drivers yet. Add your first driver.</CardContent></Card>
+            ) : (
+              <div className="space-y-2">
+                {driversList.map(d => (
+                  <Card key={d.id}>
+                    <CardContent className="p-4">
+                      {editingDriver?.id === Number(d.id) ? (
+                        <div className="flex flex-wrap gap-2 items-end">
+                          <Input placeholder="Name" value={editingDriver.name} onChange={e => setEditingDriver(ed => ed ? { ...ed, name: e.target.value } : ed)} className="h-8 text-sm w-40" />
+                          <Input placeholder="Phone" value={editingDriver.phone} onChange={e => setEditingDriver(ed => ed ? { ...ed, phone: e.target.value } : ed)} className="h-8 text-sm w-36" />
+                          <Input placeholder="Vehicle (optional)" value={editingDriver.vehicleInfo} onChange={e => setEditingDriver(ed => ed ? { ...ed, vehicleInfo: e.target.value } : ed)} className="h-8 text-sm w-48" />
+                          <Button size="sm" className="h-8 text-xs" disabled={updateDriver.isPending}
+                            onClick={() => editingDriver && updateDriver.mutate({ id: editingDriver.id, name: editingDriver.name, phone: editingDriver.phone, vehicleInfo: editingDriver.vehicleInfo || undefined })}>
+                            Save
+                          </Button>
+                          <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => setEditingDriver(null)}>Cancel</Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between gap-2">
+                          <div>
+                            <p className="font-medium text-sm">{d.name}</p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <a href={`tel:+91${d.phone}`} className="flex items-center gap-1 text-xs text-primary hover:underline">
+                                <Phone className="w-3 h-3" />{d.phone}
+                              </a>
+                              {d.vehicleInfo && <span className="text-xs text-muted-foreground">· {d.vehicleInfo}</span>}
+                            </div>
+                          </div>
+                          <div className="flex gap-1">
+                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0"
+                              onClick={() => setEditingDriver({ id: Number(d.id), name: d.name, phone: d.phone, vehicleInfo: d.vehicleInfo ?? "" })}>
+                              <Pencil className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-500 hover:bg-red-50"
+                              onClick={() => removeDriver.mutate({ id: Number(d.id) })}>
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+
+            {/* Add driver inline */}
+            {addDriverOpen && (
+              <Card className="mt-3 border-dashed border-2 border-primary/30">
+                <CardContent className="p-4">
+                  <p className="text-sm font-medium mb-3">New Driver</p>
+                  <div className="flex flex-wrap gap-2 items-end">
+                    <Input placeholder="Full Name *" value={newDriver.name} onChange={e => setNewDriver(d => ({ ...d, name: e.target.value }))} className="h-8 text-sm w-40" />
+                    <Input placeholder="Phone *" value={newDriver.phone} onChange={e => setNewDriver(d => ({ ...d, phone: e.target.value }))} className="h-8 text-sm w-36" />
+                    <Input placeholder="Vehicle / Notes" value={newDriver.vehicleInfo} onChange={e => setNewDriver(d => ({ ...d, vehicleInfo: e.target.value }))} className="h-8 text-sm w-48" />
+                    <Button size="sm" className="h-8 text-xs gap-1" disabled={!newDriver.name || !newDriver.phone || addDriver.isPending}
+                      onClick={() => addDriver.mutate({ name: newDriver.name, phone: newDriver.phone, vehicleInfo: newDriver.vehicleInfo || undefined })}>
+                      <Plus className="w-3 h-3" /> Add
+                    </Button>
+                    <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => setAddDriverOpen(false)}>Cancel</Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          {/* ── Customers ────────────────────────────────────────────── */}
           <TabsContent value="customers">
-            <div className="space-y-3">
+            <div className="space-y-2">
               {!customers?.length ? (
                 <Card><CardContent className="p-8 text-center text-muted-foreground">No customers yet.</CardContent></Card>
               ) : customers.map(c => (
@@ -364,27 +499,22 @@ export default function AdminPage() {
                           {Number(c.bookingCount)} booking{Number(c.bookingCount) !== 1 ? "s" : ""} · Joined {new Date(c.createdAt).toLocaleDateString("en-IN")}
                         </p>
                       </div>
-                      <div>
-                        {c.role !== "admin" ? (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-8 text-xs gap-1"
-                            onClick={() => setUserRole.mutate({ userId: Number(c.id), role: "admin" })}
-                          >
-                            <UserCog className="w-3 h-3" /> Make Admin
+                      {/* Only master admin can grant/revoke admin access */}
+                      {masterAdmin && (
+                        c.role !== "admin" ? (
+                          <Button size="sm" variant="outline" className="h-8 text-xs gap-1"
+                            onClick={() => setUserRole.mutate({ userId: Number(c.id), role: "admin" })}>
+                            <UserCog className="w-3 h-3" /> Give Admin Access
                           </Button>
                         ) : (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-8 text-xs text-muted-foreground"
-                            onClick={() => setUserRole.mutate({ userId: Number(c.id), role: "user" })}
-                          >
-                            Remove Admin
-                          </Button>
-                        )}
-                      </div>
+                          !MASTER_PHONES.includes(c.phone ?? "") && !MASTER_EMAILS.includes(c.email ?? "") && (
+                            <Button size="sm" variant="ghost" className="h-8 text-xs text-muted-foreground"
+                              onClick={() => setUserRole.mutate({ userId: Number(c.id), role: "user" })}>
+                              Remove Admin
+                            </Button>
+                          )
+                        )
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -394,84 +524,148 @@ export default function AdminPage() {
         </Tabs>
       </div>
 
-      {/* Driver Assignment Modal */}
-      <Dialog open={driverModal.open} onOpenChange={open => setDriverModal(m => ({ ...m, open }))}>
+      {/* ── Confirm Booking Modal ──────────────────────────────────── */}
+      <Dialog open={confirmModal.open} onOpenChange={open => setConfirmModal(m => ({ ...m, open }))}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Assign Driver — Booking #{driverModal.bookingId}</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-green-600" />
+              Confirm Booking #{confirmModal.bookingId}
+            </DialogTitle>
           </DialogHeader>
-          <div className="text-sm text-muted-foreground mb-3">
-            <p>{driverModal.route} · {driverModal.date}</p>
-            {driverModal.customerPhone && (
-              <a href={`tel:+91${driverModal.customerPhone}`} className="flex items-center gap-1 text-primary hover:underline mt-1">
-                <Phone className="w-3 h-3" /> Customer: +91-{driverModal.customerPhone}
-              </a>
-            )}
+
+          <div className="bg-slate-50 rounded-lg p-3 text-sm space-y-1 mb-2">
+            <p><span className="text-muted-foreground">Customer:</span> <strong>{confirmModal.customerName}</strong>
+              {confirmModal.customerPhone && <> · <a href={`tel:+91${confirmModal.customerPhone}`} className="text-primary hover:underline">{confirmModal.customerPhone}</a></>}
+            </p>
+            <p><span className="text-muted-foreground">Route:</span> {confirmModal.route} · {confirmModal.date}</p>
+            {confirmModal.carName && <p><span className="text-muted-foreground">Car:</span> {confirmModal.carName}</p>}
+            {confirmModal.pickupAddress && <p><span className="text-muted-foreground">Pickup:</span> {confirmModal.pickupAddress}</p>}
           </div>
+
           <div className="space-y-3">
-            <div>
-              <label className="text-sm font-medium mb-1 block">Driver Name</label>
-              <Input
-                placeholder="e.g. Ramesh Kumar"
-                value={driverName}
-                onChange={e => setDriverName(e.target.value)}
-              />
+            {/* Driver dropdown */}
+            {(driversList?.length ?? 0) > 0 && (
+              <div>
+                <label className="text-sm font-medium mb-1 block">Select from Roster</label>
+                <Select value={selectedDriverId} onValueChange={selectDriver}>
+                  <SelectTrigger className="text-sm">
+                    <SelectValue placeholder="Choose a driver…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="custom">— Enter manually —</SelectItem>
+                    {driversList!.map(d => (
+                      <SelectItem key={d.id} value={String(d.id)}>
+                        {d.name} · {d.phone}{d.vehicleInfo ? ` (${d.vehicleInfo})` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-sm font-medium mb-1 block">Driver Name *</label>
+                <Input placeholder="e.g. Ramesh Kumar" value={driverName} onChange={e => setDriverName(e.target.value)} />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Driver Phone *</label>
+                <Input placeholder="10-digit" value={driverPhone} onChange={e => setDriverPhone(e.target.value)} />
+              </div>
             </div>
-            <div>
-              <label className="text-sm font-medium mb-1 block">Driver Phone</label>
-              <Input
-                placeholder="10-digit mobile"
-                value={driverPhone}
-                onChange={e => setDriverPhone(e.target.value)}
-              />
-            </div>
+
+            {(confirmModal.customerEmail || confirmModal.customerPhone) && (
+              <div className="bg-blue-50 rounded-lg p-2 text-xs text-blue-700 flex gap-2">
+                <Mail className="w-3 h-3 shrink-0 mt-0.5" />
+                <span>
+                  Confirmation will be sent
+                  {confirmModal.customerEmail && <> via email to <strong>{confirmModal.customerEmail}</strong></>}
+                  {confirmModal.customerEmail && confirmModal.customerPhone && " and "}
+                  {confirmModal.customerPhone && <>WhatsApp link for <strong>+91-{confirmModal.customerPhone}</strong> will be shown</>}
+                  .
+                </span>
+              </div>
+            )}
+
             <Button
-              className="w-full"
-              disabled={!driverName.trim() || !driverPhone.trim() || assignDriver.isPending}
-              onClick={() => assignDriver.mutate({
-                id: driverModal.bookingId,
-                driverName: driverName.trim(),
-                driverPhone: driverPhone.trim(),
-                confirmBooking: true,
-              })}
+              className="w-full bg-green-600 hover:bg-green-700 text-white"
+              disabled={!driverName.trim() || !driverPhone.trim() || confirmBooking.isPending}
+              onClick={() => confirmBooking.mutate({ id: confirmModal.bookingId, driverName: driverName.trim(), driverPhone: driverPhone.trim() })}
             >
-              {assignDriver.isPending ? "Saving..." : "Confirm Booking & Save Driver"}
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full"
-              disabled={!driverName.trim() || !driverPhone.trim() || assignDriver.isPending}
-              onClick={() => assignDriver.mutate({
-                id: driverModal.bookingId,
-                driverName: driverName.trim(),
-                driverPhone: driverPhone.trim(),
-                confirmBooking: false,
-              })}
-            >
-              Save Driver Only (Keep Current Status)
+              <CheckCheck className="w-4 h-4 mr-2" />
+              {confirmBooking.isPending ? "Confirming…" : "Confirm Booking & Notify Customer"}
             </Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Note Modal */}
-      <Dialog open={noteModal.open} onOpenChange={open => setNoteModal(m => ({ ...m, open }))}>
+      {/* ── Cancel Booking Modal ───────────────────────────────────── */}
+      <Dialog open={cancelModal.open} onOpenChange={open => setCancelModal(m => ({ ...m, open }))}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Internal Note — Booking #{noteModal.bookingId}</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-red-500" />
+              Cancel Booking #{cancelModal.bookingId}
+            </DialogTitle>
           </DialogHeader>
-          <Textarea
-            placeholder="Internal note (not visible to customer)..."
-            value={noteText}
-            onChange={e => setNoteText(e.target.value)}
-            rows={4}
-          />
-          <Button
-            className="w-full mt-2"
-            disabled={addNote.isPending}
-            onClick={() => addNote.mutate({ id: noteModal.bookingId, note: noteText })}
-          >
-            {addNote.isPending ? "Saving..." : "Save Note"}
+
+          <div className="bg-slate-50 rounded-lg p-3 text-sm space-y-1 mb-2">
+            <p><span className="text-muted-foreground">Customer:</span> <strong>{cancelModal.customerName}</strong>
+              {cancelModal.customerPhone && <> · <a href={`tel:+91${cancelModal.customerPhone}`} className="text-primary hover:underline">{cancelModal.customerPhone}</a></>}
+            </p>
+            <p><span className="text-muted-foreground">Route:</span> {cancelModal.route} · {cancelModal.date}</p>
+          </div>
+
+          <div className="space-y-3">
+            <div>
+              <label className="text-sm font-medium mb-1 block">Reason (optional)</label>
+              <Textarea
+                placeholder="e.g. Vehicle unavailable, customer request…"
+                value={cancelReason}
+                onChange={e => setCancelReason(e.target.value)}
+                rows={3}
+              />
+            </div>
+
+            {(cancelModal.customerEmail || cancelModal.customerPhone) && (
+              <div className="bg-orange-50 rounded-lg p-2 text-xs text-orange-700 flex gap-2">
+                <Mail className="w-3 h-3 shrink-0 mt-0.5" />
+                <span>
+                  Cancellation notice will be sent
+                  {cancelModal.customerEmail && <> via email to <strong>{cancelModal.customerEmail}</strong></>}
+                  {cancelModal.customerEmail && cancelModal.customerPhone && " and "}
+                  {cancelModal.customerPhone && <>WhatsApp link for <strong>+91-{cancelModal.customerPhone}</strong> will be shown</>}
+                  .
+                </span>
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={() => setCancelModal(m => ({ ...m, open: false }))}>
+                Keep Booking
+              </Button>
+              <Button
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                disabled={cancelBooking.isPending}
+                onClick={() => cancelBooking.mutate({ id: cancelModal.bookingId, reason: cancelReason.trim() || undefined })}
+              >
+                <X className="w-4 h-4 mr-1" />
+                {cancelBooking.isPending ? "Cancelling…" : "Cancel & Notify"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Note Modal ────────────────────────────────────────────── */}
+      <Dialog open={noteModal.open} onOpenChange={open => setNoteModal(m => ({ ...m, open }))}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>Internal Note — Booking #{noteModal.bookingId}</DialogTitle></DialogHeader>
+          <Textarea placeholder="Internal note (not visible to customer)…" value={noteText} onChange={e => setNoteText(e.target.value)} rows={4} />
+          <Button className="w-full mt-2" disabled={addNote.isPending}
+            onClick={() => addNote.mutate({ id: noteModal.bookingId, note: noteText })}>
+            {addNote.isPending ? "Saving…" : "Save Note"}
           </Button>
         </DialogContent>
       </Dialog>

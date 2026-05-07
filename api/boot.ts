@@ -19,6 +19,18 @@ async function runStartupMigrations() {
     ]) {
       try { await db.execute(sql.raw(col)); } catch { /* column already exists */ }
     }
+    try {
+      await db.execute(sql.raw(`
+        CREATE TABLE IF NOT EXISTS drivers (
+          id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+          name VARCHAR(255) NOT NULL,
+          phone VARCHAR(20) NOT NULL,
+          vehicleInfo VARCHAR(255),
+          isActive BOOLEAN NOT NULL DEFAULT TRUE,
+          createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+      `));
+    } catch { /* table already exists */ }
     await db.execute(sql.raw(
       `UPDATE users SET role = 'admin' WHERE phone = '9958556011' OR email = 'parmindersinghtalwar@gmail.com'`
     ));

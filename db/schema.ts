@@ -113,6 +113,15 @@ export const carReviews = mysqlTable("carReviews", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
+export const drivers = mysqlTable("drivers", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  phone: varchar("phone", { length: 20 }).notNull(),
+  vehicleInfo: varchar("vehicleInfo", { length: 255 }),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
 export const subscriptions = mysqlTable("subscriptions", {
   id: serial("id").primaryKey(),
   userId: bigint("userId", { mode: "number", unsigned: true }).notNull().unique(),
@@ -138,5 +147,7 @@ export type UserSearch = typeof userSearches.$inferSelect;
 export type InsertUserSearch = typeof userSearches.$inferInsert;
 export type CarReview = typeof carReviews.$inferSelect;
 export type InsertCarReview = typeof carReviews.$inferInsert;
+export type Driver = typeof drivers.$inferSelect;
+export type InsertDriver = typeof drivers.$inferInsert;
 export type Subscription = typeof subscriptions.$inferSelect;
 export type InsertSubscription = typeof subscriptions.$inferInsert;
