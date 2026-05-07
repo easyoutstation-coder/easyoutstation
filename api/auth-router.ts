@@ -83,7 +83,7 @@ export const authRouter = createRouter({
     }),
 
   loginWithPhone: publicQuery
-    .input(z.object({ phone: z.string().min(10).max(15) }))
+    .input(z.object({ phone: z.string().min(10).max(15), name: z.string().optional() }))
     .mutation(async ({ input, ctx }) => {
       // Firebase OTP is verified client-side before this is called
       const db = getDb();
@@ -92,11 +92,13 @@ export const authRouter = createRouter({
 
       if (!user) {
         const unionId = nanoid();
-        await db.insert(users).values({ unionId, phone: input.phone, role: "user", lastSignInAt: new Date() });
+        await db.insert(users).values({ unionId, phone: input.phone, name: input.name ?? null, role: "user", lastSignInAt: new Date() });
         userRows = await db.select().from(users).where(eq(users.phone, input.phone)).limit(1);
         user = userRows[0];
       } else {
-        await db.update(users).set({ lastSignInAt: new Date() }).where(eq(users.id, user.id));
+        const updates: Record<string, any> = { lastSignInAt: new Date() };
+        if (input.name && !user.name) updates.name = input.name;
+        await db.update(users).set(updates).where(eq(users.id, user.id));
       }
 
       const token = await signSessionToken({ unionId: user.unionId, clientId: "easyoutstation" });
@@ -108,6 +110,14 @@ export const authRouter = createRouter({
         secure: cookieOpts.secure,
         maxAge: Session.maxAgeMs / 1000,
       }));
+      return { success: true };
+    }),
+
+  updateProfile: authedQuery
+    .input(z.object({ name: z.string().min(1).max(100) }))
+    .mutation(async ({ input, ctx }) => {
+      const db = getDb();
+      await db.update(users).set({ name: input.name }).where(eq(users.id, ctx.user.id));
       return { success: true };
     }),
 

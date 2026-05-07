@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router";
+import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { trpc } from "@/providers/trpc";
 import Navbar from "@/components/Navbar";
@@ -7,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 import {
   LayoutDashboard,
   Calendar,
@@ -17,12 +19,21 @@ import {
   Mail,
   Search,
   TrendingUp,
+  Pencil,
+  Check,
+  X,
 } from "lucide-react";
 
 export default function DashboardPage() {
   const navigate = useNavigate();
-  const { user, isAuthenticated, isLoading: authLoading } = useAuth({
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState("");
+  const { user, isAuthenticated, isLoading: authLoading, refresh } = useAuth({
     redirectOnUnauthenticated: true,
+  });
+
+  const updateProfileMutation = trpc.auth.updateProfile.useMutation({
+    onSuccess: () => { setEditingName(false); refresh(); },
   });
 
   const { data: bookings, isLoading: bookingsLoading } = trpc.booking.getMyBookings.useQuery(
@@ -57,12 +68,34 @@ export default function DashboardPage() {
               <Card className="sticky top-24">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-3 mb-6">
-                    <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+                    <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                       <User className="w-7 h-7 text-primary" />
                     </div>
-                    <div>
-                      <h3 className="font-semibold">{user?.name || "Traveler"}</h3>
-                      <p className="text-xs text-muted-foreground">{user?.email}</p>
+                    <div className="flex-1 min-w-0">
+                      {editingName ? (
+                        <div className="flex items-center gap-1">
+                          <Input
+                            value={nameInput}
+                            onChange={e => setNameInput(e.target.value)}
+                            className="h-7 text-sm px-2"
+                            autoFocus
+                            onKeyDown={e => {
+                              if (e.key === "Enter" && nameInput.trim()) updateProfileMutation.mutate({ name: nameInput.trim() });
+                              if (e.key === "Escape") setEditingName(false);
+                            }}
+                          />
+                          <button onClick={() => { if (nameInput.trim()) updateProfileMutation.mutate({ name: nameInput.trim() }); }} className="text-green-600 hover:text-green-700"><Check className="w-4 h-4" /></button>
+                          <button onClick={() => setEditingName(false)} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1">
+                          <h3 className="font-semibold truncate">{user?.name || "Guest"}</h3>
+                          <button onClick={() => { setNameInput(user?.name || ""); setEditingName(true); }} className="text-muted-foreground hover:text-primary shrink-0">
+                            <Pencil className="w-3 h-3" />
+                          </button>
+                        </div>
+                      )}
+                      <p className="text-xs text-muted-foreground truncate">{user?.email || user?.phone || ""}</p>
                     </div>
                   </div>
 

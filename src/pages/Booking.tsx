@@ -131,27 +131,12 @@ export default function BookingPage() {
   // Inline quick auth state — must be before any conditional returns
   const [quickName, setQuickName] = useState("");
   const [quickPhone, setQuickPhone] = useState("");
-  const [quickEmail, setQuickEmail] = useState("");
   const [quickOtpVerified, setQuickOtpVerified] = useState(false);
   const [quickError, setQuickError] = useState("");
-  const [quickMode, setQuickMode] = useState<"signup" | "login">("signup");
 
-  const quickSignupMutation = trpc.auth.signup.useMutation({
+  const quickLoginWithPhoneMutation = trpc.auth.loginWithPhone.useMutation({
     onSuccess: () => { window.location.reload(); },
-    onError: (e) => {
-      if (e.message.includes("exist") || e.message.includes("taken")) {
-        setQuickMode("login");
-        setQuickError("Account exists. Signing you in...");
-        quickLoginMutation.mutate({ email: quickEmail, password: quickPhone });
-      } else {
-        setQuickError(e.message);
-      }
-    },
-  });
-
-  const quickLoginMutation = trpc.auth.login.useMutation({
-    onSuccess: () => { window.location.reload(); },
-    onError: () => setQuickError("Sign in failed. Please try again."),
+    onError: (e) => setQuickError(e.message),
   });
 
   // Auth gate - AFTER all hooks
@@ -206,7 +191,7 @@ export default function BookingPage() {
                   </div>
                 </div>
 
-                {/* Phone */}
+                {/* Phone + OTP */}
                 <div className="space-y-1.5">
                   <Label className="text-sm font-medium text-slate-700">Mobile Number *</Label>
                   <div className="relative">
@@ -221,7 +206,6 @@ export default function BookingPage() {
                       </span>
                     )}
                   </div>
-                  {/* OTP section below phone */}
                   {!quickOtpVerified && quickPhone.length === 10 && (
                     <div className="pt-1">
                       <FirebaseOTP
@@ -236,16 +220,6 @@ export default function BookingPage() {
                   )}
                 </div>
 
-                {/* Email */}
-                <div className="space-y-1.5">
-                  <Label className="text-sm font-medium text-slate-700">Email Address *</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <Input value={quickEmail} onChange={e => setQuickEmail(e.target.value)}
-                      placeholder="your@email.com" type="email" className="pl-10" />
-                  </div>
-                </div>
-
                 {quickError && (
                   <p className="text-sm text-red-500 flex items-center gap-1.5 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
                     <AlertCircle className="w-3.5 h-3.5 shrink-0" />{quickError}
@@ -254,20 +228,15 @@ export default function BookingPage() {
 
                 <Button
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white h-12 text-base font-semibold gap-2"
-                  disabled={!quickOtpVerified || quickSignupMutation.isPending || quickLoginMutation.isPending}
+                  disabled={!quickOtpVerified || quickLoginWithPhoneMutation.isPending}
                   onClick={() => {
                     setQuickError("");
                     if (!quickName.trim()) { setQuickError("Please enter your name."); return; }
-                    if (!quickEmail.trim() || !quickEmail.includes("@")) { setQuickError("Please enter a valid email."); return; }
                     if (!quickOtpVerified) { setQuickError("Please verify your mobile number first."); return; }
-                    quickSignupMutation.mutate({
-                      name: quickName.trim(),
-                      email: quickEmail.trim(),
-                      password: quickPhone, // Use phone as password
-                    });
+                    quickLoginWithPhoneMutation.mutate({ phone: quickPhone, name: quickName.trim() });
                   }}
                 >
-                  {quickSignupMutation.isPending || quickLoginMutation.isPending
+                  {quickLoginWithPhoneMutation.isPending
                     ? <><Loader2 className="w-4 h-4 animate-spin" /> Setting up your account...</>
                     : <>Continue to Booking <ArrowRight className="w-4 h-4" /></>
                   }

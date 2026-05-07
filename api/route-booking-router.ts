@@ -4,6 +4,19 @@ import { getDb } from "./queries/connection";
 import { routes, bookings, userSearches } from "@db/schema";
 import { eq, and, like, desc, sql } from "drizzle-orm";
 
+async function sendBookingSms(phone: string, bookingId: number, fromCity: string, toCity: string, pickupDate: string, totalPrice: number) {
+  const sid = process.env.TWILIO_ACCOUNT_SID;
+  const token = process.env.TWILIO_AUTH_TOKEN;
+  const from = process.env.TWILIO_PHONE_NUMBER;
+  if (!sid || !token || !from) return;
+  const body = `EasyOutstation: Booking #${bookingId} confirmed! ${fromCity} → ${toCity} on ${pickupDate}. Total: ₹${totalPrice.toLocaleString("en-IN")}. Driver details shared within 60 mins. Helpline: +91-9958556011`;
+  await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+    method: "POST",
+    headers: { Authorization: `Basic ${Buffer.from(`${sid}:${token}`).toString("base64")}`, "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ To: `+91${phone}`, From: from, Body: body }).toString(),
+  });
+}
+
 async function sendBookingEmails(input: {
   bookingId: number;
   customerName: string;
@@ -204,11 +217,18 @@ export const bookingRouter = createRouter({
 
       const bookingId = Number((result as any).insertId) || Math.floor(Math.random() * 90000 + 10000);
 
-      // Send email notifications
+      // Send email + SMS notifications
       try {
         await sendBookingEmails({ ...input, bookingId });
       } catch (e) {
         console.error("Email send failed:", e);
+      }
+      if (input.customerPhone) {
+        try {
+          await sendBookingSms(input.customerPhone, bookingId, input.fromCity, input.toCity, input.pickupDate, input.totalPrice);
+        } catch (e) {
+          console.error("SMS send failed:", e);
+        }
       }
 
       return { success: true, bookingId };
