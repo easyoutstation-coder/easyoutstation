@@ -34,7 +34,7 @@ const steps = [
 export default function BookingPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, user, refresh } = useAuth();
   const [authTimedOut, setAuthTimedOut] = useState(false);
 
   // Never block the page more than 2 seconds waiting for auth
@@ -135,7 +135,7 @@ export default function BookingPage() {
   const [quickError, setQuickError] = useState("");
 
   const quickLoginWithPhoneMutation = trpc.auth.loginWithPhone.useMutation({
-    onSuccess: () => { window.location.reload(); },
+    onSuccess: () => { refresh(); },
     onError: (e) => setQuickError(e.message),
   });
 

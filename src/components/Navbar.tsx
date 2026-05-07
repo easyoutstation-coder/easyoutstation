@@ -88,7 +88,7 @@ export default function Navbar() {
                   <DropdownMenuItem onClick={() => navigate("/dashboard")} className="cursor-pointer text-slate-700 hover:text-blue-700">
                     <History className="w-4 h-4 mr-2" /> My Bookings
                   </DropdownMenuItem>
-                  {user?.role === "admin" && (
+                  {(user?.role === "admin" || user?.role === "super_admin") && (
                     <DropdownMenuItem onClick={() => navigate("/admin")} className="cursor-pointer text-purple-700 hover:text-purple-800">
                       <ShieldCheck className="w-4 h-4 mr-2" /> Admin Panel
                     </DropdownMenuItem>
@@ -135,7 +135,7 @@ export default function Navbar() {
                         className="w-full bg-blue-700 hover:bg-blue-800 text-white font-semibold">
                         My Dashboard
                       </Button>
-                      {user?.role === "admin" && (
+                      {(user?.role === "admin" || user?.role === "super_admin") && (
                         <Button variant="outline" onClick={() => { navigate("/admin"); setMobileOpen(false); }}
                           className="w-full border-purple-200 text-purple-700 hover:bg-purple-50">
                           Admin Panel
