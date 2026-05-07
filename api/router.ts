@@ -4,6 +4,7 @@ import { routeRouter, bookingRouter, searchRouter } from "./route-booking-router
 import { aiRouter } from "./ai-router";
 import { razorpayRouter } from "./razorpay-router";
 import { smsRouter } from "./sms-router";
+import { adminRouter } from "./admin-router";
 import { createRouter, publicQuery } from "./middleware";
 
 export const appRouter = createRouter({
@@ -16,6 +17,7 @@ export const appRouter = createRouter({
   ai: aiRouter,
   payment: razorpayRouter,
   sms: smsRouter,
+  admin: adminRouter,
 });
 
 export type AppRouter = typeof appRouter;

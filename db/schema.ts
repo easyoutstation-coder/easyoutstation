@@ -86,6 +86,9 @@ export const bookings = mysqlTable("bookings", {
   customerEmail: varchar("customerEmail", { length: 320 }),
   pickupAddress: text("pickupAddress"),
   specialRequests: text("specialRequests"),
+  driverName: varchar("driverName", { length: 255 }),
+  driverPhone: varchar("driverPhone", { length: 20 }),
+  adminNotes: text("adminNotes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });

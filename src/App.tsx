@@ -14,6 +14,7 @@ import Privacy from './pages/Privacy'
 import RoutesPage from './pages/Routes'
 import RouteLanding from './pages/RouteLanding'
 import NotFound from './pages/NotFound'
+import Admin from './pages/Admin'
 
 export default function App() {
   return (
@@ -32,6 +33,7 @@ export default function App() {
       <Route path="/privacy" element={<Privacy />} />
       <Route path="/routes" element={<RoutesPage />} />
       <Route path="/cab/:route" element={<RouteLanding />} />
+      <Route path="/admin" element={<Admin />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   )

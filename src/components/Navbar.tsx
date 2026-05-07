@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Menu, User, LogOut, Car, ChevronDown, History, LayoutDashboard } from "lucide-react";
+import { Menu, User, LogOut, Car, ChevronDown, History, LayoutDashboard, ShieldCheck } from "lucide-react";
 
 const navLinks = [
   { label: "Home", href: "/" },
@@ -88,6 +88,11 @@ export default function Navbar() {
                   <DropdownMenuItem onClick={() => navigate("/dashboard")} className="cursor-pointer text-slate-700 hover:text-blue-700">
                     <History className="w-4 h-4 mr-2" /> My Bookings
                   </DropdownMenuItem>
+                  {user?.role === "admin" && (
+                    <DropdownMenuItem onClick={() => navigate("/admin")} className="cursor-pointer text-purple-700 hover:text-purple-800">
+                      <ShieldCheck className="w-4 h-4 mr-2" /> Admin Panel
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator className="bg-slate-100" />
                   <DropdownMenuItem onClick={logout} className="text-red-600 cursor-pointer hover:bg-red-50">
                     <LogOut className="w-4 h-4 mr-2" /> Logout
@@ -130,6 +135,12 @@ export default function Navbar() {
                         className="w-full bg-blue-700 hover:bg-blue-800 text-white font-semibold">
                         My Dashboard
                       </Button>
+                      {user?.role === "admin" && (
+                        <Button variant="outline" onClick={() => { navigate("/admin"); setMobileOpen(false); }}
+                          className="w-full border-purple-200 text-purple-700 hover:bg-purple-50">
+                          Admin Panel
+                        </Button>
+                      )}
                       <Button variant="ghost" onClick={logout} className="w-full text-red-600 hover:bg-red-50">
                         Logout
                       </Button>

@@ -6,6 +6,27 @@ import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { appRouter } from "./router";
 import { createContext } from "./context";
 import { env } from "./lib/env";
+import { getDb } from "./queries/connection";
+import { sql } from "drizzle-orm";
+
+async function runStartupMigrations() {
+  try {
+    const db = getDb();
+    for (const col of [
+      "ALTER TABLE bookings ADD COLUMN driverName VARCHAR(255)",
+      "ALTER TABLE bookings ADD COLUMN driverPhone VARCHAR(20)",
+      "ALTER TABLE bookings ADD COLUMN adminNotes TEXT",
+    ]) {
+      try { await db.execute(sql.raw(col)); } catch { /* column already exists */ }
+    }
+    await db.execute(sql.raw(
+      `UPDATE users SET role = 'admin' WHERE phone = '9958556011' OR email = 'parmindersinghtalwar@gmail.com'`
+    ));
+    console.log("[startup] Migrations applied, admin role set.");
+  } catch (e) {
+    console.error("[startup] Migration error:", e);
+  }
+}
 
 const app = new Hono<{ Bindings: HttpBindings }>();
 
@@ -41,7 +62,8 @@ if (env.isProduction) {
   serveStaticFiles(app);
 
   const port = parseInt(process.env.PORT || "3000");
-  serve({ fetch: app.fetch, port }, () => {
+  serve({ fetch: app.fetch, port }, async () => {
     console.log(`Server running on http://localhost:${port}/`);
+    await runStartupMigrations();
   });
 }
