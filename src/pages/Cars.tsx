@@ -79,7 +79,7 @@ export default function CarsPage() {
   const fromCity = searchParams.get("from") || "";
   const toCity = searchParams.get("to") || "";
   const distanceKm = parseInt(searchParams.get("distance") || "0");
-  const DRIVER_CHARGE = 400;
+  const DRIVER_CHARGE = 250;
 
   const tripTypeParam = searchParams.get("tripType") || "one_way";
   const dateParam = searchParams.get("date") || "";

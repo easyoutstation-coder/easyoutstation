@@ -13,7 +13,7 @@ function getRuleBasedResponse(msg: string): string {
 
   // Pricing
   if (msg.match(/price|rate|cost|how much|charge|fare|tariff|km rate/)) {
-    return `Our per km rates (all-inclusive of AC & driver):\n\n🚗 Swift Dzire — ₹12/km\n🚗 Toyota Etios — ₹13/km\n🚙 Maruti Ertiga — ₹15/km\n🚙 Mahindra Xylo — ₹16/km\n🚐 Kia Carens — ₹17/km\n🚐 Toyota Innova — ₹19/km\n🚐 Innova Crysta — ₹20/km\n🚐 Innova Hycross — ₹22/km\n\n📌 Driver charges: ₹400/day\n📌 Minimum: 250 km/day\n📌 Extras: Toll, parking & state permits charged actuals`;
+    return `Our per km rates (all-inclusive of AC & driver):\n\n🚗 Swift Dzire — ₹12/km\n🚗 Toyota Etios — ₹13/km\n🚙 Maruti Ertiga — ₹15/km\n🚙 Mahindra Xylo — ₹16/km\n🚐 Kia Carens — ₹17/km\n🚐 Toyota Innova — ₹19/km\n🚐 Innova Crysta — ₹20/km\n🚐 Innova Hycross — ₹22/km\n\n📌 Driver charges: ₹250/day\n📌 Minimum: 250 km/day\n📌 Extras: Toll, parking & state permits charged actuals`;
   }
 
   // Booking
@@ -63,7 +63,7 @@ function getRuleBasedResponse(msg: string): string {
 
   // Driver
   if (msg.match(/driver|chauffeur|safe|experienced|pilot/)) {
-    return `All our cars come with professional drivers ✅\n\n• Verified & background checked\n• Experienced in highway & mountain driving\n• Courteous and punctual\n• Driver charges: ₹400/day\n• Night allowance included for outstation trips\n\nYour safety and comfort is our top priority!`;
+    return `All our cars come with professional drivers ✅\n\n• Verified & background checked\n• Experienced in highway & mountain driving\n• Courteous and punctual\n• Driver charges: ₹250/day\n• Night allowance included for outstation trips\n\nYour safety and comfort is our top priority!`;
   }
 
   // Cancellation / Refund

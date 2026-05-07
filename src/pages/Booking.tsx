@@ -167,7 +167,7 @@ export default function BookingPage() {
                 {car.imageUrl && <img src={car.imageUrl} alt={car.name} className="w-16 h-12 object-cover rounded-lg" />}
                 <div className="flex-1">
                   <div className="font-semibold text-slate-900">{car.name}</div>
-                  <div className="text-sm text-slate-500">{fromCity} → {toCity} · ₹{((parseFloat(car?.pricePerKm || "20") * defaultDistance) + 400).toLocaleString("en-IN")}</div>
+                  <div className="text-sm text-slate-500">{fromCity} → {toCity} · ₹{((parseFloat(car?.pricePerKm || "20") * defaultDistance) + 250).toLocaleString("en-IN")}</div>
                 </div>
                 <button onClick={() => navigate(-1)} className="text-xs text-blue-600 hover:underline">Change</button>
               </div>
@@ -264,7 +264,7 @@ export default function BookingPage() {
   // Derived values - after auth gate, no hooks below this line
   const finalDistance = distanceKm || manualDistance;
   const pricePerKm = parseFloat(car?.pricePerKm || "20");
-  const driverChargePerDay = parseFloat(car?.driverCharges || "400");
+  const driverChargePerDay = parseFloat(car?.driverCharges || "250");
 
   const tripDays = tripType === "multi_day" && returnDate && pickupDate
     ? Math.max(2, Math.ceil((returnDate.getTime() - pickupDate.getTime()) / (1000 * 60 * 60 * 24)))

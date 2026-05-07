@@ -37,7 +37,7 @@ export const cars = mysqlTable("cars", {
   category: mysqlEnum("category", ["sedan", "muv", "suv", "premium", "luxury"]).notNull(),
   seats: int("seats").notNull(),
   pricePerKm: decimal("pricePerKm", { precision: 10, scale: 2 }).notNull(),
-  driverCharges: decimal("driverCharges", { precision: 10, scale: 2 }).default("400.00").notNull(),
+  driverCharges: decimal("driverCharges", { precision: 10, scale: 2 }).default("250.00").notNull(),
   minKmPerDay: int("minKmPerDay").default(250).notNull(),
   fuelType: mysqlEnum("fuelType", ["petrol", "diesel", "cng", "hybrid", "electric"]).default("diesel").notNull(),
   transmission: mysqlEnum("transmission", ["manual", "automatic"]).default("manual").notNull(),

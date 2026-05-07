@@ -42,7 +42,7 @@ const fallbackCar = {
   category: "premium",
   seats: 6,
   pricePerKm: "20.00",
-  driverCharges: "400.00",
+  driverCharges: "250.00",
   minKmPerDay: 250,
   fuelType: "diesel",
   transmission: "automatic",
@@ -94,7 +94,7 @@ export default function CarDetailPage() {
     return key ? tolls[key] : Math.round(distance * 1.2);
   })();
 
-  const driverCharge = parseFloat(displayCar.driverCharges || "400");
+  const driverCharge = parseFloat(displayCar.driverCharges || "250");
   const estimatedPrice = parseFloat(displayCar.pricePerKm) * distance + driverCharge + tollCharges;
   const minPrice = parseFloat(displayCar.pricePerKm) * (displayCar.minKmPerDay || 250) + driverCharge;
 

@@ -39,7 +39,7 @@ function isWithinRadius(lat: number, lng: number): boolean {
 // Fare range based on actual fleet rates
 const MIN_RATE = 12; // Swift Dzire
 const MAX_RATE = 22; // Innova Hycross
-const DRIVER_CHARGE = 400;
+const DRIVER_CHARGE = 250;
 
 declare global {
   interface Window { google: any; initGoogleMaps: () => void; }

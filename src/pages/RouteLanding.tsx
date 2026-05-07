@@ -161,8 +161,8 @@ export default function RouteLanding() {
                   { name: "Innova Crysta", seats: 6, rate: 20 },
                   { name: "Innova Hycross", seats: 6, rate: 22 },
                 ].map((car) => {
-                  const oneway = Math.round(car.rate * data.distance + 400 + data.toll);
-                  const roundtrip = Math.round(car.rate * data.distance * 2 + 800 + data.toll * 2);
+                  const oneway = Math.round(car.rate * data.distance + 250 + data.toll);
+                  const roundtrip = Math.round(car.rate * data.distance * 2 + 500 + data.toll * 2);
                   return (
                     <tr key={car.name} className="hover:bg-slate-50 transition-colors">
                       <td className="px-6 py-4 font-medium text-slate-900">{car.name}</td>
