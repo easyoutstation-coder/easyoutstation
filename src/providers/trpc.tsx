@@ -22,9 +22,13 @@ const trpcClient = trpc.createClient({
       url: `${getBaseUrl()}/api/trpc`,
       transformer: superjson,
       fetch(input, init) {
+        const stored = localStorage.getItem("authToken");
+        const headers = new Headers(init?.headers as HeadersInit);
+        if (stored) headers.set("Authorization", `Bearer ${stored}`);
         return globalThis.fetch(input, {
           ...(init ?? {}),
           credentials: "include",
+          headers,
         });
       },
     }),

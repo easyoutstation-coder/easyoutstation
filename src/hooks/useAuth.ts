@@ -30,6 +30,7 @@ export function useAuth(options?: UseAuthOptions) {
 
   const logoutMutation = trpc.auth.logout.useMutation({
     onSuccess: () => {
+      localStorage.removeItem("authToken");
       window.location.href = "/";
     },
   });

@@ -33,20 +33,26 @@ export default function Login() {
   }, [isAuthenticated, isLoading, navigate]);
 
   const loginWithPhoneMutation = trpc.auth.loginWithPhone.useMutation({
-    onSuccess: () => {
-      if (redirectUrl) sessionStorage.setItem('justLoggedIn', '1');
+    onSuccess: (data) => {
+      if (data.token) localStorage.setItem("authToken", data.token);
       window.location.href = redirectUrl || "/dashboard";
     },
     onError: (e) => setError(e.message),
   });
 
   const loginMutation = trpc.auth.login.useMutation({
-    onSuccess: () => { window.location.href = redirectUrl || "/dashboard"; },
+    onSuccess: (data) => {
+      if (data.token) localStorage.setItem("authToken", data.token);
+      window.location.href = redirectUrl || "/dashboard";
+    },
     onError: (e) => setError(e.message),
   });
 
   const signupMutation = trpc.auth.signup.useMutation({
-    onSuccess: () => { window.location.href = redirectUrl || "/dashboard"; },
+    onSuccess: (data) => {
+      if (data.token) localStorage.setItem("authToken", data.token);
+      window.location.href = redirectUrl || "/dashboard";
+    },
     onError: (e) => setError(e.message),
   });
 

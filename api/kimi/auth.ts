@@ -7,7 +7,14 @@ import { findUserByUnionId } from "../queries/users";
 
 export async function authenticateRequest(headers: Headers) {
   const cookies = cookie.parse(headers.get("cookie") || "");
-  const token = cookies[Session.cookieName];
+  let token = cookies[Session.cookieName];
+
+  // Fallback: Authorization: Bearer <token> — Safari ITP blocks cross-origin cookies
+  if (!token) {
+    const authHeader = headers.get("authorization") || "";
+    if (authHeader.startsWith("Bearer ")) token = authHeader.slice(7);
+  }
+
   if (!token) {
     throw Errors.forbidden("Invalid authentication token.");
   }

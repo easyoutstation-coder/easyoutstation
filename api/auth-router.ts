@@ -54,7 +54,7 @@ export const authRouter = createRouter({
         secure: cookieOpts.secure,
         maxAge: Session.maxAgeMs / 1000,
       }));
-      return { success: true };
+      return { success: true, token };
     }),
 
   login: publicQuery
@@ -79,7 +79,7 @@ export const authRouter = createRouter({
         secure: cookieOpts.secure,
         maxAge: Session.maxAgeMs / 1000,
       }));
-      return { success: true };
+      return { success: true, token };
     }),
 
   loginWithPhone: publicQuery
@@ -110,7 +110,7 @@ export const authRouter = createRouter({
         secure: cookieOpts.secure,
         maxAge: Session.maxAgeMs / 1000,
       }));
-      return { success: true };
+      return { success: true, token };
     }),
 
   updateProfile: authedQuery
