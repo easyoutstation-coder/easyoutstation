@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Menu, User, LogOut, Car, ChevronDown, History, LayoutDashboard, ShieldCheck } from "lucide-react";
+import { Menu, User, LogOut, Car, ChevronDown, History, LayoutDashboard, ShieldCheck, Building2 } from "lucide-react";
 
 const navLinks = [
   { label: "Home", href: "/" },
@@ -69,6 +69,18 @@ export default function Navbar() {
 
           {/* Right */}
           <div className="hidden lg:flex items-center gap-3">
+            <a
+              href="/#corporate"
+              onClick={(e) => { e.preventDefault(); document.getElementById("corporate")?.scrollIntoView({ behavior: "smooth" }); }}
+              className={`flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-full border transition-all ${
+                isLight
+                  ? "border-blue-200 text-blue-700 hover:bg-blue-50"
+                  : "border-white/25 text-white hover:bg-white/10"
+              }`}
+            >
+              <Building2 className="w-3.5 h-3.5" />
+              For Business
+            </a>
 
             {isAuthenticated ? (
               <DropdownMenu>
@@ -128,6 +140,15 @@ export default function Navbar() {
                     </Link>
                   ))}
                 </nav>
+                <div className="mt-4">
+                  <a
+                    href="/#corporate"
+                    onClick={(e) => { e.preventDefault(); setMobileOpen(false); document.getElementById("corporate")?.scrollIntoView({ behavior: "smooth" }); }}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 transition-all"
+                  >
+                    <Building2 className="w-4 h-4" /> For Business
+                  </a>
+                </div>
                 <div className="mt-6 pt-6 border-t border-slate-100 space-y-3">
                   {isAuthenticated ? (
                     <>

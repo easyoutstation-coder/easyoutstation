@@ -16,10 +16,10 @@ export default function Home() {
       <Navbar />
       <main>
         <HeroSection />
+        <CorporateSection />
         <PopularRoutesSection />
         <PopularCarsSection />
         <FeaturesSection />
-        <CorporateSection />
         <TestimonialsSection />
         <CTASection />
       </main>

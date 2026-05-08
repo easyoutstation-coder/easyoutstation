@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { MapPin, CalendarDays, Users, ArrowRight, Shield, Clock, CheckCircle, Loader2, AlertCircle, Route, History } from "lucide-react";
+import { MapPin, CalendarDays, Users, ArrowRight, Shield, Clock, CheckCircle, Loader2, AlertCircle, Route, History, Building2 } from "lucide-react";
 import { saveRecentSearch, getRecentSearches, type RecentSearch } from "@/hooks/useRecentSearches";
 
 // 9 anchor cities with coordinates for 100km radius restriction
@@ -299,6 +299,21 @@ export default function HeroSection() {
                 See Available Cars <ArrowRight className="w-4 h-4" />
               </Button>
             </div>
+            {/* B2B teaser */}
+            <button
+              onClick={() => document.getElementById("corporate")?.scrollIntoView({ behavior: "smooth" })}
+              className="flex items-center gap-3 w-fit px-4 py-2.5 rounded-xl bg-white/8 border border-white/15 hover:bg-white/15 hover:border-white/30 transition-all group backdrop-blur-sm"
+            >
+              <div className="w-7 h-7 rounded-lg bg-blue-500/30 flex items-center justify-center shrink-0">
+                <Building2 className="w-3.5 h-3.5 text-blue-300" />
+              </div>
+              <div className="text-left">
+                <div className="text-xs font-semibold text-white">Corporate & Employee Transport</div>
+                <div className="text-[11px] text-slate-400">GST invoices · Fleet accounts · Dedicated manager</div>
+              </div>
+              <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-white group-hover:translate-x-0.5 transition-all ml-1 shrink-0" />
+            </button>
+
             <div className="flex gap-8 pt-4 border-t border-white/10">
               {[{ num: "15K+", label: "Happy Travelers" }, { num: "4.9★", label: "Average Rating" }, { num: "8+", label: "Premium Cars" }].map((s, i) => (
                 <div key={i}>
