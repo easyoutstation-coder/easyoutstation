@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router'
+import { Routes, Route, useLocation } from 'react-router'
 import Home from './pages/Home'
 import Cars from './pages/Cars'
 import CarDetail from './pages/CarDetail'
@@ -57,6 +57,9 @@ function MaintenancePage() {
           <Clock className="w-3 h-3" />
           <span>Usually back within a few minutes</span>
         </div>
+        <a href="/login" className="block mt-6 text-slate-700 text-xs hover:text-slate-400 transition-colors">
+          Admin login →
+        </a>
       </div>
     </div>
   )
@@ -64,16 +67,36 @@ function MaintenancePage() {
 
 function SiteGate({ children }: { children: React.ReactNode }) {
   const { data, isLoading } = trpc.admin.getSiteStatus.useQuery(undefined, {
-    staleTime: 30_000,
+    staleTime: 0,
+    refetchInterval: 15_000,
     retry: false,
   })
   const { user } = useAuth()
+  const { pathname } = useLocation()
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin'
+  const isOffline = data?.online === false
+  // Always let /login and /admin through so admins can log in and toggle the switch
+  const isAdminPath = pathname === '/login' || pathname.startsWith('/admin')
 
-  if (isLoading) return <>{children}</>
-  if (isAdmin) return <>{children}</>
-  if (data?.online === false) return <MaintenancePage />
-  return <>{children}</>
+  // Non-admins see the maintenance page when offline (except login/admin paths)
+  if (!isLoading && !isAdmin && isOffline && !isAdminPath) return <MaintenancePage />
+
+  // Admins always see the site, but get a warning banner when offline
+  return (
+    <>
+      {isAdmin && isOffline && (
+        <div className="fixed top-0 left-0 right-0 z-[9999] bg-red-600 text-white text-center py-2 px-4 text-sm font-semibold flex items-center justify-center gap-2 shadow-lg">
+          <WifiOff className="w-4 h-4 shrink-0" />
+          Site is OFFLINE — visitors see the maintenance page. Go to{' '}
+          <a href="/admin" className="underline font-bold">Admin Panel</a>{' '}
+          to bring it back live.
+        </div>
+      )}
+      <div className={isAdmin && isOffline ? 'pt-9' : ''}>
+        {children}
+      </div>
+    </>
+  )
 }
 
 export default function App() {
