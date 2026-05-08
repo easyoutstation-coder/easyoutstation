@@ -26,11 +26,6 @@ export default function FirebaseOTP({ phone, onVerified, onError }: FirebaseOTPP
   const [countdown, setCountdown] = useState(0);
   const recaptchaContainerRef = useRef<HTMLDivElement>(null);
 
-  // Auto-send OTP when component mounts (phone is already validated to 10 digits by parent)
-  useEffect(() => {
-    sendOTP();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // Auto-verify when all 6 digits are entered
   useEffect(() => {
@@ -129,10 +124,14 @@ export default function FirebaseOTP({ phone, onVerified, onError }: FirebaseOTPP
       <div id="recaptcha-container" ref={recaptchaContainerRef} style={{ position: "absolute", bottom: 0, left: 0, zIndex: -1 }} />
 
       {!otpSent ? (
-        <div className="flex items-center gap-2 text-sm text-slate-500 py-1">
-          <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
-          {sending ? "Sending OTP to +91-" + phone + "…" : "Preparing OTP…"}
-        </div>
+        <Button
+          type="button"
+          onClick={sendOTP}
+          disabled={sending}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+        >
+          {sending ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Sending OTP…</> : "Send OTP"}
+        </Button>
       ) : (
         <div className="space-y-2">
           <p className="text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2 flex items-center gap-1.5">

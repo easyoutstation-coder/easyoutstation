@@ -33,7 +33,10 @@ export default function Login() {
   }, [isAuthenticated, isLoading, navigate]);
 
   const loginWithPhoneMutation = trpc.auth.loginWithPhone.useMutation({
-    onSuccess: () => { window.location.href = redirectUrl || "/dashboard"; },
+    onSuccess: () => {
+      if (redirectUrl) sessionStorage.setItem('justLoggedIn', '1');
+      window.location.href = redirectUrl || "/dashboard";
+    },
     onError: (e) => setError(e.message),
   });
 
@@ -122,11 +125,15 @@ export default function Login() {
                   </div>
                 </div>
 
-                <FirebaseOTP
-                  phone={phone}
-                  onVerified={() => setPhoneVerified(true)}
-                  onError={(msg) => setError(msg)}
-                />
+                {phone.length === 10 ? (
+                  <FirebaseOTP
+                    phone={phone}
+                    onVerified={() => setPhoneVerified(true)}
+                    onError={(msg) => setError(msg)}
+                  />
+                ) : (
+                  <p className="text-xs text-slate-400">Enter your 10-digit number above to receive OTP</p>
+                )}
 
                 {error && (
                   <div className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-lg">{error}</div>
