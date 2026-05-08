@@ -4,13 +4,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Menu, User, LogOut, Car, ChevronDown, History, LayoutDashboard, ShieldCheck, Building2 } from "lucide-react";
+import { Menu, User, LogOut, Car, ChevronDown, History, LayoutDashboard, ShieldCheck } from "lucide-react";
 
 const navLinks = [
   { label: "Home", href: "/" },
   { label: "Our Fleet", href: "/cars" },
   { label: "Routes", href: "/routes" },
   { label: "About", href: "/about" },
+  { label: "For Business", href: "/#corporate" },
 ];
 
 export default function Navbar() {
@@ -57,30 +58,26 @@ export default function Navbar() {
 
           {/* Desktop Nav */}
           <nav className="hidden lg:flex items-center gap-8">
-            {navLinks.map((link) => (
-              <Link key={link.href} to={link.href}
-                className={`text-sm font-medium transition-colors duration-200 hover:text-blue-600 ${
-                  isLight ? "text-slate-600" : "text-white/90"
-                } ${location.pathname === link.href ? (isLight ? "text-blue-700 font-semibold" : "text-white font-semibold") : ""}`}>
-                {link.label}
-              </Link>
-            ))}
+            {navLinks.map((link) => {
+              const isCorporate = link.href === "/#corporate";
+              const isActive = location.pathname === link.href;
+              const cls = `text-sm font-medium transition-colors duration-200 hover:text-blue-600 ${
+                isLight ? "text-slate-600" : "text-white/90"
+              } ${isActive ? (isLight ? "text-blue-700 font-semibold" : "text-white font-semibold") : ""}`;
+              if (isCorporate) {
+                return (
+                  <a key={link.href} href={link.href} className={cls}
+                    onClick={(e) => { e.preventDefault(); document.getElementById("corporate")?.scrollIntoView({ behavior: "smooth" }); }}>
+                    {link.label}
+                  </a>
+                );
+              }
+              return <Link key={link.href} to={link.href} className={cls}>{link.label}</Link>;
+            })}
           </nav>
 
           {/* Right */}
           <div className="hidden lg:flex items-center gap-3">
-            <a
-              href="/#corporate"
-              onClick={(e) => { e.preventDefault(); document.getElementById("corporate")?.scrollIntoView({ behavior: "smooth" }); }}
-              className={`flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-full border transition-all ${
-                isLight
-                  ? "border-blue-200 text-blue-700 hover:bg-blue-50"
-                  : "border-white/25 text-white hover:bg-white/10"
-              }`}
-            >
-              <Building2 className="w-3.5 h-3.5" />
-              For Business
-            </a>
 
             {isAuthenticated ? (
               <DropdownMenu>
@@ -131,24 +128,26 @@ export default function Navbar() {
               <SheetContent side="right" className="bg-white border-slate-200 w-72">
                 <SheetTitle className="text-slate-900 font-['Playfair_Display']">EasyOutstation</SheetTitle>
                 <nav className="mt-8 flex flex-col gap-1">
-                  {navLinks.map((link) => (
-                    <Link key={link.href} to={link.href} onClick={() => setMobileOpen(false)}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all hover:bg-blue-50 hover:text-blue-700 ${
-                        location.pathname === link.href ? "bg-blue-50 text-blue-700" : "text-slate-600"
-                      }`}>
-                      {link.label}
-                    </Link>
-                  ))}
+                  {navLinks.map((link) => {
+                    const isCorporate = link.href === "/#corporate";
+                    const cls = `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all hover:bg-blue-50 hover:text-blue-700 ${
+                      location.pathname === link.href ? "bg-blue-50 text-blue-700" : "text-slate-600"
+                    }`;
+                    if (isCorporate) {
+                      return (
+                        <a key={link.href} href={link.href} className={cls}
+                          onClick={(e) => { e.preventDefault(); setMobileOpen(false); document.getElementById("corporate")?.scrollIntoView({ behavior: "smooth" }); }}>
+                          {link.label}
+                        </a>
+                      );
+                    }
+                    return (
+                      <Link key={link.href} to={link.href} onClick={() => setMobileOpen(false)} className={cls}>
+                        {link.label}
+                      </Link>
+                    );
+                  })}
                 </nav>
-                <div className="mt-4">
-                  <a
-                    href="/#corporate"
-                    onClick={(e) => { e.preventDefault(); setMobileOpen(false); document.getElementById("corporate")?.scrollIntoView({ behavior: "smooth" }); }}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 transition-all"
-                  >
-                    <Building2 className="w-4 h-4" /> For Business
-                  </a>
-                </div>
                 <div className="mt-6 pt-6 border-t border-slate-100 space-y-3">
                   {isAuthenticated ? (
                     <>
