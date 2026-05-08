@@ -202,7 +202,11 @@ export default function AdminPage() {
   if (authLoading) {
     return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" /></div>;
   }
-  if (!isAuthenticated || (user?.role !== "admin" && user?.role !== "super_admin")) {
+  if (!isAuthenticated) {
+    navigate("/login?redirect=/admin");
+    return null;
+  }
+  if (user?.role !== "admin" && user?.role !== "super_admin") {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4">
         <p className="text-lg font-semibold text-muted-foreground">Admin access only.</p>
