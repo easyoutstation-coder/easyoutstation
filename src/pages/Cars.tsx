@@ -86,16 +86,16 @@ export default function CarsPage() {
   const returnDateParam = searchParams.get("returnDate") || "";
 
   const tripDays = (() => {
-    if ((tripTypeParam === "round_trip" || tripTypeParam === "multi_day") && dateParam && returnDateParam) {
+    if (tripTypeParam === "round_trip" && dateParam && returnDateParam) {
       const d1 = new Date(dateParam);
       const d2 = new Date(returnDateParam);
       if (!isNaN(d1.getTime()) && !isNaN(d2.getTime())) {
         return Math.max(1, Math.ceil((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24)));
       }
     }
-    return 1;
+    return 1; // one_way or same-day round trip
   })();
-  const kmMultiplier = tripTypeParam === "round_trip" ? 2 : tripTypeParam === "multi_day" ? tripDays : 1;
+  const kmMultiplier = tripTypeParam === "round_trip" ? 2 : 1;
   const effectiveKm = distanceKm * kmMultiplier;
 
   // Build passthrough params to preserve user's selections across pages

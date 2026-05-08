@@ -169,6 +169,7 @@ export default function HeroSection() {
   const [returnDate, setReturnDate] = useState<Date>();
   const [passengers, setPassengers] = useState("");
   const [tripType, setTripType] = useState("one_way");
+  const [sameDayReturn, setSameDayReturn] = useState(false);
 
   const [distanceKm, setDistanceKm] = useState<number | null>(null);
   const [durationText, setDurationText] = useState("");
@@ -211,12 +212,12 @@ export default function HeroSection() {
       .finally(() => setIsCalc(false));
   }, [fromLat, fromLng, toLat, toLng]);
 
-  const isMultiDate = tripType === "round_trip" || tripType === "multi_day";
+  const isRoundTrip = tripType === "round_trip";
 
-  const tripDays = isMultiDate && returnDate && pickupDate
+  const tripDays = isRoundTrip && !sameDayReturn && returnDate && pickupDate
     ? Math.max(1, Math.ceil((returnDate.getTime() - pickupDate.getTime()) / (1000 * 60 * 60 * 24)))
     : 1;
-  const kmMultiplier = tripType === "round_trip" ? 2 : tripType === "multi_day" ? tripDays : 1;
+  const kmMultiplier = isRoundTrip ? 2 : 1;
   const displayFareMin = distanceKm ? Math.round(distanceKm * kmMultiplier * MIN_RATE + DRIVER_CHARGE * tripDays) : null;
   const displayFareMax = distanceKm ? Math.round(distanceKm * kmMultiplier * MAX_RATE + DRIVER_CHARGE * tripDays) : null;
 
@@ -225,7 +226,7 @@ export default function HeroSection() {
     if (!fromAddress) { setFormError("Please enter a pickup location."); return; }
     if (!toAddress) { setFormError("Please enter a drop-off location."); return; }
     if (!pickupDate) { setFormError("Please select a departure date."); return; }
-    if (isMultiDate && !returnDate) { setFormError("Please select a return date."); return; }
+    if (isRoundTrip && !sameDayReturn && !returnDate) { setFormError("Please select a return date, or check 'Same day return'."); return; }
     if (!passengers) { setFormError("Please select number of passengers."); return; }
 
     const params = new URLSearchParams({
@@ -237,7 +238,7 @@ export default function HeroSection() {
       tripType,
     });
     if (pickupDate) params.set("date", format(pickupDate, "yyyy-MM-dd"));
-    if (returnDate) params.set("returnDate", format(returnDate, "yyyy-MM-dd"));
+    if (isRoundTrip && !sameDayReturn && returnDate) params.set("returnDate", format(returnDate, "yyyy-MM-dd"));
     if (distanceKm) params.set("distance", String(distanceKm));
     if (fromPincode) params.set("fromPincode", fromPincode);
     if (toPincode) params.set("toPincode", toPincode);
@@ -325,24 +326,43 @@ export default function HeroSection() {
 
               <div className="space-y-4">
                 {/* Trip type */}
-                <div className="grid grid-cols-3 gap-1 p-1 bg-slate-100 rounded-xl">
-                  {[
-                    { value: "one_way", label: "One Way" },
-                    { value: "round_trip", label: "Round Trip" },
-                    { value: "multi_day", label: "Multi Day" },
-                  ].map((type) => (
-                    <button key={type.value} onClick={() => {
-                      setTripType(type.value);
-                      if (type.value === "one_way") setReturnDate(undefined);
-                    }}
-                      className={`py-2 px-2 rounded-lg text-xs font-semibold transition-all ${
-                        tripType === type.value
-                          ? "bg-white text-blue-700 shadow-sm"
-                          : "text-slate-500 hover:text-slate-700"
-                      }`}>
-                      {type.label}
-                    </button>
-                  ))}
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-1 p-1 bg-slate-100 rounded-xl">
+                    {[
+                      { value: "one_way", label: "One Way" },
+                      { value: "round_trip", label: "Round Trip" },
+                    ].map((type) => (
+                      <button key={type.value} onClick={() => {
+                        setTripType(type.value);
+                        if (type.value === "one_way") { setReturnDate(undefined); setSameDayReturn(false); }
+                      }}
+                        className={`py-2 px-2 rounded-lg text-xs font-semibold transition-all ${
+                          tripType === type.value
+                            ? "bg-white text-blue-700 shadow-sm"
+                            : "text-slate-500 hover:text-slate-700"
+                        }`}>
+                        {type.label}
+                      </button>
+                    ))}
+                  </div>
+                  {/* Same day return sub-toggle */}
+                  {isRoundTrip && (
+                    <div className="flex gap-1.5 px-0.5">
+                      {[
+                        { sd: true,  label: "Same day return" },
+                        { sd: false, label: "Overnight stay" },
+                      ].map(({ sd, label }) => (
+                        <button key={label} onClick={() => { setSameDayReturn(sd); if (sd) setReturnDate(undefined); }}
+                          className={`flex-1 py-1.5 rounded-lg text-[11px] font-medium border transition-all ${
+                            sameDayReturn === sd
+                              ? "bg-blue-50 border-blue-400 text-blue-700"
+                              : "bg-white border-slate-200 text-slate-500 hover:border-slate-300"
+                          }`}>
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* From location */}
@@ -381,7 +401,7 @@ export default function HeroSection() {
                             ₹{displayFareMin?.toLocaleString("en-IN")} – ₹{displayFareMax?.toLocaleString("en-IN")}
                           </div>
                           <div className="text-[10px] text-blue-500">
-                            {tripDays > 1 ? `${tripDays}-day total · ` : ""}depends on car
+                            {isRoundTrip && sameDayReturn ? "same day return · " : tripDays > 1 ? `${tripDays}-day total · ` : ""}depends on car
                           </div>
                         </div>
                       </div>
@@ -389,11 +409,11 @@ export default function HeroSection() {
                   </div>
                 )}
 
-                {/* Date & Passengers — layout shifts for round/multi-day */}
+                {/* Date & Passengers */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                      {isMultiDate ? "DEPARTURE" : "DATE"}
+                      {isRoundTrip ? "DEPARTURE" : "DATE"}
                     </label>
                     <Popover>
                       <PopoverTrigger asChild>
@@ -404,17 +424,25 @@ export default function HeroSection() {
                           </span>
                         </button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0 bg-white border-slate-200" align="start">
+                      <PopoverContent className="w-auto p-3 bg-white border-slate-200 shadow-lg" align="start">
                         <Calendar mode="single" selected={pickupDate} onSelect={(d) => {
                           setPickupDate(d);
                           if (returnDate && d && returnDate <= d) setReturnDate(undefined);
-                        }}
-                          disabled={(date) => date < new Date()} initialFocus />
+                        }} disabled={(date) => date < new Date()} initialFocus />
                       </PopoverContent>
                     </Popover>
                   </div>
 
-                  {isMultiDate ? (
+                  {/* Same-day round trip: show a "same day" badge instead of return picker */}
+                  {isRoundTrip && sameDayReturn ? (
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">RETURN</label>
+                      <div className="w-full h-11 px-3 rounded-xl border border-blue-200 bg-blue-50 text-sm flex items-center gap-2">
+                        <CalendarDays className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                        <span className="text-blue-700 font-medium text-xs">Same day as departure</span>
+                      </div>
+                    </div>
+                  ) : isRoundTrip && !sameDayReturn ? (
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">RETURN DATE</label>
                       <Popover>
@@ -424,11 +452,11 @@ export default function HeroSection() {
                           }`}>
                             <CalendarDays className="w-3.5 h-3.5 text-blue-600 shrink-0" />
                             <span className={returnDate ? "text-slate-900" : "text-blue-400"}>
-                              {returnDate ? format(returnDate, "dd MMM") : "Return date"}
+                              {returnDate ? format(returnDate, "dd MMM") : "Pick return date"}
                             </span>
                           </button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0 bg-white border-slate-200" align="start">
+                        <PopoverContent className="w-auto p-3 bg-white border-slate-200 shadow-lg" align="start">
                           <Calendar mode="single" selected={returnDate} onSelect={setReturnDate}
                             disabled={(date) => date <= (pickupDate || new Date())} initialFocus />
                         </PopoverContent>
@@ -451,8 +479,8 @@ export default function HeroSection() {
                   )}
                 </div>
 
-                {/* Passengers row — shown below when round/multi-day */}
-                {isMultiDate && (
+                {/* Passengers — shown below when round trip */}
+                {isRoundTrip && (
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">PASSENGERS</label>
                     <div className="relative">

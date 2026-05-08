@@ -266,12 +266,11 @@ export default function BookingPage() {
   const pricePerKm = parseFloat(car?.pricePerKm || "20");
   const driverChargePerDay = parseFloat(car?.driverCharges || "250");
 
-  const tripDays = tripType === "multi_day" && returnDate && pickupDate
-    ? Math.max(2, Math.ceil((returnDate.getTime() - pickupDate.getTime()) / (1000 * 60 * 60 * 24)))
-    : tripType === "round_trip" ? 2 : 1;
+  const tripDays = tripType === "round_trip" && returnDate && pickupDate
+    ? Math.max(1, Math.ceil((returnDate.getTime() - pickupDate.getTime()) / (1000 * 60 * 60 * 24)))
+    : 1;
 
-  const totalKmForTrip = tripType === "round_trip" ? finalDistance * 2
-    : tripType === "multi_day" ? finalDistance * tripDays : finalDistance;
+  const totalKmForTrip = tripType === "round_trip" ? finalDistance * 2 : finalDistance;
 
   const basePrice = pricePerKm * totalKmForTrip;
   const totalDriverCharges = driverChargePerDay * tripDays;
@@ -366,7 +365,7 @@ export default function BookingPage() {
         toCity: toCity || dropAddress.split(",")[0],
         pickupDate: pickupDate ? format(pickupDate, "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
         returnDate: returnDate ? format(returnDate, "yyyy-MM-dd") : undefined,
-        tripType: tripType as "one_way" | "round_trip" | "multi_day",
+        tripType: tripType as "one_way" | "round_trip",
         passengerCount: parseInt(passengerCount),
         totalKm: totalKmForTrip,
         totalPrice,
@@ -583,15 +582,15 @@ export default function BookingPage() {
                       <div className="space-y-2">
                         <Label>Trip Type</Label>
                         <div className="flex gap-2">
-                          {["one_way", "round_trip", "multi_day"].map((type) => (
+                          {["one_way", "round_trip"].map((type) => (
                             <button
                               key={type}
-                              onClick={() => setTripType(type)}
+                              onClick={() => { setTripType(type); if (type === "one_way") setReturnDate(undefined); }}
                               className={`flex-1 py-2 px-3 rounded-xl text-sm font-medium border transition-all ${
                                 tripType === type ? "bg-primary text-white border-primary" : "bg-white border-input hover:border-primary"
                               }`}
                             >
-                              {type === "one_way" ? "One Way" : type === "round_trip" ? "Round Trip" : "Multi Day"}
+                              {type === "one_way" ? "One Way" : "Round Trip"}
                             </button>
                           ))}
                         </div>
@@ -608,7 +607,7 @@ export default function BookingPage() {
                                 <span>{pickupDate ? format(pickupDate, "dd MMM yyyy") : "Select date"}</span>
                               </button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0">
+                            <PopoverContent className="w-auto p-3 shadow-lg">
                               <Calendar mode="single" selected={pickupDate} onSelect={setPickupDate} disabled={(d) => d < new Date()} />
                             </PopoverContent>
                           </Popover>
@@ -624,20 +623,37 @@ export default function BookingPage() {
                         </div>
                       </div>
 
-                      {tripType !== "one_way" && (
+                      {tripType === "round_trip" && (
                         <div className="space-y-2">
-                          <Label>Return Date *</Label>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <button className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl border border-input bg-white text-sm hover:border-primary transition-colors">
-                                <CalendarDays className="w-4 h-4 text-muted-foreground" />
-                                <span>{returnDate ? format(returnDate, "dd MMM yyyy") : "Select return date"}</span>
+                          <Label>Return Date <span className="text-xs text-muted-foreground font-normal">(leave blank for same day return)</span></Label>
+                          <div className="flex gap-2">
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <button className={`flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl border bg-white text-sm hover:border-primary transition-colors ${
+                                  returnDate ? "border-input" : "border-dashed border-slate-300"
+                                }`}>
+                                  <CalendarDays className="w-4 h-4 text-muted-foreground shrink-0" />
+                                  <span className={returnDate ? "" : "text-muted-foreground"}>
+                                    {returnDate ? format(returnDate, "dd MMM yyyy") : "Overnight — pick return date"}
+                                  </span>
+                                </button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-3 shadow-lg">
+                                <Calendar mode="single" selected={returnDate} onSelect={setReturnDate} disabled={(d) => d <= (pickupDate || new Date())} />
+                              </PopoverContent>
+                            </Popover>
+                            {returnDate && (
+                              <button onClick={() => setReturnDate(undefined)}
+                                className="px-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-500 hover:border-red-300 hover:text-red-500 transition-colors whitespace-nowrap">
+                                Same day
                               </button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0">
-                              <Calendar mode="single" selected={returnDate} onSelect={setReturnDate} disabled={(d) => d < (pickupDate || new Date())} />
-                            </PopoverContent>
-                          </Popover>
+                            )}
+                          </div>
+                          {!returnDate && (
+                            <p className="text-[11px] text-blue-600 bg-blue-50 rounded-lg px-3 py-1.5">
+                              Same day return — driver charge for 1 day · distance charged ×2
+                            </p>
+                          )}
                         </div>
                       )}
 
@@ -816,9 +832,9 @@ export default function BookingPage() {
                         <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">Distance</span>
                           <span className="font-medium">
-                            {tripType === "round_trip" ? `${finalDistance} km × 2 = ${totalKmForTrip} km` :
-                             tripType === "multi_day" ? `${finalDistance} km × ${tripDays} days = ${totalKmForTrip} km` :
-                             `${finalDistance} km`}
+                            {tripType === "round_trip"
+                              ? `${finalDistance} km × 2 = ${totalKmForTrip} km${!returnDate ? " (same day)" : ""}`
+                              : `${finalDistance} km`}
                             {durationText && ` (${durationText})`}
                           </span>
                         </div>
@@ -930,7 +946,7 @@ export default function BookingPage() {
                   <div className="bg-primary/5 rounded-xl p-3">
                     <div className="text-xs text-muted-foreground mb-1">
                       {tripType === "round_trip" ? "Round Trip Total" :
-                       tripType === "multi_day" ? `${tripDays}-Day Total` : "One Way Total"}
+                       "One Way Total"}
                     </div>
                     <div className="text-2xl font-bold text-primary">₹{totalPrice.toLocaleString("en-IN")}</div>
                     <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
