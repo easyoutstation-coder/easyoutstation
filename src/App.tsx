@@ -17,7 +17,7 @@ import NotFound from './pages/NotFound'
 import Admin from './pages/Admin'
 import { trpc } from './providers/trpc'
 import { useAuth } from './hooks/useAuth'
-import { Phone, Mail, Clock } from 'lucide-react'
+import { Phone, Mail, Clock, WifiOff } from 'lucide-react'
 
 function MaintenancePage() {
   return (
