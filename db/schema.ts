@@ -132,6 +132,12 @@ export const drivers = mysqlTable("drivers", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
+export const siteSettings = mysqlTable("siteSettings", {
+  key: varchar("key", { length: 100 }).primaryKey(),
+  value: text("value").notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull().$onUpdate(() => new Date()),
+});
+
 export const subscriptions = mysqlTable("subscriptions", {
   id: serial("id").primaryKey(),
   userId: bigint("userId", { mode: "number", unsigned: true }).notNull().unique(),

@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { createRouter, adminQuery, superAdminQuery } from "./middleware";
+import { createRouter, publicQuery, adminQuery, superAdminQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { users, bookings, drivers, expenses } from "@db/schema";
+import { users, bookings, drivers, expenses, siteSettings } from "@db/schema";
 import { eq, desc, sql, and, gte } from "drizzle-orm";
 
 const MASTER_PHONES = ["9958556011"];
@@ -469,5 +469,27 @@ Thank you for choosing EasyOutstation.`;
       const db = getDb();
       await db.delete(expenses).where(eq(expenses.id, input.id));
       return { success: true };
+    }),
+
+  // ── Site on/off ────────────────────────────────────────────────────────
+  getSiteStatus: publicQuery.query(async () => {
+    try {
+      const db = getDb();
+      const rows = await db.select().from(siteSettings).where(eq(siteSettings.key, "siteOnline")).limit(1);
+      return { online: rows[0]?.value !== "false" };
+    } catch {
+      return { online: true }; // fail open — never accidentally take site down
+    }
+  }),
+
+  setSiteStatus: superAdminQuery
+    .input(z.object({ online: z.boolean() }))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      await db.execute(sql`
+        INSERT INTO siteSettings (\`key\`, value) VALUES ('siteOnline', ${input.online ? "true" : "false"})
+        ON DUPLICATE KEY UPDATE value = ${input.online ? "true" : "false"}
+      `);
+      return { online: input.online };
     }),
 });

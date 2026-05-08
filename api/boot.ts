@@ -50,6 +50,17 @@ async function runStartupMigrations() {
         )
       `));
     } catch { /* table already exists */ }
+    // Site settings table + default
+    try {
+      await db.execute(sql.raw(`
+        CREATE TABLE IF NOT EXISTS siteSettings (
+          \`key\` VARCHAR(100) PRIMARY KEY,
+          value TEXT NOT NULL,
+          updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        )
+      `));
+      await db.execute(sql.raw(`INSERT IGNORE INTO siteSettings (\`key\`, value) VALUES ('siteOnline', 'true')`));
+    } catch { /* already exists */ }
     // Update driver charges to ₹250/day across all cars
     await db.execute(sql.raw(`UPDATE cars SET driverCharges = 250.00`));
     // Master accounts always get super_admin

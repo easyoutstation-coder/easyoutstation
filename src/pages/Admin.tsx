@@ -14,6 +14,7 @@ import {
   LayoutDashboard, Users, Car, IndianRupee, Clock, CheckCircle, XCircle,
   Phone, UserCog, StickyNote, CheckCheck, X, Plus, Pencil, Trash2,
   MessageCircle, Mail, AlertTriangle, TrendingUp, MapPin, Wallet, ShieldCheck,
+  Globe, WifiOff,
 } from "lucide-react";
 
 type BookingStatus = "pending" | "confirmed" | "completed" | "cancelled";
@@ -127,6 +128,8 @@ export default function AdminPage() {
   const { data: customers } = trpc.admin.getCustomers.useQuery(undefined, { enabled: isAdmin });
   const { data: financials } = trpc.admin.getFinancials.useQuery(undefined, { enabled: isSuperAdmin });
   const { data: expensesList } = trpc.admin.getExpenses.useQuery(undefined, { enabled: isSuperAdmin });
+  const { data: siteStatus, refetch: refetchSiteStatus } = trpc.admin.getSiteStatus.useQuery(undefined, { enabled: isSuperAdmin });
+  const setSiteStatus = trpc.admin.setSiteStatus.useMutation({ onSuccess: () => refetchSiteStatus() });
 
   const confirmBooking = trpc.admin.confirmBooking.useMutation({
     onSuccess: (res) => {
@@ -284,7 +287,45 @@ export default function AdminPage() {
           </TabsList>
 
           {/* ── Overview ────────────────────────────────────────────── */}
-          <TabsContent value="overview">
+          <TabsContent value="overview" className="space-y-5">
+            {/* Site live/offline toggle — super_admin only */}
+            {isSuperAdmin && (
+              <Card className={`border-2 ${siteStatus?.online === false ? "border-red-300 bg-red-50" : "border-green-200 bg-green-50"}`}>
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${siteStatus?.online === false ? "bg-red-100" : "bg-green-100"}`}>
+                        {siteStatus?.online === false
+                          ? <WifiOff className="w-5 h-5 text-red-600" />
+                          : <Globe className="w-5 h-5 text-green-600" />}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-slate-900">
+                          Website is {siteStatus?.online === false ? "OFFLINE" : "LIVE"}
+                        </p>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          {siteStatus?.online === false
+                            ? "Visitors see maintenance page. You can still browse as admin."
+                            : "Site is live and accepting bookings from all visitors."}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setSiteStatus.mutate({ online: siteStatus?.online === false })}
+                      disabled={setSiteStatus.isPending}
+                      className={`relative inline-flex h-7 w-13 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${
+                        siteStatus?.online === false ? "bg-red-400" : "bg-green-500"
+                      } ${setSiteStatus.isPending ? "opacity-50" : ""}`}
+                      style={{ width: "52px" }}
+                    >
+                      <span className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-lg transition duration-200 ease-in-out ${
+                        siteStatus?.online === false ? "translate-x-0" : "translate-x-6"
+                      }`} />
+                    </button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <StatCard icon={Clock} label="Pending" value={stats?.pending ?? "—"} />
               <StatCard icon={CheckCircle} label="Confirmed" value={stats?.confirmed ?? "—"} />
