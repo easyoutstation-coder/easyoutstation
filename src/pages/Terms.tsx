@@ -1,3 +1,4 @@
+import { useSeo } from "@/hooks/useSeo";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
@@ -14,6 +15,7 @@ const sections = [
 ];
 
 export default function Terms() {
+  useSeo({ title: "Terms & Conditions | EasyOutstation", description: "Read EasyOutstation terms and conditions for outstation cab booking services.", canonical: "https://www.easyoutstation.com/terms" });
   return (
     <div className="min-h-screen bg-slate-50">
       <Navbar />

@@ -3,6 +3,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Clock, Route, CheckCircle } from "lucide-react";
+import { useSeo } from "@/hooks/useSeo";
 
 const routes = [
   { from: "Delhi", to: "Manali", km: 540, hrs: 12, sedan: "6,480", innova: "10,800", highlights: ["Rohtang Pass", "Solang Valley", "Old Manali"], toll: 850 },
@@ -17,6 +18,11 @@ const routes = [
 
 export default function RoutesPage() {
   const navigate = useNavigate();
+  useSeo({
+    title: "Outstation Cab Routes from Delhi — Prices & Distance | EasyOutstation",
+    description: "Explore all outstation cab routes from Delhi. Fixed fares to Manali, Shimla, Chandigarh, Jaipur, Agra, Rishikesh, Dehradun and more. One way & round trip.",
+    canonical: "https://www.easyoutstation.com/routes",
+  });
 
   return (
     <div className="min-h-screen bg-slate-50">

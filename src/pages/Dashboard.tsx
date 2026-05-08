@@ -1,3 +1,4 @@
+import { useSeo } from "@/hooks/useSeo";
 import { useNavigate } from "react-router";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
@@ -25,6 +26,7 @@ import {
 } from "lucide-react";
 
 export default function DashboardPage() {
+  useSeo({ title: "My Bookings | EasyOutstation", description: "View and manage your EasyOutstation cab bookings.", noindex: true });
   const navigate = useNavigate();
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState("");

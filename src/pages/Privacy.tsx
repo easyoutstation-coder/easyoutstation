@@ -1,3 +1,4 @@
+import { useSeo } from "@/hooks/useSeo";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
@@ -12,6 +13,7 @@ const sections = [
 ];
 
 export default function Privacy() {
+  useSeo({ title: "Privacy Policy | EasyOutstation", description: "EasyOutstation privacy policy — how we collect, use and protect your personal data.", canonical: "https://www.easyoutstation.com/privacy" });
   return (
     <div className="min-h-screen bg-slate-50">
       <Navbar />

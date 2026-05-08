@@ -26,6 +26,21 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://www.easyoutstation.com/cancellation</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://www.easyoutstation.com/terms</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+  </url>
+  <url>
+    <loc>https://www.easyoutstation.com/privacy</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+  </url>
+  <url>
     <loc>https://www.easyoutstation.com/cab/delhi-to-manali</loc>
     <changefreq>weekly</changefreq>
     <priority>0.95</priority>

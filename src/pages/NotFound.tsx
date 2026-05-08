@@ -1,8 +1,10 @@
+import { useSeo } from "@/hooks/useSeo";
 import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Car, ArrowLeft, MapPin } from "lucide-react";
 
 export default function NotFound() {
+  useSeo({ title: "Page Not Found | EasyOutstation", description: "The page you are looking for does not exist.", noindex: true });
   const navigate = useNavigate();
 
   return (

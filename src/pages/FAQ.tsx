@@ -2,6 +2,7 @@ import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { ChevronDown } from "lucide-react";
+import { useSeo } from "@/hooks/useSeo";
 
 const faqs = [
   { q: "Are there any hidden charges?", a: "No. The price shown includes per-km rate, driver charges, and estimated toll. Parking charges are the only additional cost and are charged at actuals." },
@@ -18,6 +19,11 @@ const faqs = [
 
 export default function FAQ() {
   const [open, setOpen] = useState<number | null>(null);
+  useSeo({
+    title: "FAQs — Outstation Cab Booking Delhi | EasyOutstation",
+    description: "Answers to common questions about EasyOutstation's cab service — pricing, cancellation, driver verification, toll charges and more.",
+    canonical: "https://www.easyoutstation.com/faq",
+  });
 
   return (
     <div className="min-h-screen bg-slate-50">

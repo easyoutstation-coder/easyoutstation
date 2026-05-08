@@ -1,3 +1,4 @@
+import { useSeo } from "@/hooks/useSeo";
 import { useState } from "react";
 import { useSearchParams, useNavigate } from "react-router";
 import { trpc } from "@/providers/trpc";
@@ -56,6 +57,18 @@ const transmissions = [
 export default function CarsPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const _fromCity = searchParams.get("from") || "Delhi";
+  const _toCity = searchParams.get("to") || "";
+  useSeo({
+    title: _toCity
+      ? `${_fromCity} to ${_toCity} Cab — Choose Your Car | EasyOutstation`
+      : "Book Outstation Cabs from Delhi — Premium Cars | EasyOutstation",
+    description: _toCity
+      ? `Compare cabs for ${_fromCity} to ${_toCity}. Fixed fares, verified drivers, AC cars. Sedan, SUV & Innova available.`
+      : "Choose from premium outstation cabs from Delhi. Swift Dzire, Innova Crysta, Ertiga and more. Fixed fares, no hidden charges.",
+    canonical: "https://www.easyoutstation.com/cars",
+    noindex: !!_toCity,
+  });
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState<"price_asc" | "price_desc" | "rating" | "popular">("price_asc");
   const [searchQuery, setSearchQuery] = useState("");

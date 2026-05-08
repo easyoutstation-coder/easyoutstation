@@ -1,8 +1,15 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Shield, Clock, Users, Award, MapPin, Heart } from "lucide-react";
+import { useSeo } from "@/hooks/useSeo";
 
 export default function About() {
+  useSeo({
+    title: "About EasyOutstation — Verified Outstation Cabs from Delhi",
+    description: "Learn about EasyOutstation — Delhi's trusted outstation cab service. Verified drivers, fixed fares, no hidden charges. Serving Manali, Shimla, Jaipur, Agra and more.",
+    canonical: "https://www.easyoutstation.com/about",
+  });
+
   return (
     <div className="min-h-screen bg-slate-50">
       <Navbar />

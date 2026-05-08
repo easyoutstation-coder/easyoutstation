@@ -1,8 +1,10 @@
+import { useSeo } from "@/hooks/useSeo";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { CheckCircle, XCircle, AlertCircle } from "lucide-react";
 
 export default function CancellationPolicy() {
+  useSeo({ title: "Cancellation Policy — Free Cancellation 24hrs | EasyOutstation", description: "EasyOutstation cancellation policy. Cancel for free up to 24 hours before pickup. Full refund of advance payment guaranteed.", canonical: "https://www.easyoutstation.com/cancellation" });
   return (
     <div className="min-h-screen bg-slate-50">
       <Navbar />

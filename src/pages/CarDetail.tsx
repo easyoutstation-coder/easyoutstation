@@ -1,3 +1,4 @@
+import { useSeo } from "@/hooks/useSeo";
 import { useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router";
 import { trpc } from "@/providers/trpc";
@@ -69,6 +70,11 @@ export default function CarDetailPage() {
   );
 
   const displayCar = car || fallbackCar;
+  useSeo({
+    title: `${displayCar.name} — Outstation Cab ₹${displayCar.pricePerKm}/km | EasyOutstation`,
+    description: `Book ${displayCar.name} for outstation trips from Delhi. ₹${displayCar.pricePerKm}/km, ${displayCar.seats} seats, verified driver. Fixed fare, no hidden charges.`,
+    noindex: true,
+  });
   const features = JSON.parse(displayCar.features || "[]") as string[];
   const gallery = JSON.parse(displayCar.galleryImages || "[]") as string[];
   const allImages = [

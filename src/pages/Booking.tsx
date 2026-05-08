@@ -1,3 +1,4 @@
+import { useSeo } from "@/hooks/useSeo";
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router";
 import { trpc } from "@/providers/trpc";
@@ -36,6 +37,8 @@ export default function BookingPage() {
   const [searchParams] = useSearchParams();
   const { isAuthenticated, isLoading: authLoading, user, refresh } = useAuth();
   const [authTimedOut, setAuthTimedOut] = useState(false);
+
+  useSeo({ title: "Book Your Cab | EasyOutstation", description: "Complete your outstation cab booking.", noindex: true });
 
   // Never block the page more than 2 seconds waiting for auth on initial load
   useEffect(() => {

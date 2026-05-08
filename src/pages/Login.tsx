@@ -10,6 +10,7 @@ import { Car, ArrowLeft, Shield, Clock, Headphones, Eye, EyeOff } from "lucide-r
 import FirebaseOTP from "@/components/FirebaseOTP";
 
 export default function Login() {
+  useSeo({ title: "Sign In | EasyOutstation", description: "Sign in to EasyOutstation to manage your cab bookings.", noindex: true });
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { isAuthenticated, isLoading } = useAuth();
