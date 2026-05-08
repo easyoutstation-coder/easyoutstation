@@ -1,0 +1,34 @@
+{
+  "name": "EasyOutstation",
+  "short_name": "EasyOutstation",
+  "description": "Book outstation cabs from Delhi. Fixed fares, verified drivers, no hidden charges.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0B0B0B",
+  "theme_color": "#1e3a5f",
+  "categories": ["travel", "transportation"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/hero-bg.jpg",
+      "sizes": "1200x630",
+      "type": "image/jpeg",
+      "label": "EasyOutstation — Book outstation cabs from Delhi"
+    }
+  ]
+}
