@@ -504,7 +504,7 @@ Thank you for choosing EasyOutstation.`;
     }))
     .mutation(async ({ input }) => {
       await sendEmail(
-        "parmindersinghtalwar@gmail.com",
+        "easyoutstation@gmail.com",
         `🏢 Corporate Enquiry — ${input.company} | EasyOutstation`,
         `New corporate/B2B enquiry received!\n\n` +
         `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
