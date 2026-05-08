@@ -492,4 +492,34 @@ Thank you for choosing EasyOutstation.`;
       `);
       return { online: input.online };
     }),
+
+  // ── Corporate enquiry lead capture ─────────────────────────────────────
+  submitCorporateEnquiry: publicQuery
+    .input(z.object({
+      name: z.string().min(2),
+      phone: z.string().length(10),
+      company: z.string().min(2),
+      teamSize: z.string().optional(),
+      message: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      await sendEmail(
+        "parmindersinghtalwar@gmail.com",
+        `🏢 Corporate Enquiry — ${input.company} | EasyOutstation`,
+        `New corporate/B2B enquiry received!\n\n` +
+        `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+        `LEAD DETAILS\n` +
+        `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+        `Name        : ${input.name}\n` +
+        `Mobile      : +91-${input.phone}\n` +
+        `Company     : ${input.company}\n` +
+        `Team Size   : ${input.teamSize || "Not specified"}\n` +
+        `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+        `REQUIREMENT\n` +
+        `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+        `${input.message || "No additional details provided."}\n\n` +
+        `Reply directly to this email or call +91-${input.phone} to follow up.`
+      );
+      return { success: true };
+    }),
 });

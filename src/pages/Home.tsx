@@ -7,7 +7,8 @@ import PopularCarsSection from "@/sections/PopularCarsSection";
 import PopularRoutesSection from "@/sections/PopularRoutesSection";
 import FeaturesSection from "@/sections/FeaturesSection";
 import TestimonialsSection from "@/sections/TestimonialsSection";
-import CTASection from "@/sections/CTASection";
+import CTASection from "@/sections/CTASection"
+import CorporateSection from "@/sections/CorporateSection";
 
 export default function Home() {
   return (
@@ -18,6 +19,7 @@ export default function Home() {
         <PopularRoutesSection />
         <PopularCarsSection />
         <FeaturesSection />
+        <CorporateSection />
         <TestimonialsSection />
         <CTASection />
       </main>
