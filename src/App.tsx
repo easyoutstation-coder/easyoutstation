@@ -57,7 +57,7 @@ function MaintenancePage() {
           <Clock className="w-3 h-3" />
           <span>Usually back within a few minutes</span>
         </div>
-        <a href="/login" className="block mt-6 text-slate-700 text-xs hover:text-slate-400 transition-colors">
+        <a href="/login?redirect=/admin" className="block mt-6 text-slate-700 text-xs hover:text-slate-400 transition-colors">
           Admin login →
         </a>
       </div>
@@ -66,20 +66,22 @@ function MaintenancePage() {
 }
 
 function SiteGate({ children }: { children: React.ReactNode }) {
-  const { data, isLoading } = trpc.admin.getSiteStatus.useQuery(undefined, {
+  const { data, isLoading: statusLoading } = trpc.admin.getSiteStatus.useQuery(undefined, {
     staleTime: 0,
     refetchInterval: 15_000,
     retry: false,
   })
-  const { user } = useAuth()
+  const { user, isLoading: authLoading } = useAuth()
   const { pathname } = useLocation()
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin'
   const isOffline = data?.online === false
   // Always let /login and /admin through so admins can log in and toggle the switch
   const isAdminPath = pathname === '/login' || pathname.startsWith('/admin')
 
-  // Non-admins see the maintenance page when offline (except login/admin paths)
-  if (!isLoading && !isAdmin && isOffline && !isAdminPath) return <MaintenancePage />
+  // Wait for BOTH status AND auth to finish loading before deciding — avoids
+  // race where getSiteStatus resolves first, user is null, and admin gets bounced
+  const bothLoaded = !statusLoading && !authLoading
+  if (bothLoaded && !isAdmin && isOffline && !isAdminPath) return <MaintenancePage />
 
   // Admins always see the site, but get a warning banner when offline
   return (

@@ -37,9 +37,11 @@ export default function BookingPage() {
   const { isAuthenticated, isLoading: authLoading, user, refresh } = useAuth();
   const [authTimedOut, setAuthTimedOut] = useState(false);
 
-  // Never block the page more than 2 seconds waiting for auth
+  // After a fresh OTP login + reload, give auth up to 8s to hydrate before showing the sign-up form
   useEffect(() => {
-    const timer = setTimeout(() => setAuthTimedOut(true), 2000);
+    const justLoggedIn = sessionStorage.getItem('justLoggedIn') === '1';
+    sessionStorage.removeItem('justLoggedIn');
+    const timer = setTimeout(() => setAuthTimedOut(true), justLoggedIn ? 8000 : 2000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -138,7 +140,10 @@ export default function BookingPage() {
   const [quickError, setQuickError] = useState("");
 
   const quickLoginWithPhoneMutation = trpc.auth.loginWithPhone.useMutation({
-    onSuccess: () => { refresh(); },
+    onSuccess: () => {
+      sessionStorage.setItem('justLoggedIn', '1');
+      window.location.reload();
+    },
     onError: (e) => setQuickError(e.message),
   });
 
