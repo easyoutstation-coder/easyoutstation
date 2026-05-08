@@ -198,7 +198,7 @@ export default function CarDetailPage() {
                     ({displayCar.reviewCount} reviews)
                   </span>
                 </div>
-                <h1 className="text-3xl font-bold text-foreground font-['Playfair_Display']">
+                <h1 className="text-3xl font-bold text-foreground font-['DM_Serif_Display']">
                   {displayCar.name}
                 </h1>
                 <p className="text-muted-foreground">{displayCar.brand}</p>

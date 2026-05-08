@@ -26,7 +26,7 @@ function MaintenancePage() {
         <div className="w-20 h-20 bg-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-900/40">
           <span className="text-3xl">🚗</span>
         </div>
-        <h1 className="text-3xl font-bold text-white mb-3 font-['Playfair_Display']">
+        <h1 className="text-3xl font-bold text-white mb-3 font-['DM_Serif_Display']">
           We'll be back soon
         </h1>
         <p className="text-slate-400 text-lg mb-8 leading-relaxed">

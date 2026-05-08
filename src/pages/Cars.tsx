@@ -206,7 +206,7 @@ export default function CarsPage() {
             )}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
-                <h1 className="text-3xl font-bold text-slate-900 font-['Playfair_Display']">
+                <h1 className="text-3xl font-bold text-slate-900 font-['DM_Serif_Display']">
                   {fromCity && toCity ? `Cars for ${fromCity} → ${toCity}` : "Our Fleet"}
                 </h1>
                 <p className="text-slate-500 mt-1">

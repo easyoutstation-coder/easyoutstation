@@ -62,7 +62,7 @@ export default function CorporateSection() {
               <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-blue-400 mb-4">
                 <Building2 className="w-3.5 h-3.5" /> For Businesses
               </span>
-              <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4 font-['Playfair_Display'] leading-tight">
+              <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4 font-['DM_Serif_Display'] leading-tight">
                 Corporate & Employee<br />
                 <span className="text-blue-300">Transport Made Simple</span>
               </h2>
@@ -117,7 +117,7 @@ export default function CorporateSection() {
       <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold font-['Playfair_Display'] flex items-center gap-2">
+            <DialogTitle className="text-xl font-bold font-['DM_Serif_Display'] flex items-center gap-2">
               <Building2 className="w-5 h-5 text-blue-600" /> Corporate Enquiry
             </DialogTitle>
           </DialogHeader>

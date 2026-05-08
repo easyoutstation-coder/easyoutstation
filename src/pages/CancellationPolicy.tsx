@@ -9,7 +9,7 @@ export default function CancellationPolicy() {
       <main className="pt-20">
         <div className="bg-white border-b border-slate-100 py-12 px-4 text-center">
           <p className="text-xs font-bold uppercase tracking-widest text-blue-600 mb-2">Policies</p>
-          <h1 className="text-3xl font-bold text-slate-900 font-['Playfair_Display']">Cancellation & Refund Policy</h1>
+          <h1 className="text-3xl font-bold text-slate-900 font-['DM_Serif_Display']">Cancellation & Refund Policy</h1>
           <p className="text-slate-500 mt-2">Fair, transparent, and customer-friendly.</p>
         </div>
 

@@ -25,7 +25,7 @@ export default function FAQ() {
       <main className="pt-20">
         <div className="bg-white border-b border-slate-100 py-12 px-4 text-center">
           <p className="text-xs font-bold uppercase tracking-widest text-blue-600 mb-2">Help Center</p>
-          <h1 className="text-3xl font-bold text-slate-900 font-['Playfair_Display']">Frequently Asked Questions</h1>
+          <h1 className="text-3xl font-bold text-slate-900 font-['DM_Serif_Display']">Frequently Asked Questions</h1>
           <p className="text-slate-500 mt-2 max-w-lg mx-auto">Everything you need to know before booking your cab.</p>
         </div>
 

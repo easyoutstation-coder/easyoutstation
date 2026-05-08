@@ -23,7 +23,7 @@ export default function PopularRoutesSection() {
             <p className="text-xs font-bold uppercase tracking-widest text-blue-600 flex items-center gap-2">
               <TrendingUp className="w-3.5 h-3.5" /> Most Booked Routes
             </p>
-            <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 font-['Playfair_Display']">
+            <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 font-['DM_Serif_Display']">
               Fixed Fares. No Surprises.
             </h2>
             <p className="text-slate-500 max-w-lg text-sm">

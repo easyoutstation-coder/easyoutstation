@@ -19,7 +19,7 @@ export default function Terms() {
       <Navbar />
       <main className="pt-20">
         <div className="bg-white border-b border-slate-100 py-12 px-4 text-center">
-          <h1 className="text-3xl font-bold text-slate-900 font-['Playfair_Display']">Terms & Conditions</h1>
+          <h1 className="text-3xl font-bold text-slate-900 font-['DM_Serif_Display']">Terms & Conditions</h1>
           <p className="text-slate-500 mt-2 text-sm">Last updated: May 2026</p>
         </div>
         <div className="max-w-3xl mx-auto px-4 py-12 space-y-6">

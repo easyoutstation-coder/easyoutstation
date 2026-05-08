@@ -272,7 +272,7 @@ export default function HeroSection() {
               <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
               <span className="text-xs font-medium text-white/90 uppercase tracking-wider">Delhi's Trusted Outstation Cab</span>
             </div>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight font-['Playfair_Display']">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight font-['DM_Serif_Display']">
               Safe Journeys.<br />
               <span className="text-blue-300">Fixed Prices.</span><br />
               Every Time.
@@ -317,7 +317,7 @@ export default function HeroSection() {
             <div className="flex gap-8 pt-4 border-t border-white/10">
               {[{ num: "15K+", label: "Happy Travelers" }, { num: "4.9★", label: "Average Rating" }, { num: "8+", label: "Premium Cars" }].map((s, i) => (
                 <div key={i}>
-                  <div className="text-xl font-bold text-white font-['Playfair_Display']">{s.num}</div>
+                  <div className="text-xl font-bold text-white font-['DM_Serif_Display']">{s.num}</div>
                   <div className="text-xs text-slate-400 mt-0.5">{s.label}</div>
                 </div>
               ))}
@@ -329,7 +329,7 @@ export default function HeroSection() {
             <div className="bg-white rounded-2xl shadow-2xl p-6 lg:p-7">
               <div className="flex items-center justify-between mb-5">
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900 font-['Playfair_Display']">Book Your Cab</h3>
+                  <h3 className="text-lg font-bold text-slate-900 font-['DM_Serif_Display']">Book Your Cab</h3>
                   <p className="text-xs text-slate-500 mt-0.5">
                     Serving within 100km of Delhi, Manali, Jaipur, Agra & more
                   </p>

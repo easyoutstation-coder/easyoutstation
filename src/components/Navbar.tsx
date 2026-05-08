@@ -47,7 +47,7 @@ export default function Navbar() {
               <Car className="w-5 h-5 text-white" />
             </div>
             <div className="flex flex-col">
-              <span className={`font-bold text-lg leading-none font-['Playfair_Display'] tracking-tight transition-colors ${isLight ? "text-slate-900" : "text-white"}`}>
+              <span className={`font-bold text-lg leading-none font-['DM_Serif_Display'] tracking-tight transition-colors ${isLight ? "text-slate-900" : "text-white"}`}>
                 EasyOutstation
               </span>
               <span className={`text-[10px] leading-none uppercase tracking-widest mt-0.5 transition-colors ${isLight ? "text-blue-700" : "text-blue-200"}`}>
@@ -126,7 +126,7 @@ export default function Navbar() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="bg-white border-slate-200 w-72">
-                <SheetTitle className="text-slate-900 font-['Playfair_Display']">EasyOutstation</SheetTitle>
+                <SheetTitle className="text-slate-900 font-['DM_Serif_Display']">EasyOutstation</SheetTitle>
                 <nav className="mt-8 flex flex-col gap-1">
                   {navLinks.map((link) => {
                     const isCorporate = link.href === "/#corporate";

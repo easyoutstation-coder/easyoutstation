@@ -9,7 +9,7 @@ export default function CTASection() {
       <div className="absolute inset-0 bg-[url('/hero-bg.jpg')] bg-cover bg-center opacity-10" />
       <div className="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
         <p className="text-xs font-bold uppercase tracking-widest text-blue-400 mb-4">Ready to Travel?</p>
-        <h2 className="text-3xl lg:text-5xl font-bold text-white mb-5 font-['Playfair_Display'] leading-tight">
+        <h2 className="text-3xl lg:text-5xl font-bold text-white mb-5 font-['DM_Serif_Display'] leading-tight">
           Your Next Journey Deserves<br />
           <span className="text-blue-300">Better Than a Gamble</span>
         </h2>

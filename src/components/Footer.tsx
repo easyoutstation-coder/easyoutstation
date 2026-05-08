@@ -41,7 +41,7 @@ export default function Footer() {
                 <Car className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-white font-['Playfair_Display']">EasyOutstation</h3>
+                <h3 className="text-xl font-bold text-white font-['DM_Serif_Display']">EasyOutstation</h3>
                 <p className="text-[10px] uppercase tracking-widest text-blue-400">Premium Cab Service</p>
               </div>
             </Link>

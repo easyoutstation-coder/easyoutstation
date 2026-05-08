@@ -113,7 +113,7 @@ export default function RouteLanding() {
               <MapPin className="w-4 h-4" />
               Outstation Cab Service
             </div>
-            <h1 className="text-4xl md:text-5xl font-bold font-['Playfair_Display'] mb-4">
+            <h1 className="text-4xl md:text-5xl font-bold font-['DM_Serif_Display'] mb-4">
               {data.from} to {data.to} Cab
             </h1>
             <p className="text-slate-300 text-lg mb-6 max-w-2xl mx-auto">{data.description}</p>
@@ -138,7 +138,7 @@ export default function RouteLanding() {
 
         {/* Fare table */}
         <div className="max-w-4xl mx-auto px-4 py-12">
-          <h2 className="text-2xl font-bold text-slate-900 font-['Playfair_Display'] mb-6 text-center">
+          <h2 className="text-2xl font-bold text-slate-900 font-['DM_Serif_Display'] mb-6 text-center">
             {data.from} to {data.to} Cab Fare
           </h2>
           <div className="overflow-x-auto rounded-2xl border border-slate-200 shadow-sm">
@@ -182,7 +182,7 @@ export default function RouteLanding() {
         {/* Why choose us */}
         <div className="bg-slate-50 py-12 px-4">
           <div className="max-w-4xl mx-auto">
-            <h2 className="text-2xl font-bold text-center font-['Playfair_Display'] mb-8">Why Book {data.from} to {data.to} Cab with EasyOutstation?</h2>
+            <h2 className="text-2xl font-bold text-center font-['DM_Serif_Display'] mb-8">Why Book {data.from} to {data.to} Cab with EasyOutstation?</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {[...data.highlights,
                 "Driver details shared within 60 minutes",
@@ -203,7 +203,7 @@ export default function RouteLanding() {
 
         {/* FAQ */}
         <div className="max-w-4xl mx-auto px-4 py-12">
-          <h2 className="text-2xl font-bold font-['Playfair_Display'] mb-8 text-center">
+          <h2 className="text-2xl font-bold font-['DM_Serif_Display'] mb-8 text-center">
             Frequently Asked Questions — {data.from} to {data.to} Cab
           </h2>
           <div className="space-y-4">
@@ -218,7 +218,7 @@ export default function RouteLanding() {
 
         {/* CTA */}
         <div className="bg-blue-600 py-12 px-4 text-center text-white">
-          <h2 className="text-2xl font-bold font-['Playfair_Display'] mb-3">Ready to Book Your {data.from} to {data.to} Cab?</h2>
+          <h2 className="text-2xl font-bold font-['DM_Serif_Display'] mb-3">Ready to Book Your {data.from} to {data.to} Cab?</h2>
           <p className="text-blue-100 mb-6">Confirm with just 10% advance. Driver details within 60 minutes.</p>
           <Button size="lg" onClick={() => navigate(`/cars?from=${data.from}&to=${data.to}&distance=${data.distance}`)}
             className="bg-white text-blue-700 hover:bg-blue-50 px-8 h-12 text-base gap-2 font-semibold">

@@ -183,7 +183,7 @@ export default function BookingPage() {
                 <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
                   <LogIn className="w-7 h-7 text-blue-600" />
                 </div>
-                <h2 className="text-2xl font-bold font-['Playfair_Display'] text-slate-900">Quick Sign Up to Book</h2>
+                <h2 className="text-2xl font-bold font-['DM_Serif_Display'] text-slate-900">Quick Sign Up to Book</h2>
                 <p className="text-slate-500 text-sm mt-1">Takes 30 seconds. Verify your number and you're in!</p>
               </div>
 
@@ -473,7 +473,7 @@ export default function BookingPage() {
               <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
                 <Check className="w-10 h-10 text-green-600" />
               </div>
-              <h1 className="text-3xl font-bold font-['Playfair_Display'] mb-2">Booking Confirmed!</h1>
+              <h1 className="text-3xl font-bold font-['DM_Serif_Display'] mb-2">Booking Confirmed!</h1>
               <p className="text-muted-foreground mb-2">Booking ID: <span className="font-bold text-primary">#{bookingId}</span></p>
               {advancePaid && (
                 <div className="inline-flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 text-sm font-medium px-4 py-2 rounded-full mb-3">

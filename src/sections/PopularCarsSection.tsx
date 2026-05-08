@@ -30,7 +30,7 @@ export default function PopularCarsSection() {
             <p className="text-xs font-bold uppercase tracking-widest text-blue-600 flex items-center gap-2">
               <Sparkles className="w-3.5 h-3.5" /> Our Premium Fleet
             </p>
-            <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 font-['Playfair_Display']">
+            <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 font-['DM_Serif_Display']">
               Every Car. Verified & Maintained.
             </h2>
             <p className="text-slate-500 text-sm max-w-lg">

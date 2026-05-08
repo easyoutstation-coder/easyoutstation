@@ -16,7 +16,7 @@ export default function TestimonialsSection() {
             {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 text-amber-400 fill-amber-400" />)}
             <span className="ml-2 text-sm text-slate-500">4.9/5 from 2,400+ trips</span>
           </div>
-          <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 mb-3 font-['Playfair_Display']">
+          <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 mb-3 font-['DM_Serif_Display']">
             Real Travelers. Real Stories.
           </h2>
           <p className="text-slate-500 text-sm">Verified reviews from actual bookings — not stock photos or paid testimonials.</p>

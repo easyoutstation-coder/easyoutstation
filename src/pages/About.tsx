@@ -11,7 +11,7 @@ export default function About() {
         <div className="bg-slate-900 py-20 px-4">
           <div className="max-w-4xl mx-auto text-center">
             <p className="text-xs font-bold uppercase tracking-widest text-blue-400 mb-3">Our Story</p>
-            <h1 className="text-4xl lg:text-5xl font-bold text-white font-['Playfair_Display'] mb-5">
+            <h1 className="text-4xl lg:text-5xl font-bold text-white font-['DM_Serif_Display'] mb-5">
               Built on Trust. Driven by Service.
             </h1>
             <p className="text-slate-400 text-lg max-w-2xl mx-auto leading-relaxed">
@@ -31,7 +31,7 @@ export default function About() {
               { num: "4.9★", label: "Average Rating" },
             ].map((s, i) => (
               <div key={i}>
-                <div className="text-3xl font-bold text-blue-700 font-['Playfair_Display']">{s.num}</div>
+                <div className="text-3xl font-bold text-blue-700 font-['DM_Serif_Display']">{s.num}</div>
                 <div className="text-sm text-slate-500 mt-1">{s.label}</div>
               </div>
             ))}
@@ -43,7 +43,7 @@ export default function About() {
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
               <p className="text-xs font-bold uppercase tracking-widest text-blue-600 mb-3">Our Mission</p>
-              <h2 className="text-3xl font-bold text-slate-900 font-['Playfair_Display'] mb-5">
+              <h2 className="text-3xl font-bold text-slate-900 font-['DM_Serif_Display'] mb-5">
                 Making Every Journey Safe, Comfortable & Transparent
               </h2>
               <p className="text-slate-600 leading-relaxed mb-4">
@@ -77,7 +77,7 @@ export default function About() {
         <div className="bg-blue-50 border-t border-blue-100 py-14 px-4">
           <div className="max-w-2xl mx-auto text-center">
             <Heart className="w-8 h-8 text-blue-600 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-slate-900 font-['Playfair_Display'] mb-3">Get in Touch</h2>
+            <h2 className="text-2xl font-bold text-slate-900 font-['DM_Serif_Display'] mb-3">Get in Touch</h2>
             <p className="text-slate-600 mb-6">Have questions? We're a real team with real people who actually respond.</p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <a href="mailto:easyoutstation@gmail.com"

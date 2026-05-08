@@ -24,7 +24,7 @@ export default function RoutesPage() {
       <main className="pt-20">
         <div className="bg-white border-b border-slate-100 py-12 px-4 text-center">
           <p className="text-xs font-bold uppercase tracking-widest text-blue-600 mb-2">Popular Routes</p>
-          <h1 className="text-3xl font-bold text-slate-900 font-['Playfair_Display']">Outstation Routes from Delhi</h1>
+          <h1 className="text-3xl font-bold text-slate-900 font-['DM_Serif_Display']">Outstation Routes from Delhi</h1>
           <p className="text-slate-500 mt-2 max-w-lg mx-auto">Fixed fares, no surprises. All prices include driver charges and estimated toll.</p>
         </div>
 

@@ -95,7 +95,7 @@ export default function Login() {
               <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
                 <Car className="w-8 h-8 text-primary" />
               </div>
-              <h1 className="text-2xl font-bold font-['Playfair_Display']">
+              <h1 className="text-2xl font-bold font-['DM_Serif_Display']">
                 {showEmailForm ? (emailMode === "login" ? "Welcome Back" : "Create Account") : "Login / Sign Up"}
               </h1>
               <p className="text-sm text-muted-foreground mt-1">

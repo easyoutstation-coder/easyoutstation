@@ -15,7 +15,7 @@ export default function FeaturesSection() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-2xl mx-auto mb-16">
           <p className="text-xs font-bold uppercase tracking-widest text-blue-600 mb-3">Why Travelers Choose Us</p>
-          <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 mb-4 font-['Playfair_Display']">
+          <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 mb-4 font-['DM_Serif_Display']">
             We Fix What Others Get Wrong
           </h2>
           <p className="text-slate-500 leading-relaxed">

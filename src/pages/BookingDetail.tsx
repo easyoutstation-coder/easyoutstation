@@ -66,7 +66,7 @@ export default function BookingDetail() {
         </button>
 
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold font-['Playfair_Display']">Booking #{booking.id}</h1>
+          <h1 className="text-2xl font-bold font-['DM_Serif_Display']">Booking #{booking.id}</h1>
           <Badge className={statusColors[booking.status] || "bg-gray-100 text-gray-800"}>
             {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
           </Badge>
