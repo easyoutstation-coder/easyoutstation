@@ -21,11 +21,6 @@ export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Only use transparent navbar on homepage
-  const isHome = location.pathname === "/";
-  // Navbar is "light" (white bg, dark text) when scrolled OR not on homepage
-  const isLight = scrolled || !isHome;
-
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -33,37 +28,35 @@ export default function Navbar() {
   }, []);
 
   return (
-    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-      isLight
-        ? "bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm"
-        : "bg-transparent"
+    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-[#1e3a5f] border-b border-blue-900/40 ${
+      scrolled ? "shadow-xl shadow-blue-950/40" : "shadow-md shadow-blue-950/20"
     }`}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 lg:h-20 items-center justify-between">
+        <div className="flex h-16 lg:h-18 items-center justify-between">
 
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 shrink-0 group">
-            <div className="w-10 h-10 rounded-xl bg-blue-700 flex items-center justify-center transition-all group-hover:bg-blue-800">
+            <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center transition-all group-hover:bg-blue-500 shadow-sm shadow-blue-900/50">
               <Car className="w-5 h-5 text-white" />
             </div>
             <div className="flex flex-col">
-              <span className={`font-bold text-lg leading-none font-['DM_Serif_Display'] tracking-tight transition-colors ${isLight ? "text-slate-900" : "text-white"}`}>
+              <span className="font-bold text-lg leading-none font-['DM_Serif_Display'] tracking-tight text-white">
                 EasyOutstation
               </span>
-              <span className={`text-[10px] leading-none uppercase tracking-widest mt-0.5 transition-colors ${isLight ? "text-blue-700" : "text-blue-200"}`}>
+              <span className="text-[10px] leading-none uppercase tracking-widest mt-0.5 text-blue-300">
                 Premium Cab Service
               </span>
             </div>
           </Link>
 
           {/* Desktop Nav */}
-          <nav className="hidden lg:flex items-center gap-8">
+          <nav className="hidden lg:flex items-center gap-7">
             {navLinks.map((link) => {
               const isCorporate = link.href === "/#corporate";
               const isActive = location.pathname === link.href;
-              const cls = `text-sm font-medium transition-colors duration-200 hover:text-blue-600 ${
-                isLight ? "text-slate-600" : "text-white/90"
-              } ${isActive ? (isLight ? "text-blue-700 font-semibold" : "text-white font-semibold") : ""}`;
+              const cls = `text-sm font-medium transition-colors duration-200 text-blue-100 hover:text-white ${
+                isActive ? "text-white font-semibold border-b-2 border-blue-400 pb-0.5" : ""
+              }`;
               if (isCorporate) {
                 return (
                   <a key={link.href} href={link.href} className={cls}
@@ -78,16 +71,15 @@ export default function Navbar() {
 
           {/* Right */}
           <div className="hidden lg:flex items-center gap-3">
-
             {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className={`flex items-center gap-2 ${isLight ? "text-slate-700 hover:bg-slate-100" : "text-white hover:bg-white/10"}`}>
-                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                      <User className="w-4 h-4 text-blue-700" />
+                  <Button variant="ghost" className="flex items-center gap-2 text-white hover:bg-blue-800/60 hover:text-white border border-blue-700/50 hover:border-blue-600">
+                    <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
+                      <User className="w-4 h-4 text-white" />
                     </div>
                     <span className="text-sm">{user?.name?.split(" ")[0] || "Guest"}</span>
-                    <ChevronDown className="w-4 h-4 opacity-60" />
+                    <ChevronDown className="w-4 h-4 opacity-70" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48 bg-white border-slate-200">
@@ -110,7 +102,7 @@ export default function Navbar() {
               </DropdownMenu>
             ) : (
               <Button onClick={() => navigate("/login")}
-                className="bg-blue-700 hover:bg-blue-800 text-white font-semibold px-5 shadow-sm">
+                className="bg-blue-500 hover:bg-blue-400 text-white font-semibold px-5 shadow-sm shadow-blue-900/50 border border-blue-400/30">
                 Sign In
               </Button>
             )}
@@ -120,18 +112,25 @@ export default function Navbar() {
           <div className="flex lg:hidden items-center gap-2">
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon"
-                  className={isLight ? "text-slate-700 hover:bg-slate-100" : "text-white hover:bg-white/10"}>
+                <Button variant="ghost" size="icon" className="text-white hover:bg-blue-800/60">
                   <Menu className="w-5 h-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="bg-white border-slate-200 w-72">
-                <SheetTitle className="text-slate-900 font-['DM_Serif_Display']">EasyOutstation</SheetTitle>
-                <nav className="mt-8 flex flex-col gap-1">
+              <SheetContent side="right" className="bg-[#1e3a5f] border-blue-900 w-72 p-0">
+                <div className="px-6 py-5 border-b border-blue-800/60 flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center">
+                    <Car className="w-4 h-4 text-white" />
+                  </div>
+                  <SheetTitle className="text-white font-['DM_Serif_Display'] text-lg m-0">EasyOutstation</SheetTitle>
+                </div>
+                <nav className="px-4 py-4 flex flex-col gap-1">
                   {navLinks.map((link) => {
                     const isCorporate = link.href === "/#corporate";
-                    const cls = `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all hover:bg-blue-50 hover:text-blue-700 ${
-                      location.pathname === link.href ? "bg-blue-50 text-blue-700" : "text-slate-600"
+                    const isActive = location.pathname === link.href;
+                    const cls = `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                      isActive
+                        ? "bg-blue-700/60 text-white"
+                        : "text-blue-100 hover:bg-blue-800/60 hover:text-white"
                     }`;
                     if (isCorporate) {
                       return (
@@ -148,26 +147,26 @@ export default function Navbar() {
                     );
                   })}
                 </nav>
-                <div className="mt-6 pt-6 border-t border-slate-100 space-y-3">
+                <div className="px-4 pt-2 pb-6 border-t border-blue-800/60 space-y-3 mt-2">
                   {isAuthenticated ? (
                     <>
                       <Button onClick={() => { navigate("/dashboard"); setMobileOpen(false); }}
-                        className="w-full bg-blue-700 hover:bg-blue-800 text-white font-semibold">
+                        className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold">
                         My Dashboard
                       </Button>
                       {(user?.role === "admin" || user?.role === "super_admin") && (
                         <Button variant="outline" onClick={() => { navigate("/admin"); setMobileOpen(false); }}
-                          className="w-full border-purple-200 text-purple-700 hover:bg-purple-50">
+                          className="w-full border-purple-400/50 text-purple-200 hover:bg-purple-900/30 hover:text-purple-100">
                           Admin Panel
                         </Button>
                       )}
-                      <Button variant="ghost" onClick={logout} className="w-full text-red-600 hover:bg-red-50">
+                      <Button variant="ghost" onClick={logout} className="w-full text-red-300 hover:bg-red-900/30 hover:text-red-200">
                         Logout
                       </Button>
                     </>
                   ) : (
                     <Button onClick={() => { navigate("/login"); setMobileOpen(false); }}
-                      className="w-full bg-blue-700 hover:bg-blue-800 text-white font-semibold">
+                      className="w-full bg-blue-500 hover:bg-blue-400 text-white font-semibold">
                       Sign In
                     </Button>
                   )}
