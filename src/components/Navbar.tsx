@@ -29,7 +29,7 @@ export default function Navbar() {
 
   return (
     <header className="fixed top-4 inset-x-0 z-50 flex justify-center px-4 pointer-events-none">
-      <div className={`pointer-events-auto flex items-center gap-2 px-3 py-2 rounded-full w-full max-w-3xl transition-all duration-300 ${
+      <div className={`pointer-events-auto flex items-center gap-2 px-3 py-2 rounded-full w-full max-w-5xl transition-all duration-300 ${
         scrolled
           ? "bg-[#1e3a5f]/95 backdrop-blur-2xl shadow-2xl shadow-black/40 border border-white/10"
           : "bg-[#1e3a5f]/80 backdrop-blur-xl shadow-xl shadow-black/25 border border-white/8"
