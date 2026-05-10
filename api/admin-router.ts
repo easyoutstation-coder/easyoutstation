@@ -343,6 +343,7 @@ Thank you for choosing EasyOutstation.`;
         email: users.email,
         phone: users.phone,
         role: users.role,
+        canManageContent: users.canManageContent,
         createdAt: users.createdAt,
         lastSignInAt: users.lastSignInAt,
         bookingCount: sql<number>`COUNT(${bookings.id})`,
@@ -359,6 +360,15 @@ Thank you for choosing EasyOutstation.`;
     .mutation(async ({ input }) => {
       const db = getDb();
       await db.update(users).set({ role: input.role as any }).where(eq(users.id, input.userId));
+      return { success: true };
+    }),
+
+  // Only super_admin can grant/revoke content management permission
+  setContentPermission: superAdminQuery
+    .input(z.object({ userId: z.number(), canManage: z.boolean() }))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      await db.update(users).set({ canManageContent: input.canManage }).where(eq(users.id, input.userId));
       return { success: true };
     }),
 

@@ -272,68 +272,10 @@ export default function HeroSection() {
       </div>
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full">
-        <div className="grid lg:grid-cols-2 gap-16 items-center min-h-screen lg:py-28 py-32">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center lg:min-h-screen pt-20 pb-8 lg:py-28">
 
-          {/* Left */}
-          <div className="space-y-8">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/20">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-              <span className="text-xs font-medium text-white/90 uppercase tracking-wider">Delhi's Trusted Outstation Cab</span>
-            </div>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight font-['DM_Serif_Display']">
-              Safe Journeys.<br />
-              <span className="text-blue-300">Fixed Prices.</span><br />
-              Every Time.
-            </h1>
-            <p className="text-lg text-slate-300 max-w-md leading-relaxed">
-              Book verified cab drivers for Delhi outstation trips. Transparent pricing,
-              no hidden charges, confirmed pickup — or your money back.
-            </p>
-            <div className="flex flex-wrap gap-5 text-sm text-slate-300">
-              {[
-                { icon: Shield, text: "Verified Drivers" },
-                { icon: CheckCircle, text: "No Hidden Charges" },
-                { icon: Clock, text: "On-Time Guarantee" },
-              ].map((b, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <b.icon className="w-4 h-4 text-blue-400" />
-                  {b.text}
-                </div>
-              ))}
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <Button size="lg" onClick={handleSearch}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-7 h-12 gap-2 shadow-lg shadow-blue-900/30">
-                See Available Cars <ArrowRight className="w-4 h-4" />
-              </Button>
-            </div>
-            {/* B2B teaser */}
-            <button
-              onClick={() => document.getElementById("corporate")?.scrollIntoView({ behavior: "smooth" })}
-              className="flex items-center gap-3 w-fit px-4 py-2.5 rounded-xl bg-white/8 border border-white/15 hover:bg-white/15 hover:border-white/30 transition-all group backdrop-blur-sm"
-            >
-              <div className="w-7 h-7 rounded-lg bg-blue-500/30 flex items-center justify-center shrink-0">
-                <Building2 className="w-3.5 h-3.5 text-blue-300" />
-              </div>
-              <div className="text-left">
-                <div className="text-xs font-semibold text-white">Corporate & Employee Transport</div>
-                <div className="text-[11px] text-slate-400">GST invoices · Fleet accounts · Dedicated manager</div>
-              </div>
-              <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-white group-hover:translate-x-0.5 transition-all ml-1 shrink-0" />
-            </button>
-
-            <div className="flex gap-8 pt-4 border-t border-white/10">
-              {[{ num: "15K+", label: "Happy Travelers" }, { num: "4.9★", label: "Average Rating" }, { num: "8+", label: "Premium Cars" }].map((s, i) => (
-                <div key={i}>
-                  <div className="text-xl font-bold text-white font-['DM_Serif_Display']">{s.num}</div>
-                  <div className="text-xs text-slate-400 mt-0.5">{s.label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Right - Booking Widget */}
-          <div className="animate-scale-in">
+          {/* Right - Booking Widget (first on mobile) */}
+          <div className="order-first lg:order-last animate-scale-in">
             <div className="bg-white rounded-2xl shadow-2xl p-6 lg:p-7">
               <div className="flex items-center justify-between mb-5">
                 <div>
@@ -572,6 +514,72 @@ export default function HeroSection() {
               </div>
             </div>
           </div>
+
+          {/* Left - Brand content (second on mobile, first on desktop) */}
+          <div className="order-last lg:order-first space-y-6 lg:space-y-8">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+              <span className="text-xs font-medium text-white/90 uppercase tracking-wider">Delhi's Trusted Outstation Cab</span>
+            </div>
+            <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold text-white leading-tight font-['DM_Serif_Display']">
+              Safe Journeys.<br />
+              <span className="text-blue-300">Fixed Prices.</span><br />
+              Every Time.
+            </h1>
+            <p className="hidden sm:block text-lg text-slate-300 max-w-md leading-relaxed">
+              Book verified cab drivers for Delhi outstation trips. Transparent pricing,
+              no hidden charges, confirmed pickup — or your money back.
+            </p>
+            <div className="hidden sm:flex flex-wrap gap-5 text-sm text-slate-300">
+              {[
+                { icon: Shield, text: "Verified Drivers" },
+                { icon: CheckCircle, text: "No Hidden Charges" },
+                { icon: Clock, text: "On-Time Guarantee" },
+              ].map((b, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <b.icon className="w-4 h-4 text-blue-400" />
+                  {b.text}
+                </div>
+              ))}
+            </div>
+            <div className="hidden sm:flex flex-wrap gap-3">
+              <Button size="lg" onClick={handleSearch}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-7 h-12 gap-2 shadow-lg shadow-blue-900/30">
+                See Available Cars <ArrowRight className="w-4 h-4" />
+              </Button>
+            </div>
+            {/* B2B teaser */}
+            <button
+              onClick={() => document.getElementById("corporate")?.scrollIntoView({ behavior: "smooth" })}
+              className="hidden sm:flex items-center gap-3 w-fit px-4 py-2.5 rounded-xl bg-white/8 border border-white/15 hover:bg-white/15 hover:border-white/30 transition-all group backdrop-blur-sm"
+            >
+              <div className="w-7 h-7 rounded-lg bg-blue-500/30 flex items-center justify-center shrink-0">
+                <Building2 className="w-3.5 h-3.5 text-blue-300" />
+              </div>
+              <div className="text-left">
+                <div className="text-xs font-semibold text-white">Corporate & Employee Transport</div>
+                <div className="text-[11px] text-slate-400">GST invoices · Fleet accounts · Dedicated manager</div>
+              </div>
+              <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-white group-hover:translate-x-0.5 transition-all ml-1 shrink-0" />
+            </button>
+
+            <div className="hidden sm:flex gap-8 pt-4 border-t border-white/10">
+              {[{ num: "15K+", label: "Happy Travelers" }, { num: "4.9★", label: "Average Rating" }, { num: "8+", label: "Premium Cars" }].map((s, i) => (
+                <div key={i}>
+                  <div className="text-xl font-bold text-white font-['DM_Serif_Display']">{s.num}</div>
+                  <div className="text-xs text-slate-400 mt-0.5">{s.label}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Mobile-only compact trust row */}
+            <div className="flex sm:hidden gap-4 text-xs text-slate-300">
+              <span className="flex items-center gap-1"><Shield className="w-3 h-3 text-blue-400" />Verified</span>
+              <span className="flex items-center gap-1"><CheckCircle className="w-3 h-3 text-blue-400" />No Hidden Fees</span>
+              <span className="flex items-center gap-1"><Clock className="w-3 h-3 text-blue-400" />On-Time</span>
+            </div>
+          </div>
+
         </div>
       </div>
     </section>

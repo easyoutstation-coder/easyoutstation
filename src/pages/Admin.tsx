@@ -129,6 +129,7 @@ export default function AdminPage() {
   const utils = trpc.useUtils();
   const isAdmin = isAuthenticated && (user?.role === "admin" || user?.role === "super_admin");
   const isSuperAdmin = isAuthenticated && user?.role === "super_admin";
+  const canManageContent = isSuperAdmin || !!(user as any)?.canManageContent;
   const invalidateBookings = () => { utils.admin.getBookings.invalidate(); utils.admin.getStats.invalidate(); };
 
   const { data: stats } = trpc.admin.getStats.useQuery(undefined, { enabled: isAdmin });
@@ -181,6 +182,7 @@ export default function AdminPage() {
   const deleteExpense = trpc.admin.deleteExpense.useMutation({
     onSuccess: () => { utils.admin.getExpenses.invalidate(); utils.admin.getFinancials.invalidate(); },
   });
+  const setContentPermission = trpc.admin.setContentPermission.useMutation({ onSuccess: () => utils.admin.getCustomers.invalidate() });
 
   const { data: faqsList } = trpc.admin.getFaqs.useQuery(undefined, { enabled: isAdmin });
   const addFaq = trpc.admin.addFaq.useMutation({ onSuccess: () => { setFaqForm({ question: "", answer: "", position: "0" }); utils.admin.getFaqs.invalidate(); } });
@@ -308,7 +310,7 @@ export default function AdminPage() {
             </TabsTrigger>
             <TabsTrigger value="drivers" className="gap-1.5"><Car className="w-4 h-4" />Drivers</TabsTrigger>
             <TabsTrigger value="customers" className="gap-1.5"><Users className="w-4 h-4" />Customers</TabsTrigger>
-            <TabsTrigger value="content" className="gap-1.5"><FileText className="w-4 h-4" />Content</TabsTrigger>
+            {canManageContent && <TabsTrigger value="content" className="gap-1.5"><FileText className="w-4 h-4" />Content</TabsTrigger>}
             {isSuperAdmin && <TabsTrigger value="financials" className="gap-1.5 text-emerald-700"><TrendingUp className="w-4 h-4" />Financials</TabsTrigger>}
           </TabsList>
 
@@ -600,6 +602,7 @@ export default function AdminPage() {
                           <h4 className="font-semibold text-sm">{c.name || "No Name"}</h4>
                           {c.role === "admin" && <Badge className="bg-blue-100 text-blue-700 text-xs border-0">Admin</Badge>}
                           {c.role === "super_admin" && <Badge className="bg-purple-100 text-purple-700 text-xs border-0">Super Admin</Badge>}
+                          {(c as any).canManageContent && c.role === "admin" && <Badge className="bg-amber-100 text-amber-700 text-xs border-0">Content</Badge>}
                         </div>
                         <div className="flex items-center gap-3 mt-0.5 flex-wrap">
                           {c.phone && (
@@ -615,7 +618,7 @@ export default function AdminPage() {
                       </div>
                       {/* Only super_admin can grant/revoke roles */}
                       {isSuperAdmin && c.role !== "super_admin" && (
-                        <div className="flex gap-1">
+                        <div className="flex flex-wrap gap-1">
                           {c.role === "user" && (
                             <>
                               <Button size="sm" variant="outline" className="h-7 text-xs gap-1"
@@ -633,6 +636,13 @@ export default function AdminPage() {
                               <Button size="sm" variant="outline" className="h-7 text-xs gap-1 border-purple-200 text-purple-700 hover:bg-purple-50"
                                 onClick={() => setUserRole.mutate({ userId: Number(c.id), role: "super_admin" })}>
                                 <ShieldCheck className="w-3 h-3" /> Upgrade to Super
+                              </Button>
+                              <Button
+                                size="sm" variant="outline"
+                                className={`h-7 text-xs gap-1 ${(c as any).canManageContent ? "border-amber-200 text-amber-700 hover:bg-amber-50" : "border-blue-200 text-blue-700 hover:bg-blue-50"}`}
+                                onClick={() => setContentPermission.mutate({ userId: Number(c.id), canManage: !(c as any).canManageContent })}>
+                                <FileText className="w-3 h-3" />
+                                {(c as any).canManageContent ? "Remove Content" : "Grant Content"}
                               </Button>
                               <Button size="sm" variant="ghost" className="h-7 text-xs text-red-500 hover:bg-red-50"
                                 onClick={() => setUserRole.mutate({ userId: Number(c.id), role: "user" })}>
