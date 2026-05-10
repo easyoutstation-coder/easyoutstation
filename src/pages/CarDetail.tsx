@@ -279,21 +279,28 @@ export default function CarDetailPage() {
                     <span className="text-slate-400">Driver charges</span>
                     <span>₹{driverCharge}</span>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-400">Toll ({fromCity}→{toCity})</span>
-                    <span>₹{tollCharges}</span>
-                  </div>
                   <Separator className="bg-slate-700" />
                   <div className="flex justify-between text-base">
-                    <span className="text-slate-300 font-medium">Total Estimate</span>
-                    <span className="font-bold text-blue-400">₹{estimatedPrice.toLocaleString("en-IN")}</span>
+                    <span className="text-slate-300 font-medium">Fixed Fare</span>
+                    <span className="font-bold text-blue-400">₹{(parseFloat(displayCar.pricePerKm) * distance + driverCharge).toLocaleString("en-IN")}</span>
                   </div>
                   <div className="flex justify-between text-xs text-slate-500">
                     <span>Minimum charge (250 km)</span>
                     <span>₹{minPrice.toLocaleString("en-IN")}</span>
                   </div>
+                  <Separator className="bg-slate-700" />
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-400">Toll charges</span>
+                      <span className="text-amber-400 text-xs font-medium">Charged at actuals</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-400">Parking charges</span>
+                      <span className="text-amber-400 text-xs font-medium">Charged at actuals</span>
+                    </div>
+                  </div>
                   <p className="text-xs text-slate-500 bg-slate-800 rounded-lg px-3 py-2">
-                    ✓ Toll included above · If actual toll differs, final bill adjusted accordingly · Parking charged at actuals only
+                    ℹ️ Toll and parking vary by route and are collected at actuals — whatever is paid on the road. No markup added.
                   </p>
                 </div>
                 <Button

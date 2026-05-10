@@ -861,14 +861,18 @@ export default function BookingPage() {
                           <span className="text-muted-foreground">Driver Charges (₹{driverChargePerDay}/day × {tripType === "one_way" ? 1 : tripDays} day{tripDays > 1 ? "s" : ""})</span>
                           <span>₹{totalDriverCharges.toLocaleString("en-IN")}</span>
                         </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Toll Charges ({tripType === "round_trip" ? "both ways" : "one way"})</span>
-                          <span>₹{tollCharges.toLocaleString("en-IN")}</span>
-                        </div>
                         <Separator />
-                        <div className="flex justify-between font-bold text-base"><span>Total Fare</span><span className="text-primary">₹{totalPrice.toLocaleString("en-IN")}</span></div>
+                        <div className="flex justify-between font-bold text-base"><span>Fixed Fare</span><span className="text-primary">₹{(basePrice + totalDriverCharges).toLocaleString("en-IN")}</span></div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Toll charges</span>
+                          <span className="text-amber-600 text-xs font-medium">Charged at actuals</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Parking charges</span>
+                          <span className="text-amber-600 text-xs font-medium">Charged at actuals</span>
+                        </div>
                         <p className="text-[10px] text-muted-foreground bg-slate-50 rounded-lg px-3 py-2">
-                          ⚠️ Toll shown is estimated. If actual toll differs, the final bill will be adjusted accordingly. Parking charges are paid at actuals. No other hidden fees.
+                          ℹ️ Toll and parking are collected at actuals — whatever is paid on the road. No markup. No other hidden fees.
                         </p>
                       </div>
 
@@ -962,10 +966,10 @@ export default function BookingPage() {
                       {tripType === "round_trip" ? "Round Trip Total" :
                        "One Way Total"}
                     </div>
-                    <div className="text-2xl font-bold text-primary">₹{totalPrice.toLocaleString("en-IN")}</div>
+                    <div className="text-2xl font-bold text-primary">₹{(basePrice + totalDriverCharges).toLocaleString("en-IN")}</div>
                     <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
                       <div>₹{pricePerKm}/km × {totalKmForTrip}km = ₹{basePrice.toLocaleString("en-IN")}</div>
-                      <div>Driver: ₹{totalDriverCharges} · Toll: ₹{tollCharges}</div>
+                      <div>Driver: ₹{totalDriverCharges} · Toll + Parking: at actuals</div>
                     </div>
                   </div>
                   <div className="space-y-2 text-xs text-muted-foreground">
