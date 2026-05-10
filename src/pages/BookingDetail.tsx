@@ -164,6 +164,8 @@ export default function BookingDetail() {
   }
 
   const refund = booking.status === "pending" ? calcRefund(Number(booking.totalPrice), booking.pickupDate) : null;
+  const hoursToPickup = differenceInHours(new Date(booking.pickupDate), new Date());
+  const canModify = booking.status === "pending" && hoursToPickup >= 24;
   const minDate = new Date(); minDate.setDate(minDate.getDate() + 1);
 
   return (
@@ -332,15 +334,26 @@ export default function BookingDetail() {
             <Download className="w-4 h-4" /> Download Receipt
           </Button>
 
-          {/* Change Date — pending only */}
-          {booking.status === "pending" && (
+          {/* Locked notice when within 24h of pickup */}
+          {booking.status === "pending" && !canModify && (
+            <Card className="bg-amber-50 border-amber-200">
+              <CardContent className="p-4">
+                <p className="text-sm text-amber-800">
+                  Modifications are not allowed within 24 hours of pickup. Contact us at <strong>easyoutstation@gmail.com</strong> for urgent changes.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Change Date — pending only, more than 24h before pickup */}
+          {canModify && (
             <Button variant="outline" onClick={() => { setNewDate(""); setChangeDateOpen(true); }} className="w-full gap-2">
               <CalendarCheck className="w-4 h-4" /> Change Pickup Date
             </Button>
           )}
 
-          {/* Cancel — pending only */}
-          {booking.status === "pending" && (
+          {/* Cancel — pending only, more than 24h before pickup */}
+          {canModify && (
             <Button
               variant="destructive"
               onClick={() => setCancelDialogOpen(true)}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { useAuth } from "@/hooks/useAuth";
 import { trpc } from "@/providers/trpc";
@@ -14,7 +14,7 @@ import {
   LayoutDashboard, Users, Car, IndianRupee, Clock, CheckCircle, XCircle,
   Phone, UserCog, StickyNote, CheckCheck, X, Plus, Pencil, Trash2,
   MessageCircle, Mail, AlertTriangle, TrendingUp, MapPin, Wallet, ShieldCheck,
-  Globe, WifiOff, Search, FileText,
+  Globe, WifiOff, Search, FileText, Bot, Send, Loader2, ChevronRight,
 } from "lucide-react";
 
 type BookingStatus = "pending" | "confirmed" | "completed" | "cancelled";
@@ -126,6 +126,16 @@ export default function AdminPage() {
   const [routeForm, setRouteForm] = useState({ fromCity: "", toCity: "", distanceKm: "", durationHours: "", basePrice: "", isPopular: false });
   const [editingRoute, setEditingRoute] = useState<{ id: number; fromCity: string; toCity: string; distanceKm: string; durationHours: string; basePrice: string; isPopular: boolean } | null>(null);
 
+  // Agent chat
+  type AgentMsg = { role: "user" | "assistant"; content: string; isPending?: boolean };
+  type ToolProposal = { toolName: string; toolInput: Record<string, any>; toolUseId: string; rawContent: any[] };
+  const [agentMessages, setAgentMessages] = useState<AgentMsg[]>([
+    { role: "assistant", content: "Hi! I can help you manage bookings — search, assign drivers, confirm, cancel, or mark trips as completed. What would you like to do?" }
+  ]);
+  const [agentInput, setAgentInput] = useState("");
+  const [pendingTool, setPendingTool] = useState<ToolProposal | null>(null);
+  const agentBottomRef = useRef<HTMLDivElement>(null);
+
   const utils = trpc.useUtils();
   const isAdmin = isAuthenticated && (user?.role === "admin" || user?.role === "super_admin");
   const isSuperAdmin = isAuthenticated && user?.role === "super_admin";
@@ -193,6 +203,122 @@ export default function AdminPage() {
   const addRoute = trpc.admin.addRoute.useMutation({ onSuccess: () => { setRouteForm({ fromCity: "", toCity: "", distanceKm: "", durationHours: "", basePrice: "", isPopular: false }); utils.admin.getAdminRoutes.invalidate(); } });
   const updateRoute = trpc.admin.updateRoute.useMutation({ onSuccess: () => { setEditingRoute(null); utils.admin.getAdminRoutes.invalidate(); } });
   const deleteRoute = trpc.admin.deleteRoute.useMutation({ onSuccess: () => utils.admin.getAdminRoutes.invalidate() });
+
+  const agentChat = trpc.agent.chat.useMutation();
+  const agentExecute = trpc.agent.executeAndContinue.useMutation();
+
+  useEffect(() => {
+    agentBottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [agentMessages, pendingTool]);
+
+  async function sendAgentMessage(text: string) {
+    if (!text.trim()) return;
+    const userMsg: AgentMsg = { role: "user", content: text };
+    const history = [...agentMessages.filter(m => !m.isPending), userMsg];
+    setAgentMessages([...history, { role: "assistant", content: "…", isPending: true }]);
+    setAgentInput("");
+    setPendingTool(null);
+
+    const apiMessages = history.map(m => ({ role: m.role, content: m.content }));
+    try {
+      const result = await agentChat.mutateAsync({ messages: apiMessages });
+      if (result.type === "tool_proposal") {
+        const assistantContent = [
+          ...(result.text ? [{ type: "text", text: result.text }] : []),
+          ...result.rawContent.filter((b: any) => b.type === "tool_use"),
+        ];
+        setAgentMessages(prev => [
+          ...prev.filter(m => !m.isPending),
+          { role: "assistant", content: result.text || `I'll ${result.toolName.replace(/_/g, " ")} for you.` },
+        ]);
+        setPendingTool({
+          toolName: result.toolName,
+          toolInput: result.toolInput,
+          toolUseId: result.toolUseId,
+          rawContent: assistantContent,
+        });
+      } else {
+        setAgentMessages(prev => [
+          ...prev.filter(m => !m.isPending),
+          { role: "assistant", content: result.text },
+        ]);
+      }
+    } catch (err: any) {
+      setAgentMessages(prev => [
+        ...prev.filter(m => !m.isPending),
+        { role: "assistant", content: `Error: ${err.message ?? "Something went wrong"}` },
+      ]);
+    }
+  }
+
+  async function confirmAgentAction() {
+    if (!pendingTool) return;
+    const tool = pendingTool;
+    setPendingTool(null);
+    setAgentMessages(prev => [...prev, { role: "assistant", content: "Executing…", isPending: true }]);
+
+    const apiMessages = agentMessages
+      .filter(m => !m.isPending)
+      .map(m => ({ role: m.role, content: m.content }));
+
+    const messagesWithTool = [
+      ...apiMessages,
+      { role: "assistant" as const, content: tool.rawContent },
+    ];
+
+    try {
+      const result = await agentExecute.mutateAsync({
+        messages: messagesWithTool,
+        toolUseId: tool.toolUseId,
+        toolName: tool.toolName,
+        toolInput: tool.toolInput,
+      });
+      setAgentMessages(prev => [
+        ...prev.filter(m => !m.isPending),
+        { role: "assistant", content: result.text },
+      ]);
+      invalidateBookings();
+    } catch (err: any) {
+      setAgentMessages(prev => [
+        ...prev.filter(m => !m.isPending),
+        { role: "assistant", content: `Failed: ${err.message ?? "Something went wrong"}` },
+      ]);
+    }
+  }
+
+  function renderToolCard(tool: ToolProposal) {
+    const { toolName, toolInput } = tool;
+    const label = toolName.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+    const colorClass = toolName === "cancel_booking"
+      ? "border-red-200 bg-red-50"
+      : toolName === "confirm_booking"
+        ? "border-green-200 bg-green-50"
+        : "border-blue-200 bg-blue-50";
+    return (
+      <div className={`rounded-xl border p-4 text-sm space-y-3 ${colorClass}`}>
+        <div className="flex items-center gap-2 font-semibold">
+          <ChevronRight className="w-4 h-4" />
+          {label}
+        </div>
+        <div className="space-y-1 text-xs font-mono bg-white/60 rounded-lg p-3">
+          {Object.entries(toolInput).map(([k, v]) => (
+            <div key={k}><span className="text-slate-500">{k}:</span> <span className="font-semibold">{String(v)}</span></div>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <Button size="sm" className="flex-1" onClick={confirmAgentAction} disabled={agentExecute.isPending}>
+            {agentExecute.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : "Confirm"}
+          </Button>
+          <Button size="sm" variant="outline" className="flex-1" onClick={() => {
+            setPendingTool(null);
+            setAgentMessages(prev => [...prev, { role: "assistant", content: "Cancelled. What else can I help with?" }]);
+          }}>
+            Cancel
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   function openConfirmModal(b: any) {
     const booking = b as typeof b & { driverName?: string; driverPhone?: string };
@@ -312,6 +438,7 @@ export default function AdminPage() {
             <TabsTrigger value="customers" className="gap-1.5"><Users className="w-4 h-4" />Customers</TabsTrigger>
             {canManageContent && <TabsTrigger value="content" className="gap-1.5"><FileText className="w-4 h-4" />Content</TabsTrigger>}
             {isSuperAdmin && <TabsTrigger value="financials" className="gap-1.5 text-emerald-700"><TrendingUp className="w-4 h-4" />Financials</TabsTrigger>}
+            <TabsTrigger value="agent" className="gap-1.5 text-violet-700"><Bot className="w-4 h-4" />Agent</TabsTrigger>
           </TabsList>
 
           {/* ── Overview ────────────────────────────────────────────── */}
@@ -1115,6 +1242,70 @@ export default function AdminPage() {
               </Card>
             </TabsContent>
           )}
+
+          {/* ── Agent ───────────────────────────────────────────────── */}
+          <TabsContent value="agent">
+            <Card className="flex flex-col h-[600px]">
+              <div className="flex items-center gap-3 px-5 py-4 border-b">
+                <div className="w-9 h-9 rounded-xl bg-violet-600 flex items-center justify-center shrink-0">
+                  <Bot className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <p className="font-semibold text-sm">Booking Agent</p>
+                  <p className="text-xs text-muted-foreground">Search, confirm, assign drivers, cancel bookings</p>
+                </div>
+              </div>
+
+              {/* Messages */}
+              <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+                {agentMessages.map((msg, i) => (
+                  <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                    <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
+                      msg.role === "user"
+                        ? "bg-violet-600 text-white rounded-br-sm"
+                        : msg.isPending
+                          ? "bg-slate-100 text-slate-400 italic rounded-bl-sm"
+                          : "bg-slate-100 text-slate-800 rounded-bl-sm"
+                    }`}>
+                      {msg.content}
+                    </div>
+                  </div>
+                ))}
+
+                {/* Pending tool confirmation card */}
+                {pendingTool && (
+                  <div className="flex justify-start">
+                    <div className="max-w-[85%] w-full">
+                      {renderToolCard(pendingTool)}
+                    </div>
+                  </div>
+                )}
+
+                <div ref={agentBottomRef} />
+              </div>
+
+              {/* Input */}
+              <div className="px-4 py-3 border-t flex gap-2">
+                <input
+                  type="text"
+                  value={agentInput}
+                  onChange={e => setAgentInput(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendAgentMessage(agentInput); } }}
+                  placeholder="e.g. Show pending bookings for tomorrow…"
+                  className="flex-1 border border-input rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  disabled={agentChat.isPending || agentExecute.isPending}
+                />
+                <Button
+                  size="icon"
+                  className="bg-violet-600 hover:bg-violet-700 rounded-xl shrink-0"
+                  onClick={() => sendAgentMessage(agentInput)}
+                  disabled={!agentInput.trim() || agentChat.isPending || agentExecute.isPending}
+                >
+                  {agentChat.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                </Button>
+              </div>
+            </Card>
+          </TabsContent>
         </Tabs>
       </div>
 

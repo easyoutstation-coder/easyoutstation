@@ -5,6 +5,7 @@ import { aiRouter } from "./ai-router";
 import { razorpayRouter } from "./razorpay-router";
 import { smsRouter } from "./sms-router";
 import { adminRouter } from "./admin-router";
+import { agentRouter } from "./agent-router";
 import { createRouter, publicQuery, superAdminQuery } from "./middleware";
 import { z } from "zod";
 
@@ -19,6 +20,7 @@ export const appRouter = createRouter({
   payment: razorpayRouter,
   sms: smsRouter,
   admin: adminRouter,
+  agent: agentRouter,
   testSms: superAdminQuery
     .input(z.object({ phone: z.string() }))
     .mutation(async ({ input }) => {

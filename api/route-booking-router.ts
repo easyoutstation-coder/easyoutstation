@@ -4,6 +4,7 @@ import { createRouter, publicQuery, authedQuery } from "./middleware";
 import { getDb } from "./queries/connection";
 import { routes, bookings, userSearches } from "@db/schema";
 import { eq, and, like, desc, sql } from "drizzle-orm";
+import { differenceInHours } from "date-fns";
 
 async function sendBookingSms(phone: string, bookingId: number, fromCity: string, toCity: string, pickupDate: string, totalPrice: number) {
   const apiKey = process.env.FAST2SMS_API_KEY?.trim();
@@ -281,6 +282,14 @@ export const bookingRouter = createRouter({
       const db = getDb();
       const userId = ctx.user.id;
 
+      const booking = await db.query.bookings.findFirst({
+        where: and(eq(bookings.id, input.id), eq(bookings.userId, userId)),
+      });
+      if (!booking) throw new TRPCError({ code: "NOT_FOUND" });
+      if (booking.status !== "pending") throw new TRPCError({ code: "BAD_REQUEST", message: "Only pending bookings can be cancelled" });
+      const hoursLeft = differenceInHours(new Date(booking.pickupDate), new Date());
+      if (hoursLeft < 24) throw new TRPCError({ code: "BAD_REQUEST", message: "Cannot cancel within 24 hours of pickup" });
+
       await db
         .update(bookings)
         .set({ status: "cancelled" as const })
@@ -299,6 +308,8 @@ export const bookingRouter = createRouter({
       });
       if (!booking) throw new TRPCError({ code: "NOT_FOUND" });
       if (booking.status !== "pending") throw new TRPCError({ code: "BAD_REQUEST", message: "Only pending bookings can be rescheduled" });
+      const hoursLeft = differenceInHours(new Date(booking.pickupDate), new Date());
+      if (hoursLeft < 24) throw new TRPCError({ code: "BAD_REQUEST", message: "Cannot reschedule within 24 hours of pickup" });
       await db.update(bookings).set({ pickupDate: new Date(input.newDate) }).where(eq(bookings.id, input.id));
       return { success: true };
     }),
