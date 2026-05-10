@@ -3,12 +3,17 @@ import { Car, Mail, MapPin, MessageCircle, Phone, ArrowRight } from "lucide-reac
 
 const footerLinks = {
   routes: [
-    { label: "Delhi to Manali", href: "/cars?from=Delhi&to=Manali" },
-    { label: "Delhi to Dehradun", href: "/cars?from=Delhi&to=Dehradun" },
-    { label: "Delhi to Rishikesh", href: "/cars?from=Delhi&to=Rishikesh" },
-    { label: "Delhi to Haridwar", href: "/cars?from=Delhi&to=Haridwar" },
-    { label: "Delhi to Jaipur", href: "/cars?from=Delhi&to=Jaipur" },
-    { label: "Delhi to Agra", href: "/cars?from=Delhi&to=Agra" },
+    { label: "Delhi to Manali", href: "/cab/delhi-to-manali" },
+    { label: "Delhi to Shimla", href: "/cab/delhi-to-shimla" },
+    { label: "Delhi to Dehradun", href: "/cab/delhi-to-dehradun" },
+    { label: "Delhi to Rishikesh", href: "/cab/delhi-to-rishikesh" },
+    { label: "Delhi to Haridwar", href: "/cab/delhi-to-haridwar" },
+    { label: "Delhi to Mussoorie", href: "/cab/delhi-to-mussoorie" },
+    { label: "Delhi to Jaipur", href: "/cab/delhi-to-jaipur" },
+    { label: "Delhi to Agra", href: "/cab/delhi-to-agra" },
+    { label: "Delhi to Chandigarh", href: "/cab/delhi-to-chandigarh" },
+    { label: "Delhi to Nainital", href: "/cab/delhi-to-nainital" },
+    { label: "Delhi to Mathura", href: "/cab/delhi-to-mathura" },
   ],
   company: [
     { label: "About Us", href: "/about" },

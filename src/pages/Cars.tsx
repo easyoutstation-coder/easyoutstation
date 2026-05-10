@@ -473,7 +473,7 @@ export default function CarsPage() {
                             <div className="text-lg font-bold text-blue-700">
                               ₹{calcFare(car.pricePerKm)?.toLocaleString("en-IN")}
                             </div>
-                            <div className="text-[10px] text-slate-400">total · {effectiveKm}km{tripDays > 1 ? ` · ${tripDays}d` : ""}</div>
+                            <div className="text-[10px] text-slate-400">total · ₹{car.pricePerKm}/km</div>
                           </>
                         ) : (
                           <>
@@ -485,8 +485,9 @@ export default function CarsPage() {
                     </div>
                     <p className="text-sm text-slate-500 line-clamp-2 mb-3">{car.description}</p>
                     {calcFare(car.pricePerKm) && (
-                      <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mb-3 bg-slate-50 rounded-lg px-2.5 py-1.5">
-                        <span>₹{car.pricePerKm}/km × {effectiveKm}km + ₹{DRIVER_CHARGE * tripDays} driver</span>
+                      <div className="flex items-center justify-between text-[11px] mb-3 bg-slate-50 rounded-lg px-2.5 py-1.5">
+                        <span className="text-slate-400">₹{car.pricePerKm}/km × {effectiveKm}km + ₹{DRIVER_CHARGE * tripDays} driver</span>
+                        <span className="text-green-700 font-semibold">₹{Math.max(100, Math.round(calcFare(car.pricePerKm)! * 0.1)).toLocaleString("en-IN")} advance</span>
                       </div>
                     )}
                     <div className="flex items-center gap-3 text-xs text-muted-foreground mb-4">

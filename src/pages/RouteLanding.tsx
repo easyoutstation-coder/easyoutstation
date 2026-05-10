@@ -82,6 +82,50 @@ const ROUTES: Record<string, {
       { q: "What is the fare for Delhi to Dehradun cab?", a: "Fares start from ₹6,200 for a sedan to ₹9,500 for a premium SUV, inclusive of driver charges and toll." },
     ]
   },
+  "delhi-to-haridwar": {
+    from: "Delhi", to: "Haridwar", distance: 220, duration: "4-5 hours",
+    fare: { min: 4600, max: 7200 }, toll: 380,
+    description: "Book Delhi to Haridwar cab at fixed fares. Visit the holy Ganga Ghats with comfort. One way and round trip available.",
+    highlights: ["NH58 expressway route", "4-5 hours", "Fixed fares", "Pilgrimage specialists"],
+    faqs: [
+      { q: "How far is Delhi to Haridwar by cab?", a: "Delhi to Haridwar is approximately 220 km via NH58 and takes 4-5 hours depending on traffic." },
+      { q: "Is a same-day return trip from Delhi to Haridwar possible?", a: "Yes, same-day round trips are very popular. Leave Delhi by 5 AM and you can visit Har Ki Pauri and return the same evening." },
+      { q: "What is the cheapest Delhi to Haridwar cab fare?", a: "A Swift Dzire starts from ₹4,600 one way, inclusive of driver charges and toll." },
+    ]
+  },
+  "delhi-to-mussoorie": {
+    from: "Delhi", to: "Mussoorie", distance: 310, duration: "6-7 hours",
+    fare: { min: 6400, max: 9800 }, toll: 430,
+    description: "Book Delhi to Mussoorie cab at fixed fares. The Queen of Hills awaits. Scenic mountain drive with experienced drivers.",
+    highlights: ["Scenic mountain route", "6-7 hours", "Experienced hill drivers", "Fixed all-inclusive fares"],
+    faqs: [
+      { q: "How far is Delhi to Mussoorie by cab?", a: "Delhi to Mussoorie is approximately 310 km via Dehradun and takes 6-7 hours by road." },
+      { q: "Which is the best route from Delhi to Mussoorie?", a: "The best route is via NH44 to Dehradun, then the mountain road to Mussoorie. Our drivers take the safest hill route." },
+      { q: "What car is recommended for Delhi to Mussoorie?", a: "We recommend Innova Crysta or Innova Hycross for the mountain terrain. Sedans are also available at lower fares." },
+    ]
+  },
+  "delhi-to-nainital": {
+    from: "Delhi", to: "Nainital", distance: 310, duration: "6-7 hours",
+    fare: { min: 6400, max: 9800 }, toll: 420,
+    description: "Book Delhi to Nainital cab at fixed fares. Discover the lake city of Uttarakhand. Safe mountain driving with verified drivers.",
+    highlights: ["Kumaon hills specialists", "6-7 hours", "Fixed fares", "Lake city destination"],
+    faqs: [
+      { q: "How far is Delhi to Nainital by cab?", a: "Delhi to Nainital is approximately 310 km and takes 6-7 hours via Moradabad and Kathgodam." },
+      { q: "What is the cab fare from Delhi to Nainital?", a: "Fares start from ₹6,400 for a sedan and go up to ₹9,800 for a premium SUV, all inclusive." },
+      { q: "Is it safe to drive to Nainital?", a: "Yes. Our drivers are experienced on the Kumaon mountain roads. We recommend daytime travel for the mountain stretch." },
+    ]
+  },
+  "delhi-to-mathura": {
+    from: "Delhi", to: "Mathura", distance: 175, duration: "2-3 hours",
+    fare: { min: 3800, max: 6000 }, toll: 250,
+    description: "Book Delhi to Mathura cab at fixed fares. Visit the birthplace of Lord Krishna. Quick and comfortable same-day trip from Delhi.",
+    highlights: ["Yamuna Expressway route", "2-3 hours", "Same day return popular", "Pilgrimage destination"],
+    faqs: [
+      { q: "How far is Delhi to Mathura by cab?", a: "Delhi to Mathura is approximately 175 km via Yamuna Expressway and takes just 2-3 hours." },
+      { q: "Can I do Delhi to Mathura-Vrindavan in a day?", a: "Yes, absolutely. A day trip covering Mathura and Vrindavan (just 15 km apart) is very popular and comfortable by cab." },
+      { q: "What is the cheapest Delhi to Mathura cab fare?", a: "A Swift Dzire starts from ₹3,800 one way including driver charges and toll." },
+    ]
+  },
 };
 
 export default function RouteLanding() {
