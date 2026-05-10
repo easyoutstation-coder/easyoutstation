@@ -5,16 +5,16 @@ import { routes, bookings, userSearches } from "@db/schema";
 import { eq, and, like, desc, sql } from "drizzle-orm";
 
 async function sendBookingSms(phone: string, bookingId: number, fromCity: string, toCity: string, pickupDate: string, totalPrice: number) {
-  const sid = process.env.TWILIO_ACCOUNT_SID;
-  const token = process.env.TWILIO_AUTH_TOKEN;
-  const from = process.env.TWILIO_PHONE_NUMBER;
-  if (!sid || !token || !from) return;
-  const body = `EasyOutstation: Booking #${bookingId} confirmed! ${fromCity} → ${toCity} on ${pickupDate}. Total: ₹${totalPrice.toLocaleString("en-IN")}. Driver details shared within 60 mins. Helpline: +91-9958556011`;
-  await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+  const apiKey = process.env.FAST2SMS_API_KEY;
+  if (!apiKey) return;
+  const message = `EasyOutstation: Booking #${bookingId} received! ${fromCity} to ${toCity} on ${pickupDate}. Total: Rs.${totalPrice.toLocaleString("en-IN")}. Driver details shared within 60 mins. Helpline: 9958556011`;
+  const res = await fetch("https://www.fast2sms.com/dev/bulkV2", {
     method: "POST",
-    headers: { Authorization: `Basic ${Buffer.from(`${sid}:${token}`).toString("base64")}`, "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ To: `+91${phone}`, From: from, Body: body }).toString(),
+    headers: { authorization: apiKey, "Content-Type": "application/json" },
+    body: JSON.stringify({ route: "q", message, language: "english", flash: 0, numbers: phone.replace(/\D/g, "").slice(-10) }),
   });
+  const data = await res.json();
+  if (!data.return) console.warn("[Fast2SMS]", data.message);
 }
 
 async function sendBookingEmails(input: {
