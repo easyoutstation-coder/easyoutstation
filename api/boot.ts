@@ -99,8 +99,8 @@ app.use("/api/trpc/*", async (c) => {
     createContext,
   });
 });
-// SMS test route — hit /api/test-sms?phone=9999999999&key=easytest in browser
-app.get("/api/test-sms", async (c) => {
+// SMS test — /api/test-sms?phone=9999999999&key=easytest
+app.use("/api/test-sms", async (c) => {
   if (c.req.query("key") !== "easytest") return c.json({ error: "forbidden" }, 403);
   const phone = c.req.query("phone") || "9958556011";
   const apiKey = process.env.FAST2SMS_API_KEY?.trim();
