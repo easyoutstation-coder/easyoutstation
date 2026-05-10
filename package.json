@@ -8,8 +8,8 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "build:server": "npm run build && esbuild api/boot.ts --platform=node --bundle --format=esm --outdir=dist --banner:js=\"import { createRequire } from 'module';const require = createRequire(import.meta.url);\" --alias:@contracts=./contracts --alias:@db=./db",
+    "build": "node node_modules/vite/bin/vite.js build",
+    "build:server": "node node_modules/vite/bin/vite.js build && ./node_modules/.bin/esbuild api/boot.ts --platform=node --bundle --format=esm --outdir=dist --banner:js=\"import { createRequire } from 'module';const require = createRequire(import.meta.url);\" --alias:@contracts=./contracts --alias:@db=./db",
     "build:all": "npm run build && npm run build:server",
     "lint": "eslint .",
     "preview": "vite preview",
