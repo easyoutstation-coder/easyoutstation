@@ -31,7 +31,9 @@ export function useSeo({
     setMeta('meta[name="description"]', description);
     setMeta('meta[property="og:title"]', title);
     setMeta('meta[property="og:description"]', description);
-    setMeta('meta[property="og:url"]', canonical ?? window.location.href);
+    if (canonical) {
+      setMeta('meta[property="og:url"]', canonical);
+    }
     setMeta('meta[name="twitter:title"]', title);
     setMeta('meta[name="twitter:description"]', description);
 
@@ -39,14 +41,16 @@ export function useSeo({
       setMeta('meta[name="robots"]', "noindex, nofollow");
     }
 
-    // Canonical
-    let link = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
-    if (!link) {
-      link = document.createElement("link");
-      link.setAttribute("rel", "canonical");
-      document.head.appendChild(link);
+    // Canonical — only set when explicitly provided to avoid corrupted fallback URLs
+    if (canonical) {
+      let link = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+      if (!link) {
+        link = document.createElement("link");
+        link.setAttribute("rel", "canonical");
+        document.head.appendChild(link);
+      }
+      link.setAttribute("href", canonical);
     }
-    link.setAttribute("href", canonical ?? window.location.href);
 
     // Inject per-page JSON-LD schema using @graph (valid JSON-LD format)
     const schemaId = "dynamic-schema-ld";
