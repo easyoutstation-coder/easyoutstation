@@ -21,6 +21,10 @@ const ANCHOR_CITIES = [
   { name: "Haridwar", lat: 29.9457, lng: 78.1642 },
 ];
 
+// Delhi NCR center + 75km radius covers New Delhi, Gurgaon, Noida, Faridabad, Ghaziabad, Rohtak
+const DELHI_CENTER = { lat: 28.6139, lng: 77.2090 };
+const DELHI_NCR_RADIUS_KM = 75;
+
 const RADIUS_KM = 100;
 
 function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -35,6 +39,10 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): nu
 
 function isWithinRadius(lat: number, lng: number): boolean {
   return ANCHOR_CITIES.some(city => haversineKm(lat, lng, city.lat, city.lng) <= RADIUS_KM);
+}
+
+function isInDelhiNcr(lat: number, lng: number): boolean {
+  return haversineKm(lat, lng, DELHI_CENTER.lat, DELHI_CENTER.lng) <= DELHI_NCR_RADIUS_KM;
 }
 
 // Fare range based on actual fleet rates
@@ -69,9 +77,10 @@ interface PlaceInputProps {
   placeholder: string;
   onSelect: (address: string, lat: number, lng: number, pincode: string) => void;
   error?: string;
+  delhiNcrOnly?: boolean;
 }
 
-function PlaceInput({ label, placeholder, onSelect, error }: PlaceInputProps) {
+function PlaceInput({ label, placeholder, onSelect, error, delhiNcrOnly = false }: PlaceInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<any>(null);
   const [ready, setReady] = useState(false);
@@ -83,11 +92,23 @@ function PlaceInput({ label, placeholder, onSelect, error }: PlaceInputProps) {
     loadGoogleMaps().then(() => {
       setReady(true);
       if (!inputRef.current) return;
-      autocompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
+
+      const options: any = {
         componentRestrictions: { country: "in" },
         fields: ["formatted_address", "geometry", "name", "address_components"],
         types: ["geocode", "establishment"],
-      });
+      };
+
+      // Bias results toward Delhi NCR for pickup input
+      if (delhiNcrOnly) {
+        options.bounds = new window.google.maps.LatLngBounds(
+          new window.google.maps.LatLng(27.9, 76.5),  // SW corner of NCR
+          new window.google.maps.LatLng(29.2, 78.0),  // NE corner of NCR
+        );
+        options.strictBounds = false;
+      }
+
+      autocompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, options);
       autocompleteRef.current.addListener("place_changed", () => {
         const place = autocompleteRef.current.getPlace();
         if (!place?.geometry?.location) return;
@@ -102,12 +123,21 @@ function PlaceInput({ label, placeholder, onSelect, error }: PlaceInputProps) {
 
         setValidating(true);
         setLocalError("");
-        if (!isWithinRadius(lat, lng)) {
+
+        if (delhiNcrOnly && !isInDelhiNcr(lat, lng)) {
+          setLocalError("Pickup must be within Delhi NCR (New Delhi, Gurgaon, Noida, Faridabad, Ghaziabad)");
+          setValue("");
+          setValidating(false);
+          return;
+        }
+
+        if (!delhiNcrOnly && !isWithinRadius(lat, lng)) {
           setLocalError("Location must be within 100km of our service areas (Delhi, Manali, Jaipur, Agra, Rishikesh, Chandigarh, Dehradun, Shimla, Haridwar)");
           setValue("");
           setValidating(false);
           return;
         }
+
         setValue(address);
         onSelect(address, lat, lng, pincode);
         setValidating(false);
@@ -330,10 +360,11 @@ export default function HeroSection() {
                   )}
                 </div>
 
-                {/* From location */}
+                {/* From location — Delhi NCR only */}
                 <PlaceInput
                   label="PICKUP LOCATION"
-                  placeholder="Enter pickup address or city"
+                  placeholder="Enter Delhi NCR address or area"
+                  delhiNcrOnly
                   onSelect={(addr, lat, lng, pincode) => { setFromAddress(addr); setFromLat(lat); setFromLng(lng); setFromPincode(pincode); }}
                 />
 
