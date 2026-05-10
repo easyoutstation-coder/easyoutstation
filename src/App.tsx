@@ -1,4 +1,5 @@
 import { Routes, Route, useLocation } from 'react-router'
+import { useEffect } from 'react'
 import Home from './pages/Home'
 import Cars from './pages/Cars'
 import CarDetail from './pages/CarDetail'
@@ -76,6 +77,10 @@ function SiteGate({ children }: { children: React.ReactNode }) {
   const { user, isLoading: authLoading } = useAuth()
   const { state: notifState, enable: enableNotif, dismiss: dismissNotif } = usePushNotifications(!!user)
   const { pathname } = useLocation()
+
+  // Scroll to top on every page navigation
+  useEffect(() => { window.scrollTo(0, 0); }, [pathname])
+
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin'
   const isOffline = data?.online === false
   // Always let /login and /admin through so admins can log in and toggle the switch
