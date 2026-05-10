@@ -40,6 +40,15 @@ export default function BookingPage() {
 
   useSeo({ title: "Book Your Cab | EasyOutstation", description: "Complete your outstation cab booking.", noindex: true });
 
+  // Lazy-load Razorpay only on the booking page so it doesn't block every other page
+  useEffect(() => {
+    if (document.querySelector('script[src*="razorpay"]')) return;
+    const s = document.createElement("script");
+    s.src = "https://checkout.razorpay.com/v1/checkout.js";
+    s.async = true;
+    document.head.appendChild(s);
+  }, []);
+
   // Never block the page more than 2 seconds waiting for auth on initial load
   useEffect(() => {
     const timer = setTimeout(() => setAuthTimedOut(true), 2000);
