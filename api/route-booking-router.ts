@@ -5,16 +5,26 @@ import { routes, bookings, userSearches } from "@db/schema";
 import { eq, and, like, desc, sql } from "drizzle-orm";
 
 async function sendBookingSms(phone: string, bookingId: number, fromCity: string, toCity: string, pickupDate: string, totalPrice: number) {
-  const apiKey = process.env.FAST2SMS_API_KEY;
-  if (!apiKey) return;
-  const message = `EasyOutstation: Booking #${bookingId} received! ${fromCity} to ${toCity} on ${pickupDate}. Total: Rs.${totalPrice.toLocaleString("en-IN")}. Driver details shared within 60 mins. Helpline: 9958556011`;
-  const res = await fetch("https://www.fast2sms.com/dev/bulkV2", {
-    method: "POST",
-    headers: { authorization: apiKey, "Content-Type": "application/json" },
-    body: JSON.stringify({ route: "q", message, language: "english", flash: 0, numbers: phone.replace(/\D/g, "").slice(-10) }),
-  });
-  const data = await res.json();
-  if (!data.return) console.warn("[Fast2SMS]", data.message);
+  const apiKey = process.env.FAST2SMS_API_KEY?.trim();
+  if (!apiKey) { console.warn("[Fast2SMS] FAST2SMS_API_KEY not set"); return; }
+  const number = phone.replace(/\D/g, "").slice(-10);
+  if (number.length !== 10) { console.warn("[Fast2SMS] Invalid phone:", phone); return; }
+  const message = `EasyOutstation: Booking #${bookingId} received! ${fromCity} to ${toCity} on ${pickupDate}. Total: Rs.${totalPrice.toLocaleString("en-IN")}. Driver details within 60 mins. Help: 9958556011`;
+  try {
+    const res = await fetch("https://www.fast2sms.com/dev/bulkV2", {
+      method: "POST",
+      headers: { authorization: apiKey, "Content-Type": "application/json" },
+      body: JSON.stringify({ route: "q", message, language: "english", flash: 0, numbers: number }),
+    });
+    const data = await res.json() as any;
+    if (data.return === true) {
+      console.log(`[Fast2SMS] SMS sent to ${number}, request_id: ${data.request_id}`);
+    } else {
+      console.error("[Fast2SMS] Failed:", JSON.stringify(data));
+    }
+  } catch (e) {
+    console.error("[Fast2SMS] Request error:", e);
+  }
 }
 
 async function sendBookingEmails(input: {
