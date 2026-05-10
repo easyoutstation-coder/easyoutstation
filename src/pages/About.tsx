@@ -22,7 +22,7 @@ export default function About() {
               Built on Trust. Driven by Service.
             </h1>
             <p className="text-slate-400 text-lg max-w-2xl mx-auto leading-relaxed">
-              Since 2015, EasyOutstation has been Delhi's most trusted outstation cab service —
+              EasyOutstation is Delhi's premium outstation cab service —
               connecting families, professionals, and travelers to their destinations safely and comfortably.
             </p>
           </div>
