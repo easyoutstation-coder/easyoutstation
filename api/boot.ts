@@ -63,6 +63,8 @@ async function runStartupMigrations() {
     } catch { /* already exists */ }
     // Update driver charges to ₹250/day across all cars
     await db.execute(sql.raw(`UPDATE cars SET driverCharges = 250.00`));
+    // FCM push notification token column
+    try { await db.execute(sql.raw(`ALTER TABLE users ADD COLUMN fcmToken TEXT`)); } catch { /* already exists */ }
     // Master accounts always get super_admin
     await db.execute(sql.raw(
       `UPDATE users SET role = 'super_admin' WHERE phone = '9958556011' OR email = 'parmindersinghtalwar@gmail.com'`

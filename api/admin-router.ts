@@ -4,6 +4,7 @@ import { createRouter, publicQuery, adminQuery, superAdminQuery } from "./middle
 import { getDb } from "./queries/connection";
 import { users, bookings, drivers, expenses, siteSettings } from "@db/schema";
 import { eq, desc, sql, and, gte } from "drizzle-orm";
+import { sendFcmNotification } from "./lib/fcm";
 
 const MASTER_PHONES = ["9958556011"];
 const MASTER_EMAILS = ["parmindersinghtalwar@gmail.com"];
@@ -54,16 +55,18 @@ async function getBookingWithContact(bookingId: number) {
   let phone = normalizePhone(booking.customerPhone);
   let email = booking.customerEmail ?? null;
 
-  // Fall back to user account if contact info missing from booking
-  if ((!phone || !email) && booking.userId) {
-    const userRows = await db.select({ phone: users.phone, email: users.email })
+  // Fall back to user account if contact info missing from booking; also fetch FCM token
+  let fcmToken: string | null = null;
+  if (booking.userId) {
+    const userRows = await db.select({ phone: users.phone, email: users.email, fcmToken: users.fcmToken })
       .from(users).where(eq(users.id, booking.userId)).limit(1);
     const u = userRows[0];
     if (!phone && u?.phone) phone = normalizePhone(u.phone);
     if (!email && u?.email) email = u.email;
+    fcmToken = u?.fcmToken ?? null;
   }
 
-  return { ...booking, resolvedPhone: phone, resolvedEmail: email };
+  return { ...booking, resolvedPhone: phone, resolvedEmail: email, fcmToken };
 }
 
 export const adminRouter = createRouter({
@@ -158,6 +161,15 @@ Team EasyOutstation`;
         } catch (e) { console.error("Confirm email failed:", e); }
       }
 
+      if (booking?.fcmToken) {
+        sendFcmNotification(
+          booking.fcmToken,
+          "Booking Confirmed! 🎉",
+          `Your cab from ${booking.fromCity} to ${booking.toCity} is confirmed. Driver: ${input.driverName} (+91-${input.driverPhone})`,
+          { url: "/dashboard" }
+        ).catch(() => {});
+      }
+
       const waMsg = `Hello ${name}! 👋
 
 Your EasyOutstation booking is *CONFIRMED* ✅
@@ -223,6 +235,15 @@ Team EasyOutstation`;
           await sendEmail(booking.resolvedEmail, `Booking Cancelled #${input.id} — EasyOutstation`, emailBody);
           emailSent = true;
         } catch (e) { console.error("Cancel email failed:", e); }
+      }
+
+      if (booking?.fcmToken) {
+        sendFcmNotification(
+          booking.fcmToken,
+          "Booking Cancelled",
+          `Your booking from ${booking.fromCity} to ${booking.toCity} on ${date} has been cancelled.${input.reason ? ` Reason: ${input.reason}` : ""}`,
+          { url: "/dashboard" }
+        ).catch(() => {});
       }
 
       const waMsg = `Hello ${name},

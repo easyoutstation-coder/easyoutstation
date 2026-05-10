@@ -121,6 +121,14 @@ export const authRouter = createRouter({
       return { success: true };
     }),
 
+  saveFcmToken: authedQuery
+    .input(z.object({ token: z.string().min(1) }))
+    .mutation(async ({ input, ctx }) => {
+      const db = getDb();
+      await db.update(users).set({ fcmToken: input.token }).where(eq(users.id, ctx.user.id));
+      return { success: true };
+    }),
+
   logout: authedQuery.mutation(async ({ ctx }) => {
     const opts = getSessionCookieOptions(ctx.req.headers);
     ctx.resHeaders.append("set-cookie", cookie.serialize(Session.cookieName, "", {

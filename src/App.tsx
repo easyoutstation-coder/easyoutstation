@@ -17,6 +17,7 @@ import NotFound from './pages/NotFound'
 import Admin from './pages/Admin'
 import { trpc } from './providers/trpc'
 import { useAuth } from './hooks/useAuth'
+import { usePushNotifications } from './hooks/usePushNotifications'
 import { Phone, Mail, Clock, WifiOff } from 'lucide-react'
 
 function MaintenancePage() {
@@ -72,6 +73,7 @@ function SiteGate({ children }: { children: React.ReactNode }) {
     retry: false,
   })
   const { user, isLoading: authLoading } = useAuth()
+  usePushNotifications(!!user)
   const { pathname } = useLocation()
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin'
   const isOffline = data?.online === false

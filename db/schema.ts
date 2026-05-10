@@ -21,6 +21,7 @@ export const users = mysqlTable("users", {
   phone: varchar("phone", { length: 20 }),
   passwordHash: varchar("passwordHash", { length: 255 }),
   role: mysqlEnum("role", ["user", "admin", "super_admin"]).default("user").notNull(),
+  fcmToken: text("fcmToken"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt")
     .defaultNow()
