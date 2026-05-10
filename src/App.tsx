@@ -18,6 +18,7 @@ import Admin from './pages/Admin'
 import { trpc } from './providers/trpc'
 import { useAuth } from './hooks/useAuth'
 import { usePushNotifications } from './hooks/usePushNotifications'
+import NotificationBanner from './components/NotificationBanner'
 import { Phone, Mail, Clock, WifiOff } from 'lucide-react'
 
 function MaintenancePage() {
@@ -73,7 +74,7 @@ function SiteGate({ children }: { children: React.ReactNode }) {
     retry: false,
   })
   const { user, isLoading: authLoading } = useAuth()
-  usePushNotifications(!!user)
+  const { state: notifState, enable: enableNotif, dismiss: dismissNotif } = usePushNotifications(!!user)
   const { pathname } = useLocation()
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin'
   const isOffline = data?.online === false
@@ -99,6 +100,7 @@ function SiteGate({ children }: { children: React.ReactNode }) {
       <div className={isAdmin && isOffline ? 'pt-9' : ''}>
         {children}
       </div>
+      <NotificationBanner state={notifState} onEnable={enableNotif} onDismiss={dismissNotif} />
     </>
   )
 }
