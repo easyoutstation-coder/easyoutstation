@@ -34,7 +34,7 @@ export default function PopularCarsSection() {
               Every Car. Verified & Maintained.
             </h2>
             <p className="text-slate-500 text-sm max-w-lg">
-              No compromise on vehicle quality. Every car is under 3 years old, fully serviced, and cleaned before every trip.
+              No compromise on vehicle quality. Every car is well maintained, regularly serviced, and deep cleaned before every trip.
             </p>
           </div>
           <Button variant="outline" onClick={() => navigate("/cars")}
@@ -90,7 +90,7 @@ export default function PopularCarsSection() {
 
         <div className="mt-10 grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
-            { icon: "🚗", text: "Under 3 Years Old", sub: "All vehicles" },
+            { icon: "🚗", text: "Well Maintained", sub: "All vehicles" },
             { icon: "🧹", text: "Deep Cleaned", sub: "Before every trip" },
             { icon: "🔧", text: "Monthly Serviced", sub: "Preventive maintenance" },
             { icon: "📋", text: "Fully Insured", sub: "Passenger & vehicle" },

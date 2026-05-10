@@ -6,7 +6,7 @@ const features = [
   { icon: Clock, title: "On-Time or Compensated", description: "If your driver is late beyond 30 minutes without prior notice, you get compensation. We back our promise with action.", tag: "Guaranteed" },
   { icon: MapPin, title: "Door-to-Door Pickup", description: "We come to your home, hotel, or office. No walking to a pickup point. Your comfort starts the moment you book.", tag: "Convenient" },
   { icon: Headphones, title: "24/7 Trip Support", description: "A dedicated support line stays active throughout your journey. Any issue — big or small — gets resolved fast.", tag: "Always On" },
-  { icon: Award, title: "Premium Maintained Fleet", description: "Every car is under 3 years old, cleaned before each trip, and serviced monthly. No surprises on the road.", tag: "Quality" },
+  { icon: Award, title: "Premium Maintained Fleet", description: "Every car is thoroughly inspected, deep cleaned before each trip, and serviced regularly. Road-ready, always.", tag: "Quality" },
 ];
 
 export default function FeaturesSection() {

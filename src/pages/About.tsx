@@ -68,7 +68,7 @@ export default function About() {
                 { icon: Shield, title: "Safety First", desc: "Every driver police-verified and trained" },
                 { icon: Clock, title: "Always On Time", desc: "Or you get compensated. That's our promise." },
                 { icon: Users, title: "Family-Friendly", desc: "Safe for solo women, families & seniors" },
-                { icon: Award, title: "Premium Fleet", desc: "Cars under 3 years, cleaned before each trip" },
+                { icon: Award, title: "Premium Fleet", desc: "Well maintained cars, deep cleaned before every trip" },
               ].map((item, i) => (
                 <div key={i} className="p-4 rounded-xl bg-slate-50 border border-slate-100">
                   <item.icon className="w-5 h-5 text-blue-600 mb-2" />
