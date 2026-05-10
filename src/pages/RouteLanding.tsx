@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router";
-import { useEffect } from "react";
+import { useSeo } from "@/hooks/useSeo";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -133,13 +133,62 @@ export default function RouteLanding() {
   const navigate = useNavigate();
   const data = ROUTES[route || ""];
 
-  useEffect(() => {
-    if (data) {
-      document.title = `${data.from} to ${data.to} Cab | ₹${data.fare.min.toLocaleString("en-IN")} Fixed Fare | EasyOutstation`;
-      const meta = document.querySelector('meta[name="description"]');
-      if (meta) meta.setAttribute("content", data.description);
-    }
-  }, [data]);
+  const canonicalUrl = `https://www.easyoutstation.com/cab/${route ?? ""}`;
+  const pageTitle = data
+    ? `${data.from} to ${data.to} Cab | ₹${data.fare.min.toLocaleString("en-IN")} Fixed Fare | EasyOutstation`
+    : "Cab Routes | EasyOutstation";
+
+  const schema = data ? [
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.easyoutstation.com/" },
+        { "@type": "ListItem", "position": 2, "name": "Routes", "item": "https://www.easyoutstation.com/routes" },
+        { "@type": "ListItem", "position": 3, "name": `${data.from} to ${data.to} Cab`, "item": canonicalUrl },
+      ],
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "Service",
+      "name": `${data.from} to ${data.to} Cab Service`,
+      "provider": {
+        "@type": "LocalBusiness",
+        "name": "EasyOutstation",
+        "url": "https://www.easyoutstation.com",
+        "telephone": "+91-9958556011",
+      },
+      "areaServed": [data.from, data.to],
+      "description": data.description,
+      "offers": {
+        "@type": "Offer",
+        "priceCurrency": "INR",
+        "price": data.fare.min,
+        "priceSpecification": {
+          "@type": "PriceSpecification",
+          "minPrice": data.fare.min,
+          "maxPrice": data.fare.max,
+          "priceCurrency": "INR",
+        },
+      },
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": data.faqs.map(faq => ({
+        "@type": "Question",
+        "name": faq.q,
+        "acceptedAnswer": { "@type": "Answer", "text": faq.a },
+      })),
+    },
+  ] : undefined;
+
+  useSeo({
+    title: pageTitle,
+    description: data?.description ?? "Book outstation cabs from Delhi at fixed fares.",
+    canonical: canonicalUrl,
+    schema,
+  });
 
   if (!data) {
     navigate("/routes");

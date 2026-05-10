@@ -5,11 +5,13 @@ export function useSeo({
   description,
   canonical,
   noindex = false,
+  schema,
 }: {
   title: string;
   description: string;
   canonical?: string;
   noindex?: boolean;
+  schema?: object | object[];
 }) {
   useEffect(() => {
     document.title = title;
@@ -29,6 +31,7 @@ export function useSeo({
     setMeta('meta[name="description"]', description);
     setMeta('meta[property="og:title"]', title);
     setMeta('meta[property="og:description"]', description);
+    setMeta('meta[property="og:url"]', canonical ?? window.location.href);
     setMeta('meta[name="twitter:title"]', title);
     setMeta('meta[name="twitter:description"]', description);
 
@@ -36,14 +39,28 @@ export function useSeo({
       setMeta('meta[name="robots"]', "noindex, nofollow");
     }
 
-    if (canonical) {
-      let link = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
-      if (!link) {
-        link = document.createElement("link");
-        link.setAttribute("rel", "canonical");
-        document.head.appendChild(link);
-      }
-      link.setAttribute("href", canonical);
+    // Canonical
+    let link = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+    if (!link) {
+      link = document.createElement("link");
+      link.setAttribute("rel", "canonical");
+      document.head.appendChild(link);
     }
-  }, [title, description, canonical, noindex]);
+    link.setAttribute("href", canonical ?? window.location.href);
+
+    // Inject per-page JSON-LD schema
+    const schemaId = "dynamic-schema-ld";
+    let scriptEl = document.getElementById(schemaId);
+    if (schema) {
+      if (!scriptEl) {
+        scriptEl = document.createElement("script");
+        scriptEl.id = schemaId;
+        scriptEl.setAttribute("type", "application/ld+json");
+        document.head.appendChild(scriptEl);
+      }
+      scriptEl.textContent = JSON.stringify(Array.isArray(schema) ? schema : [schema]);
+    } else if (scriptEl) {
+      scriptEl.remove();
+    }
+  }, [title, description, canonical, noindex, schema]);
 }
