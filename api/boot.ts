@@ -99,6 +99,19 @@ app.use("/api/trpc/*", async (c) => {
     createContext,
   });
 });
+// SMS test route — hit /api/test-sms?phone=9999999999&key=easytest in browser
+app.get("/api/test-sms", async (c) => {
+  if (c.req.query("key") !== "easytest") return c.json({ error: "forbidden" }, 403);
+  const phone = c.req.query("phone") || "9958556011";
+  const apiKey = process.env.FAST2SMS_API_KEY?.trim();
+  if (!apiKey) return c.json({ error: "FAST2SMS_API_KEY not set in Railway" });
+  const number = phone.replace(/\D/g, "").slice(-10);
+  const params = new URLSearchParams({ authorization: apiKey, route: "q", message: "EasyOutstation test SMS - ignore", language: "english", flash: "0", numbers: number });
+  const res = await fetch(`https://www.fast2sms.com/dev/bulkV2?${params}`);
+  const data = await res.json();
+  return c.json(data);
+});
+
 app.all("/api/*", (c) => c.json({ error: "Not Found" }, 404));
 
 export default app;
