@@ -49,7 +49,7 @@ export default function CorporateSection() {
 
   return (
     <>
-      <section id="corporate" className="py-20 bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 relative overflow-hidden">
+      <section id="corporate" className="scroll-mt-20 py-20 bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 relative overflow-hidden">
         {/* subtle grid overlay */}
         <div className="absolute inset-0 opacity-5"
           style={{ backgroundImage: "linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px)", backgroundSize: "60px 60px" }} />

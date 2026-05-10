@@ -41,7 +41,7 @@ export default function BookingDetail() {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex-1 flex items-center justify-center pt-20">
           <div className="text-center">
             <h2 className="text-2xl font-bold mb-2">Booking Not Found</h2>
             <p className="text-muted-foreground mb-4">This booking doesn't exist or you don't have access.</p>
@@ -56,7 +56,7 @@ export default function BookingDetail() {
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
       <Navbar />
-      <div className="flex-1 max-w-3xl mx-auto w-full px-4 py-8">
+      <div className="flex-1 max-w-3xl mx-auto w-full px-4 pt-24 pb-8">
         <button
           onClick={() => navigate("/dashboard")}
           className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors"
