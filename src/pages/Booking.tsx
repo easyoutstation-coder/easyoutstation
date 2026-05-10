@@ -112,6 +112,7 @@ export default function BookingPage() {
     onSuccess: () => { setOtpVerified(true); setOtpError(""); },
     onError: () => setOtpError("Invalid OTP. Please check and try again."),
   });  const createBookingMutation = trpc.booking.create.useMutation();
+  const cancelBookingMutation = trpc.booking.cancel.useMutation();
   const createOrderMutation = trpc.payment.createOrder.useMutation();
   const verifyPaymentMutation = trpc.payment.verifyPayment.useMutation();
 
@@ -383,28 +384,46 @@ export default function BookingPage() {
       });
 
       const bookingId = bookingResult.bookingId;
-      const advanceAmount = Math.max(100, Math.round(totalPrice * 0.1));
 
-      // Step 2: Try to create Razorpay order for 10% advance
+      // Helper: cancel the just-created booking and surface an error
+      const abortWithError = (msg: string) => {
+        cancelBookingMutation.mutate({ id: bookingId });
+        setFormError(msg);
+        setIsSubmitting(false);
+      };
+
+      // Step 2: Create Razorpay order for 10% advance — payment is required
+      let order: Awaited<ReturnType<typeof createOrderMutation.mutateAsync>>;
       try {
-        const order = await createOrderMutation.mutateAsync({ bookingId, totalPrice });
+        order = await createOrderMutation.mutateAsync({ bookingId, totalPrice });
+      } catch {
+        abortWithError("Payment setup failed. Please try again or contact us on WhatsApp.");
+        return;
+      }
 
-        // Step 3: Open Razorpay checkout
-        const razorpayOptions = {
-          key: order.keyId,
-          amount: order.amount,
-          currency: order.currency,
-          name: "EasyOutstation",
-          description: `Booking #${bookingId} — Advance Payment`,
-          order_id: order.orderId,
-          prefill: {
-            name: customerName,
-            email: customerEmail,
-            contact: `+91${customerPhone}`,
-          },
-          theme: { color: "#2563EB" },
-          handler: async (response: any) => {
-            // Step 4: Verify payment
+      const Razorpay = (window as any).Razorpay;
+      if (!Razorpay) {
+        abortWithError("Payment system could not load. Please refresh the page and try again.");
+        return;
+      }
+
+      // Step 3: Open Razorpay — booking only completes after payment is verified
+      const razorpayOptions = {
+        key: order.keyId,
+        amount: order.amount,
+        currency: order.currency,
+        name: "EasyOutstation",
+        description: `Booking #${bookingId} — Advance Payment`,
+        order_id: order.orderId,
+        prefill: {
+          name: customerName,
+          email: customerEmail,
+          contact: `+91${customerPhone}`,
+        },
+        theme: { color: "#2563EB" },
+        handler: async (response: any) => {
+          // Step 4: Verify payment — only then show success
+          try {
             await verifyPaymentMutation.mutateAsync({
               razorpayOrderId: response.razorpay_order_id,
               razorpayPaymentId: response.razorpay_payment_id,
@@ -415,36 +434,25 @@ export default function BookingPage() {
             setBookingId(bookingId);
             setBookingComplete(true);
             setIsSubmitting(false);
+          } catch {
+            setFormError("Payment verification failed. Please contact us with your payment reference.");
+            setIsSubmitting(false);
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            // User closed the payment modal without paying — cancel booking
+            abortWithError("Payment was not completed. Your booking has been cancelled. Please try again.");
           },
-          modal: {
-            ondismiss: () => {
-              // Payment dismissed — booking still created, mark as pending
-              setBookingId(bookingId);
-              setBookingComplete(true);
-              setIsSubmitting(false);
-            },
-          },
-        };
+        },
+      };
 
-        const Razorpay = (window as any).Razorpay;
-        if (Razorpay) {
-          const rzp = new Razorpay(razorpayOptions);
-          rzp.open();
-        } else {
-          // Razorpay script not loaded — complete booking without payment
-          setBookingId(bookingId);
-          setBookingComplete(true);
-          setIsSubmitting(false);
-        }
-      } catch {
-        // Razorpay not configured — complete booking without advance payment
-        setBookingId(bookingId);
-        setBookingComplete(true);
-        setIsSubmitting(false);
-      }
+      const rzp = new Razorpay(razorpayOptions);
+      rzp.open();
+
     } catch {
       setIsSubmitting(false);
-      alert("Booking failed. Please try again or email us at easyoutstation@gmail.com.");
+      setFormError("Booking failed. Please try again or email us at easyoutstation@gmail.com.");
     }
   };
 

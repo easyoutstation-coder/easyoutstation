@@ -27,8 +27,6 @@ import {
 const featureIcons: Record<string, React.ReactNode> = {
   AC: <Snowflake className="w-4 h-4" />,
   "Music System": <Music className="w-4 h-4" />,
-  "Ice Box": <Snowflake className="w-4 h-4" />,
-  "Medical Kit": <Heart className="w-4 h-4" />,
   "GPS Navigation": <Navigation className="w-4 h-4" />,
   "Power Steering": <Gauge className="w-4 h-4" />,
   Airbags: <Shield className="w-4 h-4" />,
@@ -47,7 +45,7 @@ const fallbackCar = {
   minKmPerDay: 250,
   fuelType: "diesel",
   transmission: "automatic",
-  features: JSON.stringify(["AC", "Music System", "Ice Box", "Medical Kit", "GPS Navigation", "Power Steering", "Airbags", "ABS", "Third Row Seating", "Leather Seats", "Sunroof", "Cruise Control"]),
+  features: JSON.stringify(["AC", "Music System", "GPS Navigation", "Power Steering", "Airbags", "ABS", "Third Row Seating", "Leather Seats", "Sunroof", "Cruise Control"]),
   imageUrl: "/cars/toyota-innova-crysta.jpg",
   galleryImages: JSON.stringify(["/cars/toyota-innova-crysta.jpg", "/cars/toyota-innova.jpg", "/fleet-showroom.jpg"]),
   rating: "4.90",
