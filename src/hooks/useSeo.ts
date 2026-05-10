@@ -48,7 +48,7 @@ export function useSeo({
     }
     link.setAttribute("href", canonical ?? window.location.href);
 
-    // Inject per-page JSON-LD schema
+    // Inject per-page JSON-LD schema using @graph (valid JSON-LD format)
     const schemaId = "dynamic-schema-ld";
     let scriptEl = document.getElementById(schemaId);
     if (schema) {
@@ -58,7 +58,11 @@ export function useSeo({
         scriptEl.setAttribute("type", "application/ld+json");
         document.head.appendChild(scriptEl);
       }
-      scriptEl.textContent = JSON.stringify(Array.isArray(schema) ? schema : [schema]);
+      const schemas = Array.isArray(schema) ? schema : [schema];
+      scriptEl.textContent = JSON.stringify({
+        "@context": "https://schema.org",
+        "@graph": schemas,
+      });
     } else if (scriptEl) {
       scriptEl.remove();
     }

@@ -140,7 +140,6 @@ export default function RouteLanding() {
 
   const schema = data ? [
     {
-      "@context": "https://schema.org",
       "@type": "BreadcrumbList",
       "itemListElement": [
         { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.easyoutstation.com/" },
@@ -149,7 +148,6 @@ export default function RouteLanding() {
       ],
     },
     {
-      "@context": "https://schema.org",
       "@type": "Service",
       "name": `${data.from} to ${data.to} Cab Service`,
       "provider": {
@@ -173,7 +171,6 @@ export default function RouteLanding() {
       },
     },
     {
-      "@context": "https://schema.org",
       "@type": "FAQPage",
       "mainEntity": data.faqs.map(faq => ({
         "@type": "Question",
