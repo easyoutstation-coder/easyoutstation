@@ -30,7 +30,21 @@
 }
 
 @layer base {
-  * { @apply border-border; box-sizing: border-box; }
+  * {
+    @apply border-border;
+    box-sizing: border-box;
+    /* Remove 300ms tap delay on all interactive elements */
+    touch-action: manipulation;
+    /* Remove blue flash on tap (iOS/Android) */
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    /* Respect iOS notch/home bar */
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
 
   body {
     background-color: #F8FAFC;
@@ -39,6 +53,8 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     line-height: 1.6;
+    /* Prevent pull-to-refresh interfering with scroll */
+    overscroll-behavior-y: none;
   }
 
   h1, h2, h3 {
@@ -123,6 +139,50 @@
 ::-webkit-scrollbar-track { background: #F1F5F9; }
 ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+
+/* ── Mobile optimizations ──────────────────────────────────── */
+
+/* Prevent iOS from zooming into inputs (requires font-size >= 16px) */
+@media screen and (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Minimum touch target size (Apple HIG: 44px, Google: 48px) */
+@media (pointer: coarse) {
+  button, a, [role="button"], select {
+    min-height: 44px;
+  }
+}
+
+/* Smooth momentum scrolling on iOS for overflow containers */
+.overflow-y-auto, .overflow-x-auto, .overflow-auto {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Dialogs / modals — prevent background scroll bleed on iOS */
+[data-radix-dialog-content] {
+  overscroll-behavior: contain;
+}
+
+/* Safe area padding for iPhone notch / home indicator */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Prevent text selection on UI elements */
+button, [role="button"], label {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Better font rendering on mobile */
+@media screen and (max-width: 768px) {
+  body {
+    text-rendering: optimizeSpeed;
+  }
+}
 
 /* Popover/Dropdown - always white with dark text */
 [data-radix-popper-content-wrapper] > * {

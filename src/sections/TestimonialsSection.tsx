@@ -1,59 +1,85 @@
-import { Star, Quote, CheckCircle } from "lucide-react";
+import { Shield, Clock, IndianRupee, UserCheck, MapPin, Headphones } from "lucide-react";
 
-const testimonials = [
-  { name: "Rahul Sharma", location: "Delhi", rating: 5, text: "Booked Innova Crysta for Manali. Driver arrived 10 minutes early, knew all the scenic stops, car was spotless. Total came to exactly what was quoted — not a rupee more.", car: "Innova Crysta", route: "Delhi → Manali", date: "March 2026" },
-  { name: "Priya Patel", location: "Noida", rating: 5, text: "Used for Delhi-Jaipur-Delhi round trip. My friends got burned by hidden charges on another platform. We paid exactly ₹7,200 as quoted. Superb experience.", car: "Maruti Ertiga", route: "Delhi → Jaipur", date: "February 2026" },
-  { name: "Amit Kumar", location: "Gurugram", rating: 5, text: "First time to Manali — nervous about mountain roads. The driver was a 15-year veteran on that route. Felt completely safe. The Hycross is brilliant on hills.", car: "Innova Hycross", route: "Delhi → Manali", date: "January 2026" },
-  { name: "Sneha Gupta", location: "Delhi", rating: 5, text: "Corporate trip for 6 people to Rishikesh. Car arrived 15 minutes early. My CEO asked me who I booked through — that's the kind of impression this service makes.", car: "Toyota Innova", route: "Delhi → Rishikesh", date: "April 2026" },
+const promises = [
+  {
+    icon: IndianRupee,
+    title: "Fixed Fares, Always",
+    desc: "The price you see is the price you pay. No surge pricing, no hidden extras, no surprises at the end of your trip.",
+    color: "bg-blue-50 border-blue-100",
+    iconColor: "text-blue-600 bg-blue-100",
+  },
+  {
+    icon: UserCheck,
+    title: "Verified Drivers Only",
+    desc: "Every driver in our network is background-checked, licensed, and experienced on outstation routes before their first booking.",
+    color: "bg-green-50 border-green-100",
+    iconColor: "text-green-600 bg-green-100",
+  },
+  {
+    icon: Clock,
+    title: "On-Time or We Fix It",
+    desc: "We take punctuality seriously. If there's ever a delay, our support team is on it immediately — day or night.",
+    color: "bg-amber-50 border-amber-100",
+    iconColor: "text-amber-600 bg-amber-100",
+  },
+  {
+    icon: Shield,
+    title: "Full Transparency",
+    desc: "Toll estimates shown upfront. Final bill broken down line by line. We're building trust from day one — no shortcuts.",
+    color: "bg-violet-50 border-violet-100",
+    iconColor: "text-violet-600 bg-violet-100",
+  },
+];
+
+const stats = [
+  { num: "500+", label: "Combined trips by our driver network" },
+  { num: "10+ yrs", label: "Average driver experience" },
+  { num: "8+", label: "Premium vehicles" },
+  { num: "11", label: "Routes covered" },
 ];
 
 export default function TestimonialsSection() {
   return (
-    <section className="py-24 bg-white">
+    <section className="py-20 bg-slate-50">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <div className="flex items-center justify-center gap-1 mb-3">
-            {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 text-amber-400 fill-amber-400" />)}
-            <span className="ml-2 text-sm text-slate-500">4.9/5 from 2,400+ trips</span>
-          </div>
+        {/* Header */}
+        <div className="text-center max-w-2xl mx-auto mb-14">
+          <p className="text-xs font-bold uppercase tracking-widest text-blue-600 mb-3">Our Commitment</p>
           <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 mb-3 font-['DM_Serif_Display']">
-            Real Travelers. Real Stories.
+            Transparency Is Not Optional
           </h2>
-          <p className="text-slate-500 text-sm">Verified reviews from actual bookings — not stock photos or paid testimonials.</p>
+          <p className="text-slate-500 text-sm leading-relaxed">
+            We're new, and we own that. What we bring is experienced drivers, honest pricing, and a commitment to earn your trust on every single trip.
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {testimonials.map((t, i) => (
-            <div key={i} className="bg-slate-50 rounded-2xl p-6 border border-slate-100 hover:border-blue-100 hover:shadow-md transition-all duration-300">
-              <div className="flex items-center gap-1 mb-4">
-                {[...Array(t.rating)].map((_, i) => <Star key={i} className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />)}
+        {/* Promise cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-14">
+          {promises.map((p, i) => (
+            <div key={i} className={`rounded-2xl border p-6 ${p.color} transition-all hover:shadow-sm`}>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${p.iconColor}`}>
+                <p.icon className="w-5 h-5" />
               </div>
-              <div className="relative mb-5">
-                <Quote className="absolute -top-1 -left-1 w-6 h-6 text-slate-200" />
-                <p className="text-slate-600 text-sm leading-relaxed pl-5 italic">"{t.text}"</p>
-              </div>
-              <div className="flex items-center justify-between pt-4 border-t border-slate-200">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center">
-                    <span className="text-xs font-bold text-blue-700">
-                      {t.name.split(" ").map((n) => n[0]).join("")}
-                    </span>
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-sm font-semibold text-slate-900">{t.name}</span>
-                      <CheckCircle className="w-3.5 h-3.5 text-blue-500" />
-                    </div>
-                    <span className="text-[10px] text-slate-400">{t.location} · {t.date}</span>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-[10px] font-semibold text-blue-600">{t.route}</div>
-                  <div className="text-[10px] text-slate-400">{t.car}</div>
-                </div>
-              </div>
+              <h3 className="font-semibold text-slate-900 mb-2 text-sm">{p.title}</h3>
+              <p className="text-slate-500 text-xs leading-relaxed">{p.desc}</p>
             </div>
           ))}
+        </div>
+
+        {/* Honest stats from driver network */}
+        <div className="bg-white rounded-2xl border border-slate-200 px-6 py-8">
+          <p className="text-center text-xs font-bold uppercase tracking-widest text-slate-400 mb-6">From Our Driver Network</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+            {stats.map((s, i) => (
+              <div key={i}>
+                <div className="text-2xl font-bold text-blue-700 font-['DM_Serif_Display']">{s.num}</div>
+                <div className="text-xs text-slate-500 mt-1 leading-tight">{s.label}</div>
+              </div>
+            ))}
+          </div>
+          <p className="text-center text-[11px] text-slate-400 mt-5">
+            Stats reflect the combined experience of drivers in our network — not fabricated numbers.
+          </p>
         </div>
       </div>
     </section>

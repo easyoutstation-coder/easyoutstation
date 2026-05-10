@@ -32,10 +32,10 @@ export default function About() {
         <div className="bg-white border-b border-slate-100">
           <div className="max-w-5xl mx-auto px-4 py-12 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
-              { num: "15,000+", label: "Happy Travelers" },
-              { num: "9+", label: "Years in Service" },
+              { num: "500+", label: "Combined Driver Trips" },
+              { num: "10+ yrs", label: "Avg. Driver Experience" },
               { num: "8+", label: "Premium Cars" },
-              { num: "4.9★", label: "Average Rating" },
+              { num: "11", label: "Routes Covered" },
             ].map((s, i) => (
               <div key={i}>
                 <div className="text-3xl font-bold text-blue-700 font-['DM_Serif_Display']">{s.num}</div>
