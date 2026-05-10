@@ -3,18 +3,19 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { ChevronDown } from "lucide-react";
 import { useSeo } from "@/hooks/useSeo";
+import { trpc } from "@/providers/trpc";
 
-const faqs = [
-  { q: "Are there any hidden charges?", a: "No. The price shown includes per-km rate, driver charges, and estimated toll. Parking charges are the only additional cost and are charged at actuals." },
-  { q: "How are your drivers verified?", a: "Every driver goes through police background verification, document checks, and defensive driving training. We also collect customer ratings after each trip." },
-  { q: "What if my driver is late?", a: "If your driver is late beyond 30 minutes without prior notice, you are eligible for compensation. Contact us immediately at easyoutstation@gmail.com." },
-  { q: "Can I cancel my booking?", a: "Yes. Free cancellation up to 24 hours before pickup. 50% refund for cancellations within 12–24 hours. No refund for cancellations within 12 hours of pickup." },
-  { q: "How do I pay?", a: "Payment is made to the driver at the time of pickup or drop. We accept cash, UPI, and card. No advance payment required to confirm booking." },
-  { q: "Which cities do you serve?", a: "We serve outstation routes from Delhi to Manali, Dehradun, Rishikesh, Haridwar, Jaipur, Agra, Chandigarh, Shimla and all nearby destinations within 100km of these cities." },
-  { q: "Can I book a round trip?", a: "Yes. Round trips are calculated as double the one-way distance. Select 'Round Trip' during booking and the fare is shown transparently." },
-  { q: "What types of cars are available?", a: "We offer Swift Dzire (sedan), Toyota Etios (sedan), Maruti Ertiga (MUV), Mahindra Xylo (SUV), Kia Carens (premium), Toyota Innova, Innova Crysta, and Innova Hycross (luxury)." },
-  { q: "Is it safe for solo women travelers?", a: "Yes. All our drivers are verified and rated. We share the driver's name, photo, and vehicle number before every trip. Our support team is available 24/7." },
-  { q: "How quickly will I get a confirmation?", a: "Booking confirmation with driver details is sent within 60 minutes of booking. For same-day bookings, contact us on WhatsApp for fastest response." },
+const FALLBACK_FAQS = [
+  { question: "Are there any hidden charges?", answer: "No. The price shown includes per-km rate, driver charges, and estimated toll. Parking charges are the only additional cost and are charged at actuals." },
+  { question: "How are your drivers verified?", answer: "Every driver goes through police background verification, document checks, and defensive driving training. We also collect customer ratings after each trip." },
+  { question: "What if my driver is late?", answer: "If your driver is late beyond 30 minutes without prior notice, you are eligible for compensation. Contact us immediately at easyoutstation@gmail.com." },
+  { question: "Can I cancel my booking?", answer: "Yes. Free cancellation up to 24 hours before pickup. 50% refund for cancellations within 12–24 hours. No refund for cancellations within 12 hours of pickup." },
+  { question: "How do I pay?", answer: "Payment is made to the driver at the time of pickup or drop. We accept cash, UPI, and card. No advance payment required to confirm booking." },
+  { question: "Which cities do you serve?", answer: "We serve outstation routes from Delhi to Manali, Dehradun, Rishikesh, Haridwar, Jaipur, Agra, Chandigarh, Shimla and all nearby destinations within 100km of these cities." },
+  { question: "Can I book a round trip?", answer: "Yes. Round trips are calculated as double the one-way distance. Select 'Round Trip' during booking and the fare is shown transparently." },
+  { question: "What types of cars are available?", answer: "We offer Swift Dzire (sedan), Toyota Etios (sedan), Maruti Ertiga (MUV), Mahindra Xylo (SUV), Kia Carens (premium), Toyota Innova, Innova Crysta, and Innova Hycross (luxury)." },
+  { question: "Is it safe for solo women travelers?", answer: "Yes. All our drivers are verified and rated. We share the driver's name, photo, and vehicle number before every trip. Our support team is available 24/7." },
+  { question: "How quickly will I get a confirmation?", answer: "Booking confirmation with driver details is sent within 60 minutes of booking. For same-day bookings, contact us on WhatsApp for fastest response." },
 ];
 
 export default function FAQ() {
@@ -24,6 +25,11 @@ export default function FAQ() {
     description: "Answers to common questions about EasyOutstation's cab service — pricing, cancellation, driver verification, toll charges and more.",
     canonical: "https://www.easyoutstation.com/faq",
   });
+
+  const { data: apiFaqs } = trpc.admin.getPublicFaqs.useQuery();
+  const faqs = apiFaqs && apiFaqs.length > 0
+    ? apiFaqs.map(f => ({ question: f.question, answer: f.answer }))
+    : FALLBACK_FAQS;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -41,12 +47,12 @@ export default function FAQ() {
               <div key={i} className="bg-white rounded-xl border border-slate-100 overflow-hidden">
                 <button onClick={() => setOpen(open === i ? null : i)}
                   className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-slate-50 transition-colors">
-                  <span className="font-medium text-slate-900 text-sm">{faq.q}</span>
+                  <span className="font-medium text-slate-900 text-sm">{faq.question}</span>
                   <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform shrink-0 ml-3 ${open === i ? "rotate-180" : ""}`} />
                 </button>
                 {open === i && (
                   <div className="px-5 pb-4">
-                    <p className="text-sm text-slate-600 leading-relaxed">{faq.a}</p>
+                    <p className="text-sm text-slate-600 leading-relaxed">{faq.answer}</p>
                   </div>
                 )}
               </div>

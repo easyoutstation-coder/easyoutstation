@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
 import { createRouter, publicQuery, authedQuery } from "./middleware";
 import { getDb } from "./queries/connection";
 import { routes, bookings, userSearches } from "@db/schema";
@@ -285,6 +286,20 @@ export const bookingRouter = createRouter({
         .set({ status: "cancelled" as const })
         .where(and(eq(bookings.id, input.id), eq(bookings.userId, userId)));
 
+      return { success: true };
+    }),
+
+  updateDate: authedQuery
+    .input(z.object({ id: z.number(), newDate: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      const db = getDb();
+      const userId = ctx.user.id;
+      const booking = await db.query.bookings.findFirst({
+        where: and(eq(bookings.id, input.id), eq(bookings.userId, userId)),
+      });
+      if (!booking) throw new TRPCError({ code: "NOT_FOUND" });
+      if (booking.status !== "pending") throw new TRPCError({ code: "BAD_REQUEST", message: "Only pending bookings can be rescheduled" });
+      await db.update(bookings).set({ pickupDate: new Date(input.newDate) }).where(eq(bookings.id, input.id));
       return { success: true };
     }),
 });

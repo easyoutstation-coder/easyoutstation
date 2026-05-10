@@ -6,6 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns";
 import { MapPin, CalendarDays, Users, ArrowRight, Shield, Clock, CheckCircle, Loader2, AlertCircle, Route, History, Building2 } from "lucide-react";
 import { saveRecentSearch, getRecentSearches, type RecentSearch } from "@/hooks/useRecentSearches";
+import { trpc } from "@/providers/trpc";
 
 // 9 anchor cities with coordinates for 100km radius restriction
 const ANCHOR_CITIES = [
@@ -150,6 +151,7 @@ function PlaceInput({ label, placeholder, onSelect, error }: PlaceInputProps) {
 export default function HeroSection() {
   const navigate = useNavigate();
   const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([]);
+  const logSearch = trpc.search.log.useMutation();
 
   useEffect(() => {
     setRecentSearches(getRecentSearches());
@@ -244,13 +246,19 @@ export default function HeroSection() {
     if (toPincode) params.set("toPincode", toPincode);
     if (fromLat && fromLng) { params.set("fromLat", String(fromLat)); params.set("fromLng", String(fromLng)); }
     if (toLat && toLng) { params.set("toLat", String(toLat)); params.set("toLng", String(toLng)); }
-    // Save to recent searches
+    // Save to recent searches (local + backend)
     saveRecentSearch({
       from: fromAddress.split(",")[0],
       to: toAddress.split(",")[0],
       fromFull: fromAddress,
       toFull: toAddress,
       distance: distanceKm || undefined,
+    });
+    logSearch.mutate({
+      fromCity: fromAddress.split(",")[0],
+      toCity: toAddress.split(",")[0],
+      pickupDate: pickupDate ? format(pickupDate, "yyyy-MM-dd") : undefined,
+      passengerCount: passengers ? parseInt(passengers) : undefined,
     });
 
     navigate(`/cars?${params.toString()}`);

@@ -133,6 +133,15 @@ export const drivers = mysqlTable("drivers", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
+export const faqs = mysqlTable("faqs", {
+  id: serial("id").primaryKey(),
+  question: text("question").notNull(),
+  answer: text("answer").notNull(),
+  position: int("position").default(0).notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
 export const siteSettings = mysqlTable("siteSettings", {
   key: varchar("key", { length: 100 }).primaryKey(),
   value: text("value").notNull(),
@@ -170,3 +179,5 @@ export type Driver = typeof drivers.$inferSelect;
 export type InsertDriver = typeof drivers.$inferInsert;
 export type Subscription = typeof subscriptions.$inferSelect;
 export type InsertSubscription = typeof subscriptions.$inferInsert;
+export type Faq = typeof faqs.$inferSelect;
+export type InsertFaq = typeof faqs.$inferInsert;

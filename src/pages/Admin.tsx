@@ -14,7 +14,7 @@ import {
   LayoutDashboard, Users, Car, IndianRupee, Clock, CheckCircle, XCircle,
   Phone, UserCog, StickyNote, CheckCheck, X, Plus, Pencil, Trash2,
   MessageCircle, Mail, AlertTriangle, TrendingUp, MapPin, Wallet, ShieldCheck,
-  Globe, WifiOff,
+  Globe, WifiOff, Search, FileText,
 } from "lucide-react";
 
 type BookingStatus = "pending" | "confirmed" | "completed" | "cancelled";
@@ -115,6 +115,17 @@ export default function AdminPage() {
   const [expenseForm, setExpenseForm] = useState({ category: "", description: "", amount: "", date: new Date().toISOString().slice(0, 10), bookingId: "" });
   const [showExpenseForm, setShowExpenseForm] = useState(false);
 
+  // Booking search
+  const [bookingSearch, setBookingSearch] = useState("");
+
+  // FAQ management
+  const [faqForm, setFaqForm] = useState({ question: "", answer: "", position: "0" });
+  const [editingFaq, setEditingFaq] = useState<{ id: number; question: string; answer: string; position: string } | null>(null);
+
+  // Route management
+  const [routeForm, setRouteForm] = useState({ fromCity: "", toCity: "", distanceKm: "", durationHours: "", basePrice: "", isPopular: false });
+  const [editingRoute, setEditingRoute] = useState<{ id: number; fromCity: string; toCity: string; distanceKm: string; durationHours: string; basePrice: string; isPopular: boolean } | null>(null);
+
   const utils = trpc.useUtils();
   const isAdmin = isAuthenticated && (user?.role === "admin" || user?.role === "super_admin");
   const isSuperAdmin = isAuthenticated && user?.role === "super_admin";
@@ -170,6 +181,16 @@ export default function AdminPage() {
   const deleteExpense = trpc.admin.deleteExpense.useMutation({
     onSuccess: () => { utils.admin.getExpenses.invalidate(); utils.admin.getFinancials.invalidate(); },
   });
+
+  const { data: faqsList } = trpc.admin.getFaqs.useQuery(undefined, { enabled: isAdmin });
+  const addFaq = trpc.admin.addFaq.useMutation({ onSuccess: () => { setFaqForm({ question: "", answer: "", position: "0" }); utils.admin.getFaqs.invalidate(); } });
+  const updateFaq = trpc.admin.updateFaq.useMutation({ onSuccess: () => { setEditingFaq(null); utils.admin.getFaqs.invalidate(); } });
+  const deleteFaq = trpc.admin.deleteFaq.useMutation({ onSuccess: () => utils.admin.getFaqs.invalidate() });
+
+  const { data: adminRoutes } = trpc.admin.getAdminRoutes.useQuery(undefined, { enabled: isAdmin });
+  const addRoute = trpc.admin.addRoute.useMutation({ onSuccess: () => { setRouteForm({ fromCity: "", toCity: "", distanceKm: "", durationHours: "", basePrice: "", isPopular: false }); utils.admin.getAdminRoutes.invalidate(); } });
+  const updateRoute = trpc.admin.updateRoute.useMutation({ onSuccess: () => { setEditingRoute(null); utils.admin.getAdminRoutes.invalidate(); } });
+  const deleteRoute = trpc.admin.deleteRoute.useMutation({ onSuccess: () => utils.admin.getAdminRoutes.invalidate() });
 
   function openConfirmModal(b: any) {
     const booking = b as typeof b & { driverName?: string; driverPhone?: string };
@@ -287,6 +308,7 @@ export default function AdminPage() {
             </TabsTrigger>
             <TabsTrigger value="drivers" className="gap-1.5"><Car className="w-4 h-4" />Drivers</TabsTrigger>
             <TabsTrigger value="customers" className="gap-1.5"><Users className="w-4 h-4" />Customers</TabsTrigger>
+            <TabsTrigger value="content" className="gap-1.5"><FileText className="w-4 h-4" />Content</TabsTrigger>
             {isSuperAdmin && <TabsTrigger value="financials" className="gap-1.5 text-emerald-700"><TrendingUp className="w-4 h-4" />Financials</TabsTrigger>}
           </TabsList>
 
@@ -344,7 +366,7 @@ export default function AdminPage() {
 
           {/* ── Bookings ─────────────────────────────────────────────── */}
           <TabsContent value="bookings">
-            <div className="flex flex-wrap gap-2 mb-4">
+            <div className="flex flex-wrap gap-2 mb-3">
               {(["pending", "confirmed", "all", "completed", "cancelled"] as const).map(s => (
                 <Button key={s} variant={statusFilter === s ? "default" : "outline"} size="sm"
                   onClick={() => setStatusFilter(s)} className="capitalize">
@@ -353,13 +375,32 @@ export default function AdminPage() {
               ))}
             </div>
 
+            <div className="relative mb-4">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by name, phone, or booking ID…"
+                value={bookingSearch}
+                onChange={e => setBookingSearch(e.target.value)}
+                className="pl-9 h-9 text-sm"
+              />
+            </div>
+
             {bookingsLoading ? (
               <div className="flex justify-center py-16"><div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" /></div>
             ) : !bookingsList?.length ? (
               <Card><CardContent className="p-8 text-center text-muted-foreground">No bookings found.</CardContent></Card>
             ) : (
               <div className="space-y-3">
-                {bookingsList.map(b => {
+                {bookingsList.filter(b => {
+                  if (!bookingSearch.trim()) return true;
+                  const q = bookingSearch.toLowerCase();
+                  return (
+                    String(b.id).includes(q) ||
+                    b.customerName.toLowerCase().includes(q) ||
+                    (b.customerPhone ?? "").includes(q) ||
+                    (b.customerEmail ?? "").toLowerCase().includes(q)
+                  );
+                }).map(b => {
                   const bx = b as typeof b & { driverName?: string; driverPhone?: string; adminNotes?: string };
                   const isCancelled = b.status === "cancelled";
                   const isCompleted = b.status === "completed";
@@ -605,6 +646,211 @@ export default function AdminPage() {
                   </CardContent>
                 </Card>
               ))}
+            </div>
+          </TabsContent>
+
+          {/* ── Content (FAQ + Routes) ──────────────────────────────── */}
+          <TabsContent value="content" className="space-y-8">
+
+            {/* FAQ Management */}
+            <div>
+              <h2 className="font-semibold mb-4 flex items-center gap-2"><FileText className="w-4 h-4" />FAQ Management</h2>
+
+              {/* Add / Edit FAQ form */}
+              <Card className="mb-4 border-dashed border-2 border-primary/20">
+                <CardContent className="p-4 space-y-3">
+                  <p className="text-sm font-medium">{editingFaq ? `Editing FAQ #${editingFaq.id}` : "Add New FAQ"}</p>
+                  <div>
+                    <label className="text-xs font-medium mb-1 block">Question *</label>
+                    <Input
+                      placeholder="e.g. Are there hidden charges?"
+                      value={editingFaq ? editingFaq.question : faqForm.question}
+                      onChange={e => editingFaq ? setEditingFaq(f => f ? { ...f, question: e.target.value } : f) : setFaqForm(f => ({ ...f, question: e.target.value }))}
+                      className="text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium mb-1 block">Answer *</label>
+                    <Textarea
+                      placeholder="Enter the answer…"
+                      rows={3}
+                      value={editingFaq ? editingFaq.answer : faqForm.answer}
+                      onChange={e => editingFaq ? setEditingFaq(f => f ? { ...f, answer: e.target.value } : f) : setFaqForm(f => ({ ...f, answer: e.target.value }))}
+                      className="text-sm"
+                    />
+                  </div>
+                  <div className="flex gap-2 items-center">
+                    <div className="w-24">
+                      <label className="text-xs font-medium mb-1 block">Order</label>
+                      <Input
+                        type="number"
+                        placeholder="0"
+                        value={editingFaq ? editingFaq.position : faqForm.position}
+                        onChange={e => editingFaq ? setEditingFaq(f => f ? { ...f, position: e.target.value } : f) : setFaqForm(f => ({ ...f, position: e.target.value }))}
+                        className="text-sm h-8"
+                      />
+                    </div>
+                    <div className="flex gap-2 mt-5">
+                      {editingFaq ? (
+                        <>
+                          <Button size="sm" className="h-8 text-xs"
+                            disabled={!editingFaq.question || !editingFaq.answer || updateFaq.isPending}
+                            onClick={() => updateFaq.mutate({ id: editingFaq.id, question: editingFaq.question, answer: editingFaq.answer, position: parseInt(editingFaq.position) || 0 })}>
+                            {updateFaq.isPending ? "Saving…" : "Save"}
+                          </Button>
+                          <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => setEditingFaq(null)}>Cancel</Button>
+                        </>
+                      ) : (
+                        <Button size="sm" className="h-8 text-xs gap-1"
+                          disabled={!faqForm.question || !faqForm.answer || addFaq.isPending}
+                          onClick={() => addFaq.mutate({ question: faqForm.question, answer: faqForm.answer, position: parseInt(faqForm.position) || 0 })}>
+                          <Plus className="w-3 h-3" />{addFaq.isPending ? "Adding…" : "Add FAQ"}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* FAQ List */}
+              {!faqsList?.length ? (
+                <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">No FAQs yet. Add your first FAQ above.</CardContent></Card>
+              ) : (
+                <div className="space-y-2">
+                  {faqsList.map(f => (
+                    <Card key={f.id}>
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium">{f.question}</p>
+                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{f.answer}</p>
+                            <p className="text-xs text-slate-400 mt-1">Order: {f.position} · {f.isActive ? "Active" : "Hidden"}</p>
+                          </div>
+                          <div className="flex gap-1 shrink-0">
+                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0"
+                              onClick={() => setEditingFaq({ id: Number(f.id), question: f.question, answer: f.answer, position: String(f.position) })}>
+                              <Pencil className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-500 hover:bg-red-50"
+                              onClick={() => deleteFaq.mutate({ id: Number(f.id) })}>
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Route Management */}
+            <div>
+              <h2 className="font-semibold mb-4 flex items-center gap-2"><MapPin className="w-4 h-4" />Route Management</h2>
+
+              {/* Add / Edit Route form */}
+              <Card className="mb-4 border-dashed border-2 border-primary/20">
+                <CardContent className="p-4 space-y-3">
+                  <p className="text-sm font-medium">{editingRoute ? `Editing Route #${editingRoute.id}` : "Add New Route"}</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-xs font-medium mb-1 block">From City *</label>
+                      <Input placeholder="e.g. Delhi"
+                        value={editingRoute ? editingRoute.fromCity : routeForm.fromCity}
+                        onChange={e => editingRoute ? setEditingRoute(r => r ? { ...r, fromCity: e.target.value } : r) : setRouteForm(r => ({ ...r, fromCity: e.target.value }))}
+                        className="text-sm h-8" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium mb-1 block">To City *</label>
+                      <Input placeholder="e.g. Manali"
+                        value={editingRoute ? editingRoute.toCity : routeForm.toCity}
+                        onChange={e => editingRoute ? setEditingRoute(r => r ? { ...r, toCity: e.target.value } : r) : setRouteForm(r => ({ ...r, toCity: e.target.value }))}
+                        className="text-sm h-8" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium mb-1 block">Distance (km) *</label>
+                      <Input type="number" placeholder="e.g. 520"
+                        value={editingRoute ? editingRoute.distanceKm : routeForm.distanceKm}
+                        onChange={e => editingRoute ? setEditingRoute(r => r ? { ...r, distanceKm: e.target.value } : r) : setRouteForm(r => ({ ...r, distanceKm: e.target.value }))}
+                        className="text-sm h-8" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium mb-1 block">Duration (hrs) *</label>
+                      <Input type="number" placeholder="e.g. 12"
+                        value={editingRoute ? editingRoute.durationHours : routeForm.durationHours}
+                        onChange={e => editingRoute ? setEditingRoute(r => r ? { ...r, durationHours: e.target.value } : r) : setRouteForm(r => ({ ...r, durationHours: e.target.value }))}
+                        className="text-sm h-8" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium mb-1 block">Base Price (₹) *</label>
+                      <Input type="number" placeholder="e.g. 6000"
+                        value={editingRoute ? editingRoute.basePrice : routeForm.basePrice}
+                        onChange={e => editingRoute ? setEditingRoute(r => r ? { ...r, basePrice: e.target.value } : r) : setRouteForm(r => ({ ...r, basePrice: e.target.value }))}
+                        className="text-sm h-8" />
+                    </div>
+                    <div className="flex items-end pb-1.5">
+                      <label className="flex items-center gap-2 text-sm cursor-pointer">
+                        <input type="checkbox"
+                          checked={editingRoute ? editingRoute.isPopular : routeForm.isPopular}
+                          onChange={e => editingRoute ? setEditingRoute(r => r ? { ...r, isPopular: e.target.checked } : r) : setRouteForm(r => ({ ...r, isPopular: e.target.checked }))}
+                          className="rounded" />
+                        Popular route
+                      </label>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    {editingRoute ? (
+                      <>
+                        <Button size="sm" className="h-8 text-xs"
+                          disabled={!editingRoute.fromCity || !editingRoute.toCity || !editingRoute.distanceKm || updateRoute.isPending}
+                          onClick={() => updateRoute.mutate({ id: editingRoute.id, fromCity: editingRoute.fromCity, toCity: editingRoute.toCity, distanceKm: parseInt(editingRoute.distanceKm), durationHours: parseInt(editingRoute.durationHours) || 0, basePrice: editingRoute.basePrice, isPopular: editingRoute.isPopular })}>
+                          {updateRoute.isPending ? "Saving…" : "Save Route"}
+                        </Button>
+                        <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => setEditingRoute(null)}>Cancel</Button>
+                      </>
+                    ) : (
+                      <Button size="sm" className="h-8 text-xs gap-1"
+                        disabled={!routeForm.fromCity || !routeForm.toCity || !routeForm.distanceKm || addRoute.isPending}
+                        onClick={() => addRoute.mutate({ fromCity: routeForm.fromCity, toCity: routeForm.toCity, distanceKm: parseInt(routeForm.distanceKm), durationHours: parseInt(routeForm.durationHours) || 0, basePrice: routeForm.basePrice, isPopular: routeForm.isPopular })}>
+                        <Plus className="w-3 h-3" />{addRoute.isPending ? "Adding…" : "Add Route"}
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Route List */}
+              {!adminRoutes?.length ? (
+                <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">No routes yet.</CardContent></Card>
+              ) : (
+                <div className="space-y-2">
+                  {adminRoutes.map(r => (
+                    <Card key={r.id}>
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between gap-2">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-medium">{r.fromCity} → {r.toCity}</p>
+                              {r.isPopular && <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">Popular</span>}
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-0.5">{r.distanceKm} km · {r.durationHours}h · Base ₹{parseFloat(r.basePrice.toString()).toLocaleString("en-IN")}</p>
+                          </div>
+                          <div className="flex gap-1 shrink-0">
+                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0"
+                              onClick={() => setEditingRoute({ id: Number(r.id), fromCity: r.fromCity, toCity: r.toCity, distanceKm: String(r.distanceKm), durationHours: String(r.durationHours), basePrice: String(r.basePrice), isPopular: r.isPopular ?? false })}>
+                              <Pencil className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-500 hover:bg-red-50"
+                              onClick={() => deleteRoute.mutate({ id: Number(r.id) })}>
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </div>
           </TabsContent>
 

@@ -65,6 +65,19 @@ async function runStartupMigrations() {
     await db.execute(sql.raw(`UPDATE cars SET driverCharges = 250.00`));
     // FCM push notification token column
     try { await db.execute(sql.raw(`ALTER TABLE users ADD COLUMN fcmToken TEXT`)); } catch { /* already exists */ }
+    // FAQs table
+    try {
+      await db.execute(sql.raw(`
+        CREATE TABLE IF NOT EXISTS faqs (
+          id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+          question TEXT NOT NULL,
+          answer TEXT NOT NULL,
+          position INT NOT NULL DEFAULT 0,
+          isActive BOOLEAN NOT NULL DEFAULT TRUE,
+          createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+      `));
+    } catch { /* already exists */ }
     // Master accounts always get super_admin
     await db.execute(sql.raw(
       `UPDATE users SET role = 'super_admin' WHERE phone = '9958556011' OR email = 'parmindersinghtalwar@gmail.com'`

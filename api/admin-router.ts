@@ -2,7 +2,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createRouter, publicQuery, adminQuery, superAdminQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { users, bookings, drivers, expenses, siteSettings } from "@db/schema";
+import { users, bookings, drivers, expenses, siteSettings, faqs, routes } from "@db/schema";
 import { eq, desc, sql, and, gte } from "drizzle-orm";
 import { sendFcmNotification } from "./lib/fcm";
 
@@ -512,6 +512,92 @@ Thank you for choosing EasyOutstation.`;
         ON DUPLICATE KEY UPDATE value = ${input.online ? "true" : "false"}
       `);
       return { online: input.online };
+    }),
+
+  // ── FAQs ──────────────────────────────────────────────────────────────
+  getPublicFaqs: publicQuery.query(async () => {
+    const db = getDb();
+    return await db.query.faqs.findMany({
+      where: eq(faqs.isActive, true),
+      orderBy: [faqs.position, faqs.id],
+    });
+  }),
+
+  getFaqs: adminQuery.query(async () => {
+    const db = getDb();
+    return await db.query.faqs.findMany({ orderBy: [faqs.position, faqs.id] });
+  }),
+
+  addFaq: adminQuery
+    .input(z.object({ question: z.string().min(1), answer: z.string().min(1) }))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      await db.insert(faqs).values({ question: input.question, answer: input.answer, isActive: true, position: 0 });
+      return { success: true };
+    }),
+
+  updateFaq: adminQuery
+    .input(z.object({ id: z.number(), question: z.string().min(1), answer: z.string().min(1), isActive: z.boolean() }))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      await db.update(faqs).set({ question: input.question, answer: input.answer, isActive: input.isActive }).where(eq(faqs.id, input.id));
+      return { success: true };
+    }),
+
+  deleteFaq: adminQuery
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      await db.delete(faqs).where(eq(faqs.id, input.id));
+      return { success: true };
+    }),
+
+  // ── Routes CRUD ────────────────────────────────────────────────────────
+  getAdminRoutes: adminQuery.query(async () => {
+    const db = getDb();
+    return await db.query.routes.findMany({ orderBy: [desc(routes.isPopular), routes.id] });
+  }),
+
+  addRoute: adminQuery
+    .input(z.object({
+      fromCity: z.string().min(1), toCity: z.string().min(1),
+      distanceKm: z.number().positive(), durationHours: z.number().positive(),
+      basePrice: z.number().positive(), isPopular: z.boolean().optional(), description: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      await db.insert(routes).values({
+        fromCity: input.fromCity, toCity: input.toCity,
+        distanceKm: input.distanceKm, durationHours: input.durationHours,
+        basePrice: input.basePrice.toString(), isPopular: input.isPopular ?? false,
+        description: input.description,
+      });
+      return { success: true };
+    }),
+
+  updateRoute: adminQuery
+    .input(z.object({
+      id: z.number(), fromCity: z.string().min(1), toCity: z.string().min(1),
+      distanceKm: z.number().positive(), durationHours: z.number().positive(),
+      basePrice: z.number().positive(), isPopular: z.boolean().optional(), description: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      await db.update(routes).set({
+        fromCity: input.fromCity, toCity: input.toCity,
+        distanceKm: input.distanceKm, durationHours: input.durationHours,
+        basePrice: input.basePrice.toString(), isPopular: input.isPopular ?? false,
+        description: input.description ?? null,
+      }).where(eq(routes.id, input.id));
+      return { success: true };
+    }),
+
+  deleteRoute: adminQuery
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      await db.delete(routes).where(eq(routes.id, input.id));
+      return { success: true };
     }),
 
   // ── Corporate enquiry lead capture ─────────────────────────────────────
