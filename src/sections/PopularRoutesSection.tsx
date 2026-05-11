@@ -44,9 +44,10 @@ export default function PopularRoutesSection() {
             return (
             <div key={route.id} onClick={() => navigate(`/cars?from=${route.fromCity}&to=${route.toCity}`)}
               className="group bg-white rounded-2xl border border-slate-100 hover:border-blue-200 overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5">
-              <div className="relative h-48 overflow-hidden">
+              <div className="relative h-52 overflow-hidden">
                 <img src={imgSrc} alt={landmark?.landmark || `${route.fromCity} to ${route.toCity}`}
                   onError={(e) => { (e.target as HTMLImageElement).src = "/hero-bg.jpg"; }}
+                  style={{ objectPosition: landmark?.objectPosition ?? "center center" }}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent" />
                 <div className="absolute top-3 left-3">

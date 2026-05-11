@@ -206,6 +206,7 @@ export default function RouteLanding() {
             <>
               <img src={lm.image} alt={lm.landmark}
                 onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                style={{ objectPosition: lm.objectPosition }}
                 className="absolute inset-0 w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-b from-slate-900/70 via-slate-900/60 to-slate-900/80" />
             </>
