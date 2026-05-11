@@ -40,7 +40,7 @@ export default function PopularRoutesSection() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {displayRoutes.map((route) => {
             const landmark = getLandmark(route.toCity);
-            const imgSrc = route.imageUrl || landmark?.image || "/hero-bg.jpg";
+            const imgSrc = landmark?.image || route.imageUrl || "/hero-bg.jpg";
             return (
             <div key={route.id} onClick={() => navigate(`/cars?from=${route.fromCity}&to=${route.toCity}`)}
               className="group bg-white rounded-2xl border border-slate-100 hover:border-blue-200 overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5">
