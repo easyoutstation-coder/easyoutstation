@@ -297,7 +297,7 @@ export default function HeroSection() {
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden">
       <div className="absolute inset-0">
-        <img src="/hero-bg.jpg" alt="Premium cab" className="w-full h-full object-cover" />
+        <img src="/hero-bg.jpg" alt="Premium cab" className="w-full h-full object-cover" fetchpriority="high" loading="eager" />
         <div className="absolute inset-0 bg-gradient-to-r from-slate-900/90 via-slate-900/75 to-slate-900/50" />
       </div>
 

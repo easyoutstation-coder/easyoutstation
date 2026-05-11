@@ -206,7 +206,8 @@ export default function BookingPage() {
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <Input value={quickName} onChange={e => setQuickName(e.target.value)}
-                      placeholder="Your full name" className="pl-10" disabled={quickOtpVerified} />
+                      placeholder="Your full name" className="pl-10" disabled={quickOtpVerified}
+                      autoComplete="name" />
                   </div>
                 </div>
 
@@ -218,7 +219,8 @@ export default function BookingPage() {
                     <Input value={quickPhone}
                       onChange={e => { setQuickPhone(e.target.value.replace(/\D/g, "").slice(0, 10)); setQuickOtpVerified(false); }}
                       placeholder="10-digit mobile number" className="pl-12"
-                      disabled={quickOtpVerified} maxLength={10} />
+                      disabled={quickOtpVerified} maxLength={10}
+                      type="tel" inputMode="numeric" autoComplete="tel-national" />
                     {quickOtpVerified && (
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-green-600 text-xs font-medium">
                         <Check className="w-3.5 h-3.5" /> Verified
@@ -791,7 +793,7 @@ export default function BookingPage() {
                         <Label>Full Name *</Label>
                         <div className="relative">
                           <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Enter your full name" className="pl-10" />
+                          <Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Enter your full name" className="pl-10" autoComplete="name" />
                         </div>
                       </div>
 
@@ -806,6 +808,7 @@ export default function BookingPage() {
                               placeholder="10-digit mobile number"
                               className="pl-12"
                               disabled={otpVerified}
+                              type="tel" inputMode="numeric" autoComplete="tel-national"
                             />
                           </div>
                           {otpVerified && (
@@ -833,7 +836,7 @@ export default function BookingPage() {
                         <Label>Email Address * <span className="text-xs text-muted-foreground">(confirmation will be sent here)</span></Label>
                         <div className="relative">
                           <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <Input type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} placeholder="your@email.com" className="pl-10" />
+                          <Input type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} placeholder="your@email.com" className="pl-10" autoComplete="email" inputMode="email" />
                         </div>
                       </div>
                     </div>
