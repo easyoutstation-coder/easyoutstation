@@ -1,72 +1,59 @@
-// All photo IDs verified from unsplash.com search results
-// CDN format: https://images.unsplash.com/photo-{ID}
-// objectPosition controls the crop focal point in the thumbnail card
+// All CDN URLs verified by fetching actual Unsplash photo pages
 export const routeLandmarks: Record<string, { image: string; landmark: string; objectPosition: string }> = {
   manali: {
-    // "Snow covered mountain with blue sky in the background" — Manali, Himachal Pradesh
-    image: "https://images.unsplash.com/photo-TUHfyBAuHeM?w=900&q=85&fit=crop",
+    image: "https://images.unsplash.com/photo-1677821374212-8c3e88292b1b?w=900&q=85&fit=crop&auto=format",
     landmark: "Rohtang Pass, Manali",
-    objectPosition: "center 40%",
+    objectPosition: "center 30%",
   },
   shimla: {
-    // "A church with a red cross on top of it" — Christ Church, The Ridge, Shimla
-    image: "https://images.unsplash.com/photo-KkNmK2chPDI?w=900&q=85&fit=crop",
+    image: "https://images.unsplash.com/photo-1648830802584-ec070946e591?w=900&q=85&fit=crop&auto=format",
     landmark: "Christ Church, Shimla",
     objectPosition: "center 35%",
   },
   chandigarh: {
-    // "White houses on hill slope" / Chandigarh cityscape
-    image: "https://images.unsplash.com/photo-xCHoD_VciQM?w=900&q=85&fit=crop",
-    landmark: "Capitol Complex, Chandigarh",
-    objectPosition: "center center",
+    image: "https://images.unsplash.com/photo-1697306323210-5972e68c622d?w=900&q=85&fit=crop&auto=format",
+    landmark: "Sukhna Lake, Chandigarh",
+    objectPosition: "center 40%",
   },
   jaipur: {
-    // "Hawa Mahal, India" — by Roberto Reposo (verified Unsplash photo)
-    image: "https://images.unsplash.com/photo-LgQoL6eOdHs?w=900&q=85&fit=crop",
+    image: "https://images.unsplash.com/photo-1578999935853-4ec5fa6c1f60?w=900&q=85&fit=crop&auto=format",
     landmark: "Hawa Mahal, Jaipur",
-    objectPosition: "center 30%",
+    objectPosition: "center 25%",
   },
   agra: {
-    // "Taj Mahal India" — verified Unsplash photo
-    image: "https://images.unsplash.com/photo-iWMfiInivp4?w=900&q=85&fit=crop",
+    image: "https://images.unsplash.com/photo-1564507592333-c60657eea523?w=900&q=85&fit=crop&auto=format",
     landmark: "Taj Mahal, Agra",
     objectPosition: "center 30%",
   },
   rishikesh: {
-    // "People on hanging bridge surrounded by tall trees" — Laxman Jhula, Rishikesh
-    image: "https://images.unsplash.com/photo-ER7jKSiFZig?w=900&q=85&fit=crop",
-    landmark: "Laxman Jhula, Rishikesh",
+    image: "https://images.unsplash.com/photo-1642163168826-37f2233297ac?w=900&q=85&fit=crop&auto=format",
+    landmark: "Ganges Valley, Rishikesh",
     objectPosition: "center 40%",
   },
   haridwar: {
-    // Haridwar photo by Nishant Chaudhary — verified Unsplash photo
-    image: "https://images.unsplash.com/photo-S_HfQaz9Peo?w=900&q=85&fit=crop",
+    image: "https://images.unsplash.com/photo-1653392083932-d5e9e7d2ccd1?w=900&q=85&fit=crop&auto=format",
     landmark: "Har Ki Pauri, Haridwar",
     objectPosition: "center 40%",
   },
   dehradun: {
-    // Dehradun valley / forest — fallback to misty landscape
-    image: "https://images.unsplash.com/photo-6ll3fSaEfjA?w=900&q=85&fit=crop",
-    landmark: "Forest Research Institute, Dehradun",
-    objectPosition: "center center",
-  },
-  mussoorie: {
-    // Mussoorie hills / Queen of Hills
-    image: "https://images.unsplash.com/photo-1589308078059-be1415eab4c3?w=900&q=85&fit=crop",
-    landmark: "Gun Hill, Mussoorie",
+    image: "https://images.unsplash.com/photo-1590351742170-8737ea2e8ce8?w=900&q=85&fit=crop&auto=format",
+    landmark: "Himalayan Highway, Dehradun",
     objectPosition: "center 40%",
   },
+  mussoorie: {
+    image: "https://images.unsplash.com/photo-1637387568999-92c68bdee212?w=900&q=85&fit=crop&auto=format",
+    landmark: "Queen of Hills, Mussoorie",
+    objectPosition: "center 35%",
+  },
   nainital: {
-    // Naina Range / Nainital — verified Unsplash photo by Rohan
-    image: "https://images.unsplash.com/photo-JnM71B4jPbU?w=900&q=85&fit=crop",
+    image: "https://images.unsplash.com/photo-1610715936287-6c2ad208cdbf?w=900&q=85&fit=crop&auto=format",
     landmark: "Naini Lake, Nainital",
     objectPosition: "center 45%",
   },
   mathura: {
-    // Mathura / Vrindavan temple
-    image: "https://images.unsplash.com/photo-1599662961645-09b4be7dc71a?w=900&q=85&fit=crop",
-    landmark: "Dwarkadhish Temple, Mathura",
-    objectPosition: "center 35%",
+    image: "https://images.unsplash.com/photo-1756454487537-1fa7ad135349?w=900&q=85&fit=crop&auto=format",
+    landmark: "Holi Festival, Vrindavan",
+    objectPosition: "center 40%",
   },
 };
 
