@@ -188,51 +188,58 @@ export default function RouteLanding() {
     schema,
   });
 
-  const lm = getLandmark(data.to);
-
   if (!data) {
     navigate("/routes");
     return null;
   }
+
+  const lm = getLandmark(data.to);
 
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
       <main className="pt-20">
         {/* Hero — landmark photo background */}
-        <div
-          className="relative bg-slate-900 text-white py-20 px-4 overflow-hidden min-h-[340px] flex items-center"
-          style={lm ? {
-            backgroundImage: `url(${lm.image})`,
-            backgroundSize: "cover",
-            backgroundPosition: lm.objectPosition,
-          } : undefined}
-        >
-          <div className="absolute inset-0 bg-gradient-to-b from-slate-900/60 via-slate-900/50 to-slate-900/75" />
-          <div className="relative w-full max-w-4xl mx-auto text-center">
-            <div className="flex items-center justify-center gap-2 text-blue-300 text-sm font-medium mb-4">
-              <MapPin className="w-4 h-4" />
-              {lm ? lm.landmark : "Outstation Cab Service"}
-            </div>
-            <h1 className="text-4xl md:text-5xl font-bold font-['DM_Serif_Display'] mb-4">
-              {data.from} to {data.to} Cab
-            </h1>
-            <p className="text-slate-200 text-lg mb-6 max-w-2xl mx-auto">{data.description}</p>
-            <div className="flex flex-wrap justify-center gap-6 text-sm mb-8">
-              <div className="flex items-center gap-2"><MapPin className="w-4 h-4 text-blue-400" />{data.distance} km</div>
-              <div className="flex items-center gap-2"><Clock className="w-4 h-4 text-blue-400" />{data.duration}</div>
-              <div className="flex items-center gap-2"><Shield className="w-4 h-4 text-green-400" />Verified Drivers</div>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" onClick={() => navigate(`/cars?from=${data.from}&to=${data.to}&distance=${data.distance}`)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 h-12 text-base gap-2">
-                Book Now — From ₹{data.fare.min.toLocaleString("en-IN")} <ArrowRight className="w-4 h-4" />
-              </Button>
-              <a href="https://wa.me/919958556011?text=Hi%2C%20I%20want%20to%20book%20a%20cab%20from%20Delhi" target="_blank" rel="noopener noreferrer">
-                <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10 h-12 px-8 text-base w-full sm:w-auto">
-                  WhatsApp Us
+        <div className="relative overflow-hidden bg-slate-900">
+          {/* Image in normal flow — same pattern as homepage cards (works with Unsplash CDN) */}
+          {lm && (
+            <img
+              src={lm.image}
+              alt={lm.landmark}
+              className="w-full object-cover"
+              style={{ height: 420, objectPosition: lm.objectPosition }}
+            />
+          )}
+          {!lm && <div style={{ height: 420 }} />}
+          {/* Dark overlay */}
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-900/55 via-slate-900/50 to-slate-900/80" />
+          {/* Text centered over image */}
+          <div className="absolute inset-0 flex items-center justify-center px-4 py-10">
+            <div className="text-white text-center max-w-4xl w-full">
+              <div className="flex items-center justify-center gap-2 text-blue-300 text-sm font-medium mb-4">
+                <MapPin className="w-4 h-4" />
+                {lm ? lm.landmark : "Outstation Cab Service"}
+              </div>
+              <h1 className="text-4xl md:text-5xl font-bold font-['DM_Serif_Display'] mb-4">
+                {data.from} to {data.to} Cab
+              </h1>
+              <p className="text-slate-200 text-lg mb-6 max-w-2xl mx-auto">{data.description}</p>
+              <div className="flex flex-wrap justify-center gap-6 text-sm mb-8">
+                <div className="flex items-center gap-2"><MapPin className="w-4 h-4 text-blue-400" />{data.distance} km</div>
+                <div className="flex items-center gap-2"><Clock className="w-4 h-4 text-blue-400" />{data.duration}</div>
+                <div className="flex items-center gap-2"><Shield className="w-4 h-4 text-green-400" />Verified Drivers</div>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button size="lg" onClick={() => navigate(`/cars?from=${data.from}&to=${data.to}&distance=${data.distance}`)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-8 h-12 text-base gap-2">
+                  Book Now — From ₹{data.fare.min.toLocaleString("en-IN")} <ArrowRight className="w-4 h-4" />
                 </Button>
-              </a>
+                <a href="https://wa.me/919958556011?text=Hi%2C%20I%20want%20to%20book%20a%20cab%20from%20Delhi" target="_blank" rel="noopener noreferrer">
+                  <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10 h-12 px-8 text-base w-full sm:w-auto">
+                    WhatsApp Us
+                  </Button>
+                </a>
+              </div>
             </div>
           </div>
         </div>
