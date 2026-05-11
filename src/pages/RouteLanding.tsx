@@ -188,6 +188,8 @@ export default function RouteLanding() {
     schema,
   });
 
+  const lm = getLandmark(data.to);
+
   if (!data) {
     navigate("/routes");
     return null;
@@ -197,23 +199,19 @@ export default function RouteLanding() {
     <div className="min-h-screen bg-white">
       <Navbar />
       <main className="pt-20">
-        {/* Hero */}
-        {(() => {
-          const lm = getLandmark(data.to);
-          return (
-        <div className="relative text-white py-20 px-4 overflow-hidden">
-          {lm ? (
-            <>
-              <img src={lm.image} alt={lm.landmark}
-                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                style={{ objectPosition: lm.objectPosition }}
-                className="absolute inset-0 w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-b from-slate-900/70 via-slate-900/60 to-slate-900/80" />
-            </>
-          ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-900 to-slate-800" />
+        {/* Hero — landmark photo background */}
+        <div className="relative bg-slate-900 text-white py-20 px-4 overflow-hidden min-h-[340px] flex items-center">
+          {lm && (
+            <img
+              src={lm.image}
+              alt={lm.landmark}
+              style={{ objectPosition: lm.objectPosition }}
+              onError={(e) => { (e.target as HTMLImageElement).remove(); }}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
           )}
-          <div className="relative max-w-4xl mx-auto text-center">
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-900/65 via-slate-900/55 to-slate-900/80" />
+          <div className="relative w-full max-w-4xl mx-auto text-center">
             <div className="flex items-center justify-center gap-2 text-blue-300 text-sm font-medium mb-4">
               <MapPin className="w-4 h-4" />
               {lm ? lm.landmark : "Outstation Cab Service"}
@@ -240,8 +238,6 @@ export default function RouteLanding() {
             </div>
           </div>
         </div>
-          );
-        })()}
 
         {/* Fare table */}
         <div className="max-w-4xl mx-auto px-4 py-12">
