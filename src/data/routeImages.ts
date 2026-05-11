@@ -6,14 +6,14 @@ export const routeLandmarks: Record<string, { image: string; landmark: string; o
     objectPosition: "center 30%",
   },
   shimla: {
-    image: "https://images.unsplash.com/photo-1648830802584-ec070946e591?w=900&q=85&fit=crop&auto=format",
-    landmark: "Christ Church, Shimla",
+    image: "https://images.unsplash.com/photo-1720706959875-23c3293a66c7?w=900&q=85&fit=crop&auto=format",
+    landmark: "Clock Tower, Shimla",
     objectPosition: "center 35%",
   },
   chandigarh: {
-    image: "https://images.unsplash.com/photo-1697306323210-5972e68c622d?w=900&q=85&fit=crop&auto=format",
+    image: "https://images.unsplash.com/photo-1731593597977-acde4913bd19?w=900&q=85&fit=crop&auto=format",
     landmark: "Sukhna Lake, Chandigarh",
-    objectPosition: "center 40%",
+    objectPosition: "center 50%",
   },
   jaipur: {
     image: "https://images.unsplash.com/photo-1578999935853-4ec5fa6c1f60?w=900&q=85&fit=crop&auto=format",
