@@ -10,7 +10,7 @@ const FALLBACK_FAQS = [
   { question: "How are your drivers verified?", answer: "Every driver goes through police background verification, document checks, and defensive driving training. We also collect customer ratings after each trip." },
   { question: "What if my driver is late?", answer: "If your driver is late beyond 30 minutes without prior notice, you are eligible for compensation. Contact us immediately at easyoutstation@gmail.com." },
   { question: "Can I cancel my booking?", answer: "Yes. Free cancellation up to 24 hours before pickup. 50% refund for cancellations within 12–24 hours. No refund for cancellations within 12 hours of pickup." },
-  { question: "How do I pay?", answer: "A small advance of ₹100 is collected online to confirm your booking. The remaining balance is paid directly to the driver at pickup. We accept cash, UPI, and card." },
+  { question: "How do I pay?", answer: "A 10% advance is collected online to confirm your booking. The remaining 90% is paid directly to the driver at pickup. We accept cash, UPI, and card." },
   { question: "Which cities do you serve?", answer: "We serve outstation routes from Delhi to Manali, Dehradun, Rishikesh, Haridwar, Jaipur, Agra, Chandigarh, Shimla and all nearby destinations within 100km of these cities." },
   { question: "Can I book a round trip?", answer: "Yes. Round trips are calculated as double the one-way distance. Select 'Round Trip' during booking and the fare is shown transparently." },
   { question: "What types of cars are available?", answer: "We offer Swift Dzire (sedan), Toyota Etios (sedan), Maruti Ertiga (MUV), Mahindra Xylo (SUV), Kia Carens (premium), Toyota Innova, Innova Crysta, and Innova Hycross (luxury)." },
