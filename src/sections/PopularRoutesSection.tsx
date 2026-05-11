@@ -31,7 +31,7 @@ export default function PopularRoutesSection() {
               All-inclusive pricing — toll, parking & driver charges shown upfront.
             </p>
           </div>
-          <Button variant="outline" onClick={() => navigate("/cars")}
+          <Button variant="outline" onClick={() => navigate("/routes")}
             className="shrink-0 border-slate-200 text-slate-600 hover:text-blue-700 hover:border-blue-200 hidden md:flex items-center gap-2">
             View All Routes <ArrowRight className="w-4 h-4" />
           </Button>
