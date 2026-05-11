@@ -89,6 +89,17 @@ export default function CarsPage() {
     search: searchQuery || undefined,
   });
 
+  const { data: discountConfig } = trpc.admin.getDiscount.useQuery();
+  const applyDiscount = (fare: number): number => {
+    if (!discountConfig?.enabled) return fare;
+    const raw = discountConfig.type === "percentage"
+      ? (fare * discountConfig.value) / 100
+      : discountConfig.value;
+    const saving = discountConfig.maxDiscount ? Math.min(raw, discountConfig.maxDiscount) : raw;
+    return Math.round(fare - saving);
+  };
+  const discountAmount = (fare: number): number => fare - applyDiscount(fare);
+
   const fromCity = searchParams.get("from") || "";
   const toCity = searchParams.get("to") || "";
   const distanceKm = parseInt(searchParams.get("distance") || "0");
@@ -385,6 +396,26 @@ export default function CarsPage() {
           </div>
         </div>
 
+        {/* Trust + Promo bar */}
+        <div className="bg-slate-50 border-b border-slate-100">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-2.5 flex flex-wrap items-center gap-x-6 gap-y-1.5">
+            {discountConfig?.enabled && (
+              <span className="flex items-center gap-1.5 text-xs font-semibold text-orange-700 bg-orange-100 px-2.5 py-1 rounded-full">
+                🏷️ {discountConfig.verbiage}
+              </span>
+            )}
+            <span className="flex items-center gap-1.5 text-xs text-slate-600">
+              <span className="text-green-500 font-bold">✓</span> No last-minute cancellations
+            </span>
+            <span className="flex items-center gap-1.5 text-xs text-slate-600">
+              <span className="text-green-500 font-bold">✓</span> Every car inspected before dispatch
+            </span>
+            <span className="flex items-center gap-1.5 text-xs text-slate-600">
+              <span className="text-green-500 font-bold">✓</span> Verified drivers · Fixed fares
+            </span>
+          </div>
+        </div>
+
         {/* Car Grid */}
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
           {isLoading ? (
@@ -468,14 +499,22 @@ export default function CarsPage() {
                         <p className="text-xs text-slate-500">{car.brand}</p>
                       </div>
                       <div className="text-right">
-                        {calcFare(car.pricePerKm) ? (
-                          <>
-                            <div className="text-lg font-bold text-blue-700">
-                              ₹{calcFare(car.pricePerKm)?.toLocaleString("en-IN")}
-                            </div>
-                            <div className="text-[10px] text-slate-400">total · ₹{car.pricePerKm}/km</div>
-                          </>
-                        ) : (
+                        {calcFare(car.pricePerKm) ? (() => {
+                          const fare = calcFare(car.pricePerKm)!;
+                          const discounted = applyDiscount(fare);
+                          const saving = discountAmount(fare);
+                          return (
+                            <>
+                              {saving > 0 && <div className="text-xs text-slate-400 line-through">₹{fare.toLocaleString("en-IN")}</div>}
+                              <div className={`text-lg font-bold ${saving > 0 ? "text-green-700" : "text-blue-700"}`}>
+                                ₹{discounted.toLocaleString("en-IN")}
+                              </div>
+                              {saving > 0
+                                ? <div className="text-[10px] text-green-600 font-medium">Save ₹{saving.toLocaleString("en-IN")}</div>
+                                : <div className="text-[10px] text-slate-400">total · ₹{car.pricePerKm}/km</div>}
+                            </>
+                          );
+                        })() : (
                           <>
                             <div className="text-lg font-bold text-blue-700">₹{car.pricePerKm}</div>
                             <div className="text-xs text-slate-400">/km</div>
@@ -487,7 +526,7 @@ export default function CarsPage() {
                     {calcFare(car.pricePerKm) && (
                       <div className="flex items-center justify-between text-[11px] mb-3 bg-slate-50 rounded-lg px-2.5 py-1.5">
                         <span className="text-slate-400">₹{car.pricePerKm}/km × {effectiveKm}km + ₹{DRIVER_CHARGE * tripDays} driver</span>
-                        <span className="text-green-700 font-semibold">₹{Math.max(100, Math.round(calcFare(car.pricePerKm)! * 0.1)).toLocaleString("en-IN")} advance</span>
+                        <span className="text-green-700 font-semibold">₹{Math.max(100, Math.round(applyDiscount(calcFare(car.pricePerKm)!) * 0.1)).toLocaleString("en-IN")} advance</span>
                       </div>
                     )}
                     <div className="flex items-center gap-3 text-xs text-muted-foreground mb-4">

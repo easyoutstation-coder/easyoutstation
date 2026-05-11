@@ -14,7 +14,7 @@ import {
   LayoutDashboard, Users, Car, IndianRupee, Clock, CheckCircle, XCircle,
   Phone, UserCog, StickyNote, CheckCheck, X, Plus, Pencil, Trash2,
   MessageCircle, Mail, AlertTriangle, TrendingUp, MapPin, Wallet, ShieldCheck,
-  Globe, WifiOff, Search, FileText, Bot, Send, Loader2, ChevronRight,
+  Globe, WifiOff, Search, FileText, Bot, Send, Loader2, ChevronRight, Tag,
 } from "lucide-react";
 
 type BookingStatus = "pending" | "confirmed" | "completed" | "cancelled";
@@ -152,6 +152,13 @@ export default function AdminPage() {
   const { data: expensesList } = trpc.admin.getExpenses.useQuery(undefined, { enabled: isSuperAdmin });
   const { data: siteStatus, refetch: refetchSiteStatus } = trpc.admin.getSiteStatus.useQuery(undefined, { enabled: isSuperAdmin });
   const setSiteStatus = trpc.admin.setSiteStatus.useMutation({ onSuccess: () => refetchSiteStatus() });
+  const { data: discountData, refetch: refetchDiscount } = trpc.admin.getDiscount.useQuery(undefined, { enabled: isSuperAdmin });
+  const setDiscount = trpc.admin.setDiscount.useMutation({ onSuccess: () => refetchDiscount() });
+  const [discountForm, setDiscountForm] = useState({ enabled: false, type: "percentage" as "percentage" | "fixed", value: 10, maxDiscount: "" as string, verbiage: "10% off on your first ride!" });
+  const [discountSaved, setDiscountSaved] = useState(false);
+  useEffect(() => {
+    if (discountData) setDiscountForm({ ...discountData, maxDiscount: discountData.maxDiscount?.toString() ?? "" });
+  }, [discountData]);
 
   const confirmBooking = trpc.admin.confirmBooking.useMutation({
     onSuccess: (res) => {
@@ -481,6 +488,100 @@ export default function AdminPage() {
                 </CardContent>
               </Card>
             )}
+
+            {/* Promotions / Discount toggle */}
+            {isSuperAdmin && (
+              <Card className={`border-2 ${discountForm.enabled ? "border-orange-300 bg-orange-50" : "border-slate-200 bg-white"}`}>
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-between gap-4 mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${discountForm.enabled ? "bg-orange-100" : "bg-slate-100"}`}>
+                        <Tag className={`w-5 h-5 ${discountForm.enabled ? "text-orange-600" : "text-slate-500"}`} />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-slate-900">Promotion / Discount</p>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          {discountForm.enabled ? "Active — shown to all users on car selection" : "Inactive — no discount applied"}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setDiscountForm(f => ({ ...f, enabled: !f.enabled }))}
+                      className={`relative inline-flex h-7 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${discountForm.enabled ? "bg-orange-500" : "bg-slate-300"}`}
+                      style={{ width: "52px" }}
+                    >
+                      <span className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-lg transition duration-200 ease-in-out ${discountForm.enabled ? "translate-x-6" : "translate-x-0"}`} />
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1 block">Discount Type</label>
+                      <select
+                        value={discountForm.type}
+                        onChange={e => setDiscountForm(f => ({ ...f, type: e.target.value as "percentage" | "fixed" }))}
+                        className="w-full h-9 px-3 rounded-lg border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-400/30 focus:border-orange-400"
+                      >
+                        <option value="percentage">Percentage (%)</option>
+                        <option value="fixed">Fixed Amount (₹)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1 block">
+                        {discountForm.type === "percentage" ? "Discount %" : "Discount ₹"}
+                      </label>
+                      <Input
+                        type="number" min={0}
+                        value={discountForm.value}
+                        onChange={e => setDiscountForm(f => ({ ...f, value: parseFloat(e.target.value) || 0 }))}
+                        className="h-9 text-sm"
+                        placeholder={discountForm.type === "percentage" ? "e.g. 20" : "e.g. 200"}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1 block">Max Discount Cap (₹) — optional</label>
+                      <Input
+                        type="number" min={0}
+                        value={discountForm.maxDiscount}
+                        onChange={e => setDiscountForm(f => ({ ...f, maxDiscount: e.target.value }))}
+                        className="h-9 text-sm"
+                        placeholder="e.g. 200 — leave blank for no cap"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1 block">Promo Verbiage (shown to users)</label>
+                      <Input
+                        value={discountForm.verbiage}
+                        onChange={e => setDiscountForm(f => ({ ...f, verbiage: e.target.value }))}
+                        className="h-9 text-sm"
+                        placeholder="e.g. 20% off on rides up to ₹200"
+                      />
+                    </div>
+                  </div>
+                  {discountForm.verbiage && (
+                    <div className="mt-3 flex items-center gap-2 px-3 py-2 bg-orange-100 border border-orange-200 rounded-lg">
+                      <Tag className="w-3.5 h-3.5 text-orange-600 shrink-0" />
+                      <span className="text-xs text-orange-800 font-medium">Preview: {discountForm.verbiage}</span>
+                    </div>
+                  )}
+                  <div className="mt-3 flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        setDiscount.mutate({ ...discountForm, maxDiscount: discountForm.maxDiscount ? parseFloat(discountForm.maxDiscount) : null });
+                        setDiscountSaved(true);
+                        setTimeout(() => setDiscountSaved(false), 2000);
+                      }}
+                      disabled={setDiscount.isPending}
+                      className="bg-orange-500 hover:bg-orange-600 text-white"
+                    >
+                      {setDiscount.isPending ? "Saving…" : discountSaved ? "Saved ✓" : "Save Changes"}
+                    </Button>
+                    <span className="text-xs text-slate-400">Changes apply site-wide immediately</span>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <StatCard icon={Clock} label="Pending" value={stats?.pending ?? "—"} />
               <StatCard icon={CheckCircle} label="Confirmed" value={stats?.confirmed ?? "—"} />

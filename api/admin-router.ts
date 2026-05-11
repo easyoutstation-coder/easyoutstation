@@ -502,6 +502,35 @@ Thank you for choosing EasyOutstation.`;
       return { success: true };
     }),
 
+  // ── Discount / Promotions ─────────────────────────────────────────────
+  getDiscount: publicQuery.query(async () => {
+    try {
+      const db = getDb();
+      const rows = await db.select().from(siteSettings).where(eq(siteSettings.key, "discount")).limit(1);
+      if (!rows[0]) return { enabled: false, type: "percentage" as const, value: 10, maxDiscount: null as number | null, verbiage: "10% off on your first ride!" };
+      return JSON.parse(rows[0].value) as { enabled: boolean; type: "percentage" | "fixed"; value: number; maxDiscount: number | null; verbiage: string };
+    } catch {
+      return { enabled: false, type: "percentage" as const, value: 10, maxDiscount: null as number | null, verbiage: "10% off on your first ride!" };
+    }
+  }),
+
+  setDiscount: superAdminQuery
+    .input(z.object({
+      enabled: z.boolean(),
+      type: z.enum(["percentage", "fixed"]),
+      value: z.number().min(0),
+      maxDiscount: z.number().nullable(),
+      verbiage: z.string(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      await db.execute(sql`
+        INSERT INTO siteSettings (\`key\`, value) VALUES ('discount', ${JSON.stringify(input)})
+        ON DUPLICATE KEY UPDATE value = ${JSON.stringify(input)}
+      `);
+      return input;
+    }),
+
   // ── Site on/off ────────────────────────────────────────────────────────
   getSiteStatus: publicQuery.query(async () => {
     try {
