@@ -18,7 +18,7 @@ export default function CancellationPolicy() {
         <div className="max-w-3xl mx-auto px-4 py-12 space-y-6">
           {[
             { icon: CheckCircle, color: "text-green-600 bg-green-50 border-green-200", title: "Free Cancellation — More than 24 Hours Before Pickup", desc: "Cancel anytime up to 24 hours before your scheduled pickup and receive a 100% refund. No questions asked." },
-            { icon: AlertCircle, color: "text-amber-600 bg-amber-50 border-amber-200", title: "50% Refund — Between 12 to 24 Hours Before Pickup", desc: "If you cancel between 12 and 24 hours before pickup, you will receive a 50% refund of the total fare paid." },
+            { icon: AlertCircle, color: "text-amber-600 bg-amber-50 border-amber-200", title: "50% Refund — Between 12 to 24 Hours Before Pickup", desc: "If you cancel between 12 and 24 hours before pickup, you will receive a 50% refund of the advance amount paid online." },
             { icon: XCircle, color: "text-red-600 bg-red-50 border-red-200", title: "No Refund — Less Than 12 Hours Before Pickup", desc: "Cancellations made within 12 hours of the scheduled pickup time are non-refundable due to driver allocation costs." },
           ].map((item, i) => (
             <div key={i} className={`p-5 rounded-xl border ${item.color}`}>

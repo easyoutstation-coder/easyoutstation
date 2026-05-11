@@ -502,7 +502,7 @@ export default function BookingPage() {
                 A confirmation email has been sent to <strong>{customerEmail}</strong>.<br />
                 Driver details will be shared within <strong>60 minutes</strong>.<br />
                 {advancePaid
-                  ? <>Balance of <strong>₹{(totalPrice - advanceAmount).toLocaleString("en-IN")}</strong> payable to driver at pickup.</>
+                  ? <>Balance of <strong>₹{(totalPrice - Math.max(100, Math.round(totalPrice * 0.1))).toLocaleString("en-IN")}</strong> payable to driver at pickup.</>
                   : <>Full amount of <strong>₹{totalPrice.toLocaleString("en-IN")}</strong> payable to driver at pickup.</>
                 }
               </p>
