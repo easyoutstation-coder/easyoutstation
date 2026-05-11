@@ -6,9 +6,9 @@ export const routeLandmarks: Record<string, { image: string; landmark: string; o
     objectPosition: "center 30%",
   },
   shimla: {
-    image: "https://images.unsplash.com/photo-1650471689517-592c882004d5?w=900&q=85&fit=crop&auto=format",
-    landmark: "Christ Church Clock Tower, Shimla",
-    objectPosition: "center 20%",
+    image: "https://images.pexels.com/photos/19294061/pexels-photo-19294061.jpeg?auto=compress&cs=tinysrgb&w=900",
+    landmark: "Clock Tower, Shimla",
+    objectPosition: "center center",
   },
   chandigarh: {
     image: "https://images.unsplash.com/photo-1731593597977-acde4913bd19?w=900&q=85&fit=crop&auto=format",
