@@ -5,10 +5,10 @@ import { ArrowRight, Clock, Route, TrendingUp, CheckCircle, MapPin } from "lucid
 import { getLandmark } from "@/data/routeImages";
 
 const fallbackRoutes = [
-  { id: 1, fromCity: "Delhi", toCity: "Manali", distanceKm: 540, durationHours: 12, basePrice: "6,480", imageUrl: "", description: "Scenic Himalayan drive via Chandigarh & Kullu Valley", highlights: ["Mountain road experts", "Crysta recommended", "Scenic stops included"] },
-  { id: 2, fromCity: "Delhi", toCity: "Dehradun", distanceKm: 250, durationHours: 5, basePrice: "3,000", imageUrl: "", description: "Gateway to Uttarakhand — connect to Mussoorie", highlights: ["Weekend favourite", "Smooth highway", "5-6 hrs journey"] },
-  { id: 3, fromCity: "Delhi", toCity: "Rishikesh", distanceKm: 240, durationHours: 5, basePrice: "2,880", imageUrl: "", description: "Yoga capital — also covers Haridwar on the way", highlights: ["Covers Haridwar", "Adventure hub", "Early morning slots"] },
-  { id: 4, fromCity: "Delhi", toCity: "Jaipur", distanceKm: 280, durationHours: 5, basePrice: "3,360", imageUrl: "", description: "The Pink City — palaces, food & heritage", highlights: ["Smooth expressway", "Day trip possible", "Heritage route"] },
+  { id: 1, fromCity: "Delhi", toCity: "Manali", distanceKm: 540, durationHours: 12, basePrice: "6,730", imageUrl: "", description: "Scenic Himalayan drive via Chandigarh & Kullu Valley", highlights: ["Mountain road experts", "Crysta recommended", "Scenic stops included"] },
+  { id: 2, fromCity: "Delhi", toCity: "Dehradun", distanceKm: 250, durationHours: 5, basePrice: "3,250", imageUrl: "", description: "Gateway to Uttarakhand — connect to Mussoorie", highlights: ["Weekend favourite", "Smooth highway", "5-6 hrs journey"] },
+  { id: 3, fromCity: "Delhi", toCity: "Rishikesh", distanceKm: 240, durationHours: 5, basePrice: "3,130", imageUrl: "", description: "Yoga capital — also covers Haridwar on the way", highlights: ["Covers Haridwar", "Adventure hub", "Early morning slots"] },
+  { id: 4, fromCity: "Delhi", toCity: "Jaipur", distanceKm: 280, durationHours: 5, basePrice: "3,610", imageUrl: "", description: "The Pink City — palaces, food & heritage", highlights: ["Smooth expressway", "Day trip possible", "Heritage route"] },
 ];
 
 export default function PopularRoutesSection() {
@@ -28,7 +28,7 @@ export default function PopularRoutesSection() {
               Fixed Fares. No Surprises.
             </h2>
             <p className="text-slate-500 max-w-lg text-sm">
-              All-inclusive pricing — toll, parking & driver charges shown upfront.
+              Driver charges included in fare. Toll & parking charged at actuals.
             </p>
           </div>
           <Button variant="outline" onClick={() => navigate("/routes")}
@@ -95,7 +95,7 @@ export default function PopularRoutesSection() {
                 )}
 
                 <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                  <span className="text-[10px] text-slate-400">All-inclusive · No hidden charges</span>
+                  <span className="text-[10px] text-slate-400">Driver charge included · Toll at actuals</span>
                   <span className="text-xs font-semibold text-blue-600 group-hover:underline flex items-center gap-1">
                     Book Now <ArrowRight className="w-3 h-3" />
                   </span>

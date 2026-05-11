@@ -6,11 +6,11 @@ import { useSeo } from "@/hooks/useSeo";
 import { trpc } from "@/providers/trpc";
 
 const FALLBACK_FAQS = [
-  { question: "Are there any hidden charges?", answer: "No. The price shown includes per-km rate, driver charges, and estimated toll. Parking charges are the only additional cost and are charged at actuals." },
+  { question: "Are there any hidden charges?", answer: "No hidden charges or markups. The fare shown includes per-km rate and driver charges (₹250/day). Toll and parking are charged at actuals — exactly what is paid on the road, with no markup." },
   { question: "How are your drivers verified?", answer: "Every driver goes through police background verification, document checks, and defensive driving training. We also collect customer ratings after each trip." },
   { question: "What if my driver is late?", answer: "If your driver is late beyond 30 minutes without prior notice, you are eligible for compensation. Contact us immediately at easyoutstation@gmail.com." },
   { question: "Can I cancel my booking?", answer: "Yes. Free cancellation up to 24 hours before pickup. 50% refund for cancellations within 12–24 hours. No refund for cancellations within 12 hours of pickup." },
-  { question: "How do I pay?", answer: "Payment is made to the driver at the time of pickup or drop. We accept cash, UPI, and card. No advance payment required to confirm booking." },
+  { question: "How do I pay?", answer: "A small advance of ₹100 is collected online to confirm your booking. The remaining balance is paid directly to the driver at pickup. We accept cash, UPI, and card." },
   { question: "Which cities do you serve?", answer: "We serve outstation routes from Delhi to Manali, Dehradun, Rishikesh, Haridwar, Jaipur, Agra, Chandigarh, Shimla and all nearby destinations within 100km of these cities." },
   { question: "Can I book a round trip?", answer: "Yes. Round trips are calculated as double the one-way distance. Select 'Round Trip' during booking and the fare is shown transparently." },
   { question: "What types of cars are available?", answer: "We offer Swift Dzire (sedan), Toyota Etios (sedan), Maruti Ertiga (MUV), Mahindra Xylo (SUV), Kia Carens (premium), Toyota Innova, Innova Crysta, and Innova Hycross (luxury)." },

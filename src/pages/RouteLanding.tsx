@@ -14,7 +14,7 @@ const ROUTES: Record<string, {
 }> = {
   "delhi-to-manali": {
     from: "Delhi", to: "Manali", distance: 540, duration: "12-14 hours",
-    fare: { min: 11500, max: 16500 }, toll: 850,
+    fare: { min: 6730, max: 12130 }, toll: 850,
     description: "Book Delhi to Manali cab at fixed fares. Experienced mountain drivers, comfortable cars, no hidden charges. One way and round trip available.",
     highlights: ["Experienced mountain drivers", "AC cars with comfortable seats", "Available 24/7", "Fixed price — no surge"],
     faqs: [
@@ -25,7 +25,7 @@ const ROUTES: Record<string, {
   },
   "delhi-to-shimla": {
     from: "Delhi", to: "Shimla", distance: 350, duration: "7-8 hours",
-    fare: { min: 7500, max: 11000 }, toll: 650,
+    fare: { min: 4450, max: 8000 }, toll: 650,
     description: "Book Delhi to Shimla cab at fixed fares. Professional drivers, AC cars, door-to-door pickup. One way and round trip available.",
     highlights: ["Hill station specialists", "AC cars", "Available 24/7", "No hidden charges"],
     faqs: [
@@ -35,7 +35,7 @@ const ROUTES: Record<string, {
   },
   "delhi-to-chandigarh": {
     from: "Delhi", to: "Chandigarh", distance: 260, duration: "4-5 hours",
-    fare: { min: 5500, max: 8500 }, toll: 380,
+    fare: { min: 3370, max: 6070 }, toll: 380,
     description: "Book Delhi to Chandigarh cab at fixed fares. Fast, comfortable and reliable. One way and round trip available.",
     highlights: ["Fast highway route", "4-5 hours journey", "Fixed fares", "Verified drivers"],
     faqs: [
@@ -45,17 +45,17 @@ const ROUTES: Record<string, {
   },
   "delhi-to-jaipur": {
     from: "Delhi", to: "Jaipur", distance: 280, duration: "4-5 hours",
-    fare: { min: 5800, max: 8800 }, toll: 350,
+    fare: { min: 3610, max: 6410 }, toll: 350,
     description: "Book Delhi to Jaipur cab at fixed fares. Comfortable AC cabs, experienced drivers, on-time pickup guaranteed.",
     highlights: ["Express highway route", "4-5 hours", "Fixed fares", "AC cars"],
     faqs: [
       { q: "How far is Delhi to Jaipur by cab?", a: "Delhi to Jaipur is 280 km via NH48 (Delhi-Mumbai Expressway) and takes 4-5 hours." },
-      { q: "What is the cheapest cab from Delhi to Jaipur?", a: "Swift Dzire starts from ₹5,800 one way. All prices include driver charges and toll estimates." },
+      { q: "What is the cheapest cab from Delhi to Jaipur?", a: "Swift Dzire starts from ₹3,610 one way. Price includes driver charges. Toll is charged at actuals." },
     ]
   },
   "delhi-to-agra": {
     from: "Delhi", to: "Agra", distance: 230, duration: "3-4 hours",
-    fare: { min: 4800, max: 7500 }, toll: 290,
+    fare: { min: 3010, max: 5310 }, toll: 290,
     description: "Book Delhi to Agra cab at fixed fares. Visit the Taj Mahal comfortably. Same day return trips available.",
     highlights: ["Yamuna Expressway route", "3-4 hours", "Same day return available", "Taj Mahal specialists"],
     faqs: [
@@ -65,7 +65,7 @@ const ROUTES: Record<string, {
   },
   "delhi-to-rishikesh": {
     from: "Delhi", to: "Rishikesh", distance: 250, duration: "5-6 hours",
-    fare: { min: 5200, max: 8200 }, toll: 450,
+    fare: { min: 3250, max: 5750 }, toll: 450,
     description: "Book Delhi to Rishikesh cab at fixed fares. Adventure awaits! Comfortable journey to the yoga and rafting capital.",
     highlights: ["Scenic route", "5-6 hours", "Fixed fares", "Adventure ready"],
     faqs: [
@@ -75,30 +75,30 @@ const ROUTES: Record<string, {
   },
   "delhi-to-dehradun": {
     from: "Delhi", to: "Dehradun", distance: 300, duration: "5-6 hours",
-    fare: { min: 6200, max: 9500 }, toll: 420,
+    fare: { min: 3850, max: 6850 }, toll: 420,
     description: "Book Delhi to Dehradun cab at fixed fares. Gateway to Uttarakhand. Comfortable, reliable and affordable.",
     highlights: ["NH58 highway route", "5-6 hours", "Fixed fares", "Uttarakhand specialists"],
     faqs: [
       { q: "How far is Delhi to Dehradun by cab?", a: "Delhi to Dehradun is approximately 300 km and takes 5-6 hours by cab." },
-      { q: "What is the fare for Delhi to Dehradun cab?", a: "Fares start from ₹6,200 for a sedan to ₹9,500 for a premium SUV, inclusive of driver charges and toll." },
+      { q: "What is the fare for Delhi to Dehradun cab?", a: "Fares start from ₹3,850 for a sedan to ₹6,850 for a premium SUV. Price includes driver charges. Toll is charged at actuals." },
     ]
   },
   "delhi-to-haridwar": {
     from: "Delhi", to: "Haridwar", distance: 220, duration: "4-5 hours",
-    fare: { min: 4600, max: 7200 }, toll: 380,
+    fare: { min: 2890, max: 5090 }, toll: 380,
     description: "Book Delhi to Haridwar cab at fixed fares. Visit the holy Ganga Ghats with comfort. One way and round trip available.",
     highlights: ["NH58 expressway route", "4-5 hours", "Fixed fares", "Pilgrimage specialists"],
     faqs: [
       { q: "How far is Delhi to Haridwar by cab?", a: "Delhi to Haridwar is approximately 220 km via NH58 and takes 4-5 hours depending on traffic." },
       { q: "Is a same-day return trip from Delhi to Haridwar possible?", a: "Yes, same-day round trips are very popular. Leave Delhi by 5 AM and you can visit Har Ki Pauri and return the same evening." },
-      { q: "What is the cheapest Delhi to Haridwar cab fare?", a: "A Swift Dzire starts from ₹4,600 one way, inclusive of driver charges and toll." },
+      { q: "What is the cheapest Delhi to Haridwar cab fare?", a: "A Swift Dzire starts from ₹2,890 one way. Price includes driver charges. Toll is charged at actuals." },
     ]
   },
   "delhi-to-mussoorie": {
     from: "Delhi", to: "Mussoorie", distance: 310, duration: "6-7 hours",
-    fare: { min: 6400, max: 9800 }, toll: 430,
+    fare: { min: 3970, max: 7070 }, toll: 430,
     description: "Book Delhi to Mussoorie cab at fixed fares. The Queen of Hills awaits. Scenic mountain drive with experienced drivers.",
-    highlights: ["Scenic mountain route", "6-7 hours", "Experienced hill drivers", "Fixed all-inclusive fares"],
+    highlights: ["Scenic mountain route", "6-7 hours", "Experienced hill drivers", "Fixed fares"],
     faqs: [
       { q: "How far is Delhi to Mussoorie by cab?", a: "Delhi to Mussoorie is approximately 310 km via Dehradun and takes 6-7 hours by road." },
       { q: "Which is the best route from Delhi to Mussoorie?", a: "The best route is via NH44 to Dehradun, then the mountain road to Mussoorie. Our drivers take the safest hill route." },
@@ -107,24 +107,24 @@ const ROUTES: Record<string, {
   },
   "delhi-to-nainital": {
     from: "Delhi", to: "Nainital", distance: 310, duration: "6-7 hours",
-    fare: { min: 6400, max: 9800 }, toll: 420,
+    fare: { min: 3970, max: 7070 }, toll: 420,
     description: "Book Delhi to Nainital cab at fixed fares. Discover the lake city of Uttarakhand. Safe mountain driving with verified drivers.",
     highlights: ["Kumaon hills specialists", "6-7 hours", "Fixed fares", "Lake city destination"],
     faqs: [
       { q: "How far is Delhi to Nainital by cab?", a: "Delhi to Nainital is approximately 310 km and takes 6-7 hours via Moradabad and Kathgodam." },
-      { q: "What is the cab fare from Delhi to Nainital?", a: "Fares start from ₹6,400 for a sedan and go up to ₹9,800 for a premium SUV, all inclusive." },
+      { q: "What is the cab fare from Delhi to Nainital?", a: "Fares start from ₹3,970 for a sedan to ₹7,070 for a premium SUV. Price includes driver charges. Toll is charged at actuals." },
       { q: "Is it safe to drive to Nainital?", a: "Yes. Our drivers are experienced on the Kumaon mountain roads. We recommend daytime travel for the mountain stretch." },
     ]
   },
   "delhi-to-mathura": {
     from: "Delhi", to: "Mathura", distance: 175, duration: "2-3 hours",
-    fare: { min: 3800, max: 6000 }, toll: 250,
+    fare: { min: 2350, max: 4100 }, toll: 250,
     description: "Book Delhi to Mathura cab at fixed fares. Visit the birthplace of Lord Krishna. Quick and comfortable same-day trip from Delhi.",
     highlights: ["Yamuna Expressway route", "2-3 hours", "Same day return popular", "Pilgrimage destination"],
     faqs: [
       { q: "How far is Delhi to Mathura by cab?", a: "Delhi to Mathura is approximately 175 km via Yamuna Expressway and takes just 2-3 hours." },
       { q: "Can I do Delhi to Mathura-Vrindavan in a day?", a: "Yes, absolutely. A day trip covering Mathura and Vrindavan (just 15 km apart) is very popular and comfortable by cab." },
-      { q: "What is the cheapest Delhi to Mathura cab fare?", a: "A Swift Dzire starts from ₹3,800 one way including driver charges and toll." },
+      { q: "What is the cheapest Delhi to Mathura cab fare?", a: "A Swift Dzire starts from ₹2,350 one way. Price includes driver charges. Toll is charged at actuals." },
     ]
   },
 };

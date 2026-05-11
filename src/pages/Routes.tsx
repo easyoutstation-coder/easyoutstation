@@ -7,14 +7,14 @@ import { useSeo } from "@/hooks/useSeo";
 import { getLandmark } from "@/data/routeImages";
 
 const routes = [
-  { from: "Delhi", to: "Manali", km: 540, hrs: 12, sedan: "6,480", innova: "10,800", highlights: ["Rohtang Pass", "Solang Valley", "Old Manali"], toll: 850 },
-  { from: "Delhi", to: "Dehradun", km: 250, hrs: 5, sedan: "3,000", innova: "5,000", highlights: ["Mussoorie connect", "Rajaji Park", "Doon Valley"], toll: 420 },
-  { from: "Delhi", to: "Rishikesh", km: 240, hrs: 5, sedan: "2,880", innova: "4,800", highlights: ["River Rafting", "Laxman Jhula", "Haridwar stop"], toll: 450 },
-  { from: "Delhi", to: "Haridwar", km: 210, hrs: 4, sedan: "2,520", innova: "4,200", highlights: ["Har ki Pauri", "Ganga Aarti", "Rishikesh connect"], toll: 430 },
-  { from: "Delhi", to: "Jaipur", km: 280, hrs: 5, sedan: "3,360", innova: "5,600", highlights: ["Amber Fort", "Hawa Mahal", "City Palace"], toll: 350 },
-  { from: "Delhi", to: "Agra", km: 230, hrs: 4, sedan: "2,760", innova: "4,600", highlights: ["Taj Mahal", "Agra Fort", "Fatehpur Sikri"], toll: 290 },
-  { from: "Delhi", to: "Chandigarh", km: 250, hrs: 5, sedan: "3,000", innova: "5,000", highlights: ["Rock Garden", "Sukhna Lake", "Shimla gateway"], toll: 380 },
-  { from: "Delhi", to: "Shimla", km: 350, hrs: 8, sedan: "4,200", innova: "7,000", highlights: ["Mall Road", "Jakhu Temple", "Kufri"], toll: 650 },
+  { from: "Delhi", to: "Manali", km: 540, hrs: 12, sedan: "6,730", innova: "11,050", highlights: ["Rohtang Pass", "Solang Valley", "Old Manali"], toll: 850 },
+  { from: "Delhi", to: "Dehradun", km: 250, hrs: 5, sedan: "3,250", innova: "5,250", highlights: ["Mussoorie connect", "Rajaji Park", "Doon Valley"], toll: 420 },
+  { from: "Delhi", to: "Rishikesh", km: 240, hrs: 5, sedan: "3,130", innova: "5,050", highlights: ["River Rafting", "Laxman Jhula", "Haridwar stop"], toll: 450 },
+  { from: "Delhi", to: "Haridwar", km: 210, hrs: 4, sedan: "2,770", innova: "4,450", highlights: ["Har ki Pauri", "Ganga Aarti", "Rishikesh connect"], toll: 430 },
+  { from: "Delhi", to: "Jaipur", km: 280, hrs: 5, sedan: "3,610", innova: "5,850", highlights: ["Amber Fort", "Hawa Mahal", "City Palace"], toll: 350 },
+  { from: "Delhi", to: "Agra", km: 230, hrs: 4, sedan: "3,010", innova: "4,850", highlights: ["Taj Mahal", "Agra Fort", "Fatehpur Sikri"], toll: 290 },
+  { from: "Delhi", to: "Chandigarh", km: 250, hrs: 5, sedan: "3,250", innova: "5,250", highlights: ["Rock Garden", "Sukhna Lake", "Shimla gateway"], toll: 380 },
+  { from: "Delhi", to: "Shimla", km: 350, hrs: 8, sedan: "4,450", innova: "7,250", highlights: ["Mall Road", "Jakhu Temple", "Kufri"], toll: 650 },
 ];
 
 export default function RoutesPage() {
@@ -32,7 +32,7 @@ export default function RoutesPage() {
         <div className="bg-white border-b border-slate-100 py-12 px-4 text-center">
           <p className="text-xs font-bold uppercase tracking-widest text-blue-600 mb-2">Popular Routes</p>
           <h1 className="text-3xl font-bold text-slate-900 font-['DM_Serif_Display']">Outstation Routes from Delhi</h1>
-          <p className="text-slate-500 mt-2 max-w-lg mx-auto">Fixed fares, no surprises. All prices include driver charges and estimated toll.</p>
+          <p className="text-slate-500 mt-2 max-w-lg mx-auto">Fixed fares. All prices include driver charges. Toll & parking charged at actuals.</p>
         </div>
 
         <div className="max-w-6xl mx-auto px-4 py-12">
@@ -110,7 +110,7 @@ export default function RoutesPage() {
                   </div>
 
                   <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                    <span className="text-[10px] text-slate-400">All-inclusive · No hidden charges</span>
+                    <span className="text-[10px] text-slate-400">Driver charge included · Toll at actuals</span>
                     <span className="text-xs font-semibold text-blue-600 group-hover:underline flex items-center gap-1">
                       Book Now <ArrowRight className="w-3 h-3" />
                     </span>
