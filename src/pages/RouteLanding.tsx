@@ -200,17 +200,15 @@ export default function RouteLanding() {
       <Navbar />
       <main className="pt-20">
         {/* Hero — landmark photo background */}
-        <div className="relative bg-slate-900 text-white py-20 px-4 overflow-hidden min-h-[340px] flex items-center">
-          {lm && (
-            <img
-              src={lm.image}
-              alt={lm.landmark}
-              style={{ objectPosition: lm.objectPosition }}
-              onError={(e) => { (e.target as HTMLImageElement).remove(); }}
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-b from-slate-900/65 via-slate-900/55 to-slate-900/80" />
+        <div
+          className="relative bg-slate-900 text-white py-20 px-4 overflow-hidden min-h-[340px] flex items-center"
+          style={lm ? {
+            backgroundImage: `url(${lm.image})`,
+            backgroundSize: "cover",
+            backgroundPosition: lm.objectPosition,
+          } : undefined}
+        >
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-900/60 via-slate-900/50 to-slate-900/75" />
           <div className="relative w-full max-w-4xl mx-auto text-center">
             <div className="flex items-center justify-center gap-2 text-blue-300 text-sm font-medium mb-4">
               <MapPin className="w-4 h-4" />
