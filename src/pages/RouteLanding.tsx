@@ -4,6 +4,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { MapPin, Clock, Shield, Star, Check, ArrowRight } from "lucide-react";
+import { getLandmark } from "@/data/routeImages";
 
 const ROUTES: Record<string, {
   from: string; to: string; distance: number; duration: string;
@@ -197,20 +198,33 @@ export default function RouteLanding() {
       <Navbar />
       <main className="pt-20">
         {/* Hero */}
-        <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white py-16 px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="flex items-center justify-center gap-2 text-blue-400 text-sm font-medium mb-4">
+        {(() => {
+          const lm = getLandmark(data.to);
+          return (
+        <div className="relative text-white py-20 px-4 overflow-hidden">
+          {lm ? (
+            <>
+              <img src={lm.image} alt={lm.landmark}
+                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                className="absolute inset-0 w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-b from-slate-900/70 via-slate-900/60 to-slate-900/80" />
+            </>
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-900 to-slate-800" />
+          )}
+          <div className="relative max-w-4xl mx-auto text-center">
+            <div className="flex items-center justify-center gap-2 text-blue-300 text-sm font-medium mb-4">
               <MapPin className="w-4 h-4" />
-              Outstation Cab Service
+              {lm ? lm.landmark : "Outstation Cab Service"}
             </div>
             <h1 className="text-4xl md:text-5xl font-bold font-['DM_Serif_Display'] mb-4">
               {data.from} to {data.to} Cab
             </h1>
-            <p className="text-slate-300 text-lg mb-6 max-w-2xl mx-auto">{data.description}</p>
+            <p className="text-slate-200 text-lg mb-6 max-w-2xl mx-auto">{data.description}</p>
             <div className="flex flex-wrap justify-center gap-6 text-sm mb-8">
               <div className="flex items-center gap-2"><MapPin className="w-4 h-4 text-blue-400" />{data.distance} km</div>
               <div className="flex items-center gap-2"><Clock className="w-4 h-4 text-blue-400" />{data.duration}</div>
-              <div className="flex items-center gap-2"><Star className="w-4 h-4 text-yellow-400" />4.9 Rating</div>
+              <div className="flex items-center gap-2"><Shield className="w-4 h-4 text-green-400" />Verified Drivers</div>
             </div>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" onClick={() => navigate(`/cars?from=${data.from}&to=${data.to}&distance=${data.distance}`)}
@@ -225,6 +239,8 @@ export default function RouteLanding() {
             </div>
           </div>
         </div>
+          );
+        })()}
 
         {/* Fare table */}
         <div className="max-w-4xl mx-auto px-4 py-12">

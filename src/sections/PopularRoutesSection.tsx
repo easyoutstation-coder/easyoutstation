@@ -1,13 +1,14 @@
 import { useNavigate } from "react-router";
 import { trpc } from "@/providers/trpc";
 import { Button } from "@/components/ui/button";
-import { MapPin, ArrowRight, Clock, Route, TrendingUp, CheckCircle } from "lucide-react";
+import { ArrowRight, Clock, Route, TrendingUp, CheckCircle, MapPin } from "lucide-react";
+import { getLandmark } from "@/data/routeImages";
 
 const fallbackRoutes = [
-  { id: 1, fromCity: "Delhi", toCity: "Manali", distanceKm: 540, durationHours: 12, basePrice: "6,480", imageUrl: "/hero-bg.jpg", description: "Scenic Himalayan drive via Chandigarh & Kullu Valley", highlights: ["Mountain road experts", "Crysta recommended", "Scenic stops included"] },
-  { id: 2, fromCity: "Delhi", toCity: "Dehradun", distanceKm: 250, durationHours: 5, basePrice: "3,000", imageUrl: "/cars/toyota-innova.jpg", description: "Gateway to Uttarakhand — connect to Mussoorie", highlights: ["Weekend favourite", "Smooth highway", "5-6 hrs journey"] },
-  { id: 3, fromCity: "Delhi", toCity: "Rishikesh", distanceKm: 240, durationHours: 5, basePrice: "2,880", imageUrl: "/cars/swift-dzire.jpg", description: "Yoga capital — also covers Haridwar on the way", highlights: ["Covers Haridwar", "Adventure hub", "Early morning slots"] },
-  { id: 4, fromCity: "Delhi", toCity: "Jaipur", distanceKm: 280, durationHours: 5, basePrice: "3,360", imageUrl: "/cars/maruti-ertiga.jpg", description: "The Pink City — palaces, food & heritage", highlights: ["Smooth expressway", "Day trip possible", "Heritage route"] },
+  { id: 1, fromCity: "Delhi", toCity: "Manali", distanceKm: 540, durationHours: 12, basePrice: "6,480", imageUrl: "", description: "Scenic Himalayan drive via Chandigarh & Kullu Valley", highlights: ["Mountain road experts", "Crysta recommended", "Scenic stops included"] },
+  { id: 2, fromCity: "Delhi", toCity: "Dehradun", distanceKm: 250, durationHours: 5, basePrice: "3,000", imageUrl: "", description: "Gateway to Uttarakhand — connect to Mussoorie", highlights: ["Weekend favourite", "Smooth highway", "5-6 hrs journey"] },
+  { id: 3, fromCity: "Delhi", toCity: "Rishikesh", distanceKm: 240, durationHours: 5, basePrice: "2,880", imageUrl: "", description: "Yoga capital — also covers Haridwar on the way", highlights: ["Covers Haridwar", "Adventure hub", "Early morning slots"] },
+  { id: 4, fromCity: "Delhi", toCity: "Jaipur", distanceKm: 280, durationHours: 5, basePrice: "3,360", imageUrl: "", description: "The Pink City — palaces, food & heritage", highlights: ["Smooth expressway", "Day trip possible", "Heritage route"] },
 ];
 
 export default function PopularRoutesSection() {
@@ -37,18 +38,28 @@ export default function PopularRoutesSection() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {displayRoutes.map((route) => (
+          {displayRoutes.map((route) => {
+            const landmark = getLandmark(route.toCity);
+            const imgSrc = route.imageUrl || landmark?.image || "/hero-bg.jpg";
+            return (
             <div key={route.id} onClick={() => navigate(`/cars?from=${route.fromCity}&to=${route.toCity}`)}
               className="group bg-white rounded-2xl border border-slate-100 hover:border-blue-200 overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5">
-              <div className="relative h-44 overflow-hidden">
-                <img src={route.imageUrl || "/hero-bg.jpg"} alt={`${route.fromCity} to ${route.toCity}`}
+              <div className="relative h-48 overflow-hidden">
+                <img src={imgSrc} alt={landmark?.landmark || `${route.fromCity} to ${route.toCity}`}
+                  onError={(e) => { (e.target as HTMLImageElement).src = "/hero-bg.jpg"; }}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/30 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent" />
                 <div className="absolute top-3 left-3">
                   <span className="px-2.5 py-1 rounded-full bg-blue-600 text-white text-[10px] font-bold uppercase tracking-wide">
                     Popular
                   </span>
                 </div>
+                {landmark && (
+                  <div className="absolute bottom-3 left-3 flex items-center gap-1">
+                    <MapPin className="w-3 h-3 text-white/70" />
+                    <span className="text-white/80 text-[10px] font-medium">{landmark.landmark}</span>
+                  </div>
+                )}
               </div>
 
               <div className="p-5">
@@ -90,7 +101,8 @@ export default function PopularRoutesSection() {
                 </div>
               </div>
             </div>
-          ))}
+          );
+          })}
         </div>
       </div>
     </section>
