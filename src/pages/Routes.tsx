@@ -2,8 +2,9 @@ import { useNavigate } from "react-router";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Clock, Route, CheckCircle } from "lucide-react";
+import { ArrowRight, Clock, Route, CheckCircle, MapPin } from "lucide-react";
 import { useSeo } from "@/hooks/useSeo";
+import { getLandmark } from "@/data/routeImages";
 
 const routes = [
   { from: "Delhi", to: "Manali", km: 540, hrs: 12, sedan: "6,480", innova: "10,800", highlights: ["Rohtang Pass", "Solang Valley", "Old Manali"], toll: 850 },
@@ -36,8 +37,36 @@ export default function RoutesPage() {
 
         <div className="max-w-6xl mx-auto px-4 py-12">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {routes.map((route, i) => (
-              <div key={i} className="bg-white rounded-2xl border border-slate-100 hover:border-blue-200 hover:shadow-md transition-all duration-300 overflow-hidden">
+            {routes.map((route, i) => {
+              const lm = getLandmark(route.to);
+              return (
+              <div key={i} className="group bg-white rounded-2xl border border-slate-100 hover:border-blue-200 hover:shadow-md transition-all duration-300 overflow-hidden cursor-pointer"
+                onClick={() => navigate(`/cars?from=${route.from}&to=${route.to}&distance=${route.km}`)}>
+                {/* Landmark thumbnail */}
+                <div className="relative h-44 overflow-hidden bg-slate-800">
+                  {lm && (
+                    <img
+                      src={lm.image}
+                      alt={lm.landmark}
+                      onError={(e) => { (e.target as HTMLImageElement).src = "/hero-bg.jpg"; }}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                      style={{ objectPosition: lm.objectPosition }}
+                    />
+                  )}
+                  {!lm && <div className="w-full h-full bg-slate-700" />}
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/70 via-slate-900/20 to-transparent" />
+                  <div className="absolute top-3 left-3">
+                    <span className="px-2.5 py-1 rounded-full bg-blue-600 text-white text-[10px] font-bold uppercase tracking-wide">
+                      Popular
+                    </span>
+                  </div>
+                  {lm && (
+                    <div className="absolute bottom-3 left-3 flex items-center gap-1">
+                      <MapPin className="w-3 h-3 text-white/70" />
+                      <span className="text-white/80 text-[10px] font-medium">{lm.landmark}</span>
+                    </div>
+                  )}
+                </div>
                 <div className="p-5">
                   <div className="flex items-start justify-between mb-4">
                     <div>
@@ -80,14 +109,16 @@ export default function RoutesPage() {
                     </div>
                   </div>
 
-                  <Button onClick={() => navigate(`/cars?from=${route.from}&to=${route.to}&distance=${route.km}`)}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm h-10 gap-2">
-                    See Available Cars
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Button>
+                  <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                    <span className="text-[10px] text-slate-400">All-inclusive · No hidden charges</span>
+                    <span className="text-xs font-semibold text-blue-600 group-hover:underline flex items-center gap-1">
+                      Book Now <ArrowRight className="w-3 h-3" />
+                    </span>
+                  </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </main>
