@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { MapPin, CalendarDays, Users, ArrowRight, Shield, Clock, CheckCircle, Loader2, AlertCircle, Route, History, Building2 } from "lucide-react";
+import { MapPin, CalendarDays, ArrowRight, Shield, Clock, CheckCircle, Loader2, AlertCircle, Route, History, Building2 } from "lucide-react";
 import { saveRecentSearch, getRecentSearches, type RecentSearch } from "@/hooks/useRecentSearches";
 import { trpc } from "@/providers/trpc";
 
@@ -199,6 +199,9 @@ export default function HeroSection() {
 
   const [pickupDate, setPickupDate] = useState<Date>();
   const [returnDate, setReturnDate] = useState<Date>();
+  const [pickupOpen, setPickupOpen] = useState(false);
+  const [returnOpen, setReturnOpen] = useState(false);
+  const [pickupTime, setPickupTime] = useState("08:00");
   const [tripType, setTripType] = useState("one_way");
   const [sameDayReturn, setSameDayReturn] = useState(false);
 
@@ -267,6 +270,7 @@ export default function HeroSection() {
       tripType,
     });
     if (pickupDate) params.set("date", format(pickupDate, "yyyy-MM-dd"));
+    params.set("time", pickupTime);
     if (isRoundTrip && !sameDayReturn && returnDate) params.set("returnDate", format(returnDate, "yyyy-MM-dd"));
     if (distanceKm) params.set("distance", String(distanceKm));
     if (fromPincode) params.set("fromPincode", fromPincode);
@@ -402,13 +406,13 @@ export default function HeroSection() {
                   </div>
                 )}
 
-                {/* Date */}
+                {/* Date row */}
                 <div className={`grid gap-3 ${isRoundTrip ? "grid-cols-2" : "grid-cols-1"}`}>
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                       {isRoundTrip ? "DEPARTURE" : "DATE"}
                     </label>
-                    <Popover>
+                    <Popover open={pickupOpen} onOpenChange={setPickupOpen}>
                       <PopoverTrigger asChild>
                         <button className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-white text-sm flex items-center gap-2 hover:border-blue-400 transition-colors">
                           <CalendarDays className="w-3.5 h-3.5 text-blue-600 shrink-0" />
@@ -420,6 +424,7 @@ export default function HeroSection() {
                       <PopoverContent className="w-auto p-3 bg-white border-slate-200 shadow-lg" align="start">
                         <Calendar mode="single" selected={pickupDate} onSelect={(d) => {
                           setPickupDate(d);
+                          setPickupOpen(false);
                           if (returnDate && d && returnDate <= d) setReturnDate(undefined);
                         }} disabled={(date) => date < new Date()} initialFocus />
                       </PopoverContent>
@@ -438,7 +443,7 @@ export default function HeroSection() {
                   ) : (
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">RETURN DATE</label>
-                      <Popover>
+                      <Popover open={returnOpen} onOpenChange={setReturnOpen}>
                         <PopoverTrigger asChild>
                           <button className={`w-full h-11 px-3 rounded-xl border bg-white text-sm flex items-center gap-2 hover:border-blue-400 transition-colors ${
                             returnDate ? "border-slate-200" : "border-blue-300 border-dashed"
@@ -450,12 +455,36 @@ export default function HeroSection() {
                           </button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-3 bg-white border-slate-200 shadow-lg" align="start">
-                          <Calendar mode="single" selected={returnDate} onSelect={setReturnDate}
-                            disabled={(date) => date <= (pickupDate || new Date())} initialFocus />
+                          <Calendar mode="single" selected={returnDate} onSelect={(d) => {
+                            setReturnDate(d);
+                            setReturnOpen(false);
+                          }} disabled={(date) => date <= (pickupDate || new Date())} initialFocus />
                         </PopoverContent>
                       </Popover>
                     </div>
                   ))}
+                </div>
+
+                {/* Pickup time */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">PICKUP TIME</label>
+                  <div className="relative">
+                    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-blue-600 pointer-events-none" />
+                    <select
+                      value={pickupTime}
+                      onChange={(e) => setPickupTime(e.target.value)}
+                      className="w-full h-11 pl-9 pr-3 rounded-xl border border-slate-200 bg-white text-slate-900 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none appearance-none cursor-pointer"
+                    >
+                      {Array.from({ length: 38 }, (_, i) => {
+                        const totalMins = 4 * 60 + i * 30;
+                        const h = Math.floor(totalMins / 60);
+                        const m = totalMins % 60;
+                        const val = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+                        const label = `${h === 0 ? 12 : h > 12 ? h - 12 : h}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
+                        return <option key={val} value={val}>{label}</option>;
+                      })}
+                    </select>
+                  </div>
                 </div>
 
                 {formError && (

@@ -142,6 +142,8 @@ export default function CarsPage() {
     if (dateParam) p.set("date", dateParam);
     if (returnDateParam) p.set("returnDate", returnDateParam);
     if (tripTypeParam) p.set("tripType", tripTypeParam);
+    const timeParam = searchParams.get("time");
+    if (timeParam) p.set("time", timeParam);
     if (fromPincode) p.set("fromPincode", fromPincode);
     if (toPincode) p.set("toPincode", toPincode);
     return p.toString();
@@ -486,7 +488,7 @@ export default function CarsPage() {
                 <Card
                   key={car.id}
                   className="group overflow-hidden border-0 shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer bg-white"
-                  onClick={() => navigate(`/cars/${car.id}?${passthroughParams()}`)}
+                  onClick={() => navigate(`/booking?carId=${car.id}&${passthroughParams()}`)}
                 >
                   <div className="relative aspect-[4/3] overflow-hidden">
                     <img
@@ -569,10 +571,10 @@ export default function CarsPage() {
                       className="w-full bg-primary hover:bg-primary/90 text-white"
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate(`/cars/${car.id}?${passthroughParams()}`);
+                        navigate(`/booking?carId=${car.id}&${passthroughParams()}`);
                       }}
                     >
-                      View Details
+                      Book Now
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
                   </CardContent>

@@ -63,6 +63,7 @@ export default function BookingPage() {
   const paramFromFull = searchParams.get("fromFull") || "";
   const paramToFull = searchParams.get("toFull") || "";
   const paramDate = searchParams.get("date") || "";
+  const paramTime = searchParams.get("time") || "";
   const paramReturnDate = searchParams.get("returnDate") || "";
   const paramTripType = searchParams.get("tripType") || "one_way";
   const paramFromPincode = searchParams.get("fromPincode") || "";
@@ -78,7 +79,7 @@ export default function BookingPage() {
   const [pickupDate, setPickupDate] = useState<Date | undefined>(
     paramDate ? (() => { const d = new Date(paramDate); return isNaN(d.getTime()) ? undefined : d; })() : undefined
   );
-  const [pickupTime, setPickupTime] = useState("08:00");
+  const [pickupTime, setPickupTime] = useState(paramTime || "08:00");
   const [returnDate, setReturnDate] = useState<Date | undefined>(
     paramReturnDate ? (() => { const d = new Date(paramReturnDate); return isNaN(d.getTime()) ? undefined : d; })() : undefined
   );
@@ -106,6 +107,8 @@ export default function BookingPage() {
   const [otpInput, setOtpInput] = useState("");
   const [otpError, setOtpError] = useState("");
   const [formError, setFormError] = useState("");
+  const [pickupCalOpen, setPickupCalOpen] = useState(false);
+  const [returnCalOpen, setReturnCalOpen] = useState(false);
 
   // ALL trpc hooks
   const { data: car } = trpc.car.getById.useQuery({ id: carId }, { enabled: carId > 0 });
@@ -134,13 +137,13 @@ export default function BookingPage() {
   useEffect(() => {
     if (!bookingComplete) {
       saveBookingDraft({
-        tripType, pickupTime, passengerCount, specialRequests,
+        tripType, pickupTime, specialRequests,
         pickupAddress, pickupPincode, dropAddress, dropPincode,
         currentStep,
         pickupDate: pickupDate ? format(pickupDate, "yyyy-MM-dd") : undefined,
       });
     }
-  }, [tripType, pickupDate, pickupTime, passengerCount, pickupAddress, pickupPincode, dropAddress, dropPincode, currentStep, bookingComplete]);
+  }, [tripType, pickupDate, pickupTime, pickupAddress, pickupPincode, dropAddress, dropPincode, currentStep, bookingComplete]);
 
   // Inline quick auth state — must be before any conditional returns
   const [quickName, setQuickName] = useState("");
@@ -620,7 +623,7 @@ export default function BookingPage() {
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label>Pickup Date *</Label>
-                          <Popover>
+                          <Popover open={pickupCalOpen} onOpenChange={setPickupCalOpen}>
                             <PopoverTrigger asChild>
                               <button className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl border border-input bg-white text-sm hover:border-primary transition-colors">
                                 <CalendarDays className="w-4 h-4 text-muted-foreground" />
@@ -628,7 +631,7 @@ export default function BookingPage() {
                               </button>
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-3 shadow-lg">
-                              <Calendar mode="single" selected={pickupDate} onSelect={setPickupDate} disabled={(d) => d < new Date()} />
+                              <Calendar mode="single" selected={pickupDate} onSelect={(d) => { setPickupDate(d); setPickupCalOpen(false); }} disabled={(d) => d < new Date()} />
                             </PopoverContent>
                           </Popover>
                         </div>
@@ -647,7 +650,7 @@ export default function BookingPage() {
                         <div className="space-y-2">
                           <Label>Return Date <span className="text-xs text-muted-foreground font-normal">(leave blank for same day return)</span></Label>
                           <div className="flex gap-2">
-                            <Popover>
+                            <Popover open={returnCalOpen} onOpenChange={setReturnCalOpen}>
                               <PopoverTrigger asChild>
                                 <button className={`flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl border bg-white text-sm hover:border-primary transition-colors ${
                                   returnDate ? "border-input" : "border-dashed border-slate-300"
@@ -659,7 +662,7 @@ export default function BookingPage() {
                                 </button>
                               </PopoverTrigger>
                               <PopoverContent className="w-auto p-3 shadow-lg">
-                                <Calendar mode="single" selected={returnDate} onSelect={setReturnDate} disabled={(d) => d <= (pickupDate || new Date())} />
+                                <Calendar mode="single" selected={returnDate} onSelect={(d) => { setReturnDate(d); setReturnCalOpen(false); }} disabled={(d) => d <= (pickupDate || new Date())} />
                               </PopoverContent>
                             </Popover>
                             {returnDate && (
