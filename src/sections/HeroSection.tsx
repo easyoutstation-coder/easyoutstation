@@ -199,7 +199,6 @@ export default function HeroSection() {
 
   const [pickupDate, setPickupDate] = useState<Date>();
   const [returnDate, setReturnDate] = useState<Date>();
-  const [passengers, setPassengers] = useState("");
   const [tripType, setTripType] = useState("one_way");
   const [sameDayReturn, setSameDayReturn] = useState(false);
 
@@ -259,14 +258,12 @@ export default function HeroSection() {
     if (!toAddress) { setFormError("Please enter a drop-off location."); return; }
     if (!pickupDate) { setFormError("Please select a departure date."); return; }
     if (isRoundTrip && !sameDayReturn && !returnDate) { setFormError("Please select a return date, or check 'Same day return'."); return; }
-    if (!passengers) { setFormError("Please select number of passengers."); return; }
 
     const params = new URLSearchParams({
       from: fromAddress.split(",")[0],
       to: toAddress.split(",")[0],
       fromFull: fromAddress,
       toFull: toAddress,
-      passengers,
       tripType,
     });
     if (pickupDate) params.set("date", format(pickupDate, "yyyy-MM-dd"));
@@ -288,7 +285,7 @@ export default function HeroSection() {
       fromCity: fromAddress.split(",")[0],
       toCity: toAddress.split(",")[0],
       pickupDate: pickupDate ? format(pickupDate, "yyyy-MM-dd") : undefined,
-      passengerCount: passengers ? parseInt(passengers) : undefined,
+      passengerCount: undefined,
     });
 
     navigate(`/cars?${params.toString()}`);
@@ -405,8 +402,8 @@ export default function HeroSection() {
                   </div>
                 )}
 
-                {/* Date & Passengers */}
-                <div className="grid grid-cols-2 gap-3">
+                {/* Date */}
+                <div className={`grid gap-3 ${isRoundTrip ? "grid-cols-2" : "grid-cols-1"}`}>
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                       {isRoundTrip ? "DEPARTURE" : "DATE"}
@@ -429,8 +426,8 @@ export default function HeroSection() {
                     </Popover>
                   </div>
 
-                  {/* Same-day round trip: show a "same day" badge instead of return picker */}
-                  {isRoundTrip && sameDayReturn ? (
+                  {/* Return date — only shown for round trips */}
+                  {isRoundTrip && (sameDayReturn ? (
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">RETURN</label>
                       <div className="w-full h-11 px-3 rounded-xl border border-blue-200 bg-blue-50 text-sm flex items-center gap-2">
@@ -438,7 +435,7 @@ export default function HeroSection() {
                         <span className="text-blue-700 font-medium text-xs">Same day as departure</span>
                       </div>
                     </div>
-                  ) : isRoundTrip && !sameDayReturn ? (
+                  ) : (
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">RETURN DATE</label>
                       <Popover>
@@ -458,39 +455,8 @@ export default function HeroSection() {
                         </PopoverContent>
                       </Popover>
                     </div>
-                  ) : (
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">PASSENGERS</label>
-                      <div className="relative">
-                        <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-blue-600" />
-                        <select value={passengers} onChange={(e) => setPassengers(e.target.value)}
-                          className="w-full h-11 pl-9 pr-3 rounded-xl border border-slate-200 bg-white text-slate-900 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none appearance-none cursor-pointer">
-                          <option value="" disabled>Select</option>
-                          {[1,2,3,4,5,6].map((n) => (
-                            <option key={n} value={n}>{n} {n === 1 ? "Person" : "People"}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                  )}
+                  ))}
                 </div>
-
-                {/* Passengers — shown below when round trip */}
-                {isRoundTrip && (
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">PASSENGERS</label>
-                    <div className="relative">
-                      <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-blue-600" />
-                      <select value={passengers} onChange={(e) => setPassengers(e.target.value)}
-                        className="w-full h-11 pl-9 pr-3 rounded-xl border border-slate-200 bg-white text-slate-900 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none appearance-none cursor-pointer">
-                        <option value="" disabled>Select</option>
-                        {[1,2,3,4,5,6].map((n) => (
-                          <option key={n} value={n}>{n} {n === 1 ? "Person" : "People"}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                )}
 
                 {formError && (
                   <p className="text-xs text-red-500 flex items-center gap-1.5 bg-red-50 border border-red-200 rounded-lg px-3 py-2">

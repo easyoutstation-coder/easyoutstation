@@ -135,7 +135,6 @@ export default function CarsPage() {
     if (distanceKm) p.set("distance", distanceKm.toString());
     const fromFull = searchParams.get("fromFull");
     const toFull = searchParams.get("toFull");
-    const passengers = searchParams.get("passengers");
     const fromPincode = searchParams.get("fromPincode");
     const toPincode = searchParams.get("toPincode");
     if (fromFull) p.set("fromFull", fromFull);
@@ -143,7 +142,6 @@ export default function CarsPage() {
     if (dateParam) p.set("date", dateParam);
     if (returnDateParam) p.set("returnDate", returnDateParam);
     if (tripTypeParam) p.set("tripType", tripTypeParam);
-    if (passengers) p.set("passengers", passengers);
     if (fromPincode) p.set("fromPincode", fromPincode);
     if (toPincode) p.set("toPincode", toPincode);
     return p.toString();
@@ -556,7 +554,7 @@ export default function CarsPage() {
                     <div className="flex items-center gap-3 text-xs text-muted-foreground mb-4">
                       <span className="flex items-center gap-1">
                         <Users className="w-3.5 h-3.5" />
-                        {car.seats} seats
+                        {car.seats - 1} passengers
                       </span>
                       <span className="flex items-center gap-1">
                         <Fuel className="w-3.5 h-3.5" />

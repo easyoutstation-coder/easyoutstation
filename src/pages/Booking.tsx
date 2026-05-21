@@ -65,7 +65,6 @@ export default function BookingPage() {
   const paramDate = searchParams.get("date") || "";
   const paramReturnDate = searchParams.get("returnDate") || "";
   const paramTripType = searchParams.get("tripType") || "one_way";
-  const paramPassengers = searchParams.get("passengers") || "";
   const paramFromPincode = searchParams.get("fromPincode") || "";
   const paramToPincode = searchParams.get("toPincode") || "";
 
@@ -83,7 +82,6 @@ export default function BookingPage() {
   const [returnDate, setReturnDate] = useState<Date | undefined>(
     paramReturnDate ? (() => { const d = new Date(paramReturnDate); return isNaN(d.getTime()) ? undefined : d; })() : undefined
   );
-  const [passengerCount, setPassengerCount] = useState(paramPassengers || "4");
   const [specialRequests, setSpecialRequests] = useState("");
   const [pickupAddress, setPickupAddress] = useState(paramFromFull);
   const [pickupPincode, setPickupPincode] = useState(paramFromPincode);
@@ -346,9 +344,6 @@ export default function BookingPage() {
       if (pickupAddress.trim().toLowerCase() === dropAddress.trim().toLowerCase()) {
         setFormError("Pickup and drop-off addresses cannot be the same."); return;
       }
-      if (!passengerCount) {
-        setFormError("Please select number of passengers."); return;
-      }
     }
     if (currentStep === 2) {
       if (!customerName.trim() || customerName.trim().length < 2) {
@@ -384,7 +379,7 @@ export default function BookingPage() {
         pickupDate: pickupDate ? format(pickupDate, "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
         returnDate: returnDate ? format(returnDate, "yyyy-MM-dd") : undefined,
         tripType: tripType as "one_way" | "round_trip",
-        passengerCount: parseInt(passengerCount),
+        passengerCount: car ? car.seats - 1 : 4,
         totalKm: totalKmForTrip,
         totalPrice,
         customerName,
@@ -682,20 +677,6 @@ export default function BookingPage() {
                         </div>
                       )}
 
-                      {/* Passengers */}
-                      <div className="space-y-2">
-                        <Label>Passengers</Label>
-                        <select
-                          value={passengerCount}
-                          onChange={(e) => setPassengerCount(e.target.value)}
-                          className="w-full px-3 py-2.5 rounded-xl border border-input bg-white text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
-                        >
-                          {[1,2,3,4,5,6,7,8].map((n) => (
-                            <option key={n} value={n}>{n} Passenger{n > 1 ? "s" : ""}</option>
-                          ))}
-                        </select>
-                      </div>
-
                       {/* Pickup Address */}
                       <div className="space-y-2">
                         <Label>Pickup Address * <span className="text-xs text-muted-foreground">(House/Flat No, Street, Area)</span></Label>
@@ -854,7 +835,7 @@ export default function BookingPage() {
                         <div className="flex justify-between text-sm"><span className="text-muted-foreground">Pickup Address</span><span className="font-medium text-right max-w-[200px]">{pickupAddress}</span></div>
                         <div className="flex justify-between text-sm"><span className="text-muted-foreground">Drop Address</span><span className="font-medium text-right max-w-[200px]">{dropAddress}</span></div>
                         <div className="flex justify-between text-sm"><span className="text-muted-foreground">Date & Time</span><span className="font-medium">{pickupDate ? format(pickupDate, "dd MMM yyyy") : ""} at {pickupTime}</span></div>
-                        <div className="flex justify-between text-sm"><span className="text-muted-foreground">Passengers</span><span className="font-medium">{passengerCount}</span></div>
+                        <div className="flex justify-between text-sm"><span className="text-muted-foreground">Passengers allowed</span><span className="font-medium">{car ? car.seats - 1 : "—"}</span></div>
                         <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">Distance</span>
                           <span className="font-medium">
@@ -961,7 +942,7 @@ export default function BookingPage() {
                       {car.imageUrl && <img src={car.imageUrl} alt={car.name} className="w-16 h-12 object-cover rounded-lg" />}
                       <div>
                         <div className="font-semibold text-sm">{car.name}</div>
-                        <div className="text-xs text-muted-foreground">{car.brand} · {car.seats} seats</div>
+                        <div className="text-xs text-muted-foreground">{car.brand} · {car.seats - 1} passengers</div>
                       </div>
                     </div>
                   )}

@@ -113,14 +113,12 @@ export default function CarDetailPage() {
     const toFull = searchParams.get("toFull");
     const date = searchParams.get("date");
     const tripType = searchParams.get("tripType");
-    const passengers = searchParams.get("passengers");
     const fromPincode = searchParams.get("fromPincode");
     const toPincode = searchParams.get("toPincode");
     if (fromFull) params.set("fromFull", fromFull);
     if (toFull) params.set("toFull", toFull);
     if (date) params.set("date", date);
     if (tripType) params.set("tripType", tripType);
-    if (passengers) params.set("passengers", passengers);
     if (fromPincode) params.set("fromPincode", fromPincode);
     if (toPincode) params.set("toPincode", toPincode);
     navigate(`/booking?${params.toString()}`);
@@ -211,8 +209,8 @@ export default function CarDetailPage() {
               <div className="grid grid-cols-3 gap-4">
                 <div className="bg-white rounded-xl p-4 border border-border text-center">
                   <Users className="w-5 h-5 text-primary mx-auto mb-1" />
-                  <div className="text-lg font-bold">{displayCar.seats}</div>
-                  <div className="text-xs text-muted-foreground">Seats</div>
+                  <div className="text-lg font-bold">{displayCar.seats - 1}</div>
+                  <div className="text-xs text-muted-foreground">Passengers</div>
                 </div>
                 <div className="bg-white rounded-xl p-4 border border-border text-center">
                   <Fuel className="w-5 h-5 text-primary mx-auto mb-1" />
