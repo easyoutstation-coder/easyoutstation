@@ -466,7 +466,16 @@ export default function AdminPage() {
             </div>
             <span className="font-bold text-slate-900">EasyOutstation Admin</span>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => navigate("/")}>← Site</Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost" size="sm"
+              onClick={() => navigate("/executive-team")}
+              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 font-medium"
+            >
+              🏢 Executive Team
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => navigate("/")}>← Site</Button>
+          </div>
         </div>
       </div>
 

@@ -16,6 +16,7 @@ import RoutesPage from './pages/Routes'
 import RouteLanding from './pages/RouteLanding'
 import NotFound from './pages/NotFound'
 import Admin from './pages/Admin'
+import ExecutiveTeam from './pages/ExecutiveTeam'
 import { trpc } from './providers/trpc'
 import { useAuth } from './hooks/useAuth'
 import { usePushNotifications } from './hooks/usePushNotifications'
@@ -129,6 +130,7 @@ export default function App() {
         <Route path="/routes" element={<RoutesPage />} />
         <Route path="/cab/:route" element={<RouteLanding />} />
         <Route path="/admin" element={<Admin />} />
+        <Route path="/executive-team" element={<ExecutiveTeam />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </SiteGate>
