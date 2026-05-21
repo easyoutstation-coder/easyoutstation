@@ -124,12 +124,11 @@ export const bookingRouter = createRouter({
         ),
       });
 
+      const fmt = (d: Date | string | null) => d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : undefined;
       let sent = 0;
       for (const booking of abandoned) {
-        const pickupDateStr =
-          booking.pickupDate instanceof Date
-            ? booking.pickupDate.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
-            : String(booking.pickupDate);
+        const pickupDateStr = fmt(booking.pickupDate) ?? String(booking.pickupDate);
+        const returnDateStr = booking.returnDate ? fmt(booking.returnDate) : undefined;
         const price = parseFloat(booking.totalPrice);
 
         try {
@@ -142,6 +141,7 @@ export const bookingRouter = createRouter({
               fromCity: booking.fromCity,
               toCity: booking.toCity,
               pickupDate: pickupDateStr,
+              returnDate: returnDateStr,
               totalKm: booking.totalKm,
               totalPrice: price,
               tripType: booking.tripType,
@@ -177,10 +177,9 @@ export const bookingRouter = createRouter({
       });
       if (!booking || booking.paymentStatus === "paid") return { success: false };
 
-      const pickupDateStr =
-        booking.pickupDate instanceof Date
-          ? booking.pickupDate.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
-          : String(booking.pickupDate);
+      const fmt = (d: Date | string | null) => d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : undefined;
+      const pickupDateStr = fmt(booking.pickupDate) ?? String(booking.pickupDate);
+      const returnDateStr = booking.returnDate ? fmt(booking.returnDate) : undefined;
       const price = parseFloat(booking.totalPrice);
 
       try {
@@ -193,6 +192,7 @@ export const bookingRouter = createRouter({
             fromCity: booking.fromCity,
             toCity: booking.toCity,
             pickupDate: pickupDateStr,
+            returnDate: returnDateStr,
             totalKm: booking.totalKm,
             totalPrice: price,
             tripType: booking.tripType,

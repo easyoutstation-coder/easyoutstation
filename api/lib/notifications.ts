@@ -5,7 +5,8 @@ export async function sendBookingSms(
   toCity: string,
   pickupDate: string,
   totalPrice: number,
-  type: "confirmation" | "abandonment" = "confirmation"
+  type: "confirmation" | "abandonment" = "confirmation",
+  returnDate?: string
 ) {
   const apiKey = process.env.FAST2SMS_API_KEY?.trim();
   if (!apiKey) { console.warn("[Fast2SMS] FAST2SMS_API_KEY not set"); return; }
@@ -16,7 +17,7 @@ export async function sendBookingSms(
   if (type === "abandonment") {
     message = `EasyOutstation: You left your booking incomplete! ${fromCity} to ${toCity} on ${pickupDate}. Fare: Rs ${totalPrice.toLocaleString("en-IN")}. Complete booking: https://easyoutstation.com/booking?resume=${bookingId} Help: 9958556011`;
   } else {
-    message = `EasyOutstation: Booking #${bookingId} CONFIRMED! ${fromCity} to ${toCity} on ${pickupDate}. Fare: Rs ${totalPrice.toLocaleString("en-IN")}. Driver details within 60 mins. Help: 9958556011`;
+    message = `EasyOutstation: Booking #${bookingId} CONFIRMED! ${fromCity} to ${toCity}. Pickup: ${pickupDate}${returnDate ? `. Return: ${returnDate}` : ""}. Fare: Rs ${totalPrice.toLocaleString("en-IN")}. Driver details within 60 mins. Help: 9958556011`;
   }
 
   const params = new URLSearchParams({
@@ -49,6 +50,7 @@ export async function sendBookingEmails(
     fromCity: string;
     toCity: string;
     pickupDate: string;
+    returnDate?: string;
     totalKm: number;
     totalPrice: number;
     tripType: string;
@@ -73,7 +75,7 @@ Email        : ${input.customerEmail || "Not provided"}
 TRIP DETAILS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Route        : ${input.fromCity} → ${input.toCity}
-Pickup Date  : ${input.pickupDate}
+Pickup Date  : ${input.pickupDate}${input.returnDate ? `\nReturn Date  : ${input.returnDate}` : ""}
 Distance     : ${input.totalKm} km
 Trip Type    : ${input.tripType.replace(/_/g, " ").toUpperCase()}
 Passengers   : ${input.passengerCount}

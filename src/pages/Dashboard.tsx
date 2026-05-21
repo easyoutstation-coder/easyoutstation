@@ -207,7 +207,8 @@ export default function DashboardPage() {
                               <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground mb-2">
                                 <span className="flex items-center gap-1">
                                   <Calendar className="w-3 h-3" />
-                                  {new Date(booking.pickupDate).toLocaleDateString()}
+                                  {new Date(booking.pickupDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                                  {booking.returnDate && ` → ${new Date(booking.returnDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}`}
                                 </span>
                                 <span className="flex items-center gap-1">
                                   <MapPin className="w-3 h-3" />

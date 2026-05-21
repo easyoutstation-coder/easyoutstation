@@ -513,7 +513,7 @@ export default function BookingPage() {
     })();
 
     const whatsappShareText = encodeURIComponent(
-      `🚗 My EasyOutstation trip is confirmed!\n\n📍 ${fromCity} → ${toCity}\n📅 ${pickupDate ? format(pickupDate, "dd MMM yyyy") : ""} at ${pickupTime}\n💰 ₹${totalPrice.toLocaleString("en-IN")}\n\nBooking ID: #${bookingId}\n\nBook your cab at easyoutstation.com`
+      `🚗 My EasyOutstation trip is confirmed!\n\n📍 ${fromCity} → ${toCity}\n📅 Pickup: ${pickupDate ? format(pickupDate, "dd MMM yyyy") : ""} at ${pickupTime}${tripType === "round_trip" ? `\n🔄 Return: ${returnDate ? format(returnDate, "dd MMM yyyy") : "Same day"}` : ""}\n💰 ₹${totalPrice.toLocaleString("en-IN")}\n\nBooking ID: #${bookingId}\n\nBook your cab at easyoutstation.com`
     );
 
     clearBookingDraft();
@@ -557,6 +557,7 @@ export default function BookingPage() {
               <div className="bg-slate-50 rounded-xl p-4 text-sm text-left space-y-2 mb-6">
                 <div className="flex justify-between"><span className="text-muted-foreground">Route</span><span className="font-medium">{fromCity} → {toCity}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Pickup</span><span className="font-medium">{pickupDate ? format(pickupDate, "dd MMM yyyy") : ""} at {pickupTime}</span></div>
+                {tripType === "round_trip" && (<div className="flex justify-between"><span className="text-muted-foreground">Return</span><span className="font-medium">{returnDate ? format(returnDate, "dd MMM yyyy") : "Same day"}</span></div>)}
                 <div className="flex justify-between"><span className="text-muted-foreground">Distance</span><span className="font-medium">{finalDistance} km {durationText && `(${durationText})`}</span></div>
                 <Separator />
                 <div className="flex justify-between font-bold"><span>Total Fare</span><span className="text-primary">₹{totalPrice.toLocaleString("en-IN")}</span></div>
@@ -879,7 +880,8 @@ export default function BookingPage() {
                         <div className="flex justify-between text-sm"><span className="text-muted-foreground">Trip Type</span><span className="font-medium capitalize">{tripType.replace("_", " ")}</span></div>
                         <div className="flex justify-between text-sm"><span className="text-muted-foreground">Pickup Address</span><span className="font-medium text-right max-w-[200px]">{pickupAddress}</span></div>
                         <div className="flex justify-between text-sm"><span className="text-muted-foreground">Drop Address</span><span className="font-medium text-right max-w-[200px]">{dropAddress}</span></div>
-                        <div className="flex justify-between text-sm"><span className="text-muted-foreground">Date & Time</span><span className="font-medium">{pickupDate ? format(pickupDate, "dd MMM yyyy") : ""} at {pickupTime}</span></div>
+                        <div className="flex justify-between text-sm"><span className="text-muted-foreground">Pickup Date & Time</span><span className="font-medium">{pickupDate ? format(pickupDate, "dd MMM yyyy") : ""} at {pickupTime}</span></div>
+                        {tripType === "round_trip" && (<div className="flex justify-between text-sm"><span className="text-muted-foreground">Return Date</span><span className="font-medium">{returnDate ? format(returnDate, "dd MMM yyyy") : "Same day"}</span></div>)}
                         <div className="flex justify-between text-sm"><span className="text-muted-foreground">Passengers allowed</span><span className="font-medium">{car ? car.seats - 1 : "—"}</span></div>
                         <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">Actual Distance</span>
