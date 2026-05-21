@@ -202,6 +202,7 @@ export default function HeroSection() {
   const [pickupOpen, setPickupOpen] = useState(false);
   const [returnOpen, setReturnOpen] = useState(false);
   const [pickupTime, setPickupTime] = useState("08:00");
+  const [returnTime, setReturnTime] = useState("08:00");
   const [tripType, setTripType] = useState("one_way");
   const [sameDayReturn, setSameDayReturn] = useState(false);
 
@@ -272,6 +273,7 @@ export default function HeroSection() {
     if (pickupDate) params.set("date", format(pickupDate, "yyyy-MM-dd"));
     params.set("time", pickupTime);
     if (isRoundTrip && !sameDayReturn && returnDate) params.set("returnDate", format(returnDate, "yyyy-MM-dd"));
+    if (isRoundTrip) params.set("returnTime", returnTime);
     if (distanceKm) params.set("distance", String(distanceKm));
     if (fromPincode) params.set("fromPincode", fromPincode);
     if (toPincode) params.set("toPincode", toPincode);
@@ -465,26 +467,44 @@ export default function HeroSection() {
                   ))}
                 </div>
 
-                {/* Pickup time */}
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">PICKUP TIME</label>
-                  <div className="relative">
-                    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-blue-600 pointer-events-none" />
-                    <select
-                      value={pickupTime}
-                      onChange={(e) => setPickupTime(e.target.value)}
-                      className="w-full h-11 pl-9 pr-3 rounded-xl border border-slate-200 bg-white text-slate-900 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none appearance-none cursor-pointer"
-                    >
-                      {Array.from({ length: 38 }, (_, i) => {
-                        const totalMins = 4 * 60 + i * 30;
-                        const h = Math.floor(totalMins / 60);
-                        const m = totalMins % 60;
-                        const val = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-                        const label = `${h === 0 ? 12 : h > 12 ? h - 12 : h}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
-                        return <option key={val} value={val}>{label}</option>;
-                      })}
-                    </select>
+                {/* Time row — 2 cols for round trip */}
+                <div className={`grid gap-3 ${isRoundTrip ? "grid-cols-2" : "grid-cols-1"}`}>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">PICKUP TIME</label>
+                    <div className="relative">
+                      <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-blue-600 pointer-events-none" />
+                      <select value={pickupTime} onChange={(e) => setPickupTime(e.target.value)}
+                        className="w-full h-11 pl-9 pr-3 rounded-xl border border-slate-200 bg-white text-slate-900 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none appearance-none cursor-pointer">
+                        {Array.from({ length: 38 }, (_, i) => {
+                          const totalMins = 4 * 60 + i * 30;
+                          const h = Math.floor(totalMins / 60);
+                          const m = totalMins % 60;
+                          const val = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+                          const label = `${h === 0 ? 12 : h > 12 ? h - 12 : h}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
+                          return <option key={val} value={val}>{label}</option>;
+                        })}
+                      </select>
+                    </div>
                   </div>
+                  {isRoundTrip && (
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">DROP-OFF TIME</label>
+                      <div className="relative">
+                        <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-blue-600 pointer-events-none" />
+                        <select value={returnTime} onChange={(e) => setReturnTime(e.target.value)}
+                          className="w-full h-11 pl-9 pr-3 rounded-xl border border-slate-200 bg-white text-slate-900 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none appearance-none cursor-pointer">
+                          {Array.from({ length: 38 }, (_, i) => {
+                            const totalMins = 4 * 60 + i * 30;
+                            const h = Math.floor(totalMins / 60);
+                            const m = totalMins % 60;
+                            const val = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+                            const label = `${h === 0 ? 12 : h > 12 ? h - 12 : h}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
+                            return <option key={val} value={val}>{label}</option>;
+                          })}
+                        </select>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {formError && (

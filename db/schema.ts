@@ -77,6 +77,7 @@ export const bookings = mysqlTable("bookings", {
   toCity: varchar("toCity", { length: 100 }).notNull(),
   pickupDate: date("pickupDate").notNull(),
   returnDate: date("returnDate"),
+  returnTime: varchar("returnTime", { length: 5 }),
   tripType: mysqlEnum("tripType", ["one_way", "round_trip", "multi_day"]).default("one_way").notNull(),
   passengerCount: int("passengerCount").default(1),
   totalKm: int("totalKm").notNull(),

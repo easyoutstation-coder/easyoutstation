@@ -1027,7 +1027,7 @@ export default function AdminPage() {
                                 )}
                               </div>
                               <p className="text-xs text-muted-foreground mt-0.5">
-                                {b.fromCity} → {b.toCity} · {new Date(b.pickupDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}{b.returnDate ? ` → ${new Date(b.returnDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}` : ""}
+                                {b.fromCity} → {b.toCity} · {new Date(b.pickupDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}{b.returnDate ? ` → ${new Date(b.returnDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}${(b as any).returnTime ? ` at ${(() => { const [h, m] = ((b as any).returnTime as string).split(":").map(Number); return `${h === 0 ? 12 : h > 12 ? h - 12 : h}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`; })()}` : ""}` : ""}
                               </p>
                               <p className="text-xs text-muted-foreground">{b.car?.name} · {b.totalKm} km · {b.tripType.replace("_", " ")}</p>
                               {b.pickupAddress && <p className="text-xs text-muted-foreground">📍 {b.pickupAddress}</p>}

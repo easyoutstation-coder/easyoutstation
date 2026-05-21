@@ -63,6 +63,8 @@ async function runStartupMigrations() {
     } catch { /* already exists */ }
     // Update driver charges to ₹250/day across all cars
     await db.execute(sql.raw(`UPDATE cars SET driverCharges = 250.00`));
+    // Return pickup time column for round trips
+    try { await db.execute(sql.raw(`ALTER TABLE bookings ADD COLUMN returnTime VARCHAR(5)`)); } catch { /* already exists */ }
     // FCM push notification token column
     try { await db.execute(sql.raw(`ALTER TABLE users ADD COLUMN fcmToken TEXT`)); } catch { /* already exists */ }
     // Content management permission column

@@ -26,6 +26,11 @@ import {
   Route, Loader2, AlertCircle, LogIn, MessageCircle,
 } from "lucide-react";
 
+function fmtTime(t: string) {
+  const [h, m] = t.split(":").map(Number);
+  return `${h === 0 ? 12 : h > 12 ? h - 12 : h}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
+}
+
 const steps = [
   { id: 1, label: "Trip Details", icon: MapPin },
   { id: 2, label: "Personal Info", icon: User },
@@ -65,6 +70,7 @@ export default function BookingPage() {
   const paramDate = searchParams.get("date") || "";
   const paramTime = searchParams.get("time") || "";
   const paramReturnDate = searchParams.get("returnDate") || "";
+  const paramReturnTime = searchParams.get("returnTime") || "";
   const paramTripType = searchParams.get("tripType") || "one_way";
   const paramFromPincode = searchParams.get("fromPincode") || "";
   const paramToPincode = searchParams.get("toPincode") || "";
@@ -81,6 +87,7 @@ export default function BookingPage() {
     paramDate ? (() => { const d = new Date(paramDate); return isNaN(d.getTime()) ? undefined : d; })() : undefined
   );
   const [pickupTime, setPickupTime] = useState(paramTime || "08:00");
+  const [returnTime, setReturnTime] = useState(paramReturnTime || "08:00");
   const [returnDate, setReturnDate] = useState<Date | undefined>(
     paramReturnDate ? (() => { const d = new Date(paramReturnDate); return isNaN(d.getTime()) ? undefined : d; })() : undefined
   );
@@ -416,6 +423,7 @@ export default function BookingPage() {
           toCity: toCity || dropAddress.split(",")[0],
           pickupDate: pickupDate ? format(pickupDate, "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
           returnDate: returnDate ? format(returnDate, "yyyy-MM-dd") : undefined,
+          returnTime: tripType === "round_trip" ? returnTime : undefined,
           tripType: tripType as "one_way" | "round_trip",
           passengerCount: car ? car.seats - 1 : 4,
           totalKm: billedKm,
@@ -513,7 +521,7 @@ export default function BookingPage() {
     })();
 
     const whatsappShareText = encodeURIComponent(
-      `🚗 My EasyOutstation trip is confirmed!\n\n📍 ${fromCity} → ${toCity}\n📅 Pickup: ${pickupDate ? format(pickupDate, "dd MMM yyyy") : ""} at ${pickupTime}${tripType === "round_trip" ? `\n🔄 Return: ${returnDate ? format(returnDate, "dd MMM yyyy") : "Same day"}` : ""}\n💰 ₹${totalPrice.toLocaleString("en-IN")}\n\nBooking ID: #${bookingId}\n\nBook your cab at easyoutstation.com`
+      `🚗 My EasyOutstation trip is confirmed!\n\n📍 ${fromCity} → ${toCity}\n📅 Pickup: ${pickupDate ? format(pickupDate, "dd MMM yyyy") : ""} at ${pickupTime}${tripType === "round_trip" ? `\n🔄 Return: ${returnDate ? format(returnDate, "dd MMM yyyy") : "Same day"}${returnTime ? ` at ${fmtTime(returnTime)}` : ""}` : ""}\n💰 ₹${totalPrice.toLocaleString("en-IN")}\n\nBooking ID: #${bookingId}\n\nBook your cab at easyoutstation.com`
     );
 
     clearBookingDraft();
@@ -557,7 +565,7 @@ export default function BookingPage() {
               <div className="bg-slate-50 rounded-xl p-4 text-sm text-left space-y-2 mb-6">
                 <div className="flex justify-between"><span className="text-muted-foreground">Route</span><span className="font-medium">{fromCity} → {toCity}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Pickup</span><span className="font-medium">{pickupDate ? format(pickupDate, "dd MMM yyyy") : ""} at {pickupTime}</span></div>
-                {tripType === "round_trip" && (<div className="flex justify-between"><span className="text-muted-foreground">Return</span><span className="font-medium">{returnDate ? format(returnDate, "dd MMM yyyy") : "Same day"}</span></div>)}
+                {tripType === "round_trip" && (<div className="flex justify-between"><span className="text-muted-foreground">Return</span><span className="font-medium">{returnDate ? format(returnDate, "dd MMM yyyy") : "Same day"}{returnTime ? ` at ${fmtTime(returnTime)}` : ""}</span></div>)}
                 <div className="flex justify-between"><span className="text-muted-foreground">Distance</span><span className="font-medium">{finalDistance} km {durationText && `(${durationText})`}</span></div>
                 <Separator />
                 <div className="flex justify-between font-bold"><span>Total Fare</span><span className="text-primary">₹{totalPrice.toLocaleString("en-IN")}</span></div>
@@ -714,6 +722,19 @@ export default function BookingPage() {
                               Same day return — driver charge for 1 day · distance charged ×2
                             </p>
                           )}
+                        </div>
+                      )}
+
+                      {tripType === "round_trip" && (
+                        <div className="space-y-2">
+                          <Label>Return Pickup Time *</Label>
+                          <input
+                            type="time"
+                            value={returnTime}
+                            onChange={(e) => setReturnTime(e.target.value)}
+                            className="w-full px-3 py-2.5 rounded-xl border border-input bg-white text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+                          />
+                          <p className="text-[11px] text-slate-500">What time should the driver pick you up on the return day?</p>
                         </div>
                       )}
 
@@ -881,7 +902,7 @@ export default function BookingPage() {
                         <div className="flex justify-between text-sm"><span className="text-muted-foreground">Pickup Address</span><span className="font-medium text-right max-w-[200px]">{pickupAddress}</span></div>
                         <div className="flex justify-between text-sm"><span className="text-muted-foreground">Drop Address</span><span className="font-medium text-right max-w-[200px]">{dropAddress}</span></div>
                         <div className="flex justify-between text-sm"><span className="text-muted-foreground">Pickup Date & Time</span><span className="font-medium">{pickupDate ? format(pickupDate, "dd MMM yyyy") : ""} at {pickupTime}</span></div>
-                        {tripType === "round_trip" && (<div className="flex justify-between text-sm"><span className="text-muted-foreground">Return Date</span><span className="font-medium">{returnDate ? format(returnDate, "dd MMM yyyy") : "Same day"}</span></div>)}
+                        {tripType === "round_trip" && (<div className="flex justify-between text-sm"><span className="text-muted-foreground">Return Date & Time</span><span className="font-medium">{returnDate ? format(returnDate, "dd MMM yyyy") : "Same day"}{returnTime ? ` at ${fmtTime(returnTime)}` : ""}</span></div>)}
                         <div className="flex justify-between text-sm"><span className="text-muted-foreground">Passengers allowed</span><span className="font-medium">{car ? car.seats - 1 : "—"}</span></div>
                         <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">Distance</span>

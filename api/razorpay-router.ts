@@ -101,6 +101,7 @@ export const razorpayRouter = createRouter({
             toCity: booking.toCity,
             pickupDate: pickupDateStr,
             returnDate: returnDateStr,
+            returnTime: booking.returnTime ?? undefined,
             totalKm: booking.totalKm,
             totalPrice: price,
             tripType: booking.tripType,
@@ -114,7 +115,7 @@ export const razorpayRouter = createRouter({
 
         if (booking.customerPhone) {
           try {
-            await sendBookingSms(booking.customerPhone, booking.id, booking.fromCity, booking.toCity, pickupDateStr, price, "confirmation", returnDateStr);
+            await sendBookingSms(booking.customerPhone, booking.id, booking.fromCity, booking.toCity, pickupDateStr, price, "confirmation", returnDateStr, booking.returnTime ?? undefined);
           } catch (e) {
             console.error("[verifyPayment] SMS send failed:", e);
           }

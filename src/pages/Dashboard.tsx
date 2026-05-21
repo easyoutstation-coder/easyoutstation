@@ -208,7 +208,7 @@ export default function DashboardPage() {
                                 <span className="flex items-center gap-1">
                                   <Calendar className="w-3 h-3" />
                                   {new Date(booking.pickupDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-                                  {booking.returnDate && ` → ${new Date(booking.returnDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}`}
+                                  {booking.returnDate && ` → ${new Date(booking.returnDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}${(booking as any).returnTime ? ` at ${(() => { const [h, m] = ((booking as any).returnTime as string).split(":").map(Number); return `${h === 0 ? 12 : h > 12 ? h - 12 : h}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`; })()}` : ""}`}
                                 </span>
                                 <span className="flex items-center gap-1">
                                   <MapPin className="w-3 h-3" />
