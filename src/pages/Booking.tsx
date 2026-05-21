@@ -125,6 +125,7 @@ export default function BookingPage() {
     onError: () => setOtpError("Invalid OTP. Please check and try again."),
   });  const createBookingMutation = trpc.booking.create.useMutation();
   const cancelBookingMutation = trpc.booking.cancel.useMutation();
+  const notifyAbandonedMutation = trpc.booking.notifyAbandoned.useMutation();
   const createOrderMutation = trpc.payment.createOrder.useMutation();
   const verifyPaymentMutation = trpc.payment.verifyPayment.useMutation();
 
@@ -484,8 +485,9 @@ export default function BookingPage() {
         },
         modal: {
           ondismiss: () => {
-            // User closed the payment modal without paying — cancel booking
-            abortWithError("Payment was not completed. Your booking has been cancelled. Please try again.");
+            // Fire abandonment SMS + email immediately so customer gets a resume link
+            notifyAbandonedMutation.mutate({ id: bookingId });
+            abortWithError("Payment was not completed. Check your SMS/email for a link to resume this booking.");
           },
         },
       };

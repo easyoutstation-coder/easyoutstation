@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { createRouter, publicQuery, authedQuery } from "./middleware";
 import { getDb } from "./queries/connection";
 import { routes, bookings, userSearches } from "@db/schema";
-import { eq, and, like, desc, sql, lt, isNull } from "drizzle-orm";
+import { eq, and, like, desc, sql, lt, isNull, ne } from "drizzle-orm";
 import { differenceInHours, subMinutes } from "date-fns";
 import { sendBookingEmails, sendBookingSms } from "./lib/notifications";
 
@@ -119,9 +119,9 @@ export const bookingRouter = createRouter({
       const abandoned = await db.query.bookings.findMany({
         where: and(
           eq(bookings.paymentStatus, "pending"),
+          ne(bookings.status, "cancelled"),
           lt(bookings.createdAt, cutoff)
         ),
-        with: { car: true },
       });
 
       let sent = 0;
@@ -166,6 +166,55 @@ export const bookingRouter = createRouter({
       }
 
       return { success: true, total: abandoned.length, sent };
+    }),
+
+  notifyAbandoned: publicQuery
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      const booking = await db.query.bookings.findFirst({
+        where: eq(bookings.id, input.id),
+      });
+      if (!booking || booking.paymentStatus === "paid") return { success: false };
+
+      const pickupDateStr =
+        booking.pickupDate instanceof Date
+          ? booking.pickupDate.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+          : String(booking.pickupDate);
+      const price = parseFloat(booking.totalPrice);
+
+      try {
+        await sendBookingEmails(
+          {
+            bookingId: booking.id,
+            customerName: booking.customerName,
+            customerEmail: booking.customerEmail ?? undefined,
+            customerPhone: booking.customerPhone ?? undefined,
+            fromCity: booking.fromCity,
+            toCity: booking.toCity,
+            pickupDate: pickupDateStr,
+            totalKm: booking.totalKm,
+            totalPrice: price,
+            tripType: booking.tripType,
+            passengerCount: booking.passengerCount ?? 1,
+            pickupAddress: booking.pickupAddress ?? undefined,
+            specialRequests: booking.specialRequests ?? undefined,
+          },
+          "abandonment"
+        );
+      } catch (e) {
+        console.error(`[notifyAbandoned] Email failed for booking #${booking.id}:`, e);
+      }
+
+      if (booking.customerPhone) {
+        try {
+          await sendBookingSms(booking.customerPhone, booking.id, booking.fromCity, booking.toCity, pickupDateStr, price, "abandonment");
+        } catch (e) {
+          console.error(`[notifyAbandoned] SMS failed for booking #${booking.id}:`, e);
+        }
+      }
+
+      return { success: true };
     }),
 
   getMyBookings: authedQuery.query(async ({ ctx }) => {
