@@ -2,9 +2,12 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createRouter, publicQuery, adminQuery, superAdminQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { users, bookings, drivers, expenses, siteSettings, faqs, routes, cars } from "@db/schema";
+import { users, bookings, drivers, expenses, siteSettings, faqs, routes, cars, userSearches, carReviews } from "@db/schema";
 import { eq, desc, sql, and, gte } from "drizzle-orm";
 import { sendFcmNotification } from "./lib/fcm";
+
+// In-memory OTP store for data-clear verification (process-scoped, 10-min TTL)
+const clearDataOtpStore = new Map<string, { otp: string; category: string; expiresAt: number }>();
 
 const MASTER_PHONES = ["9958556011"];
 const MASTER_EMAILS = ["parmindersinghtalwar@gmail.com"];
@@ -703,6 +706,79 @@ Thank you for choosing EasyOutstation.`;
         .set({ pricePerKm: input.pricePerKm.toFixed(2), driverCharges: input.driverCharges.toFixed(2) })
         .where(eq(cars.id, input.id));
       return { success: true };
+    }),
+
+  // ── Danger Zone: Send OTP for data-clear verification ──────────────────
+  sendClearOtp: superAdminQuery
+    .input(z.object({
+      category: z.enum(["bookings", "expenses", "searches", "reviews", "all"]),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = getDb();
+      const userRow = await db.select({ phone: users.phone }).from(users).where(eq(users.id, ctx.user.id)).limit(1);
+      const phone = normalizePhone(userRow[0]?.phone);
+      if (!phone) throw new TRPCError({ code: "BAD_REQUEST", message: "No mobile number on your account." });
+
+      const otp = String(Math.floor(100000 + Math.random() * 900000));
+      clearDataOtpStore.set(ctx.user.id, { otp, category: input.category, expiresAt: Date.now() + 10 * 60 * 1000 });
+
+      const categoryLabel: Record<string, string> = {
+        bookings: "ALL BOOKINGS & revenue data",
+        expenses: "ALL EXPENSE records",
+        searches: "ALL search analytics",
+        reviews: "ALL car reviews",
+        all: "ALL data (bookings, expenses, analytics, reviews)",
+      };
+      const message = `EasyOutstation DANGER: Your OTP to permanently delete ${categoryLabel[input.category]} is ${otp}. Valid 10 mins. If you did NOT request this, call 9958556011 immediately.`;
+
+      const apiKey = process.env.FAST2SMS_API_KEY?.trim();
+      if (apiKey) {
+        const params = new URLSearchParams({ authorization: apiKey, route: "q", message, language: "english", flash: "0", numbers: phone });
+        await fetch(`https://www.fast2sms.com/dev/bulkV2?${params.toString()}`).catch(() => {});
+      }
+
+      const masked = `XXXXX${phone.slice(-3)}`;
+      return { maskedPhone: masked };
+    }),
+
+  // ── Danger Zone: Verify OTP and delete selected data ───────────────────
+  clearData: superAdminQuery
+    .input(z.object({
+      category: z.enum(["bookings", "expenses", "searches", "reviews", "all"]),
+      otp: z.string().length(6),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const entry = clearDataOtpStore.get(ctx.user.id);
+      if (!entry) throw new TRPCError({ code: "BAD_REQUEST", message: "No OTP requested. Please request a new OTP first." });
+      if (Date.now() > entry.expiresAt) {
+        clearDataOtpStore.delete(ctx.user.id);
+        throw new TRPCError({ code: "BAD_REQUEST", message: "OTP expired. Please request a new one." });
+      }
+      if (entry.otp !== input.otp) throw new TRPCError({ code: "BAD_REQUEST", message: "Incorrect OTP." });
+      if (entry.category !== input.category) throw new TRPCError({ code: "BAD_REQUEST", message: "OTP was issued for a different category." });
+
+      clearDataOtpStore.delete(ctx.user.id);
+      const db = getDb();
+      const deleted: string[] = [];
+
+      if (input.category === "bookings" || input.category === "all") {
+        await db.delete(bookings);
+        deleted.push("bookings");
+      }
+      if (input.category === "expenses" || input.category === "all") {
+        await db.delete(expenses);
+        deleted.push("expenses");
+      }
+      if (input.category === "searches" || input.category === "all") {
+        await db.delete(userSearches);
+        deleted.push("searches");
+      }
+      if (input.category === "reviews" || input.category === "all") {
+        await db.delete(carReviews);
+        deleted.push("reviews");
+      }
+
+      return { success: true, deleted };
     }),
 
   // ── Corporate enquiry lead capture ─────────────────────────────────────

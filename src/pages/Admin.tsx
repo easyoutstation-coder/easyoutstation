@@ -236,6 +236,21 @@ export default function AdminPage() {
     onSuccess: (res) => setAbandonedResult(res),
   });
 
+  // Danger Zone — data-clear state
+  type ClearCategory = "bookings" | "expenses" | "searches" | "reviews" | "all";
+  const [clearCategory, setClearCategory] = useState<ClearCategory>("bookings");
+  const [clearModalOpen, setClearModalOpen] = useState(false);
+  const [clearOtpSent, setClearOtpSent] = useState(false);
+  const [clearMaskedPhone, setClearMaskedPhone] = useState("");
+  const [clearOtp, setClearOtp] = useState("");
+  const [clearDone, setClearDone] = useState<string[] | null>(null);
+  const sendClearOtp = trpc.admin.sendClearOtp.useMutation({
+    onSuccess: (res) => { setClearOtpSent(true); setClearMaskedPhone(res.maskedPhone); },
+  });
+  const clearData = trpc.admin.clearData.useMutation({
+    onSuccess: (res) => { setClearDone(res.deleted); utils.admin.getStats.invalidate(); utils.admin.getFinancials.invalidate(); utils.admin.getExpenses.invalidate(); },
+  });
+
   async function handleVehicleImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -1728,6 +1743,38 @@ export default function AdminPage() {
                   )}
                 </CardContent>
               </Card>
+
+              {/* ── Danger Zone ────────────────────────────────────────── */}
+              <Card className="border-red-300 bg-red-50">
+                <CardContent className="p-4">
+                  <h3 className="font-semibold text-sm text-red-700 flex items-center gap-2 mb-3">
+                    <AlertTriangle className="w-4 h-4" /> Danger Zone — Permanent Data Deletion
+                  </h3>
+                  <p className="text-xs text-red-600 mb-3">
+                    This will permanently delete data from the database. This action cannot be undone. An OTP will be sent to your registered mobile number for verification.
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={clearCategory}
+                      onChange={e => setClearCategory(e.target.value as ClearCategory)}
+                      className="flex-1 h-9 rounded-lg border border-red-300 bg-white text-sm px-3 text-red-800 focus:outline-none focus:ring-2 focus:ring-red-300"
+                    >
+                      <option value="bookings">Bookings &amp; Revenue data</option>
+                      <option value="expenses">Expense records</option>
+                      <option value="searches">Search analytics</option>
+                      <option value="reviews">Car reviews</option>
+                      <option value="all">Everything (all of the above)</option>
+                    </select>
+                    <Button
+                      size="sm"
+                      className="bg-red-600 hover:bg-red-700 text-white shrink-0"
+                      onClick={() => { setClearModalOpen(true); setClearOtpSent(false); setClearOtp(""); setClearDone(null); sendClearOtp.reset(); clearData.reset(); }}
+                    >
+                      <Trash2 className="w-4 h-4 mr-1" /> Clear Data
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
           )}
 
@@ -1940,6 +1987,82 @@ export default function AdminPage() {
             onClick={() => addNote.mutate({ id: noteModal.bookingId, note: noteText })}>
             {addNote.isPending ? "Saving…" : "Save Note"}
           </Button>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Danger Zone OTP Modal ─────────────────────────────────── */}
+      <Dialog open={clearModalOpen} onOpenChange={open => { if (!open) { setClearModalOpen(false); setClearOtpSent(false); setClearOtp(""); setClearDone(null); } }}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="w-5 h-5" />
+              {clearDone ? "Data Deleted" : "Confirm Data Deletion"}
+            </DialogTitle>
+          </DialogHeader>
+
+          {clearDone ? (
+            <div className="space-y-3">
+              <div className="bg-red-50 rounded-lg p-3 text-sm text-red-700">
+                <p className="font-semibold mb-1">Permanently deleted:</p>
+                <ul className="list-disc list-inside space-y-0.5">
+                  {clearDone.map(d => <li key={d} className="capitalize">{d}</li>)}
+                </ul>
+              </div>
+              <Button className="w-full" onClick={() => { setClearModalOpen(false); setClearDone(null); }}>Done</Button>
+            </div>
+          ) : !clearOtpSent ? (
+            <div className="space-y-3">
+              <div className="bg-red-50 rounded-lg p-3 text-sm text-red-800">
+                <p>You are about to permanently delete:</p>
+                <p className="font-semibold mt-1">
+                  {{
+                    bookings: "All bookings & revenue data",
+                    expenses: "All expense records",
+                    searches: "All search analytics",
+                    reviews: "All car reviews",
+                    all: "ALL data — bookings, expenses, analytics & reviews",
+                  }[clearCategory]}
+                </p>
+                <p className="mt-2 text-red-600 font-medium">This cannot be undone.</p>
+              </div>
+              <p className="text-sm text-muted-foreground">An OTP will be sent to your registered mobile number to confirm this action.</p>
+              {sendClearOtp.error && <p className="text-xs text-red-600">{sendClearOtp.error.message}</p>}
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1" onClick={() => setClearModalOpen(false)}>Cancel</Button>
+                <Button
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                  disabled={sendClearOtp.isPending}
+                  onClick={() => sendClearOtp.mutate({ category: clearCategory })}
+                >
+                  {sendClearOtp.isPending ? "Sending…" : "Send OTP"}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                OTP sent to <span className="font-semibold text-slate-700">+91 {clearMaskedPhone}</span>. Enter it below to confirm deletion.
+              </p>
+              <Input
+                placeholder="6-digit OTP"
+                maxLength={6}
+                value={clearOtp}
+                onChange={e => setClearOtp(e.target.value.replace(/\D/g, ""))}
+                className="text-center text-lg tracking-widest font-mono h-12"
+              />
+              {clearData.error && <p className="text-xs text-red-600">{clearData.error.message}</p>}
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1" onClick={() => { setClearOtpSent(false); sendClearOtp.reset(); }}>Resend OTP</Button>
+                <Button
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                  disabled={clearOtp.length !== 6 || clearData.isPending}
+                  onClick={() => clearData.mutate({ category: clearCategory, otp: clearOtp })}
+                >
+                  {clearData.isPending ? "Deleting…" : "Delete Now"}
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
