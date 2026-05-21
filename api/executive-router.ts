@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { createRouter, adminQuery } from "./middleware";
+import { createRouter, superAdminQuery } from "./middleware";
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -297,7 +297,7 @@ BOARD RULES:
 const agentIdSchema = z.enum(["ceo", "marketing", "finance", "operations", "seo", "support", "board"]);
 
 export const executiveRouter = createRouter({
-  chat: adminQuery
+  chat: superAdminQuery
     .input(z.object({
       agentId: agentIdSchema,
       messages: z.array(z.object({

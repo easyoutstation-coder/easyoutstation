@@ -138,7 +138,7 @@ type ConversationMap = Record<AgentId, Message[]>;
 export default function ExecutiveTeam() {
   const navigate = useNavigate();
   const { user, isLoading } = useAuth();
-  const isAdmin = user?.role === "admin" || user?.role === "super_admin";
+  const isAdmin = user?.role === "super_admin";
 
   const [activeAgent, setActiveAgent] = useState<AgentId>("board");
   const [conversations, setConversations] = useState<ConversationMap>({
