@@ -1,5 +1,5 @@
 import { useSeo } from "@/hooks/useSeo";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router";
 import { trpc } from "@/providers/trpc";
 import { useAuth } from "@/hooks/useAuth";
@@ -136,6 +136,9 @@ export default function BookingPage() {
   const createOrderMutation = trpc.payment.createOrder.useMutation();
   const verifyPaymentMutation = trpc.payment.verifyPayment.useMutation();
 
+  // Tracks the booking ID while Razorpay is open — used for mobile abandonment detection
+  const pendingPaymentRef = useRef<number | null>(null);
+
   // ALL useEffects
   useEffect(() => {
     if (pickupLat && pickupLng && dropLat && dropLng) {
@@ -168,6 +171,40 @@ export default function BookingPage() {
     }
     setCurrentStep(3);
   }, [resumeBooking]);
+
+  // Mobile abandonment: on mount, fire notification for any booking interrupted by page unload
+  useEffect(() => {
+    const stored = localStorage.getItem("eo_pending_booking");
+    if (stored) {
+      localStorage.removeItem("eo_pending_booking");
+      const id = parseInt(stored);
+      if (id > 0) notifyAbandonedMutation.mutate({ id });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Mobile abandonment: when page is hidden (Android back-button navigation away), save to localStorage
+  useEffect(() => {
+    const handlePageHide = () => {
+      if (pendingPaymentRef.current) {
+        localStorage.setItem("eo_pending_booking", String(pendingPaymentRef.current));
+      }
+    };
+    window.addEventListener("pagehide", handlePageHide);
+    return () => window.removeEventListener("pagehide", handlePageHide);
+  }, []);
+
+  // Mobile abandonment: when page regains focus after Razorpay dismissal without ondismiss firing
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible" && pendingPaymentRef.current) {
+        const id = pendingPaymentRef.current;
+        pendingPaymentRef.current = null;
+        notifyAbandonedMutation.mutate({ id });
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Inline quick auth state — must be before any conditional returns
   const [quickName, setQuickName] = useState("");
@@ -474,6 +511,9 @@ export default function BookingPage() {
         },
         theme: { color: "#2563EB" },
         handler: async (response: any) => {
+          // Payment succeeded — clear pending ref so mobile fallbacks don't misfire
+          pendingPaymentRef.current = null;
+          localStorage.removeItem("eo_pending_booking");
           // Step 4: Verify payment — only then show success
           try {
             await verifyPaymentMutation.mutateAsync({
@@ -493,6 +533,9 @@ export default function BookingPage() {
         },
         modal: {
           ondismiss: () => {
+            // Clear ref so visibilitychange fallback doesn't double-fire
+            pendingPaymentRef.current = null;
+            localStorage.removeItem("eo_pending_booking");
             // Fire abandonment SMS + email immediately so customer gets a resume link
             notifyAbandonedMutation.mutate({ id: bookingId });
             abortWithError("Payment was not completed. Check your SMS/email for a link to resume this booking.");
@@ -500,6 +543,8 @@ export default function BookingPage() {
         },
       };
 
+      // Set pending ref BEFORE opening — mobile fallbacks watch this
+      pendingPaymentRef.current = bookingId;
       const rzp = new Razorpay(razorpayOptions);
       rzp.open();
 
