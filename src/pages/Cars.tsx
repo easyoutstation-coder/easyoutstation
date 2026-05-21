@@ -119,7 +119,7 @@ export default function CarsPage() {
       const d1 = new Date(dateParam);
       const d2 = new Date(returnDateParam);
       if (!isNaN(d1.getTime()) && !isNaN(d2.getTime())) {
-        return Math.max(1, Math.ceil((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24)));
+        return Math.max(1, Math.ceil((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24)) + 1);
       }
     }
     return 1; // one_way or same-day round trip

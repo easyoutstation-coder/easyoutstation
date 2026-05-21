@@ -303,7 +303,7 @@ export default function BookingPage() {
   const driverChargePerDay = parseFloat(car?.driverCharges || "250");
 
   const tripDays = tripType === "round_trip" && returnDate && pickupDate
-    ? Math.max(1, Math.ceil((returnDate.getTime() - pickupDate.getTime()) / (1000 * 60 * 60 * 24)))
+    ? Math.max(1, Math.ceil((returnDate.getTime() - pickupDate.getTime()) / (1000 * 60 * 60 * 24)) + 1)
     : 1;
 
   const totalKmForTrip = tripType === "round_trip" ? finalDistance * 2 : finalDistance;
@@ -895,15 +895,15 @@ export default function BookingPage() {
                           <div className="text-[11px] bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 space-y-0.5">
                             {tripDays > 1 ? (
                               <div className="text-amber-800 font-medium">
-                                Min billing: {tripDays} days × {MIN_KM_PER_DAY} km/day = {tripDays * MIN_KM_PER_DAY} km
+                                Min: {MIN_KM_PER_DAY} km/day × {tripDays} days = {tripDays * MIN_KM_PER_DAY} km
                               </div>
                             ) : (
                               <div className="text-amber-800 font-medium">
-                                Min booking: {MIN_KM_HEAVY} km (heavy vehicle minimum)
+                                Min: {MIN_KM_HEAVY} km (heavy vehicle)
                               </div>
                             )}
                             <div className="text-amber-700">
-                              Actual {totalKmForTrip} km &lt; minimum → billed at {billedKm} km
+                              Your route is {totalKmForTrip} km — billed at {billedKm} km
                             </div>
                           </div>
                         )}
