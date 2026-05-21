@@ -36,7 +36,7 @@ export const cars = mysqlTable("cars", {
   name: varchar("name", { length: 255 }).notNull(),
   brand: varchar("brand", { length: 100 }).notNull(),
   model: varchar("model", { length: 100 }).notNull(),
-  category: mysqlEnum("category", ["sedan", "muv", "suv", "premium", "luxury", "tempo", "bus"]).notNull(),
+  category: mysqlEnum("category", ["sedan", "muv", "suv", "premium", "luxury", "tempo", "bus", "electric"]).notNull(),
   seats: int("seats").notNull(),
   pricePerKm: decimal("pricePerKm", { precision: 10, scale: 2 }).notNull(),
   driverCharges: decimal("driverCharges", { precision: 10, scale: 2 }).default("250.00").notNull(),

@@ -41,6 +41,7 @@ const categories = [
   { value: "luxury", label: "Luxury" },
   { value: "tempo", label: "Tempo Traveller" },
   { value: "bus", label: "Bus" },
+  { value: "electric", label: "Electric" },
 ];
 
 const fuelTypes = [
@@ -48,6 +49,7 @@ const fuelTypes = [
   { value: "petrol", label: "Petrol" },
   { value: "diesel", label: "Diesel" },
   { value: "hybrid", label: "Hybrid" },
+  { value: "electric", label: "Electric" },
 ];
 
 const transmissions = [
@@ -77,7 +79,8 @@ export default function CarsPage() {
   const [category, setCategory] = useState(searchParams.get("category") || "all");
   const [fuelType, setFuelType] = useState("all");
   const [transmission, setTransmission] = useState("all");
-  const [priceRange, setPriceRange] = useState([0, 30]);
+  const MAX_PRICE_KM = 70;
+  const [priceRange, setPriceRange] = useState([0, MAX_PRICE_KM]);
   const [seats, setSeats] = useState("all");
   const [isListening, setIsListening] = useState(false);
 
@@ -86,7 +89,7 @@ export default function CarsPage() {
     fuelType: fuelType === "all" ? undefined : fuelType,
     transmission: transmission === "all" ? undefined : transmission,
     minPrice: priceRange[0] || undefined,
-    maxPrice: priceRange[1] || undefined,
+    maxPrice: priceRange[1] >= MAX_PRICE_KM ? undefined : priceRange[1],
     seats: seats === "all" ? undefined : parseInt(seats),
     search: searchQuery || undefined,
   });
@@ -174,7 +177,7 @@ export default function CarsPage() {
     setCategory("all");
     setFuelType("all");
     setTransmission("all");
-    setPriceRange([0, 30]);
+    setPriceRange([0, MAX_PRICE_KM]);
     setSeats("all");
     setSearchQuery("");
   };
@@ -184,7 +187,7 @@ export default function CarsPage() {
     fuelType !== "all" ||
     transmission !== "all" ||
     priceRange[0] !== 0 ||
-    priceRange[1] !== 30 ||
+    priceRange[1] !== MAX_PRICE_KM ||
     seats !== "all" ||
     searchQuery;
 
@@ -204,14 +207,23 @@ export default function CarsPage() {
     { id: 13, name: "Luxury Bus (35-41 Seater)", brand: "Eicher / Tata / Bharat Benz", category: "bus", seats: 41, pricePerKm: "50.00", rating: "4.62", reviewCount: 18, imageUrl: "/cars/luxury-bus-35.jpg", isAvailable: true, description: "AC 35 to 41-seater luxury bus. Brand assigned on availability. Toll, parking & state taxes charged at actuals.", fuelType: "diesel", transmission: "manual" },
     { id: 14, name: "Luxury Bus (45 Seater)", brand: "Eicher / Tata / Bharat Benz", category: "bus", seats: 45, pricePerKm: "55.00", rating: "4.58", reviewCount: 15, imageUrl: "/cars/luxury-bus-45.jpg", isAvailable: true, description: "AC 45-seater luxury bus. Brand assigned on availability. Toll, parking & state taxes charged at actuals.", fuelType: "diesel", transmission: "manual" },
     { id: 15, name: "Luxury Bus (49 Seater)", brand: "Eicher / Tata / Bharat Benz", category: "bus", seats: 49, pricePerKm: "60.00", rating: "4.55", reviewCount: 12, imageUrl: "/cars/luxury-bus-49.jpg", isAvailable: true, description: "AC 49-seater luxury bus. Brand assigned on availability. Toll, parking & state taxes charged at actuals.", fuelType: "diesel", transmission: "manual" },
+    { id: 16, name: "BYD eMax 7", brand: "BYD", category: "electric", seats: 7, pricePerKm: "15.00", rating: "4.75", reviewCount: 18, imageUrl: "/cars/byd-emax7.jpg", isAvailable: true, description: "Zero-emission 7-seater electric MPV. As per availability. Toll, parking & state taxes charged at actuals.", fuelType: "electric", transmission: "automatic" },
+    { id: 17, name: "BYD Atto 3", brand: "BYD", category: "electric", seats: 5, pricePerKm: "15.00", rating: "4.70", reviewCount: 14, imageUrl: "/cars/byd-atto3.jpg", isAvailable: true, description: "Zero-emission electric SUV with premium interiors. As per availability. Toll, parking & state taxes charged at actuals.", fuelType: "electric", transmission: "automatic" },
   ];
 
-  const displayCars = (cars?.length ? cars : fallbackCars)
+  const mergedCars = (() => {
+    if (!cars?.length) return fallbackCars;
+    const dbCategories = new Set(cars.map((c) => c.category));
+    const supplemental = fallbackCars.filter((fc) => !dbCategories.has(fc.category as string));
+    return [...cars, ...supplemental] as typeof fallbackCars;
+  })();
+
+  const displayCars = mergedCars
     .slice()
     .sort((a, b) => {
       if (sortBy === "price_asc") return parseFloat(a.pricePerKm) - parseFloat(b.pricePerKm);
       if (sortBy === "price_desc") return parseFloat(b.pricePerKm) - parseFloat(a.pricePerKm);
-      if (sortBy === "rating") return parseFloat(b.rating) - parseFloat(a.rating);
+      if (sortBy === "rating") return parseFloat(b.rating ?? "0") - parseFloat(a.rating ?? "0");
       if (sortBy === "popular") return (b.reviewCount || 0) - (a.reviewCount || 0);
       return 0;
     });
@@ -382,12 +394,12 @@ export default function CarsPage() {
                 </div>
                 <div className="mt-4">
                   <label className="text-xs font-medium text-muted-foreground uppercase mb-1.5 block">
-                    Price Range: ₹{priceRange[0]} - ₹{priceRange[1]} per km
+                    Price Range: ₹{priceRange[0]} - {priceRange[1] >= MAX_PRICE_KM ? "any" : `₹${priceRange[1]}`} per km
                   </label>
                   <Slider
                     value={priceRange}
                     onValueChange={setPriceRange}
-                    max={30}
+                    max={MAX_PRICE_KM}
                     step={1}
                     className="w-full"
                   />
