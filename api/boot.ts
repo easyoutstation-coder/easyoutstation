@@ -138,12 +138,17 @@ app.use("*", cors({
 }));
 
 app.use("/api/trpc/*", async (c) => {
-  return fetchRequestHandler({
+  const res = await fetchRequestHandler({
     endpoint: "/api/trpc",
     req: c.req.raw,
     router: appRouter,
     createContext,
   });
+  // Prevent browsers from caching API responses — ensures image/data changes
+  // show immediately without requiring a hard refresh
+  const headers = new Headers(res.headers);
+  headers.set("Cache-Control", "no-store");
+  return new Response(res.body, { status: res.status, headers });
 });
 // SMS test — /api/test-sms?phone=9999999999&key=easytest
 app.use("/api/test-sms", async (c) => {
