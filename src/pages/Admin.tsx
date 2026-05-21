@@ -160,6 +160,24 @@ export default function AdminPage() {
     if (discountData) setDiscountForm({ ...discountData, maxDiscount: discountData.maxDiscount?.toString() ?? "" });
   }, [discountData]);
 
+  const { data: fleetPricing, refetch: refetchFleetPricing } = trpc.admin.getFleetPricing.useQuery(undefined, { enabled: isSuperAdmin });
+  const updateCarPricing = trpc.admin.updateCarPricing.useMutation({
+    onSuccess: (_, vars) => {
+      refetchFleetPricing();
+      setFleetSaved(s => ({ ...s, [vars.id]: true }));
+      setTimeout(() => setFleetSaved(s => ({ ...s, [vars.id]: false })), 2000);
+    },
+  });
+  const [fleetEdits, setFleetEdits] = useState<Record<number, { pricePerKm: string; driverCharges: string }>>({});
+  const [fleetSaved, setFleetSaved] = useState<Record<number, boolean>>({});
+  useEffect(() => {
+    if (fleetPricing) {
+      setFleetEdits(Object.fromEntries(
+        fleetPricing.map(c => [c.id, { pricePerKm: c.pricePerKm, driverCharges: c.driverCharges }])
+      ));
+    }
+  }, [fleetPricing]);
+
   const confirmBooking = trpc.admin.confirmBooking.useMutation({
     onSuccess: (res) => {
       setConfirmModal(m => ({ ...m, open: false }));
@@ -578,6 +596,109 @@ export default function AdminPage() {
                     </Button>
                     <span className="text-xs text-slate-400">Changes apply site-wide immediately</span>
                   </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Fleet Pricing */}
+            {isSuperAdmin && (
+              <Card className="border-2 border-slate-200 bg-white">
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+                      <IndianRupee className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-slate-900">Fleet Pricing</p>
+                      <p className="text-xs text-slate-500 mt-0.5">Edit per-km rate and driver charges — updates apply site-wide instantly</p>
+                    </div>
+                  </div>
+                  {!fleetPricing?.length ? (
+                    <p className="text-sm text-slate-400 text-center py-4">Loading fleet…</p>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-slate-100">
+                            <th className="text-left text-xs font-medium text-slate-400 uppercase pb-2 pr-4">Vehicle</th>
+                            <th className="text-left text-xs font-medium text-slate-400 uppercase pb-2 pr-3 w-32">₹ / km</th>
+                            <th className="text-left text-xs font-medium text-slate-400 uppercase pb-2 pr-3 w-36">Driver / day</th>
+                            <th className="pb-2 w-20" />
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-50">
+                          {fleetPricing.map(car => {
+                            const edit = fleetEdits[car.id] ?? { pricePerKm: car.pricePerKm, driverCharges: car.driverCharges };
+                            const dirty = edit.pricePerKm !== car.pricePerKm || edit.driverCharges !== car.driverCharges;
+                            const saved = fleetSaved[car.id];
+                            const catColors: Record<string, string> = {
+                              sedan: "bg-blue-50 text-blue-700",
+                              muv: "bg-teal-50 text-teal-700",
+                              suv: "bg-emerald-50 text-emerald-700",
+                              premium: "bg-violet-50 text-violet-700",
+                              luxury: "bg-amber-50 text-amber-700",
+                              tempo: "bg-orange-50 text-orange-700",
+                              bus: "bg-red-50 text-red-700",
+                              electric: "bg-green-50 text-green-700",
+                            };
+                            return (
+                              <tr key={car.id} className="group">
+                                <td className="py-2.5 pr-4">
+                                  <div className="flex items-center gap-2">
+                                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded uppercase shrink-0 ${catColors[car.category] ?? "bg-slate-100 text-slate-600"}`}>
+                                      {car.category}
+                                    </span>
+                                    <span className="text-slate-800 font-medium leading-tight">{car.name}</span>
+                                  </div>
+                                </td>
+                                <td className="py-2.5 pr-3">
+                                  <div className="relative">
+                                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs">₹</span>
+                                    <input
+                                      type="number" min={1} step={0.5}
+                                      value={edit.pricePerKm}
+                                      onChange={e => setFleetEdits(prev => ({ ...prev, [car.id]: { ...edit, pricePerKm: e.target.value } }))}
+                                      className="w-full pl-6 pr-2 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400/30 focus:border-blue-400"
+                                    />
+                                  </div>
+                                </td>
+                                <td className="py-2.5 pr-3">
+                                  <div className="relative">
+                                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs">₹</span>
+                                    <input
+                                      type="number" min={0} step={50}
+                                      value={edit.driverCharges}
+                                      onChange={e => setFleetEdits(prev => ({ ...prev, [car.id]: { ...edit, driverCharges: e.target.value } }))}
+                                      className="w-full pl-6 pr-2 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400/30 focus:border-blue-400"
+                                    />
+                                  </div>
+                                </td>
+                                <td className="py-2.5 text-right">
+                                  <button
+                                    onClick={() => updateCarPricing.mutate({
+                                      id: car.id,
+                                      pricePerKm: parseFloat(edit.pricePerKm),
+                                      driverCharges: parseFloat(edit.driverCharges),
+                                    })}
+                                    disabled={!dirty && !saved || updateCarPricing.isPending}
+                                    className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${
+                                      saved
+                                        ? "bg-green-100 text-green-700"
+                                        : dirty
+                                          ? "bg-blue-600 text-white hover:bg-blue-700"
+                                          : "bg-slate-100 text-slate-400 cursor-default"
+                                    }`}
+                                  >
+                                    {saved ? "Saved ✓" : "Save"}
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}

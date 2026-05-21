@@ -2,7 +2,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createRouter, publicQuery, adminQuery, superAdminQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { users, bookings, drivers, expenses, siteSettings, faqs, routes } from "@db/schema";
+import { users, bookings, drivers, expenses, siteSettings, faqs, routes, cars } from "@db/schema";
 import { eq, desc, sql, and, gte } from "drizzle-orm";
 import { sendFcmNotification } from "./lib/fcm";
 
@@ -636,6 +636,29 @@ Thank you for choosing EasyOutstation.`;
     .mutation(async ({ input }) => {
       const db = getDb();
       await db.delete(routes).where(eq(routes.id, input.id));
+      return { success: true };
+    }),
+
+  // ── Fleet pricing ─────────────────────────────────────────────────────
+  getFleetPricing: superAdminQuery.query(async () => {
+    const db = getDb();
+    return await db
+      .select({ id: cars.id, name: cars.name, category: cars.category, pricePerKm: cars.pricePerKm, driverCharges: cars.driverCharges })
+      .from(cars)
+      .orderBy(cars.id);
+  }),
+
+  updateCarPricing: superAdminQuery
+    .input(z.object({
+      id: z.number(),
+      pricePerKm: z.number().positive(),
+      driverCharges: z.number().min(0),
+    }))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      await db.update(cars)
+        .set({ pricePerKm: input.pricePerKm.toFixed(2), driverCharges: input.driverCharges.toFixed(2) })
+        .where(eq(cars.id, input.id));
       return { success: true };
     }),
 
