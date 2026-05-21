@@ -151,9 +151,21 @@ export default function CarsPage() {
 
   const recommendations: { carId: number; reason: string; confidence: number }[] = [];
 
-  const calcFare = (pricePerKm: string) => {
+  const calcFare = (pricePerKm: string, seats: number, driverCharges: string) => {
     if (!distanceKm) return null;
-    return Math.round(parseFloat(pricePerKm) * effectiveKm + DRIVER_CHARGE * tripDays);
+    const isHeavy = seats > 7;
+    let billedKm = effectiveKm;
+    if (tripDays > 1) billedKm = Math.max(effectiveKm, tripDays * 250);
+    else if (isHeavy) billedKm = Math.max(effectiveKm, 100);
+    return Math.round(parseFloat(pricePerKm) * billedKm + parseFloat(driverCharges || "250") * tripDays);
+  };
+
+  const billedKmFor = (seats: number) => {
+    if (!distanceKm) return effectiveKm;
+    const isHeavy = seats > 7;
+    if (tripDays > 1) return Math.max(effectiveKm, tripDays * 250);
+    if (isHeavy) return Math.max(effectiveKm, 100);
+    return effectiveKm;
   };
 
   const handleVoiceSearch = () => {
@@ -200,13 +212,13 @@ export default function CarsPage() {
     { id: 6, name: "Toyota Innova Crysta", brand: "Toyota", category: "premium", seats: 6, pricePerKm: "20.00", rating: "4.90", reviewCount: 456, imageUrl: "/cars/toyota-innova-crysta.jpg", isAvailable: true, description: "Premium MPV with luxurious interiors", fuelType: "diesel", transmission: "automatic" },
     { id: 7, name: "Kia Carens", brand: "Kia", category: "premium", seats: 6, pricePerKm: "17.00", rating: "4.75", reviewCount: 89, imageUrl: "/cars/kia-carens.jpg", isAvailable: true, description: "Modern premium MPV with advanced features", fuelType: "petrol", transmission: "automatic" },
     { id: 8, name: "Toyota Innova Hycross", brand: "Toyota", category: "luxury", seats: 6, pricePerKm: "22.00", rating: "4.95", reviewCount: 67, imageUrl: "/cars/toyota-innova-hycross.jpg", isAvailable: true, description: "Flagship luxury hybrid MPV", fuelType: "hybrid", transmission: "automatic" },
-    { id: 9, name: "Tempo Traveller Maharaja (12 Seater)", brand: "Force Motors", category: "tempo", seats: 12, pricePerKm: "28.00", rating: "4.70", reviewCount: 45, imageUrl: "/cars/tempo-traveller-maharaja.jpg", isAvailable: true, description: "Luxury 1x1 Maharaja recliner seats. Perfect for group outstation travel. Toll, parking & state taxes charged at actuals.", fuelType: "diesel", transmission: "manual" },
-    { id: 10, name: "Tempo Traveller (16-19 Seater)", brand: "Force Motors", category: "tempo", seats: 19, pricePerKm: "30.00", rating: "4.65", reviewCount: 38, imageUrl: "/cars/tempo-traveller-pushback.jpg", isAvailable: true, description: "Seats up to 19 passengers with 2x1 pushback recliner seats. Toll, parking & state taxes charged at actuals.", fuelType: "diesel", transmission: "manual" },
-    { id: 11, name: "Force Urbania", brand: "Force Motors", category: "tempo", seats: 17, pricePerKm: "35.00", rating: "4.80", reviewCount: 29, imageUrl: "/cars/force-urbania.jpg", isAvailable: true, description: "Premium Force Urbania luxury van with plush seating. Toll, parking & state taxes charged at actuals.", fuelType: "diesel", transmission: "manual" },
-    { id: 12, name: "Mini Luxury Bus (27 Seater)", brand: "Eicher / Tata / Bharat Benz", category: "bus", seats: 27, pricePerKm: "45.00", rating: "4.60", reviewCount: 22, imageUrl: "/cars/mini-bus-27.jpg", isAvailable: true, description: "AC 27-seater luxury mini bus. Brand assigned on availability. Toll, parking & state taxes charged at actuals.", fuelType: "diesel", transmission: "manual" },
-    { id: 13, name: "Luxury Bus (35-41 Seater)", brand: "Eicher / Tata / Bharat Benz", category: "bus", seats: 41, pricePerKm: "50.00", rating: "4.62", reviewCount: 18, imageUrl: "/cars/luxury-bus-35.jpg", isAvailable: true, description: "AC 35 to 41-seater luxury bus. Brand assigned on availability. Toll, parking & state taxes charged at actuals.", fuelType: "diesel", transmission: "manual" },
-    { id: 14, name: "Luxury Bus (45 Seater)", brand: "Eicher / Tata / Bharat Benz", category: "bus", seats: 45, pricePerKm: "55.00", rating: "4.58", reviewCount: 15, imageUrl: "/cars/luxury-bus-45.jpg", isAvailable: true, description: "AC 45-seater luxury bus. Brand assigned on availability. Toll, parking & state taxes charged at actuals.", fuelType: "diesel", transmission: "manual" },
-    { id: 15, name: "Luxury Bus (49 Seater)", brand: "Eicher / Tata / Bharat Benz", category: "bus", seats: 49, pricePerKm: "60.00", rating: "4.55", reviewCount: 12, imageUrl: "/cars/luxury-bus-49.jpg", isAvailable: true, description: "AC 49-seater luxury bus. Brand assigned on availability. Toll, parking & state taxes charged at actuals.", fuelType: "diesel", transmission: "manual" },
+    { id: 9, name: "Tempo Traveller Maharaja (12 Seater)", brand: "Force Motors", category: "tempo", seats: 12, pricePerKm: "28.00", driverCharges: "500.00", rating: "4.70", reviewCount: 45, imageUrl: "/cars/tempo-traveller-maharaja.jpg", isAvailable: true, description: "Luxury 1x1 Maharaja recliner seats. Perfect for group outstation travel. Toll, parking & state taxes charged at actuals.", fuelType: "diesel", transmission: "manual" },
+    { id: 10, name: "Tempo Traveller (16-19 Seater)", brand: "Force Motors", category: "tempo", seats: 19, pricePerKm: "30.00", driverCharges: "500.00", rating: "4.65", reviewCount: 38, imageUrl: "/cars/tempo-traveller-pushback.jpg", isAvailable: true, description: "Seats up to 19 passengers with 2x1 pushback recliner seats. Toll, parking & state taxes charged at actuals.", fuelType: "diesel", transmission: "manual" },
+    { id: 11, name: "Force Urbania", brand: "Force Motors", category: "tempo", seats: 17, pricePerKm: "35.00", driverCharges: "500.00", rating: "4.80", reviewCount: 29, imageUrl: "/cars/force-urbania.jpg", isAvailable: true, description: "Premium Force Urbania luxury van with plush seating. Toll, parking & state taxes charged at actuals.", fuelType: "diesel", transmission: "manual" },
+    { id: 12, name: "Mini Luxury Bus (27 Seater)", brand: "Eicher / Tata / Bharat Benz", category: "bus", seats: 27, pricePerKm: "45.00", driverCharges: "500.00", rating: "4.60", reviewCount: 22, imageUrl: "/cars/mini-bus-27.jpg", isAvailable: true, description: "AC 27-seater luxury mini bus. Brand assigned on availability. Toll, parking & state taxes charged at actuals.", fuelType: "diesel", transmission: "manual" },
+    { id: 13, name: "Luxury Bus (35-41 Seater)", brand: "Eicher / Tata / Bharat Benz", category: "bus", seats: 41, pricePerKm: "50.00", driverCharges: "500.00", rating: "4.62", reviewCount: 18, imageUrl: "/cars/luxury-bus-35.jpg", isAvailable: true, description: "AC 35 to 41-seater luxury bus. Brand assigned on availability. Toll, parking & state taxes charged at actuals.", fuelType: "diesel", transmission: "manual" },
+    { id: 14, name: "Luxury Bus (45 Seater)", brand: "Eicher / Tata / Bharat Benz", category: "bus", seats: 45, pricePerKm: "55.00", driverCharges: "500.00", rating: "4.58", reviewCount: 15, imageUrl: "/cars/luxury-bus-45.jpg", isAvailable: true, description: "AC 45-seater luxury bus. Brand assigned on availability. Toll, parking & state taxes charged at actuals.", fuelType: "diesel", transmission: "manual" },
+    { id: 15, name: "Luxury Bus (49 Seater)", brand: "Eicher / Tata / Bharat Benz", category: "bus", seats: 49, pricePerKm: "60.00", driverCharges: "500.00", rating: "4.55", reviewCount: 12, imageUrl: "/cars/luxury-bus-49.jpg", isAvailable: true, description: "AC 49-seater luxury bus. Brand assigned on availability. Toll, parking & state taxes charged at actuals.", fuelType: "diesel", transmission: "manual" },
     { id: 16, name: "BYD eMax 7", brand: "BYD", category: "electric", seats: 7, pricePerKm: "15.00", rating: "4.75", reviewCount: 18, imageUrl: "/cars/byd-emax7.jpg", isAvailable: true, description: "Zero-emission 7-seater electric MPV. As per availability. Toll, parking & state taxes charged at actuals.", fuelType: "electric", transmission: "automatic" },
     { id: 17, name: "BYD Atto 3", brand: "BYD", category: "electric", seats: 5, pricePerKm: "15.00", rating: "4.70", reviewCount: 14, imageUrl: "/cars/byd-atto3.jpg", isAvailable: true, description: "Zero-emission electric SUV with premium interiors. As per availability. Toll, parking & state taxes charged at actuals.", fuelType: "electric", transmission: "automatic" },
   ];
@@ -237,8 +249,21 @@ export default function CarsPage() {
                   <span className="text-sm text-blue-500">· {distanceKm} km</span>
                 </div>
                 <div className="text-sm text-blue-700 font-medium">
-                  Fares from <span className="font-bold">₹{(effectiveKm * 12 + DRIVER_CHARGE * tripDays).toLocaleString("en-IN")}</span> to <span className="font-bold">₹{(effectiveKm * 22 + DRIVER_CHARGE * tripDays).toLocaleString("en-IN")}</span>
-                  {tripDays > 1 ? <span className="text-blue-500 text-xs ml-1">({tripDays}-day total)</span> : " depending on car"}
+                  {(() => {
+                    const minBilledKm = tripDays > 1 ? Math.max(effectiveKm, tripDays * 250) : effectiveKm;
+                    const minApplies = minBilledKm > effectiveKm;
+                    return (
+                      <>
+                        Fares from{" "}
+                        <span className="font-bold">₹{(minBilledKm * 12 + DRIVER_CHARGE * tripDays).toLocaleString("en-IN")}</span>
+                        {" "}to{" "}
+                        <span className="font-bold">₹{(minBilledKm * 22 + DRIVER_CHARGE * tripDays).toLocaleString("en-IN")}</span>
+                        {tripDays > 1
+                          ? <span className="text-blue-500 text-xs ml-1">({tripDays} days · {minBilledKm} km min{minApplies ? " applies" : ""})</span>
+                          : " depending on car"}
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
             )}
@@ -248,7 +273,7 @@ export default function CarsPage() {
                   {fromCity && toCity ? `Cars for ${fromCity} → ${toCity}` : "Our Fleet"}
                 </h1>
                 <p className="text-slate-500 mt-1">
-                  {displayCars.length} vehicles available{distanceKm > 0 ? ` · Prices shown for ${effectiveKm}km${tripDays > 1 ? ` (${tripDays} days)` : ""}` : " for your journey"}
+                  {displayCars.length} vehicles available{distanceKm > 0 ? ` · Prices for ${tripDays > 1 ? `${tripDays} days, min ${Math.max(effectiveKm, tripDays * 250)} km` : `${effectiveKm} km`}` : " for your journey"}
                 </p>
               </div>
               <div className="flex gap-2">
@@ -516,8 +541,8 @@ export default function CarsPage() {
                         <p className="text-xs text-slate-500">{car.brand}</p>
                       </div>
                       <div className="text-right">
-                        {calcFare(car.pricePerKm) ? (() => {
-                          const fare = calcFare(car.pricePerKm)!;
+                        {calcFare(car.pricePerKm, car.seats, car.driverCharges ?? "250") ? (() => {
+                          const fare = calcFare(car.pricePerKm, car.seats, car.driverCharges ?? "250")!;
                           const discounted = applyDiscount(fare);
                           const saving = discountAmount(fare);
                           return (
@@ -540,12 +565,19 @@ export default function CarsPage() {
                       </div>
                     </div>
                     <p className="text-sm text-slate-500 line-clamp-2 mb-3">{car.description}</p>
-                    {calcFare(car.pricePerKm) && (
-                      <div className="flex items-center justify-between text-[11px] mb-3 bg-slate-50 rounded-lg px-2.5 py-1.5">
-                        <span className="text-slate-400">₹{car.pricePerKm}/km × {effectiveKm}km + ₹{DRIVER_CHARGE * tripDays} driver</span>
-                        <span className="text-green-700 font-semibold">₹{Math.max(100, Math.round(applyDiscount(calcFare(car.pricePerKm)!) * 0.1)).toLocaleString("en-IN")} advance</span>
-                      </div>
-                    )}
+                    {calcFare(car.pricePerKm, car.seats, car.driverCharges ?? "250") && (() => {
+                      const bkm = billedKmFor(car.seats);
+                      const minApplies = bkm > effectiveKm;
+                      const perCarDriver = parseFloat(car.driverCharges ?? "250");
+                      return (
+                        <div className="flex items-center justify-between text-[11px] mb-3 bg-slate-50 rounded-lg px-2.5 py-1.5">
+                          <span className="text-slate-400">
+                            ₹{car.pricePerKm}/km × {bkm} km{minApplies ? " (min)" : ""} + ₹{(perCarDriver * tripDays).toLocaleString("en-IN")} driver
+                          </span>
+                          <span className="text-green-700 font-semibold">₹{Math.max(100, Math.round(applyDiscount(calcFare(car.pricePerKm, car.seats, car.driverCharges ?? "250")!) * 0.1)).toLocaleString("en-IN")} advance</span>
+                        </div>
+                      );
+                    })()}
                     <div className="flex items-center gap-3 text-xs text-muted-foreground mb-4">
                       <span className="flex items-center gap-1">
                         <Users className="w-3.5 h-3.5" />

@@ -231,6 +231,11 @@ export default function AdminPage() {
     },
   });
 
+  const [abandonedResult, setAbandonedResult] = useState<{ total: number; sent: number } | null>(null);
+  const sendAbandonedReminders = trpc.booking.sendAbandonedReminders.useMutation({
+    onSuccess: (res) => setAbandonedResult(res),
+  });
+
   async function handleVehicleImage(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -790,6 +795,42 @@ export default function AdminPage() {
                           })}
                         </tbody>
                       </table>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Abandoned Booking Recovery */}
+            {isSuperAdmin && (
+              <Card className="border-2 border-amber-200 bg-amber-50">
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+                        <Mail className="w-5 h-5 text-amber-600" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-slate-900">Abandoned Booking Recovery</p>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          Find bookings started but payment not completed (&gt;30 min ago) and send SMS + email with a resume link
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => { setAbandonedResult(null); sendAbandonedReminders.mutate({}); }}
+                      disabled={sendAbandonedReminders.isPending}
+                      className="bg-amber-500 hover:bg-amber-600 text-white shrink-0"
+                    >
+                      {sendAbandonedReminders.isPending ? "Sending…" : "Send Reminders"}
+                    </Button>
+                  </div>
+                  {abandonedResult && (
+                    <div className="mt-3 flex items-center gap-2 px-3 py-2 bg-white border border-amber-200 rounded-lg">
+                      <span className="text-xs text-amber-800 font-medium">
+                        Found {abandonedResult.total} abandoned booking{abandonedResult.total !== 1 ? "s" : ""} — sent reminders to {abandonedResult.sent}
+                      </span>
                     </div>
                   )}
                 </CardContent>

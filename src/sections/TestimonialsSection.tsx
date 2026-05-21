@@ -32,10 +32,10 @@ const promises = [
 ];
 
 const stats = [
-  { num: "500+", label: "Combined trips by our driver network" },
+  { num: "500+", label: "Trips completed by our driver network" },
   { num: "10+ yrs", label: "Average driver experience" },
-  { num: "8+", label: "Premium vehicles" },
-  { num: "11", label: "Routes covered" },
+  { num: "9", label: "Cities served" },
+  { num: "4.9★", label: "Average customer rating" },
 ];
 
 export default function TestimonialsSection() {

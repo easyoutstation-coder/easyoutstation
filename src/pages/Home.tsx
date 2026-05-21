@@ -40,7 +40,8 @@ const homeSchema = [
       "addressCountry": "IN"
     },
     "areaServed": [
-      "New Delhi", "Gurgaon", "Noida", "Faridabad", "Ghaziabad"
+      "New Delhi", "Gurgaon", "Noida", "Faridabad", "Ghaziabad",
+      "Manali", "Shimla", "Jaipur", "Agra", "Rishikesh", "Haridwar", "Dehradun", "Chandigarh"
     ],
     "serviceType": "Outstation Cab Service",
     "description": "Premium outstation cab service from Delhi NCR. Police-verified drivers, fixed fares, no hidden charges. Book trips to Manali, Shimla, Jaipur, Agra, Haridwar and more.",

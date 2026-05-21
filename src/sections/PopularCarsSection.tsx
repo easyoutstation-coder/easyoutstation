@@ -68,7 +68,7 @@ export default function PopularCarsSection() {
                   <p className="text-[11px] text-slate-500 mb-3 line-clamp-2">{car.description}</p>
 
                   <div className="flex items-center gap-3 text-[10px] text-slate-400 mb-3">
-                    <span className="flex items-center gap-1"><Users className="w-3 h-3" />{car.seats} seats</span>
+                    <span className="flex items-center gap-1"><Users className="w-3 h-3" />{car.seats - 1} passengers</span>
                     <span className="flex items-center gap-1"><Fuel className="w-3 h-3" />{car.fuelType || "AC"}</span>
                     <span className="flex items-center gap-1 text-green-600"><CheckCircle className="w-3 h-3" />Verified</span>
                   </div>

@@ -3,135 +3,9 @@ import { TRPCError } from "@trpc/server";
 import { createRouter, publicQuery, authedQuery } from "./middleware";
 import { getDb } from "./queries/connection";
 import { routes, bookings, userSearches } from "@db/schema";
-import { eq, and, like, desc, sql } from "drizzle-orm";
-import { differenceInHours } from "date-fns";
-
-async function sendBookingSms(phone: string, bookingId: number, fromCity: string, toCity: string, pickupDate: string, totalPrice: number) {
-  const apiKey = process.env.FAST2SMS_API_KEY?.trim();
-  if (!apiKey) { console.warn("[Fast2SMS] FAST2SMS_API_KEY not set"); return; }
-  const number = phone.replace(/\D/g, "").slice(-10);
-  if (number.length !== 10) { console.warn("[Fast2SMS] Invalid phone:", phone); return; }
-  const message = `EasyOutstation: Booking #${bookingId} received! ${fromCity} to ${toCity} on ${pickupDate}. Total: Rs ${totalPrice.toLocaleString("en-IN")}. Driver details within 60 mins. Help: 9958556011`;
-  const params = new URLSearchParams({
-    authorization: apiKey,
-    route: "q",
-    message,
-    language: "english",
-    flash: "0",
-    numbers: number,
-  });
-  try {
-    const res = await fetch(`https://www.fast2sms.com/dev/bulkV2?${params.toString()}`);
-    const data = await res.json() as any;
-    if (data.return === true) {
-      console.log(`[Fast2SMS] SMS sent to ${number}, request_id: ${data.request_id}`);
-    } else {
-      console.error("[Fast2SMS] Failed:", JSON.stringify(data));
-    }
-  } catch (e) {
-    console.error("[Fast2SMS] Request error:", e);
-  }
-}
-
-async function sendBookingEmails(input: {
-  bookingId: number;
-  customerName: string;
-  customerEmail?: string;
-  customerPhone?: string;
-  fromCity: string;
-  toCity: string;
-  pickupDate: string;
-  totalKm: number;
-  totalPrice: number;
-  tripType: string;
-  passengerCount: number;
-  pickupAddress?: string;
-  specialRequests?: string;
-}) {
-  const RESEND_API_KEY = process.env.RESEND_API_KEY;
-  if (!RESEND_API_KEY) return;
-
-  const bookingDetails = `
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-BOOKING DETAILS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Booking ID   : #${input.bookingId}
-Customer     : ${input.customerName}
-Mobile       : ${input.customerPhone ? `+91-${input.customerPhone}` : "Not provided"}
-Email        : ${input.customerEmail || "Not provided"}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-TRIP DETAILS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Route        : ${input.fromCity} → ${input.toCity}
-Pickup Date  : ${input.pickupDate}
-Distance     : ${input.totalKm} km
-Trip Type    : ${input.tripType.replace(/_/g, " ").toUpperCase()}
-Passengers   : ${input.passengerCount}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-FARE BREAKDOWN
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Total Fare   : ₹${input.totalPrice.toLocaleString("en-IN")}
-(Includes distance charges, driver charges & estimated toll)
-Note: Parking charges paid at actuals
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-PICKUP DETAILS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-${input.pickupAddress || "Not provided"}
-${input.specialRequests ? `\nNotes: ${input.specialRequests}` : ""}
-  `.trim();
-
-  // Email to EasyOutstation team
-  await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${RESEND_API_KEY}`,
-    },
-    body: JSON.stringify({
-      from: "EasyOutstation Bookings <bookings@easyoutstation.com>",
-      to: ["easyoutstation@gmail.com"],
-      subject: `🚗 New Booking #${input.bookingId} — ${input.fromCity} → ${input.toCity} | ${input.pickupDate}`,
-      text: `New booking received!\n\n${bookingDetails}`,
-    }),
-  });
-
-  // Email to customer
-  if (input.customerEmail) {
-    await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: "EasyOutstation <bookings@easyoutstation.com>",
-        to: [input.customerEmail],
-        subject: `Booking Received #${input.bookingId} — ${input.fromCity} → ${input.toCity} | EasyOutstation`,
-        text: `Dear ${input.customerName},
-
-Thank you for choosing EasyOutstation! 🚗
-
-We have successfully received your booking request. Our team will review the details and send you a confirmation with your driver's information within 60 minutes.
-
-${bookingDetails}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-WHAT HAPPENS NEXT?
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-✅ We will confirm your booking within 60 minutes
-✅ You will receive your driver's name & contact details
-✅ Driver will call you 1 hour before pickup
-
-For any queries, email us at: easyoutstation@gmail.com
-
-Have a wonderful journey! 🌟
-
-Warm regards,
-Team EasyOutstation`,
-      }),
-    });
-  }
-}
+import { eq, and, like, desc, sql, lt, isNull } from "drizzle-orm";
+import { differenceInHours, subMinutes } from "date-fns";
+import { sendBookingEmails, sendBookingSms } from "./lib/notifications";
 
 export const routeRouter = createRouter({
   list: publicQuery.query(async () => {
@@ -233,21 +107,65 @@ export const bookingRouter = createRouter({
 
       const bookingId = Number((result as any).insertId) || Math.floor(Math.random() * 90000 + 10000);
 
-      // Send email + SMS notifications
-      try {
-        await sendBookingEmails({ ...input, bookingId });
-      } catch (e) {
-        console.error("Email send failed:", e);
-      }
-      if (input.customerPhone) {
+      return { success: true, bookingId };
+    }),
+
+  sendAbandonedReminders: publicQuery
+    .input(z.object({ minutesOld: z.number().default(30) }).optional())
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      const cutoff = subMinutes(new Date(), input?.minutesOld ?? 30);
+
+      const abandoned = await db.query.bookings.findMany({
+        where: and(
+          eq(bookings.paymentStatus, "pending"),
+          lt(bookings.createdAt, cutoff)
+        ),
+        with: { car: true },
+      });
+
+      let sent = 0;
+      for (const booking of abandoned) {
+        const pickupDateStr =
+          booking.pickupDate instanceof Date
+            ? booking.pickupDate.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+            : String(booking.pickupDate);
+        const price = parseFloat(booking.totalPrice);
+
         try {
-          await sendBookingSms(input.customerPhone, bookingId, input.fromCity, input.toCity, input.pickupDate, input.totalPrice);
+          await sendBookingEmails(
+            {
+              bookingId: booking.id,
+              customerName: booking.customerName,
+              customerEmail: booking.customerEmail ?? undefined,
+              customerPhone: booking.customerPhone ?? undefined,
+              fromCity: booking.fromCity,
+              toCity: booking.toCity,
+              pickupDate: pickupDateStr,
+              totalKm: booking.totalKm,
+              totalPrice: price,
+              tripType: booking.tripType,
+              passengerCount: booking.passengerCount ?? 1,
+              pickupAddress: booking.pickupAddress ?? undefined,
+              specialRequests: booking.specialRequests ?? undefined,
+            },
+            "abandonment"
+          );
         } catch (e) {
-          console.error("SMS send failed:", e);
+          console.error(`[Abandoned] Email failed for booking #${booking.id}:`, e);
         }
+
+        if (booking.customerPhone) {
+          try {
+            await sendBookingSms(booking.customerPhone, booking.id, booking.fromCity, booking.toCity, pickupDateStr, price, "abandonment");
+          } catch (e) {
+            console.error(`[Abandoned] SMS failed for booking #${booking.id}:`, e);
+          }
+        }
+        sent++;
       }
 
-      return { success: true, bookingId };
+      return { success: true, total: abandoned.length, sent };
     }),
 
   getMyBookings: authedQuery.query(async ({ ctx }) => {

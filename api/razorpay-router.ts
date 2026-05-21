@@ -1,5 +1,9 @@
 import { z } from "zod";
 import { createRouter, publicQuery } from "./middleware";
+import { getDb } from "./queries/connection";
+import { bookings } from "@db/schema";
+import { eq } from "drizzle-orm";
+import { sendBookingEmails, sendBookingSms } from "./lib/notifications";
 
 const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID || "";
 const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_SECRET || process.env.RAZORPAY_KEY_SECRET || "";
@@ -66,6 +70,55 @@ export const razorpayRouter = createRouter({
 
       if (expectedSignature !== input.razorpaySignature) {
         throw new Error("Payment verification failed — signature mismatch");
+      }
+
+      const db = getDb();
+
+      // Mark booking as paid + confirmed
+      await db
+        .update(bookings)
+        .set({ paymentStatus: "paid", status: "confirmed" })
+        .where(eq(bookings.id, input.bookingId));
+
+      // Fetch booking details for notifications
+      const booking = await db.query.bookings.findFirst({
+        where: eq(bookings.id, input.bookingId),
+      });
+
+      if (booking) {
+        const pickupDateStr =
+          booking.pickupDate instanceof Date
+            ? booking.pickupDate.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+            : String(booking.pickupDate);
+        const price = parseFloat(booking.totalPrice);
+
+        try {
+          await sendBookingEmails({
+            bookingId: booking.id,
+            customerName: booking.customerName,
+            customerEmail: booking.customerEmail ?? undefined,
+            customerPhone: booking.customerPhone ?? undefined,
+            fromCity: booking.fromCity,
+            toCity: booking.toCity,
+            pickupDate: pickupDateStr,
+            totalKm: booking.totalKm,
+            totalPrice: price,
+            tripType: booking.tripType,
+            passengerCount: booking.passengerCount ?? 1,
+            pickupAddress: booking.pickupAddress ?? undefined,
+            specialRequests: booking.specialRequests ?? undefined,
+          });
+        } catch (e) {
+          console.error("[verifyPayment] Email send failed:", e);
+        }
+
+        if (booking.customerPhone) {
+          try {
+            await sendBookingSms(booking.customerPhone, booking.id, booking.fromCity, booking.toCity, pickupDateStr, price);
+          } catch (e) {
+            console.error("[verifyPayment] SMS send failed:", e);
+          }
+        }
       }
 
       return { verified: true, paymentId: input.razorpayPaymentId };

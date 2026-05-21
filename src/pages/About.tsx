@@ -32,10 +32,10 @@ export default function About() {
         <div className="bg-white border-b border-slate-100">
           <div className="max-w-5xl mx-auto px-4 py-12 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
-              { num: "500+", label: "Combined Driver Trips" },
+              { num: "500+", label: "Trips Completed" },
               { num: "10+ yrs", label: "Avg. Driver Experience" },
-              { num: "8+", label: "Premium Cars" },
-              { num: "11", label: "Routes Covered" },
+              { num: "9", label: "Cities Served" },
+              { num: "4.9★", label: "Average Rating" },
             ].map((s, i) => (
               <div key={i}>
                 <div className="text-3xl font-bold text-blue-700 font-['DM_Serif_Display']">{s.num}</div>
@@ -59,8 +59,8 @@ export default function About() {
               </p>
               <p className="text-slate-600 leading-relaxed">
                 We built the service we always wanted: fixed prices, verified drivers, and a team
-                that actually picks up the phone. Today, over 15,000 travelers trust us for their
-                most important journeys.
+                that actually picks up the phone. We're growing — and every trip we complete is
+                a step toward being the most trusted name in outstation travel from Delhi.
               </p>
             </div>
             <div className="grid grid-cols-2 gap-4">

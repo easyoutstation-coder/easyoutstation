@@ -312,7 +312,7 @@ export default function HeroSection() {
                 <div>
                   <h3 className="text-lg font-bold text-slate-900 font-['DM_Serif_Display']">Book Your Cab</h3>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Serving within 100km of Delhi, Manali, Jaipur, Agra & more
+                    Delhi · Manali · Shimla · Jaipur · Agra · Rishikesh · Haridwar · Dehradun · Chandigarh
                   </p>
                 </div>
                 <span className="px-2.5 py-1 rounded-full bg-green-50 border border-green-200 text-xs font-semibold text-green-700 shrink-0 ml-2">
@@ -590,7 +590,7 @@ export default function HeroSection() {
             </button>
 
             <div className="hidden sm:flex gap-8 pt-4 border-t border-white/10">
-              {[{ num: "15K+", label: "Happy Travelers" }, { num: "4.9★", label: "Average Rating" }, { num: "8+", label: "Premium Cars" }].map((s, i) => (
+              {[{ num: "500+", label: "Trips Completed" }, { num: "4.9★", label: "Average Rating" }, { num: "9", label: "Cities Served" }].map((s, i) => (
                 <div key={i}>
                   <div className="text-xl font-bold text-white font-['DM_Serif_Display']">{s.num}</div>
                   <div className="text-xs text-slate-400 mt-0.5">{s.label}</div>

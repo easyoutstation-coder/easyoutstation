@@ -68,6 +68,7 @@ export default function BookingPage() {
   const paramTripType = searchParams.get("tripType") || "one_way";
   const paramFromPincode = searchParams.get("fromPincode") || "";
   const paramToPincode = searchParams.get("toPincode") || "";
+  const resumeBookingId = parseInt(searchParams.get("resume") || "0");
 
   // ALL useState hooks
   const [currentStep, setCurrentStep] = useState(1);
@@ -112,6 +113,7 @@ export default function BookingPage() {
 
   // ALL trpc hooks
   const { data: car } = trpc.car.getById.useQuery({ id: carId }, { enabled: carId > 0 });
+  const { data: resumeBooking } = trpc.booking.getById.useQuery({ id: resumeBookingId }, { enabled: resumeBookingId > 0 });
   const { distanceKm, durationText, isLoading: isCalcDistance, calculateDistance } = useDistanceCalculator();
   const [manualDistance, setManualDistance] = useState(defaultDistance);
   const sendOtpMutation = trpc.sms.sendOtp.useMutation({
@@ -144,6 +146,20 @@ export default function BookingPage() {
       });
     }
   }, [tripType, pickupDate, pickupTime, pickupAddress, pickupPincode, dropAddress, dropPincode, currentStep, bookingComplete]);
+
+  // Pre-fill form when resuming an abandoned booking
+  useEffect(() => {
+    if (!resumeBooking) return;
+    if (resumeBooking.customerName) setCustomerName(resumeBooking.customerName);
+    if (resumeBooking.customerPhone) setCustomerPhone(resumeBooking.customerPhone);
+    if (resumeBooking.customerEmail) setCustomerEmail(resumeBooking.customerEmail);
+    if (resumeBooking.pickupAddress) setPickupAddress(resumeBooking.pickupAddress);
+    if (resumeBooking.pickupDate) {
+      const d = new Date(resumeBooking.pickupDate);
+      if (!isNaN(d.getTime())) setPickupDate(d);
+    }
+    setCurrentStep(3);
+  }, [resumeBooking]);
 
   // Inline quick auth state — must be before any conditional returns
   const [quickName, setQuickName] = useState("");
@@ -291,7 +307,21 @@ export default function BookingPage() {
 
   const totalKmForTrip = tripType === "round_trip" ? finalDistance * 2 : finalDistance;
 
-  const basePrice = pricePerKm * totalKmForTrip;
+  // Minimum km billing rules:
+  // • Any trip spanning multiple days: min 250 km/day (all vehicles)
+  // • Heavy vehicles (>7 seats): min 100 km even for same-day / local trips
+  const MIN_KM_PER_DAY = 250;
+  const MIN_KM_HEAVY = 100;
+  const isHeavyVehicle = (car?.seats ?? 0) > 7;
+
+  const billedKm = (() => {
+    if (tripDays > 1) return Math.max(totalKmForTrip, tripDays * MIN_KM_PER_DAY);
+    if (isHeavyVehicle) return Math.max(totalKmForTrip, MIN_KM_HEAVY);
+    return totalKmForTrip;
+  })();
+
+  const minKmApplies = billedKm > totalKmForTrip;
+  const basePrice = pricePerKm * billedKm;
   const totalDriverCharges = driverChargePerDay * tripDays;
 
   const tollCharges = (() => {
@@ -374,25 +404,29 @@ export default function BookingPage() {
     setIsSubmitting(true);
 
     try {
-      // Step 1: Create booking first to get bookingId
-      const bookingResult = await createBookingMutation.mutateAsync({
-        carId,
-        fromCity: fromCity || pickupAddress.split(",")[0],
-        toCity: toCity || dropAddress.split(",")[0],
-        pickupDate: pickupDate ? format(pickupDate, "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
-        returnDate: returnDate ? format(returnDate, "yyyy-MM-dd") : undefined,
-        tripType: tripType as "one_way" | "round_trip",
-        passengerCount: car ? car.seats - 1 : 4,
-        totalKm: totalKmForTrip,
-        totalPrice,
-        customerName,
-        customerPhone,
-        customerEmail,
-        pickupAddress: `${pickupAddress}, Pincode: ${pickupPincode}, Time: ${pickupTime}${pickupLat ? `, GPS: ${pickupLat},${pickupLng}` : ""}`,
-        specialRequests: dropAddress ? `Drop: ${dropAddress}${dropPincode ? ` (${dropPincode})` : ""}${specialRequests ? `. Notes: ${specialRequests}` : ""}` : specialRequests || undefined,
-      });
-
-      const bookingId = bookingResult.bookingId;
+      // Step 1: Create booking (or reuse existing if resuming an abandoned booking)
+      let bookingId: number;
+      if (resumeBookingId > 0) {
+        bookingId = resumeBookingId;
+      } else {
+        const bookingResult = await createBookingMutation.mutateAsync({
+          carId,
+          fromCity: fromCity || pickupAddress.split(",")[0],
+          toCity: toCity || dropAddress.split(",")[0],
+          pickupDate: pickupDate ? format(pickupDate, "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
+          returnDate: returnDate ? format(returnDate, "yyyy-MM-dd") : undefined,
+          tripType: tripType as "one_way" | "round_trip",
+          passengerCount: car ? car.seats - 1 : 4,
+          totalKm: billedKm,
+          totalPrice,
+          customerName,
+          customerPhone,
+          customerEmail,
+          pickupAddress: `${pickupAddress}, Pincode: ${pickupPincode}, Time: ${pickupTime}${pickupLat ? `, GPS: ${pickupLat},${pickupLng}` : ""}`,
+          specialRequests: dropAddress ? `Drop: ${dropAddress}${dropPincode ? ` (${dropPincode})` : ""}${specialRequests ? `. Notes: ${specialRequests}` : ""}` : specialRequests || undefined,
+        });
+        bookingId = bookingResult.bookingId;
+      }
 
       // Helper: cancel the just-created booking and surface an error
       const abortWithError = (msg: string) => {
@@ -830,6 +864,12 @@ export default function BookingPage() {
                   {currentStep === 3 && (
                     <div className="space-y-5">
                       <h2 className="text-xl font-semibold">Review & Confirm</h2>
+                      {resumeBookingId > 0 && (
+                        <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-sm text-amber-800">
+                          <Clock className="w-4 h-4 shrink-0 text-amber-600" />
+                          <span>Resuming your saved booking — your details are pre-filled. Just review and pay to confirm.</span>
+                        </div>
+                      )}
 
                       <div className="bg-muted rounded-xl p-4 space-y-3">
                         <div className="flex justify-between text-sm"><span className="text-muted-foreground">Car</span><span className="font-medium">{car?.name}</span></div>
@@ -840,7 +880,7 @@ export default function BookingPage() {
                         <div className="flex justify-between text-sm"><span className="text-muted-foreground">Date & Time</span><span className="font-medium">{pickupDate ? format(pickupDate, "dd MMM yyyy") : ""} at {pickupTime}</span></div>
                         <div className="flex justify-between text-sm"><span className="text-muted-foreground">Passengers allowed</span><span className="font-medium">{car ? car.seats - 1 : "—"}</span></div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Distance</span>
+                          <span className="text-muted-foreground">Actual Distance</span>
                           <span className="font-medium">
                             {tripType === "round_trip"
                               ? `${finalDistance} km × 2 = ${totalKmForTrip} km${!returnDate ? " (same day)" : ""}`
@@ -848,13 +888,34 @@ export default function BookingPage() {
                             {durationText && ` (${durationText})`}
                           </span>
                         </div>
+                        {/* Minimum km billing note */}
+                        {minKmApplies && (
+                          <div className="text-[11px] bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 space-y-0.5">
+                            {tripDays > 1 ? (
+                              <div className="text-amber-800 font-medium">
+                                Min billing: {tripDays} days × {MIN_KM_PER_DAY} km/day = {tripDays * MIN_KM_PER_DAY} km
+                              </div>
+                            ) : (
+                              <div className="text-amber-800 font-medium">
+                                Min booking: {MIN_KM_HEAVY} km (heavy vehicle minimum)
+                              </div>
+                            )}
+                            <div className="text-amber-700">
+                              Actual {totalKmForTrip} km &lt; minimum → billed at {billedKm} km
+                            </div>
+                          </div>
+                        )}
+                        <div className="flex justify-between text-sm font-medium">
+                          <span className="text-muted-foreground">Billed Distance</span>
+                          <span>{billedKm} km{minKmApplies ? " (min applies)" : ""}</span>
+                        </div>
                         <Separator />
                         <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Distance Fare ({totalKmForTrip} km × ₹{pricePerKm})</span>
+                          <span className="text-muted-foreground">Distance Fare ({billedKm} km × ₹{pricePerKm})</span>
                           <span>₹{basePrice.toLocaleString("en-IN")}</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Driver Charges (₹{driverChargePerDay}/day × {tripType === "one_way" ? 1 : tripDays} day{tripDays > 1 ? "s" : ""})</span>
+                          <span className="text-muted-foreground">Driver Charges (₹{driverChargePerDay}/day × {tripDays} day{tripDays > 1 ? "s" : ""})</span>
                           <span>₹{totalDriverCharges.toLocaleString("en-IN")}</span>
                         </div>
                         <Separator />
@@ -868,7 +929,7 @@ export default function BookingPage() {
                           <span className="text-amber-600 text-xs font-medium">Charged at actuals</span>
                         </div>
                         <p className="text-[10px] text-muted-foreground bg-slate-50 rounded-lg px-3 py-2">
-                          ℹ️ Toll and parking are collected at actuals — whatever is paid on the road. No markup. No other hidden fees.
+                          ℹ️ Toll and parking collected at actuals — no markup. Any km beyond {billedKm} km on this trip charged at ₹{pricePerKm}/km.
                         </p>
                       </div>
 
@@ -964,8 +1025,9 @@ export default function BookingPage() {
                     </div>
                     <div className="text-2xl font-bold text-primary">₹{(basePrice + totalDriverCharges).toLocaleString("en-IN")}</div>
                     <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
-                      <div>₹{pricePerKm}/km × {totalKmForTrip}km = ₹{basePrice.toLocaleString("en-IN")}</div>
+                      <div>₹{pricePerKm}/km × {billedKm} km{minKmApplies ? " (min)" : ""} = ₹{basePrice.toLocaleString("en-IN")}</div>
                       <div>Driver: ₹{totalDriverCharges} · Toll + Parking: at actuals</div>
+                      {minKmApplies && <div className="text-amber-600">Extra km @ ₹{pricePerKm}/km</div>}
                     </div>
                   </div>
                   <div className="space-y-2 text-xs text-muted-foreground">
