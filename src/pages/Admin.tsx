@@ -81,6 +81,37 @@ interface NoteModal { open: boolean; bookingId: number; currentNote: string }
 interface ActionResult { whatsappLink: string | null; emailSent: boolean; customerPhone: string | null; bookingId?: number; action?: "confirmed" | "cancelled" }
 interface DriverForm { name: string; phone: string; vehicleInfo: string }
 
+function compressImage(file: File): Promise<string> {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX_W = 900;
+        const ratio = Math.min(1, MAX_W / img.width);
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * ratio);
+        canvas.height = Math.round(img.height * ratio);
+        canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", 0.78));
+      };
+      img.src = e.target!.result as string;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+const VEHICLE_CATEGORIES = ["sedan","muv","suv","premium","luxury","tempo","bus","electric"] as const;
+const FUEL_TYPES = ["petrol","diesel","cng","hybrid","electric"] as const;
+const TRANSMISSIONS = ["manual","automatic"] as const;
+const DEFAULT_VEHICLE_FORM = {
+  name: "", brand: "", model: "", category: "sedan" as typeof VEHICLE_CATEGORIES[number],
+  seats: 4, pricePerKm: "", driverCharges: "250",
+  fuelType: "diesel" as typeof FUEL_TYPES[number],
+  transmission: "manual" as typeof TRANSMISSIONS[number],
+  description: "", imageUrl: "",
+};
+
 export default function AdminPage() {
   const navigate = useNavigate();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth({ redirectOnUnauthenticated: true });
@@ -177,6 +208,36 @@ export default function AdminPage() {
       ));
     }
   }, [fleetPricing]);
+
+  const [addVehicleOpen, setAddVehicleOpen] = useState(false);
+  const [vehicleForm, setVehicleForm] = useState({ ...DEFAULT_VEHICLE_FORM });
+  const [vehicleImagePreview, setVehicleImagePreview] = useState("");
+  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
+
+  const addCar = trpc.admin.addCar.useMutation({
+    onSuccess: () => {
+      setAddVehicleOpen(false);
+      setVehicleForm({ ...DEFAULT_VEHICLE_FORM });
+      setVehicleImagePreview("");
+      refetchFleetPricing();
+      utils.car.list.invalidate();
+    },
+  });
+  const deleteCar = trpc.admin.deleteCar.useMutation({
+    onSuccess: () => {
+      setDeleteConfirmId(null);
+      refetchFleetPricing();
+      utils.car.list.invalidate();
+    },
+  });
+
+  async function handleVehicleImage(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const compressed = await compressImage(file);
+    setVehicleImagePreview(compressed);
+    setVehicleForm(f => ({ ...f, imageUrl: compressed }));
+  }
 
   const confirmBooking = trpc.admin.confirmBooking.useMutation({
     onSuccess: (res) => {
@@ -604,14 +665,19 @@ export default function AdminPage() {
             {isSuperAdmin && (
               <Card className="border-2 border-slate-200 bg-white">
                 <CardContent className="p-5">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-                      <IndianRupee className="w-5 h-5 text-blue-600" />
+                  <div className="flex items-center justify-between gap-4 mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+                        <IndianRupee className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-slate-900">Fleet Management</p>
+                        <p className="text-xs text-slate-500 mt-0.5">Add / remove vehicles and tweak pricing — changes apply site-wide instantly</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-semibold text-slate-900">Fleet Pricing</p>
-                      <p className="text-xs text-slate-500 mt-0.5">Edit per-km rate and driver charges — updates apply site-wide instantly</p>
-                    </div>
+                    <Button size="sm" onClick={() => setAddVehicleOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white shrink-0">
+                      <Plus className="w-4 h-4 mr-1" /> Add Vehicle
+                    </Button>
                   </div>
                   {!fleetPricing?.length ? (
                     <p className="text-sm text-slate-400 text-center py-4">Loading fleet…</p>
@@ -623,7 +689,7 @@ export default function AdminPage() {
                             <th className="text-left text-xs font-medium text-slate-400 uppercase pb-2 pr-4">Vehicle</th>
                             <th className="text-left text-xs font-medium text-slate-400 uppercase pb-2 pr-3 w-32">₹ / km</th>
                             <th className="text-left text-xs font-medium text-slate-400 uppercase pb-2 pr-3 w-36">Driver / day</th>
-                            <th className="pb-2 w-20" />
+                            <th className="pb-2 w-36" />
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
@@ -674,23 +740,50 @@ export default function AdminPage() {
                                   </div>
                                 </td>
                                 <td className="py-2.5 text-right">
-                                  <button
-                                    onClick={() => updateCarPricing.mutate({
-                                      id: car.id,
-                                      pricePerKm: parseFloat(edit.pricePerKm),
-                                      driverCharges: parseFloat(edit.driverCharges),
-                                    })}
-                                    disabled={!dirty && !saved || updateCarPricing.isPending}
-                                    className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${
-                                      saved
-                                        ? "bg-green-100 text-green-700"
-                                        : dirty
-                                          ? "bg-blue-600 text-white hover:bg-blue-700"
-                                          : "bg-slate-100 text-slate-400 cursor-default"
-                                    }`}
-                                  >
-                                    {saved ? "Saved ✓" : "Save"}
-                                  </button>
+                                  <div className="flex items-center justify-end gap-1.5">
+                                    <button
+                                      onClick={() => updateCarPricing.mutate({
+                                        id: car.id,
+                                        pricePerKm: parseFloat(edit.pricePerKm),
+                                        driverCharges: parseFloat(edit.driverCharges),
+                                      })}
+                                      disabled={(!dirty && !saved) || updateCarPricing.isPending}
+                                      className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${
+                                        saved
+                                          ? "bg-green-100 text-green-700"
+                                          : dirty
+                                            ? "bg-blue-600 text-white hover:bg-blue-700"
+                                            : "bg-slate-100 text-slate-400 cursor-default"
+                                      }`}
+                                    >
+                                      {saved ? "Saved ✓" : "Save"}
+                                    </button>
+                                    {deleteConfirmId === car.id ? (
+                                      <>
+                                        <button
+                                          onClick={() => deleteCar.mutate({ id: car.id })}
+                                          disabled={deleteCar.isPending}
+                                          className="text-xs font-semibold px-2 py-1.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors"
+                                        >
+                                          {deleteCar.isPending ? "…" : "Confirm"}
+                                        </button>
+                                        <button
+                                          onClick={() => setDeleteConfirmId(null)}
+                                          className="text-xs px-2 py-1.5 rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors"
+                                        >
+                                          ✕
+                                        </button>
+                                      </>
+                                    ) : (
+                                      <button
+                                        onClick={() => setDeleteConfirmId(car.id)}
+                                        className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                                        title="Remove vehicle"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </button>
+                                    )}
+                                  </div>
                                 </td>
                               </tr>
                             );
@@ -702,6 +795,127 @@ export default function AdminPage() {
                 </CardContent>
               </Card>
             )}
+
+            {/* Add Vehicle Dialog */}
+            <Dialog open={addVehicleOpen} onOpenChange={setAddVehicleOpen}>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Add New Vehicle</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 pt-2">
+                  {/* Image upload */}
+                  <div>
+                    <label className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5 block">Vehicle Image</label>
+                    <div className="flex items-start gap-4">
+                      <div className="w-28 h-20 rounded-xl border-2 border-dashed border-slate-200 overflow-hidden flex items-center justify-center bg-slate-50 shrink-0">
+                        {vehicleImagePreview
+                          ? <img src={vehicleImagePreview} alt="preview" className="w-full h-full object-cover" />
+                          : <Car className="w-6 h-6 text-slate-300" />}
+                      </div>
+                      <div className="flex-1">
+                        <input
+                          type="file" accept="image/*"
+                          onChange={handleVehicleImage}
+                          className="block w-full text-sm text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+                        />
+                        <p className="text-xs text-slate-400 mt-1">JPEG / PNG / WebP — auto-compressed to ~900px</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1 block">Vehicle Name *</label>
+                      <Input value={vehicleForm.name} onChange={e => setVehicleForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Toyota Innova Crysta" className="h-9 text-sm" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1 block">Brand *</label>
+                      <Input value={vehicleForm.brand} onChange={e => setVehicleForm(f => ({ ...f, brand: e.target.value }))} placeholder="e.g. Toyota" className="h-9 text-sm" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1 block">Model *</label>
+                      <Input value={vehicleForm.model} onChange={e => setVehicleForm(f => ({ ...f, model: e.target.value }))} placeholder="e.g. Crysta 2.4G" className="h-9 text-sm" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1 block">Category *</label>
+                      <Select value={vehicleForm.category} onValueChange={v => setVehicleForm(f => ({ ...f, category: v as any }))}>
+                        <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {VEHICLE_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1 block">Seats *</label>
+                      <Input type="number" min={1} value={vehicleForm.seats} onChange={e => setVehicleForm(f => ({ ...f, seats: parseInt(e.target.value) || 4 }))} className="h-9 text-sm" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1 block">Price per km (₹) *</label>
+                      <Input type="number" min={1} step={0.5} value={vehicleForm.pricePerKm} onChange={e => setVehicleForm(f => ({ ...f, pricePerKm: e.target.value }))} placeholder="e.g. 18" className="h-9 text-sm" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1 block">Driver Charge / day (₹) *</label>
+                      <Input type="number" min={0} step={50} value={vehicleForm.driverCharges} onChange={e => setVehicleForm(f => ({ ...f, driverCharges: e.target.value }))} placeholder="e.g. 250" className="h-9 text-sm" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1 block">Fuel Type *</label>
+                      <Select value={vehicleForm.fuelType} onValueChange={v => setVehicleForm(f => ({ ...f, fuelType: v as any }))}>
+                        <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {FUEL_TYPES.map(t => <SelectItem key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1 block">Transmission *</label>
+                      <Select value={vehicleForm.transmission} onValueChange={v => setVehicleForm(f => ({ ...f, transmission: v as any }))}>
+                        <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {TRANSMISSIONS.map(t => <SelectItem key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1 block">Description</label>
+                    <Textarea
+                      value={vehicleForm.description}
+                      onChange={e => setVehicleForm(f => ({ ...f, description: e.target.value }))}
+                      placeholder="Short description shown on the cars page…"
+                      className="text-sm resize-none"
+                      rows={2}
+                    />
+                  </div>
+
+                  <div className="flex gap-2 pt-1">
+                    <Button
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                      disabled={!vehicleForm.name || !vehicleForm.brand || !vehicleForm.model || !vehicleForm.pricePerKm || addCar.isPending}
+                      onClick={() => addCar.mutate({
+                        name: vehicleForm.name,
+                        brand: vehicleForm.brand,
+                        model: vehicleForm.model,
+                        category: vehicleForm.category,
+                        seats: vehicleForm.seats,
+                        pricePerKm: parseFloat(vehicleForm.pricePerKm),
+                        driverCharges: parseFloat(vehicleForm.driverCharges) || 250,
+                        fuelType: vehicleForm.fuelType,
+                        transmission: vehicleForm.transmission,
+                        description: vehicleForm.description || undefined,
+                        imageUrl: vehicleForm.imageUrl || undefined,
+                      })}
+                    >
+                      {addCar.isPending ? "Adding…" : "Add Vehicle"}
+                    </Button>
+                    <Button variant="outline" onClick={() => { setAddVehicleOpen(false); setVehicleForm({ ...DEFAULT_VEHICLE_FORM }); setVehicleImagePreview(""); }}>
+                      Cancel
+                    </Button>
+                  </div>
+                  {addCar.error && <p className="text-xs text-red-600">{addCar.error.message}</p>}
+                </div>
+              </DialogContent>
+            </Dialog>
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <StatCard icon={Clock} label="Pending" value={stats?.pending ?? "—"} />

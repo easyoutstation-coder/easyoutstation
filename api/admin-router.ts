@@ -639,6 +639,49 @@ Thank you for choosing EasyOutstation.`;
       return { success: true };
     }),
 
+  // ── Fleet CRUD ────────────────────────────────────────────────────────
+  addCar: superAdminQuery
+    .input(z.object({
+      name: z.string().min(1),
+      brand: z.string().min(1),
+      model: z.string().min(1),
+      category: z.enum(["sedan","muv","suv","premium","luxury","tempo","bus","electric"]),
+      seats: z.number().int().positive(),
+      pricePerKm: z.number().positive(),
+      driverCharges: z.number().min(0),
+      fuelType: z.enum(["petrol","diesel","cng","hybrid","electric"]),
+      transmission: z.enum(["manual","automatic"]),
+      description: z.string().optional(),
+      imageUrl: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      await db.insert(cars).values({
+        name: input.name,
+        brand: input.brand,
+        model: input.model,
+        category: input.category,
+        seats: input.seats,
+        pricePerKm: input.pricePerKm.toFixed(2),
+        driverCharges: input.driverCharges.toFixed(2),
+        fuelType: input.fuelType,
+        transmission: input.transmission,
+        description: input.description ?? null,
+        imageUrl: input.imageUrl ?? null,
+        isAvailable: true,
+        isPopular: false,
+      });
+      return { success: true };
+    }),
+
+  deleteCar: superAdminQuery
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      await db.delete(cars).where(eq(cars.id, input.id));
+      return { success: true };
+    }),
+
   // ── Fleet pricing ─────────────────────────────────────────────────────
   getFleetPricing: superAdminQuery.query(async () => {
     const db = getDb();
