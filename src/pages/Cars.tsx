@@ -92,7 +92,7 @@ export default function CarsPage() {
     maxPrice: priceRange[1] >= MAX_PRICE_KM ? undefined : priceRange[1],
     seats: seats === "all" ? undefined : parseInt(seats),
     search: searchQuery || undefined,
-  });
+  }, { staleTime: 2 * 60 * 1000 });
 
   const { data: discountConfig } = trpc.admin.getDiscount.useQuery();
   const applyDiscount = (fare: number): number => {
@@ -211,14 +211,7 @@ export default function CarsPage() {
     { id: 17, name: "BYD Atto 3", brand: "BYD", category: "electric", seats: 5, pricePerKm: "15.00", rating: "4.70", reviewCount: 14, imageUrl: "/cars/byd-atto3.jpg", isAvailable: true, description: "Zero-emission electric SUV with premium interiors. As per availability. Toll, parking & state taxes charged at actuals.", fuelType: "electric", transmission: "automatic" },
   ];
 
-  const mergedCars = (() => {
-    if (!cars?.length) return fallbackCars;
-    const dbCategories = new Set(cars.map((c) => c.category));
-    const supplemental = fallbackCars.filter((fc) => !dbCategories.has(fc.category as string));
-    return [...cars, ...supplemental] as typeof fallbackCars;
-  })();
-
-  const displayCars = mergedCars
+  const displayCars = (cars ?? fallbackCars)
     .slice()
     .sort((a, b) => {
       if (sortBy === "price_asc") return parseFloat(a.pricePerKm) - parseFloat(b.pricePerKm);
