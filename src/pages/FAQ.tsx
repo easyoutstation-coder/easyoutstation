@@ -20,16 +20,25 @@ const FALLBACK_FAQS = [
 
 export default function FAQ() {
   const [open, setOpen] = useState<number | null>(null);
-  useSeo({
-    title: "FAQs — Outstation Cab Booking Delhi | EasyOutstation",
-    description: "Answers to common questions about EasyOutstation's cab service — pricing, cancellation, driver verification, toll charges and more.",
-    canonical: "https://www.easyoutstation.com/faq",
-  });
 
   const { data: apiFaqs } = trpc.admin.getPublicFaqs.useQuery();
   const faqs = apiFaqs && apiFaqs.length > 0
     ? apiFaqs.map(f => ({ question: f.question, answer: f.answer }))
     : FALLBACK_FAQS;
+
+  useSeo({
+    title: "FAQs — Outstation Cab Booking Delhi | EasyOutstation",
+    description: "Answers to common questions about EasyOutstation's cab service — pricing, cancellation, driver verification, toll charges and more.",
+    canonical: "https://www.easyoutstation.com/faq",
+    schema: {
+      "@type": "FAQPage",
+      "mainEntity": faqs.map(f => ({
+        "@type": "Question",
+        "name": f.question,
+        "acceptedAnswer": { "@type": "Answer", "text": f.answer },
+      })),
+    },
+  });
 
   return (
     <div className="min-h-screen bg-slate-50">
