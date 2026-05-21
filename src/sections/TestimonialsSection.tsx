@@ -69,7 +69,7 @@ export default function TestimonialsSection() {
         {/* Honest stats from driver network */}
         <div className="bg-white rounded-2xl border border-slate-200 px-6 py-8">
           <p className="text-center text-xs font-bold uppercase tracking-widest text-slate-400 mb-6">From Our Driver Network</p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 text-center">
             {stats.map((s, i) => (
               <div key={i}>
                 <div className="text-2xl font-bold text-blue-700 font-['DM_Serif_Display']">{s.num}</div>

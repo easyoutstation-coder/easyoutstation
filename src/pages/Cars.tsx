@@ -570,7 +570,7 @@ export default function CarsPage() {
                       const minApplies = bkm > effectiveKm;
                       const perCarDriver = parseFloat(car.driverCharges ?? "250");
                       return (
-                        <div className="flex items-center justify-between text-[11px] mb-3 bg-slate-50 rounded-lg px-2.5 py-1.5">
+                        <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-[11px] mb-3 bg-slate-50 rounded-lg px-2.5 py-1.5">
                           <span className="text-slate-400">
                             ₹{car.pricePerKm}/km × {bkm} km{minApplies ? " (min)" : ""} + ₹{(perCarDriver * tripDays).toLocaleString("en-IN")} driver
                           </span>

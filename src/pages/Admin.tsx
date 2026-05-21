@@ -805,9 +805,9 @@ export default function AdminPage() {
             {isSuperAdmin && (
               <Card className="border-2 border-amber-200 bg-amber-50">
                 <CardContent className="p-5">
-                  <div className="flex items-center justify-between gap-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
                         <Mail className="w-5 h-5 text-amber-600" />
                       </div>
                       <div>
@@ -821,7 +821,7 @@ export default function AdminPage() {
                       size="sm"
                       onClick={() => { setAbandonedResult(null); sendAbandonedReminders.mutate({}); }}
                       disabled={sendAbandonedReminders.isPending}
-                      className="bg-amber-500 hover:bg-amber-600 text-white shrink-0"
+                      className="bg-amber-500 hover:bg-amber-600 text-white sm:shrink-0 w-full sm:w-auto"
                     >
                       {sendAbandonedReminders.isPending ? "Sending…" : "Send Reminders"}
                     </Button>
