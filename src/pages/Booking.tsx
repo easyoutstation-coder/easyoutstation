@@ -884,34 +884,10 @@ export default function BookingPage() {
                         {tripType === "round_trip" && (<div className="flex justify-between text-sm"><span className="text-muted-foreground">Return Date</span><span className="font-medium">{returnDate ? format(returnDate, "dd MMM yyyy") : "Same day"}</span></div>)}
                         <div className="flex justify-between text-sm"><span className="text-muted-foreground">Passengers allowed</span><span className="font-medium">{car ? car.seats - 1 : "—"}</span></div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Actual Distance</span>
+                          <span className="text-muted-foreground">Distance</span>
                           <span className="font-medium">
-                            {tripType === "round_trip"
-                              ? `${finalDistance} km × 2 = ${totalKmForTrip} km${!returnDate ? " (same day)" : ""}`
-                              : `${finalDistance} km`}
-                            {durationText && ` (${durationText})`}
+                            {billedKm} km{durationText && ` (${durationText})`}
                           </span>
-                        </div>
-                        {/* Minimum km billing note */}
-                        {minKmApplies && (
-                          <div className="text-[11px] bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 space-y-0.5">
-                            {tripDays > 1 ? (
-                              <div className="text-amber-800 font-medium">
-                                Min: {MIN_KM_PER_DAY} km/day × {tripDays} days = {tripDays * MIN_KM_PER_DAY} km
-                              </div>
-                            ) : (
-                              <div className="text-amber-800 font-medium">
-                                Min: {MIN_KM_HEAVY} km (heavy vehicle)
-                              </div>
-                            )}
-                            <div className="text-amber-700">
-                              Your route is {totalKmForTrip} km — billed at {billedKm} km
-                            </div>
-                          </div>
-                        )}
-                        <div className="flex justify-between text-sm font-medium">
-                          <span className="text-muted-foreground">Billed Distance</span>
-                          <span>{billedKm} km{minKmApplies ? " (min applies)" : ""}</span>
                         </div>
                         <Separator />
                         <div className="flex justify-between text-sm">
@@ -1029,9 +1005,8 @@ export default function BookingPage() {
                     </div>
                     <div className="text-2xl font-bold text-primary">₹{(basePrice + totalDriverCharges).toLocaleString("en-IN")}</div>
                     <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
-                      <div>₹{pricePerKm}/km × {billedKm} km{minKmApplies ? " (min)" : ""} = ₹{basePrice.toLocaleString("en-IN")}</div>
+                      <div>₹{pricePerKm}/km × {billedKm} km = ₹{basePrice.toLocaleString("en-IN")}</div>
                       <div>Driver: ₹{totalDriverCharges} · Toll + Parking: at actuals</div>
-                      {minKmApplies && <div className="text-amber-600">Extra km @ ₹{pricePerKm}/km</div>}
                     </div>
                   </div>
                   <div className="space-y-2 text-xs text-muted-foreground">
