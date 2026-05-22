@@ -273,7 +273,7 @@ export const agentRouter = createRouter({
       messages: z.array(z.any()),
       toolUseId: z.string(),
       toolName: z.string(),
-      toolInput: z.record(z.any()),
+      toolInput: z.record(z.string(), z.any()),
     }))
     .mutation(async ({ input }) => {
       if (!process.env.ANTHROPIC_API_KEY) {
