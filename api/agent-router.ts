@@ -250,12 +250,16 @@ export const agentRouter = createRouter({
       if (response.stop_reason === "tool_use") {
         const toolUseBlock = response.content.find((b): b is Anthropic.ToolUseBlock => b.type === "tool_use");
         const textBlock = response.content.find((b): b is Anthropic.TextBlock => b.type === "text");
+        if (!toolUseBlock) {
+          // Unexpected: stop_reason is tool_use but no tool_use block found — fall through to text
+          return { type: "text" as const, text: textBlock?.text ?? "I encountered an issue. Please try again." };
+        }
         return {
           type: "tool_proposal" as const,
           text: textBlock?.text ?? "",
-          toolName: toolUseBlock!.name,
-          toolInput: toolUseBlock!.input as Record<string, any>,
-          toolUseId: toolUseBlock!.id,
+          toolName: toolUseBlock.name,
+          toolInput: toolUseBlock.input as Record<string, any>,
+          toolUseId: toolUseBlock.id,
           rawContent: response.content,
         };
       }

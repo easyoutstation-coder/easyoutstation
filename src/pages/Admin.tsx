@@ -325,13 +325,17 @@ export default function AdminPage() {
     setAgentInput("");
     setPendingTool(null);
 
-    const apiMessages = history.map(m => ({ role: m.role, content: m.content }));
+    // Only send real API turns — skip the initial UI greeting (role: assistant, not from API)
+    const firstUserIdx = history.findIndex(m => m.role === "user");
+    const apiMessages = history
+      .slice(firstUserIdx >= 0 ? firstUserIdx : 0)
+      .map(m => ({ role: m.role, content: m.content }));
     try {
       const result = await agentChat.mutateAsync({ messages: apiMessages });
       if (result.type === "tool_proposal") {
         const assistantContent = [
           ...(result.text ? [{ type: "text", text: result.text }] : []),
-          ...result.rawContent.filter((b: any) => b.type === "tool_use"),
+          ...(result.rawContent ?? []).filter((b: any) => b.type === "tool_use"),
         ];
         setAgentMessages(prev => [
           ...prev.filter(m => !m.isPending),
