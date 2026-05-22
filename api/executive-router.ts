@@ -302,7 +302,7 @@ export const executiveRouter = createRouter({
       agentId: agentIdSchema,
       messages: z.array(z.object({
         role: z.enum(["user", "assistant"]),
-        content: z.string(),
+        content: z.union([z.string(), z.array(z.any())]),
       })),
       businessContext: z.string().optional(),
     }))

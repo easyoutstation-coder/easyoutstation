@@ -5,8 +5,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
-  Send, Loader2, ChevronDown, ChevronUp, BarChart2,
-  ArrowLeft, Trash2, Copy, Check, RefreshCw,
+  Send, Loader2, BarChart2,
+  ArrowLeft, Trash2, Copy, Check, Paperclip, X, FileText,
 } from "lucide-react";
 
 // ─── Agent Config ────────────────────────────────────────────────────────────
@@ -124,9 +124,21 @@ const DATA_TEMPLATES = [
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
+interface Attachment {
+  type: "image" | "text";
+  name: string;
+  dataUrl?: string;
+  base64?: string;
+  mediaType?: string;
+  text?: string;
+}
+
 interface Message {
   role: "user" | "assistant";
   content: string;
+  apiContent?: string | any[];
+  imageDataUrl?: string;
+  attachedFileName?: string;
   agentId?: AgentId;
   timestamp: Date;
 }
@@ -151,8 +163,11 @@ export default function ExecutiveTeam() {
   const [copiedMsgIdx, setCopiedMsgIdx] = useState<number | null>(null);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
+  const [pendingAttachment, setPendingAttachment] = useState<Attachment | null>(null);
+
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const chatMutation = trpc.executive.chat.useMutation();
 
@@ -186,16 +201,59 @@ export default function ExecutiveTeam() {
     );
   }
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    const isImage = file.type.startsWith("image/");
+    const isText = file.type === "text/plain" || file.type === "text/csv" || file.name.endsWith(".csv") || file.name.endsWith(".txt");
+    if (isImage) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const dataUrl = ev.target?.result as string;
+        const [header, base64] = dataUrl.split(",");
+        const mediaType = header.match(/:(.*?);/)?.[1] ?? "image/jpeg";
+        setPendingAttachment({ type: "image", name: file.name, dataUrl, base64, mediaType });
+      };
+      reader.readAsDataURL(file);
+    } else if (isText) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setPendingAttachment({ type: "text", name: file.name, text: ev.target?.result as string });
+      };
+      reader.readAsText(file);
+    }
+  };
+
   const sendMessage = async () => {
     const text = input.trim();
-    if (!text || chatMutation.isPending) return;
+    if ((!text && !pendingAttachment) || chatMutation.isPending) return;
 
-    const userMsg: Message = { role: "user", content: text, timestamp: new Date() };
+    let apiContent: string | any[] = text;
+    let imageDataUrl: string | undefined;
+    let attachedFileName: string | undefined;
+
+    if (pendingAttachment) {
+      if (pendingAttachment.type === "image") {
+        imageDataUrl = pendingAttachment.dataUrl;
+        apiContent = [
+          ...(text ? [{ type: "text", text }] : []),
+          { type: "image", source: { type: "base64", media_type: pendingAttachment.mediaType, data: pendingAttachment.base64 } },
+        ];
+      } else {
+        attachedFileName = pendingAttachment.name;
+        const fileBlock = `--- Attached: ${pendingAttachment.name} ---\n${pendingAttachment.text}`;
+        apiContent = text ? `${text}\n\n${fileBlock}` : fileBlock;
+      }
+      setPendingAttachment(null);
+    }
+
+    const userMsg: Message = { role: "user", content: text, apiContent, imageDataUrl, attachedFileName, timestamp: new Date() };
     const updatedMsgs = [...messages, userMsg];
     setConversations(prev => ({ ...prev, [activeAgent]: updatedMsgs }));
     setInput("");
 
-    const apiMessages = updatedMsgs.map(m => ({ role: m.role, content: m.content }));
+    const apiMessages = updatedMsgs.map(m => ({ role: m.role, content: m.apiContent ?? m.content }));
 
     try {
       const result = await chatMutation.mutateAsync({
@@ -509,7 +567,22 @@ export default function ExecutiveTeam() {
                 }`}>
                   {msg.role === "assistant"
                     ? formatContent(msg.content)
-                    : <p>{msg.content}</p>
+                    : <>
+                        {msg.imageDataUrl && (
+                          <img
+                            src={msg.imageDataUrl}
+                            alt="attachment"
+                            className="max-w-[220px] rounded-lg mb-1.5 border border-blue-400/20"
+                          />
+                        )}
+                        {msg.attachedFileName && (
+                          <div className="flex items-center gap-1.5 bg-blue-500/30 rounded-lg px-2 py-1 mb-1 text-xs">
+                            <FileText className="w-3 h-3 shrink-0" />
+                            <span className="truncate max-w-[160px]">{msg.attachedFileName}</span>
+                          </div>
+                        )}
+                        {msg.content && <p>{msg.content}</p>}
+                      </>
                   }
                 </div>
                 {/* Timestamp + copy */}
@@ -555,8 +628,37 @@ export default function ExecutiveTeam() {
         {/* ── Input Area ── */}
         <div className="border-t border-slate-800 bg-slate-900/50 p-4 shrink-0">
           <div className="max-w-3xl mx-auto">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,.txt,.csv"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
             <div className="flex gap-3 items-end">
               <div className="flex-1 bg-slate-800 border border-slate-700 rounded-2xl focus-within:border-slate-600 transition-colors">
+                {/* Attachment preview */}
+                {pendingAttachment && (
+                  <div className="flex items-center gap-2 px-3 pt-2.5">
+                    {pendingAttachment.type === "image" ? (
+                      <div className="inline-flex items-center gap-1.5 bg-slate-700 rounded-lg pl-1 pr-2 py-0.5">
+                        <img src={pendingAttachment.dataUrl} alt="" className="w-6 h-6 rounded object-cover" />
+                        <span className="text-xs text-slate-300 max-w-[140px] truncate">{pendingAttachment.name}</span>
+                        <button onClick={() => setPendingAttachment(null)} className="text-slate-400 hover:text-red-400 transition-colors ml-0.5">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="inline-flex items-center gap-1.5 bg-slate-700 rounded-lg px-2 py-0.5">
+                        <FileText className="w-3.5 h-3.5 text-emerald-400" />
+                        <span className="text-xs text-slate-300 max-w-[140px] truncate">{pendingAttachment.name}</span>
+                        <button onClick={() => setPendingAttachment(null)} className="text-slate-400 hover:text-red-400 transition-colors ml-0.5">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
                 <textarea
                   ref={inputRef}
                   value={input}
@@ -573,15 +675,25 @@ export default function ExecutiveTeam() {
                   }}
                 />
                 <div className="flex items-center justify-between px-3 pb-2">
-                  <span className="text-[10px] text-slate-700">
-                    {businessContext ? "📊 Business context active" : "No business context set"}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="text-slate-600 hover:text-slate-400 transition-colors"
+                      title="Attach image or file (.png, .jpg, .csv, .txt)"
+                    >
+                      <Paperclip className="w-3.5 h-3.5" />
+                    </button>
+                    <span className="text-[10px] text-slate-700">
+                      {businessContext ? "📊 Business context active" : "No business context set"}
+                    </span>
+                  </div>
                   <span className="text-[10px] text-slate-700">⏎ send · ⇧⏎ newline</span>
                 </div>
               </div>
               <Button
                 onClick={sendMessage}
-                disabled={!input.trim() || chatMutation.isPending}
+                disabled={(!input.trim() && !pendingAttachment) || chatMutation.isPending}
                 className={`h-11 w-11 rounded-xl p-0 shrink-0 ${agent.color} hover:opacity-90 disabled:opacity-40 transition-opacity`}
               >
                 {chatMutation.isPending
