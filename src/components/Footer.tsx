@@ -1,6 +1,5 @@
 import { Link } from "react-router";
-import { Mail, MapPin, MessageCircle, Phone, ArrowRight } from "lucide-react";
-import LogoIcon from "@/components/LogoIcon";
+import { Car, Mail, MapPin, MessageCircle, Phone, ArrowRight } from "lucide-react";
 
 const footerLinks = {
   routes: [
@@ -43,7 +42,9 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12">
           <div className="lg:col-span-2 space-y-6">
             <Link to="/" className="flex items-center gap-3 group">
-              <LogoIcon size={48} className="transition-transform group-hover:scale-105" />
+              <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center">
+                <Car className="w-6 h-6 text-white" />
+              </div>
               <div>
                 <h3 className="text-xl font-bold text-white font-['DM_Serif_Display']">EasyOutstation</h3>
                 <p className="text-[10px] uppercase tracking-widest text-blue-400">Premium Cab Service</p>
