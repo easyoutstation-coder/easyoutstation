@@ -4,7 +4,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Menu, User, LogOut, Car, ChevronDown, History, LayoutDashboard, ShieldCheck } from "lucide-react";
+import { Menu, User, LogOut, ChevronDown, History, LayoutDashboard, ShieldCheck } from "lucide-react";
+import LogoIcon from "@/components/LogoIcon";
 
 const navLinks = [
   { label: "Home", href: "/" },
@@ -36,10 +37,8 @@ export default function Navbar() {
       }`}>
 
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2.5 shrink-0 pl-1 group">
-          <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center transition-all group-hover:bg-blue-500">
-            <Car className="w-4 h-4 text-white" />
-          </div>
+        <Link to="/" className="flex items-center gap-2 shrink-0 pl-1 group">
+          <LogoIcon size={34} className="transition-transform group-hover:scale-105" />
           <span className="font-bold text-[15px] leading-none font-['DM_Serif_Display'] text-white whitespace-nowrap">
             EasyOutstation
           </span>
@@ -121,9 +120,7 @@ export default function Navbar() {
             </SheetTrigger>
             <SheetContent side="right" className="bg-[#1e3a5f] border-blue-900/60 w-72 p-0">
               <div className="px-6 py-5 border-b border-blue-800/50 flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
-                  <Car className="w-4 h-4 text-white" />
-                </div>
+                <LogoIcon size={34} />
                 <SheetTitle className="text-white font-['DM_Serif_Display'] text-lg m-0">EasyOutstation</SheetTitle>
               </div>
               <nav className="px-4 py-4 flex flex-col gap-1">
