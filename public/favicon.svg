@@ -1,43 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <defs>
-    <radialGradient id="bg" cx="50%" cy="40%" r="65%">
-      <stop offset="0%" stop-color="#1a3a6e"/>
-      <stop offset="100%" stop-color="#08111f"/>
-    </radialGradient>
-    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#3b82f6"/>
-      <stop offset="100%" stop-color="#1d4ed8"/>
-    </linearGradient>
-  </defs>
   <!-- Background -->
-  <circle cx="32" cy="32" r="32" fill="url(#bg)"/>
-  <!-- Road dashes -->
-  <line x1="5" y1="42" x2="12" y2="42" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-opacity="0.5"/>
-  <line x1="52" y1="42" x2="59" y2="42" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-opacity="0.5"/>
-  <!-- Car body -->
-  <rect x="9" y="31" width="46" height="13" rx="3" fill="url(#body)"/>
-  <!-- Car roof -->
-  <path d="M17 31 L21.5 21 L42.5 21 L47 31 Z" fill="#60a5fa"/>
-  <!-- Roof highlight -->
-  <path d="M18 31 L22 22.5 L31 22.5 L29 31 Z" fill="white" fill-opacity="0.1"/>
-  <!-- Windows -->
-  <rect x="23" y="22.5" width="7.5" height="6.5" rx="1" fill="#bfdbfe" fill-opacity="0.88"/>
-  <rect x="33" y="22.5" width="7.5" height="6.5" rx="1" fill="#bfdbfe" fill-opacity="0.88"/>
-  <rect x="31.5" y="22" width="1.5" height="9" fill="#3b82f6"/>
-  <!-- Headlight -->
-  <rect x="51" y="34" width="3" height="5" rx="1" fill="#fef3c7"/>
-  <!-- Wheels -->
-  <circle cx="18.5" cy="44" r="5.5" fill="#0f172a"/>
-  <circle cx="18.5" cy="44" r="3.2" fill="#94a3b8"/>
-  <circle cx="18.5" cy="44" r="1.2" fill="#475569"/>
-  <circle cx="45.5" cy="44" r="5.5" fill="#0f172a"/>
-  <circle cx="45.5" cy="44" r="3.2" fill="#94a3b8"/>
-  <circle cx="45.5" cy="44" r="1.2" fill="#475569"/>
-  <!-- Red pin -->
-  <circle cx="54" cy="16" r="5" fill="#ef4444"/>
-  <path d="M51.2 19 L56.8 19 L54 25 Z" fill="#ef4444"/>
-  <circle cx="54" cy="16" r="2" fill="white"/>
-  <!-- Green start dot -->
-  <circle cx="5" cy="42" r="3" fill="#22c55e"/>
-  <circle cx="5" cy="42" r="1.5" fill="white" fill-opacity="0.6"/>
+  <rect width="64" height="64" rx="12" fill="#152040"/>
+  <!-- Left mountain -->
+  <polygon points="1,52 21,16 49,52" fill="white" fill-opacity="0.95"/>
+  <polygon points="21,16 49,52 35,52" fill="#0d1a30" fill-opacity="0.18"/>
+  <polygon points="16,27 21,16 26,27" fill="white"/>
+  <!-- Right mountain -->
+  <polygon points="17,52 44,20 63,52" fill="white" fill-opacity="0.88"/>
+  <polygon points="44,20 17,52 31,52" fill="#0d1a30" fill-opacity="0.18"/>
+  <polygon points="38,32 44,20 50,32" fill="white"/>
+  <!-- Road -->
+  <polygon points="21,60 43,60 36,43 28,43" fill="#f97316"/>
+  <rect x="31" y="45" width="2" height="3.5" rx="1" fill="white" fill-opacity="0.9"/>
+  <rect x="31" y="50" width="2" height="3.5" rx="1" fill="white" fill-opacity="0.9"/>
+  <rect x="31" y="55" width="2" height="3.5" rx="1" fill="white" fill-opacity="0.9"/>
+  <!-- Pin -->
+  <path d="M32,44 C23,36.5 19,29.5 19,23 A13,13 0 1,1 45,23 C45,29.5 41,36.5 32,44 Z" fill="#f97316"/>
+  <path d="M24,17 C26,13 30,11 34,11" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-opacity="0.4"/>
+  <!-- Pin hole -->
+  <circle cx="32" cy="22.5" r="5.5" fill="#152040"/>
 </svg>
