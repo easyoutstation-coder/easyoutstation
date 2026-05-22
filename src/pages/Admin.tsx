@@ -159,7 +159,7 @@ export default function AdminPage() {
 
   // Agent chat
   type AgentMsg = { role: "user" | "assistant"; content: string; isPending?: boolean };
-  type ToolProposal = { toolName: string; toolInput: Record<string, any>; toolUseId: string; rawContent: any[] };
+  type ToolProposal = { toolName: string; toolInput: Record<string, any>; toolUseId: string; rawContent: any[]; priorMessages: any[] };
   const [agentMessages, setAgentMessages] = useState<AgentMsg[]>([
     { role: "assistant", content: "Hi! I can help you manage bookings — search, assign drivers, confirm, cancel, or mark trips as completed. What would you like to do?" }
   ]);
@@ -346,6 +346,7 @@ export default function AdminPage() {
           toolInput: result.toolInput,
           toolUseId: result.toolUseId,
           rawContent: assistantContent,
+          priorMessages: apiMessages,  // exact messages sent to API for this turn
         });
       } else {
         setAgentMessages(prev => [
@@ -367,12 +368,12 @@ export default function AdminPage() {
     setPendingTool(null);
     setAgentMessages(prev => [...prev, { role: "assistant", content: "Executing…", isPending: true }]);
 
-    const apiMessages = agentMessages
-      .filter(m => !m.isPending)
-      .map(m => ({ role: m.role, content: m.content }));
-
+    // Build correct Anthropic message history:
+    // [prior user/assistant turns, assistant message containing text+tool_use]
+    // Do NOT use agentMessages — it has UI-only messages (greeting, display text)
+    // that would create invalid consecutive assistant turns.
     const messagesWithTool = [
-      ...apiMessages,
+      ...tool.priorMessages,
       { role: "assistant" as const, content: tool.rawContent },
     ];
 
