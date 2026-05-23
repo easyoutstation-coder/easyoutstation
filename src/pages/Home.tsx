@@ -64,7 +64,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-[#0B0B0B]">
       <Navbar />
-      <main>
+      <main className="bg-white">
         <HeroSection />
         <CorporateSection />
         <PopularRoutesSection />

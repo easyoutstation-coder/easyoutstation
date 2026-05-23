@@ -84,7 +84,7 @@ export default function AIChatbot() {
       {/* Floating Button */}
       <button
         onClick={() => setOpen(!open)}
-        className={`fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-110 ${
+        className={`fixed bottom-6 right-5 md:right-6 z-50 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-110 ${
           open ? "bg-red-500 text-white rotate-90" : "bg-blue-600 text-white"
         }`}
       >

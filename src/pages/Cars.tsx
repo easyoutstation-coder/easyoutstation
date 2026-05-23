@@ -10,26 +10,19 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import {
   Search,
   SlidersHorizontal,
   Star,
   Users,
-  Fuel,
-  Gauge,
   ArrowRight,
   X,
-  Check,
   Mic,
   Sparkles,
   MapPin,
+  Wind,
+  Briefcase,
 } from "lucide-react";
 
 const categories = [
@@ -44,19 +37,93 @@ const categories = [
   { value: "electric", label: "Electric" },
 ];
 
-const fuelTypes = [
-  { value: "all", label: "All Fuel Types" },
-  { value: "petrol", label: "Petrol" },
-  { value: "diesel", label: "Diesel" },
-  { value: "hybrid", label: "Hybrid" },
-  { value: "electric", label: "Electric" },
+const seatOptions = [
+  { value: "all", label: "Any" },
+  { value: "4", label: "4+" },
+  { value: "6", label: "6+" },
+  { value: "7", label: "7+" },
 ];
 
-const transmissions = [
-  { value: "all", label: "All Transmissions" },
-  { value: "manual", label: "Manual" },
-  { value: "automatic", label: "Automatic" },
-];
+function getBaggage(seats: number, category: string): string {
+  if (category === "bus") return "Ample luggage";
+  if (category === "tempo") return seats >= 16 ? "10+ bags" : "6–8 bags";
+  if (seats <= 4) return "2 large bags";
+  if (seats <= 6) return "3–4 bags";
+  return "4–5 bags";
+}
+
+interface FilterPanelProps {
+  category: string; setCategory: (v: string) => void;
+  seats: string; setSeats: (v: string) => void;
+  priceRange: number[]; setPriceRange: (v: number[]) => void;
+  hasActiveFilters: boolean; clearFilters: () => void;
+  maxPrice: number;
+}
+
+function FilterPanel({ category, setCategory, seats, setSeats, priceRange, setPriceRange, hasActiveFilters, clearFilters, maxPrice }: FilterPanelProps) {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-semibold text-slate-900">Filters</span>
+        {hasActiveFilters && (
+          <button onClick={clearFilters} className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
+            <X className="w-3 h-3" /> Clear all
+          </button>
+        )}
+      </div>
+
+      <div>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2.5">Category</p>
+        <div className="space-y-0.5">
+          {categories.map((c) => (
+            <button
+              key={c.value}
+              onClick={() => setCategory(c.value)}
+              className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${
+                category === c.value ? "bg-blue-50 text-blue-700 font-semibold" : "text-slate-600 hover:bg-slate-50"
+              }`}
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2.5">Seating</p>
+        <div className="flex flex-wrap gap-2">
+          {seatOptions.map((s) => (
+            <button
+              key={s.value}
+              onClick={() => setSeats(s.value)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                seats === s.value
+                  ? "bg-blue-600 text-white border-blue-600"
+                  : "text-slate-600 border-slate-200 hover:border-blue-300 hover:text-blue-600"
+              }`}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Price per km</p>
+        <p className="text-xs text-slate-500 mb-3">
+          ₹{priceRange[0]} – {priceRange[1] >= maxPrice ? "any" : `₹${priceRange[1]}`}
+        </p>
+        <Slider
+          value={priceRange}
+          onValueChange={setPriceRange}
+          max={maxPrice}
+          step={1}
+          className="w-full"
+        />
+      </div>
+    </div>
+  );
+}
 
 export default function CarsPage() {
   const navigate = useNavigate();
@@ -65,7 +132,7 @@ export default function CarsPage() {
   const _toCity = searchParams.get("to") || "";
   useSeo({
     title: _toCity
-      ? `${_fromCity} to ${_toCity} Cab — Choose Your Car | EasyOutstation`
+      ? `${_fromCity} to ${_toCity} Cab — Choose Your Vehicle | EasyOutstation`
       : "Book Outstation Cabs from Delhi — Premium Cars | EasyOutstation",
     description: _toCity
       ? `Compare cabs for ${_fromCity} to ${_toCity}. Fixed fares, verified drivers, AC cars. Sedan, SUV & Innova available.`
@@ -73,12 +140,11 @@ export default function CarsPage() {
     canonical: "https://www.easyoutstation.com/cars",
     noindex: !!_toCity,
   });
-  const [showFilters, setShowFilters] = useState(false);
+
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [sortBy, setSortBy] = useState<"price_asc" | "price_desc" | "rating" | "popular">("price_asc");
   const [searchQuery, setSearchQuery] = useState("");
   const [category, setCategory] = useState(searchParams.get("category") || "all");
-  const [fuelType, setFuelType] = useState("all");
-  const [transmission, setTransmission] = useState("all");
   const MAX_PRICE_KM = 70;
   const [priceRange, setPriceRange] = useState([0, MAX_PRICE_KM]);
   const [seats, setSeats] = useState("all");
@@ -86,8 +152,6 @@ export default function CarsPage() {
 
   const { data: cars, isLoading } = trpc.car.list.useQuery({
     category: category === "all" ? undefined : category,
-    fuelType: fuelType === "all" ? undefined : fuelType,
-    transmission: transmission === "all" ? undefined : transmission,
     minPrice: priceRange[0] || undefined,
     maxPrice: priceRange[1] >= MAX_PRICE_KM ? undefined : priceRange[1],
     seats: seats === "all" ? undefined : parseInt(seats),
@@ -122,12 +186,11 @@ export default function CarsPage() {
         return Math.max(1, Math.ceil((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24)) + 1);
       }
     }
-    return 1; // one_way or same-day round trip
+    return 1;
   })();
   const kmMultiplier = tripTypeParam === "round_trip" ? 2 : 1;
   const effectiveKm = distanceKm * kmMultiplier;
 
-  // Build passthrough params to preserve user's selections across pages
   const passthroughParams = () => {
     const p = new URLSearchParams();
     if (fromCity) p.set("from", fromCity);
@@ -151,18 +214,18 @@ export default function CarsPage() {
 
   const recommendations: { carId: number; reason: string; confidence: number }[] = [];
 
-  const calcFare = (pricePerKm: string, seats: number, driverCharges: string) => {
+  const calcFare = (pricePerKm: string, carSeats: number, driverCharges: string) => {
     if (!distanceKm) return null;
-    const isHeavy = seats > 7;
+    const isHeavy = carSeats > 7;
     let billedKm = effectiveKm;
     if (tripDays > 1) billedKm = Math.max(effectiveKm, tripDays * 250);
     else if (isHeavy) billedKm = Math.max(effectiveKm, 100);
     return Math.round(parseFloat(pricePerKm) * billedKm + parseFloat(driverCharges || "250") * tripDays);
   };
 
-  const billedKmFor = (seats: number) => {
+  const billedKmFor = (carSeats: number) => {
     if (!distanceKm) return effectiveKm;
-    const isHeavy = seats > 7;
+    const isHeavy = carSeats > 7;
     if (tripDays > 1) return Math.max(effectiveKm, tripDays * 250);
     if (isHeavy) return Math.max(effectiveKm, 100);
     return effectiveKm;
@@ -187,8 +250,6 @@ export default function CarsPage() {
 
   const clearFilters = () => {
     setCategory("all");
-    setFuelType("all");
-    setTransmission("all");
     setPriceRange([0, MAX_PRICE_KM]);
     setSeats("all");
     setSearchQuery("");
@@ -196,8 +257,6 @@ export default function CarsPage() {
 
   const hasActiveFilters =
     category !== "all" ||
-    fuelType !== "all" ||
-    transmission !== "all" ||
     priceRange[0] !== 0 ||
     priceRange[1] !== MAX_PRICE_KM ||
     seats !== "all" ||
@@ -233,14 +292,17 @@ export default function CarsPage() {
       return 0;
     });
 
+  const filterProps = { category, setCategory, seats, setSeats, priceRange, setPriceRange, hasActiveFilters, clearFilters, maxPrice: MAX_PRICE_KM };
+
   return (
     <div className="min-h-screen bg-slate-50">
       <Navbar />
       <main className="pt-20">
+
         {/* Header */}
         <div className="bg-white border-b border-slate-200">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-            {/* Route banner when coming from search */}
+            {/* Route banner */}
             {fromCity && toCity && distanceKm > 0 && (
               <div className="mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-blue-50 border border-blue-200">
                 <div className="flex items-center gap-3 text-blue-800">
@@ -267,10 +329,11 @@ export default function CarsPage() {
                 </div>
               </div>
             )}
+
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
                 <h1 className="text-3xl font-bold text-slate-900 font-['DM_Serif_Display']">
-                  {fromCity && toCity ? `Cars for ${fromCity} → ${toCity}` : "Our Fleet"}
+                  {fromCity && toCity ? `Vehicles for ${fromCity} → ${toCity}` : "Vehicles"}
                 </h1>
                 <p className="text-slate-500 mt-1">
                   {displayCars.length} vehicles available{distanceKm > 0 ? ` · Prices for ${tripDays > 1 ? `${tripDays} days, min ${Math.max(effectiveKm, tripDays * 250)} km` : `${effectiveKm} km`}` : " for your journey"}
@@ -292,21 +355,21 @@ export default function CarsPage() {
                     <Mic className="w-4 h-4" />
                   </button>
                 </div>
+
+                {/* Mobile filter button */}
                 <Button
                   variant="outline"
-                  onClick={() => setShowFilters(!showFilters)}
-                  className={showFilters ? "bg-primary text-white border-primary" : ""}
+                  onClick={() => setShowMobileFilters(true)}
+                  className="lg:hidden relative"
                 >
                   <SlidersHorizontal className="w-4 h-4 mr-2" />
                   Filters
                   {hasActiveFilters && (
-                    <span className="ml-2 w-5 h-5 rounded-full bg-primary text-white text-xs flex items-center justify-center">
-                      <Check className="w-3 h-3" />
-                    </span>
+                    <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-blue-600" />
                   )}
                 </Button>
 
-                {/* Sort dropdown */}
+                {/* Sort */}
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as any)}
@@ -344,94 +407,6 @@ export default function CarsPage() {
                 </div>
               </div>
             )}
-
-            {/* Filters Panel */}
-            {showFilters && (
-              <div className="mt-6 p-6 bg-slate-50 rounded-xl border border-border">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground uppercase mb-1.5 block">
-                      Category
-                    </label>
-                    <Select value={category} onValueChange={setCategory}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((c) => (
-                          <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground uppercase mb-1.5 block">
-                      Fuel Type
-                    </label>
-                    <Select value={fuelType} onValueChange={setFuelType}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {fuelTypes.map((f) => (
-                          <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground uppercase mb-1.5 block">
-                      Transmission
-                    </label>
-                    <Select value={transmission} onValueChange={setTransmission}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {transmissions.map((t) => (
-                          <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground uppercase mb-1.5 block">
-                      Min Seats
-                    </label>
-                    <Select value={seats} onValueChange={setSeats}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Any</SelectItem>
-                        <SelectItem value="4">4+</SelectItem>
-                        <SelectItem value="6">6+</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <label className="text-xs font-medium text-muted-foreground uppercase mb-1.5 block">
-                    Price Range: ₹{priceRange[0]} - {priceRange[1] >= MAX_PRICE_KM ? "any" : `₹${priceRange[1]}`} per km
-                  </label>
-                  <Slider
-                    value={priceRange}
-                    onValueChange={setPriceRange}
-                    max={MAX_PRICE_KM}
-                    step={1}
-                    className="w-full"
-                  />
-                </div>
-                {hasActiveFilters && (
-                  <div className="mt-4 flex justify-end">
-                    <Button variant="ghost" size="sm" onClick={clearFilters} className="text-destructive">
-                      <X className="w-4 h-4 mr-1" />
-                      Clear All Filters
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
         </div>
 
@@ -444,172 +419,206 @@ export default function CarsPage() {
               </span>
             )}
             <span className="flex items-center gap-1.5 text-xs text-slate-600">
+              <span className="text-blue-500 font-bold">❄️</span> All vehicles air-conditioned
+            </span>
+            <span className="flex items-center gap-1.5 text-xs text-slate-600">
               <span className="text-green-500 font-bold">✓</span> No last-minute cancellations
             </span>
             <span className="flex items-center gap-1.5 text-xs text-slate-600">
-              <span className="text-green-500 font-bold">✓</span> Every car inspected before dispatch
+              <span className="text-green-500 font-bold">✓</span> Every vehicle inspected before dispatch
             </span>
             <span className="flex items-center gap-1.5 text-xs text-slate-600">
               <span className="text-green-500 font-bold">✓</span> Verified drivers · Fixed fares
             </span>
             <span className="flex items-center gap-1.5 text-xs text-slate-600">
-              <span className="text-green-500 font-bold">✓</span> Toll, parking & state taxes charged at actuals — no markup
+              <span className="text-green-500 font-bold">✓</span> Toll, parking & state taxes at actuals — no markup
             </span>
           </div>
         </div>
 
-        {/* Car Grid */}
+        {/* Main content */}
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-          {isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="bg-white rounded-2xl border border-slate-100 overflow-hidden animate-pulse">
-                  <div className="aspect-[4/3] bg-slate-200" />
-                  <div className="p-4 space-y-3">
-                    <div className="flex justify-between">
-                      <div className="h-4 bg-slate-200 rounded w-2/3" />
-                      <div className="h-4 bg-slate-200 rounded w-1/4" />
-                    </div>
-                    <div className="h-3 bg-slate-100 rounded w-full" />
-                    <div className="h-3 bg-slate-100 rounded w-3/4" />
-                    <div className="flex justify-between items-center pt-2 border-t border-slate-100">
-                      <div className="h-5 bg-slate-200 rounded w-1/3" />
-                      <div className="h-7 bg-slate-200 rounded w-1/4" />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : displayCars.length === 0 ? (
-            <div className="text-center py-20">
-              <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-foreground">No cars found</h3>
-              <p className="text-muted-foreground mt-1">Try adjusting your filters</p>
-              <Button variant="outline" className="mt-4" onClick={clearFilters}>
-                Clear Filters
-              </Button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {displayCars.map((car, carIndex) => {
-                // Urgency signals — rotated per car for variety
-                const urgencyMessages = [
-                  "🔥 3 bookings this week",
-                  "⚡ Popular choice",
-                  "👥 2 people viewing now",
-                  "✅ Available today",
-                  "🏆 Top rated",
-                ];
-                const urgency = urgencyMessages[carIndex % urgencyMessages.length];
+          <div className="flex gap-8 items-start">
 
-                return (
-                <Card
-                  key={car.id}
-                  className="group overflow-hidden border-0 shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer bg-white"
-                  onClick={() => navigate(`/booking?carId=${car.id}&${passthroughParams()}`)}
-                >
-                  <div className="relative aspect-[4/3] overflow-hidden">
-                    <img
-                      src={car.imageUrl || "/cars/swift-dzire.jpg"}
-                      alt={car.name}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                      loading="lazy"
-                    />
-                    <div className="absolute top-3 left-3">
-                      <Badge className="bg-primary text-white border-0 text-xs">
-                        {car.category.toUpperCase()}
-                      </Badge>
-                    </div>
-                    <div className="absolute top-3 right-3 flex items-center gap-1 bg-white/90 backdrop-blur-sm rounded-full px-2 py-0.5">
-                      <Star className="w-3 h-3 text-primary fill-primary" />
-                      <span className="text-xs font-medium">{car.rating}</span>
-                    </div>
-                    {/* Urgency signal */}
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-3 py-2">
-                      <span className="text-white text-[10px] font-medium">{urgency}</span>
-                    </div>
-                    {!car.isAvailable && (
-                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                        <Badge variant="destructive" className="text-sm">Not Available</Badge>
-                      </div>
-                    )}
-                  </div>
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <h3 className="font-semibold text-slate-900 text-base">{car.name}</h3>
-                        <p className="text-xs text-slate-500">{car.brand}</p>
-                      </div>
-                      <div className="text-right">
-                        {calcFare(car.pricePerKm, car.seats, car.driverCharges ?? "250") ? (() => {
-                          const fare = calcFare(car.pricePerKm, car.seats, car.driverCharges ?? "250")!;
-                          const discounted = applyDiscount(fare);
-                          const saving = discountAmount(fare);
-                          return (
-                            <>
-                              {saving > 0 && <div className="text-xs text-slate-400 line-through">₹{fare.toLocaleString("en-IN")}</div>}
-                              <div className={`text-lg font-bold ${saving > 0 ? "text-green-700" : "text-blue-700"}`}>
-                                ₹{discounted.toLocaleString("en-IN")}
-                              </div>
-                              {saving > 0
-                                ? <div className="text-[10px] text-green-600 font-medium">Save ₹{saving.toLocaleString("en-IN")}</div>
-                                : <div className="text-[10px] text-slate-400">total · ₹{car.pricePerKm}/km</div>}
-                            </>
-                          );
-                        })() : (
-                          <>
-                            <div className="text-lg font-bold text-blue-700">₹{car.pricePerKm}</div>
-                            <div className="text-xs text-slate-400">/km</div>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    <p className="text-sm text-slate-500 line-clamp-2 mb-3">{car.description}</p>
-                    {calcFare(car.pricePerKm, car.seats, car.driverCharges ?? "250") && (() => {
-                      const bkm = billedKmFor(car.seats);
-                      const minApplies = bkm > effectiveKm;
-                      const perCarDriver = parseFloat(car.driverCharges ?? "250");
-                      return (
-                        <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-[11px] mb-3 bg-slate-50 rounded-lg px-2.5 py-1.5">
-                          <span className="text-slate-400">
-                            ₹{car.pricePerKm}/km × {bkm} km{minApplies ? " (min)" : ""} + ₹{(perCarDriver * tripDays).toLocaleString("en-IN")} driver
-                          </span>
-                          <span className="text-green-700 font-semibold">₹{Math.max(100, Math.round(applyDiscount(calcFare(car.pricePerKm, car.seats, car.driverCharges ?? "250")!) * 0.1)).toLocaleString("en-IN")} advance</span>
+            {/* Desktop sidebar */}
+            <aside className="hidden lg:block w-56 shrink-0">
+              <div className="sticky top-24 bg-white rounded-2xl border border-slate-100 p-5">
+                <FilterPanel {...filterProps} />
+              </div>
+            </aside>
+
+            {/* Car grid */}
+            <div className="flex-1 min-w-0">
+              {isLoading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="bg-white rounded-2xl border border-slate-100 overflow-hidden animate-pulse">
+                      <div className="aspect-[4/3] bg-slate-200" />
+                      <div className="p-4 space-y-3">
+                        <div className="flex justify-between">
+                          <div className="h-4 bg-slate-200 rounded w-2/3" />
+                          <div className="h-4 bg-slate-200 rounded w-1/4" />
                         </div>
-                      );
-                    })()}
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground mb-4">
-                      <span className="flex items-center gap-1">
-                        <Users className="w-3.5 h-3.5" />
-                        {car.seats - 1} passengers
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Fuel className="w-3.5 h-3.5" />
-                        {car.fuelType}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Gauge className="w-3.5 h-3.5" />
-                        {car.transmission}
-                      </span>
+                        <div className="h-3 bg-slate-100 rounded w-full" />
+                        <div className="h-3 bg-slate-100 rounded w-3/4" />
+                        <div className="flex justify-between items-center pt-2 border-t border-slate-100">
+                          <div className="h-5 bg-slate-200 rounded w-1/3" />
+                          <div className="h-7 bg-slate-200 rounded w-1/4" />
+                        </div>
+                      </div>
                     </div>
-                    <Button
-                      className="w-full bg-primary hover:bg-primary/90 text-white"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/booking?carId=${car.id}&${passthroughParams()}`);
-                      }}
-                    >
-                      Book Now
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
-                  </CardContent>
-                </Card>
-                );
-              })}
+                  ))}
+                </div>
+              ) : displayCars.length === 0 ? (
+                <div className="text-center py-20">
+                  <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-foreground">No cars found</h3>
+                  <p className="text-muted-foreground mt-1">Try adjusting your filters</p>
+                  <Button variant="outline" className="mt-4" onClick={clearFilters}>
+                    Clear Filters
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {displayCars.map((car, carIndex) => {
+                    const urgencyMessages = [
+                      "🔥 3 bookings this week",
+                      "⚡ Popular choice",
+                      "👥 2 people viewing now",
+                      "✅ Available today",
+                      "🏆 Top rated",
+                    ];
+                    const urgency = urgencyMessages[carIndex % urgencyMessages.length];
+
+                    return (
+                      <Card
+                        key={car.id}
+                        className="group overflow-hidden border-0 shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer bg-white"
+                        onClick={() => navigate(`/booking?carId=${car.id}&${passthroughParams()}`)}
+                      >
+                        <div className="relative aspect-[4/3] overflow-hidden">
+                          <img
+                            src={car.imageUrl || "/cars/swift-dzire.jpg"}
+                            alt={car.name}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                            loading="lazy"
+                          />
+                          <div className="absolute top-3 left-3 flex items-center gap-1.5">
+                            <Badge className="bg-primary text-white border-0 text-xs">
+                              {car.category.toUpperCase()}
+                            </Badge>
+                            <Badge className="bg-blue-500/90 text-white border-0 text-xs flex items-center gap-1 backdrop-blur-sm">
+                              <Wind className="w-2.5 h-2.5" /> AC
+                            </Badge>
+                          </div>
+                          <div className="absolute top-3 right-3 flex items-center gap-1 bg-white/90 backdrop-blur-sm rounded-full px-2 py-0.5">
+                            <Star className="w-3 h-3 text-primary fill-primary" />
+                            <span className="text-xs font-medium">{car.rating}</span>
+                          </div>
+                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-3 py-2">
+                            <span className="text-white text-[10px] font-medium">{urgency}</span>
+                          </div>
+                          {!car.isAvailable && (
+                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                              <Badge variant="destructive" className="text-sm">Not Available</Badge>
+                            </div>
+                          )}
+                        </div>
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between mb-2">
+                            <div>
+                              <h3 className="font-semibold text-slate-900 text-base">{car.name}</h3>
+                              <p className="text-xs text-slate-500">{car.brand}</p>
+                            </div>
+                            <div className="text-right">
+                              {calcFare(car.pricePerKm, car.seats, car.driverCharges ?? "250") ? (() => {
+                                const fare = calcFare(car.pricePerKm, car.seats, car.driverCharges ?? "250")!;
+                                const discounted = applyDiscount(fare);
+                                const saving = discountAmount(fare);
+                                return (
+                                  <>
+                                    {saving > 0 && <div className="text-xs text-slate-400 line-through">₹{fare.toLocaleString("en-IN")}</div>}
+                                    <div className={`text-lg font-bold ${saving > 0 ? "text-green-700" : "text-blue-700"}`}>
+                                      ₹{discounted.toLocaleString("en-IN")}
+                                    </div>
+                                    {saving > 0
+                                      ? <div className="text-[10px] text-green-600 font-medium">Save ₹{saving.toLocaleString("en-IN")}</div>
+                                      : <div className="text-[10px] text-slate-400">total · ₹{car.pricePerKm}/km</div>}
+                                  </>
+                                );
+                              })() : (
+                                <>
+                                  <div className="text-lg font-bold text-blue-700">₹{car.pricePerKm}</div>
+                                  <div className="text-xs text-slate-400">/km</div>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                          <p className="text-sm text-slate-500 line-clamp-2 mb-3">{car.description}</p>
+                          {calcFare(car.pricePerKm, car.seats, car.driverCharges ?? "250") && (() => {
+                            const bkm = billedKmFor(car.seats);
+                            const minApplies = bkm > effectiveKm;
+                            const perCarDriver = parseFloat(car.driverCharges ?? "250");
+                            return (
+                              <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-[11px] mb-3 bg-slate-50 rounded-lg px-2.5 py-1.5">
+                                <span className="text-slate-400">
+                                  ₹{car.pricePerKm}/km × {bkm} km{minApplies ? " (min)" : ""} + ₹{(perCarDriver * tripDays).toLocaleString("en-IN")} driver
+                                </span>
+                                <span className="text-green-700 font-semibold">₹{Math.max(100, Math.round(applyDiscount(calcFare(car.pricePerKm, car.seats, car.driverCharges ?? "250")!) * 0.1)).toLocaleString("en-IN")} advance</span>
+                              </div>
+                            );
+                          })()}
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground mb-4">
+                            <span className="flex items-center gap-1">
+                              <Users className="w-3.5 h-3.5" />
+                              {car.seats - 1} passengers
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Briefcase className="w-3.5 h-3.5" />
+                              {getBaggage(car.seats, car.category)}
+                            </span>
+                          </div>
+                          <Button
+                            className="w-full bg-primary hover:bg-primary/90 text-white"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/booking?carId=${car.id}&${passthroughParams()}`);
+                            }}
+                          >
+                            Book Now
+                            <ArrowRight className="w-4 h-4 ml-2" />
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </main>
+
+      {/* Mobile filter Sheet */}
+      <Sheet open={showMobileFilters} onOpenChange={setShowMobileFilters}>
+        <SheetContent side="left" className="w-72 p-0 bg-white flex flex-col">
+          <div className="px-5 py-4 border-b border-slate-100">
+            <SheetTitle className="text-base font-semibold text-slate-900">Filters</SheetTitle>
+          </div>
+          <div className="flex-1 overflow-y-auto px-5 py-5">
+            <FilterPanel {...filterProps} />
+          </div>
+          <div className="px-5 py-4 border-t border-slate-100">
+            <Button
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              onClick={() => setShowMobileFilters(false)}
+            >
+              Show {displayCars.length} vehicles
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
+
       <Footer />
       <AIChatbot />
     </div>

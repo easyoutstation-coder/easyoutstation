@@ -2,13 +2,13 @@ import { MessageCircle, X } from "lucide-react";
 import { useState, useEffect } from "react";
 
 export default function WhatsAppFloat() {
-  const [showTooltip, setShowTooltip] = useState(true);
+  const [showTooltip, setShowTooltip] = useState(false);
   const [pulsing, setPulsing] = useState(true);
 
-  // Auto-hide tooltip after 6 seconds, but keep it dismissable
   useEffect(() => {
-    const timer = setTimeout(() => setPulsing(false), 6000);
-    return () => clearTimeout(timer);
+    const showTimer = setTimeout(() => setShowTooltip(true), 3000);
+    const pulseTimer = setTimeout(() => setPulsing(false), 6000);
+    return () => { clearTimeout(showTimer); clearTimeout(pulseTimer); };
   }, []);
 
   return (
