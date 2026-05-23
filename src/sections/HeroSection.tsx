@@ -8,24 +8,9 @@ import { MapPin, CalendarDays, ArrowRight, Shield, Clock, CheckCircle, Loader2, 
 import { saveRecentSearch, getRecentSearches, type RecentSearch } from "@/hooks/useRecentSearches";
 import { trpc } from "@/providers/trpc";
 
-// 9 anchor cities with coordinates for 100km radius restriction
-const ANCHOR_CITIES = [
-  { name: "Delhi", lat: 28.6139, lng: 77.2090 },
-  { name: "Manali", lat: 32.2396, lng: 77.1887 },
-  { name: "Jaipur", lat: 26.9124, lng: 75.7873 },
-  { name: "Agra", lat: 27.1767, lng: 78.0081 },
-  { name: "Rishikesh", lat: 30.0869, lng: 78.2676 },
-  { name: "Chandigarh", lat: 30.7333, lng: 76.7794 },
-  { name: "Dehradun", lat: 30.3165, lng: 78.0322 },
-  { name: "Shimla", lat: 31.1048, lng: 77.1734 },
-  { name: "Haridwar", lat: 29.9457, lng: 78.1642 },
-];
-
-// Delhi NCR center + 75km radius covers New Delhi, Gurgaon, Noida, Faridabad, Ghaziabad, Rohtak
+// Delhi center — pickup restricted to 40km radius (covers full NCR: Gurgaon, Noida, Faridabad, Ghaziabad, Rohtak, Sonipat)
 const DELHI_CENTER = { lat: 28.6139, lng: 77.2090 };
-const DELHI_NCR_RADIUS_KM = 75;
-
-const RADIUS_KM = 100;
+const DELHI_PICKUP_RADIUS_KM = 40;
 
 function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371;
@@ -37,12 +22,8 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): nu
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-function isWithinRadius(lat: number, lng: number): boolean {
-  return ANCHOR_CITIES.some(city => haversineKm(lat, lng, city.lat, city.lng) <= RADIUS_KM);
-}
-
 function isInDelhiNcr(lat: number, lng: number): boolean {
-  return haversineKm(lat, lng, DELHI_CENTER.lat, DELHI_CENTER.lng) <= DELHI_NCR_RADIUS_KM;
+  return haversineKm(lat, lng, DELHI_CENTER.lat, DELHI_CENTER.lng) <= DELHI_PICKUP_RADIUS_KM;
 }
 
 // Fare range based on actual fleet rates
@@ -125,14 +106,7 @@ function PlaceInput({ label, placeholder, onSelect, error, delhiNcrOnly = false 
         setLocalError("");
 
         if (delhiNcrOnly && !isInDelhiNcr(lat, lng)) {
-          setLocalError("Pickup must be within Delhi NCR (New Delhi, Gurgaon, Noida, Faridabad, Ghaziabad)");
-          setValue("");
-          setValidating(false);
-          return;
-        }
-
-        if (!delhiNcrOnly && !isWithinRadius(lat, lng)) {
-          setLocalError("Location must be within 100km of our service areas (Delhi, Manali, Jaipur, Agra, Rishikesh, Chandigarh, Dehradun, Shimla, Haridwar)");
+          setLocalError("Pickup must be within Delhi NCR (Delhi, Gurgaon, Noida, Faridabad, Ghaziabad, Rohtak, Sonipat)");
           setValue("");
           setValidating(false);
           return;
@@ -312,7 +286,7 @@ export default function HeroSection() {
             <div className="bg-white rounded-2xl shadow-2xl p-6 lg:p-7">
               <div className="flex items-center justify-between mb-5">
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900 font-['DM_Serif_Display']">Book Your Cab</h3>
+                  <h3 className="text-lg font-bold text-slate-900 font-['DM_Serif_Display']">Book Your Ride</h3>
                   <p className="text-xs text-slate-500 mt-0.5">
                     Delhi · Manali · Shimla · Jaipur · Agra · Rishikesh · Haridwar · Dehradun · Chandigarh
                   </p>
@@ -400,7 +374,7 @@ export default function HeroSection() {
                             ₹{displayFareMin?.toLocaleString("en-IN")} – ₹{displayFareMax?.toLocaleString("en-IN")}
                           </div>
                           <div className="text-[10px] text-blue-500">
-                            {isRoundTrip && sameDayReturn ? "same day return · " : tripDays > 1 ? `${tripDays}-day total · ` : ""}depends on car
+                            {isRoundTrip && sameDayReturn ? "same day return · " : tripDays > 1 ? `${tripDays}-day total · ` : ""}depends on vehicle
                           </div>
                         </div>
                       </div>
@@ -517,8 +491,8 @@ export default function HeroSection() {
                 <Button onClick={handleSearch}
                   className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm gap-2 shadow-sm transition-all">
                   {displayFareMin
-                    ? `See Cars · ₹${displayFareMin.toLocaleString("en-IN")}–₹${displayFareMax?.toLocaleString("en-IN")}${tripDays > 1 ? ` (${tripDays}d)` : ""}`
-                    : "See Available Cars & Fares"}
+                    ? `See Vehicles · ₹${displayFareMin.toLocaleString("en-IN")}–₹${displayFareMax?.toLocaleString("en-IN")}${tripDays > 1 ? ` (${tripDays}d)` : ""}`
+                    : "See Available Vehicles & Fares"}
                   <ArrowRight className="w-4 h-4" />
                 </Button>
 
@@ -587,12 +561,6 @@ export default function HeroSection() {
                   {b.text}
                 </div>
               ))}
-            </div>
-            <div className="hidden sm:flex flex-wrap gap-3">
-              <Button size="lg" onClick={handleSearch}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-7 h-12 gap-2 shadow-lg shadow-blue-900/30">
-                See Available Cars <ArrowRight className="w-4 h-4" />
-              </Button>
             </div>
             {/* B2B teaser */}
             <button

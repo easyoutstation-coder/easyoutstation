@@ -43,7 +43,7 @@ export default function BookingPage() {
   const { isAuthenticated, isLoading: authLoading, user, refresh } = useAuth();
   const [authTimedOut, setAuthTimedOut] = useState(false);
 
-  useSeo({ title: "Book Your Cab | EasyOutstation", description: "Complete your outstation cab booking.", noindex: true });
+  useSeo({ title: "Book Your Ride | EasyOutstation", description: "Complete your outstation ride booking.", noindex: true });
 
   // Lazy-load Razorpay only on the booking page so it doesn't block every other page
   useEffect(() => {
@@ -566,7 +566,7 @@ export default function BookingPage() {
     })();
 
     const whatsappShareText = encodeURIComponent(
-      `🚗 My EasyOutstation trip is confirmed!\n\n📍 ${fromCity} → ${toCity}\n📅 Pickup: ${pickupDate ? format(pickupDate, "dd MMM yyyy") : ""} at ${pickupTime}${tripType === "round_trip" ? `\n🔄 Return: ${returnDate ? format(returnDate, "dd MMM yyyy") : "Same day"}${returnTime ? ` at ${fmtTime(returnTime)}` : ""}` : ""}\n💰 ₹${totalPrice.toLocaleString("en-IN")}\n\nBooking ID: #${bookingId}\n\nBook your cab at easyoutstation.com`
+      `🚌 My EasyOutstation trip is confirmed!\n\n📍 ${fromCity} → ${toCity}\n📅 Pickup: ${pickupDate ? format(pickupDate, "dd MMM yyyy") : ""} at ${pickupTime}${tripType === "round_trip" ? `\n🔄 Return: ${returnDate ? format(returnDate, "dd MMM yyyy") : "Same day"}${returnTime ? ` at ${fmtTime(returnTime)}` : ""}` : ""}\n💰 ₹${totalPrice.toLocaleString("en-IN")}\n\nBooking ID: #${bookingId}\n\nBook your ride at easyoutstation.com`
     );
 
     clearBookingDraft();
@@ -644,7 +644,7 @@ export default function BookingPage() {
         {/* Sticky mobile price bar */}
         <div className="sticky top-16 z-30 lg:hidden bg-white border-b border-slate-200 px-4 py-2 flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-2 text-sm">
-            <span className="text-slate-500">{car?.name || "Selected Car"}</span>
+            <span className="text-slate-500">{car?.name || "Selected Vehicle"}</span>
             <span className="text-slate-300">·</span>
             <span className="text-slate-500">{fromCity} → {toCity}</span>
           </div>
@@ -655,7 +655,7 @@ export default function BookingPage() {
           {/* Change Car link */}
           <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-blue-600 mb-4 transition-colors">
             <ArrowLeft className="w-4 h-4" />
-            Change car or route
+            Change vehicle or route
           </button>
           {/* Steps */}
           <div className="flex items-center justify-center gap-2 mb-8">
@@ -941,7 +941,7 @@ export default function BookingPage() {
                       )}
 
                       <div className="bg-muted rounded-xl p-4 space-y-3">
-                        <div className="flex justify-between text-sm"><span className="text-muted-foreground">Car</span><span className="font-medium">{car?.name}</span></div>
+                        <div className="flex justify-between text-sm"><span className="text-muted-foreground">Vehicle</span><span className="font-medium">{car?.name}</span></div>
                         <div className="flex justify-between text-sm"><span className="text-muted-foreground">Route</span><span className="font-medium">{fromCity} → {toCity}</span></div>
                         <div className="flex justify-between text-sm"><span className="text-muted-foreground">Trip Type</span><span className="font-medium capitalize">{tripType.replace("_", " ")}</span></div>
                         <div className="flex justify-between text-sm"><span className="text-muted-foreground">Pickup Address</span><span className="font-medium text-right max-w-[200px]">{pickupAddress}</span></div>

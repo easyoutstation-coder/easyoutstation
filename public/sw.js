@@ -26,8 +26,9 @@ self.addEventListener("activate", (e) => {
 self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
 
-  // Never intercept API calls or tRPC
+  // Never intercept API calls, tRPC, or Vite dev-server internals
   if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/trpc")) return;
+  if (url.pathname.startsWith("/@") || url.pathname.startsWith("/node_modules/")) return;
 
   // Network-first for HTML navigation
   if (e.request.mode === "navigate") {

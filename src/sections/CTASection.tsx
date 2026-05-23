@@ -20,7 +20,7 @@ export default function CTASection() {
         <div className="flex flex-wrap justify-center gap-4 mb-12">
           <Button size="lg" onClick={() => navigate("/cars")}
             className="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-8 h-12 gap-2 shadow-lg shadow-blue-900/40 transition-all">
-            Book My Cab Now <ArrowRight className="w-4 h-4" />
+            Book Your Ride <ArrowRight className="w-4 h-4" />
           </Button>
           <a href="https://wa.me/919958556011?text=Hi%2C%20I%20want%20to%20book%20a%20cab%20from%20Delhi" target="_blank" rel="noopener noreferrer">
             <Button size="lg" variant="outline"

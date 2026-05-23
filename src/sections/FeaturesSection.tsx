@@ -1,8 +1,9 @@
-import { Shield, Clock, MapPin, Headphones, Wallet, Award } from "lucide-react";
+import { Shield, Clock, MapPin, Headphones, Wallet, Award, Wind } from "lucide-react";
 
 const features = [
   { icon: Shield, title: "Police-Verified Drivers", description: "Every driver is background-verified, trained, and rated by real customers. You know who's picking you up before they arrive.", tag: "Safety First" },
   { icon: Wallet, title: "Zero Hidden Charges", description: "Toll, parking, driver allowance — all disclosed before you book. The price you confirm is the price you pay. Period.", tag: "Transparent" },
+  { icon: Wind, title: "100% Air-Conditioned Fleet", description: "Every vehicle in our fleet — from sedans to tempo travellers — is fully air-conditioned. Travel comfortably regardless of weather or season.", tag: "Always Comfortable" },
   { icon: Clock, title: "On-Time or Compensated", description: "If your driver is late beyond 30 minutes without prior notice, you get compensation. We back our promise with action.", tag: "Guaranteed" },
   { icon: MapPin, title: "Door-to-Door Pickup", description: "We come to your home, hotel, or office. No walking to a pickup point. Your comfort starts the moment you book.", tag: "Convenient" },
   { icon: Headphones, title: "24/7 Trip Support", description: "A dedicated support line stays active throughout your journey. Any issue — big or small — gets resolved fast.", tag: "Always On" },
@@ -24,7 +25,7 @@ export default function FeaturesSection() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {features.map((f, i) => (
             <div key={i} className="group p-6 rounded-2xl border border-slate-100 hover:border-blue-100 bg-white hover:bg-blue-50/30 transition-all duration-300 hover:shadow-md">
               <div className="flex items-start gap-4">

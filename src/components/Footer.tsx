@@ -17,7 +17,7 @@ const footerLinks = {
   ],
   company: [
     { label: "About Us", href: "/about" },
-    { label: "Our Fleet", href: "/cars" },
+    { label: "Vehicles", href: "/cars" },
     { label: "How It Works", href: "/#features" },
     { label: "Testimonials", href: "/#testimonials" },
   ],

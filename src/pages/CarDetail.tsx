@@ -127,14 +127,14 @@ export default function CarDetailPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <Navbar />
-      <main className="pt-20">
+      <main className="pt-20 pb-24 lg:pb-0">
         {/* Breadcrumb */}
         <div className="bg-white border-b border-border">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span className="cursor-pointer hover:text-primary" onClick={() => navigate("/")}>Home</span>
               <ArrowRight className="w-3 h-3" />
-              <span className="cursor-pointer hover:text-primary" onClick={() => navigate("/cars")}>Cars</span>
+              <span className="cursor-pointer hover:text-primary" onClick={() => navigate("/cars")}>Vehicles</span>
               <ArrowRight className="w-3 h-3" />
               <span className="text-foreground font-medium">{displayCar.name}</span>
             </div>
@@ -217,17 +217,12 @@ export default function CarDetailPage() {
                   <div className="text-lg font-bold capitalize">{displayCar.fuelType}</div>
                   <div className="text-xs text-muted-foreground">Fuel</div>
                 </div>
-                <div className="bg-white rounded-xl p-4 border border-border text-center">
-                  <Gauge className="w-5 h-5 text-primary mx-auto mb-1" />
-                  <div className="text-lg font-bold capitalize">{displayCar.transmission}</div>
-                  <div className="text-xs text-muted-foreground">Gear</div>
-                </div>
               </div>
 
               <Separator />
 
               <div>
-                <h3 className="font-semibold mb-2">About this car</h3>
+                <h3 className="font-semibold mb-2">About this vehicle</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   {displayCar.description}
                 </p>
@@ -305,7 +300,7 @@ export default function CarDetailPage() {
                   onClick={handleBookNow}
                   className="w-full mt-4 bg-primary hover:bg-primary/90 text-white h-12 text-base"
                 >
-                  Book This Car
+                  Book Your Ride
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
                 <div className="flex gap-2 mt-3">
@@ -321,6 +316,22 @@ export default function CarDetailPage() {
           </div>
         </div>
       </main>
+
+      {/* Sticky mobile bottom CTA */}
+      <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-slate-200 px-4 py-3 flex items-center gap-3 shadow-[0_-4px_16px_rgba(0,0,0,0.08)]" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs text-slate-500 truncate">{displayCar.name}</p>
+          <p className="text-base font-bold text-slate-900">
+            ₹{(parseFloat(displayCar.pricePerKm) * distance + driverCharge).toLocaleString("en-IN")}
+            <span className="text-xs font-normal text-slate-400 ml-1">est. fare</span>
+          </p>
+        </div>
+        <Button onClick={handleBookNow} className="bg-primary hover:bg-primary/90 text-white h-11 px-6 font-semibold shrink-0">
+          Book Your Ride
+          <ArrowRight className="w-4 h-4 ml-1.5" />
+        </Button>
+      </div>
+
       <Footer />
       <AIChatbot />
     </div>
