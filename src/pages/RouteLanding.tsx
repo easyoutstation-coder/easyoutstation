@@ -127,6 +127,18 @@ const ROUTES: Record<string, {
       { q: "What is the cheapest Delhi to Mathura cab fare?", a: "A Swift Dzire starts from ₹2,350 one way. Price includes driver charges. Toll is charged at actuals." },
     ]
   },
+  "delhi-to-amritsar": {
+    from: "Delhi", to: "Amritsar", distance: 460, duration: "7-8 hours",
+    fare: { min: 5770, max: 10370 }, toll: 600,
+    description: "Book Delhi to Amritsar cab at fixed fares. Visit the Golden Temple and Wagah Border with comfort. Verified drivers, AC cars, no hidden charges. One way and round trip available.",
+    highlights: ["NH44 highway route", "7-8 hours", "Golden Temple specialists", "Wagah Border visit"],
+    faqs: [
+      { q: "How far is Delhi to Amritsar by cab?", a: "Delhi to Amritsar is approximately 460 km via NH44 (Grand Trunk Road) and takes 7-8 hours depending on traffic." },
+      { q: "What is the cab fare from Delhi to Amritsar?", a: "Fares start from ₹5,770 for a Swift Dzire to ₹10,370 for an Innova Hycross one way. Price includes driver charges. Toll is charged at actuals." },
+      { q: "Can I visit Wagah Border from Delhi by cab?", a: "Yes. A popular itinerary is to leave Delhi early morning, visit Golden Temple, attend the Wagah Border ceremony at sunset, and return or stay overnight in Amritsar." },
+      { q: "Is an overnight stay required for Delhi to Amritsar?", a: "For a comfortable trip with sightseeing, an overnight stay is recommended. However, a same-day return is possible if you leave Delhi by 4-5 AM." },
+    ]
+  },
 };
 
 export default function RouteLanding() {
