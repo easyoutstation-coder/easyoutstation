@@ -276,8 +276,8 @@ export default function RouteLanding() {
                   { name: "Innova Crysta", seats: 6, rate: 20 },
                   { name: "Innova Hycross", seats: 6, rate: 22 },
                 ].map((car) => {
-                  const oneway = Math.round(car.rate * data.distance + 250 + data.toll);
-                  const roundtrip = Math.round(car.rate * data.distance * 2 + 500 + data.toll * 2);
+                  const oneway = Math.round(car.rate * data.distance + 250);
+                  const roundtrip = Math.round(car.rate * data.distance * 2 + 500);
                   return (
                     <tr key={car.name} className="hover:bg-slate-50 transition-colors">
                       <td className="px-6 py-4 font-medium text-slate-900">{car.name}</td>
@@ -291,7 +291,7 @@ export default function RouteLanding() {
               </tbody>
             </table>
           </div>
-          <p className="text-xs text-slate-400 mt-3 text-center">* Fares include driver charges & estimated tolls. Actual toll may vary slightly.</p>
+          <p className="text-xs text-slate-400 mt-3 text-center">* Fares include driver charges (₹250). Toll & parking charged at actuals — whatever is paid on the road, no markup.</p>
         </div>
 
         {/* Why choose us */}
