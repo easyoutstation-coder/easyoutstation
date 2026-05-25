@@ -91,7 +91,7 @@ export default function About() {
                 className="px-6 py-3 rounded-xl bg-blue-600 text-white font-semibold text-sm hover:bg-blue-700 transition-all">
                 Email Us
               </a>
-              <a href="https://wa.me/919958556011" target="_blank" rel="noopener noreferrer"
+              <a href="https://wa.me/918796564111" target="_blank" rel="noopener noreferrer"
                 className="px-6 py-3 rounded-xl bg-white border border-slate-200 text-slate-700 font-semibold text-sm hover:border-blue-300 transition-all">
                 WhatsApp Us
               </a>

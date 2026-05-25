@@ -75,7 +75,7 @@ export default function FAQ() {
                 className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-all">
                 Email Us
               </a>
-              <a href="https://wa.me/919958556011" target="_blank" rel="noopener noreferrer"
+              <a href="https://wa.me/918796564111" target="_blank" rel="noopener noreferrer"
                 className="px-4 py-2 rounded-lg bg-white border border-slate-200 text-slate-700 text-sm font-medium hover:border-blue-300 transition-all">
                 WhatsApp
               </a>

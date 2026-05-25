@@ -22,7 +22,7 @@ export default function CTASection() {
             className="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-8 h-12 gap-2 shadow-lg shadow-blue-900/40 transition-all">
             Book Your Ride <ArrowRight className="w-4 h-4" />
           </Button>
-          <a href="https://wa.me/919958556011?text=Hi%2C%20I%20want%20to%20book%20a%20cab%20from%20Delhi" target="_blank" rel="noopener noreferrer">
+          <a href="https://wa.me/918796564111?text=Hi%2C%20I%20want%20to%20book%20a%20cab%20from%20Delhi" target="_blank" rel="noopener noreferrer">
             <Button size="lg" variant="outline"
               className="border-white/20 text-white hover:bg-white/10 h-12 px-6 gap-2 transition-all">
               <MessageCircle className="w-4 h-4 text-green-400" />
@@ -32,9 +32,9 @@ export default function CTASection() {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto">
           {[
-            { icon: MessageCircle, label: "WhatsApp", value: "+91-99585 56011", href: "https://wa.me/919958556011", color: "text-green-400" },
+            { icon: MessageCircle, label: "WhatsApp", value: "+91-87965 64111", href: "https://wa.me/918796564111", color: "text-green-400" },
             { icon: Mail, label: "Email", value: "easyoutstation@gmail.com", href: "mailto:easyoutstation@gmail.com", color: "text-blue-400" },
-            { icon: Phone, label: "Call Us", value: "+91-99585 56011", href: "tel:+919958556011", color: "text-blue-400" },
+            { icon: Phone, label: "Call Us", value: "+91-87965 64111", href: "tel:+918796564111", color: "text-blue-400" },
           ].map((c, i) => (
             <a key={i} href={c.href} target={c.href.startsWith("http") ? "_blank" : undefined} rel="noopener noreferrer"
               className="flex items-center gap-3 p-4 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 transition-all group">

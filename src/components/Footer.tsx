@@ -59,7 +59,7 @@ export default function Footer() {
                 <Mail className="w-4 h-4 text-blue-500" />
                 easyoutstation@gmail.com
               </a>
-              <a href="tel:+919958556011"
+              <a href="tel:+918796564111"
                 className="flex items-center gap-3 text-sm text-slate-400 hover:text-blue-400 transition-colors">
                 <Phone className="w-4 h-4 text-blue-500" />
                 +91-99585 56011
@@ -69,7 +69,7 @@ export default function Footer() {
                 Delhi NCR, India
               </div>
             </div>
-            <a href="https://wa.me/919958556011?text=Hi%2C%20I%20want%20to%20book%20a%20cab%20from%20Delhi" target="_blank" rel="noopener noreferrer"
+            <a href="https://wa.me/918796564111?text=Hi%2C%20I%20want%20to%20book%20a%20cab%20from%20Delhi" target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-green-600 text-white text-sm font-semibold hover:bg-green-500 transition-all">
               <MessageCircle className="w-4 h-4" />
               Chat & Book Instantly

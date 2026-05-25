@@ -31,7 +31,7 @@ const homeSchema = [
     "url": "https://www.easyoutstation.com/",
     "logo": "https://www.easyoutstation.com/logo.svg",
     "image": "https://www.easyoutstation.com/hero-bg.jpg",
-    "telephone": "+91-9958556011",
+    "telephone": "+91-8796564111",
     "email": "easyoutstation@gmail.com",
     "address": {
       "@type": "PostalAddress",
@@ -61,7 +61,7 @@ const homeSchema = [
       "ratingCount": "500"
     },
     "sameAs": [
-      "https://wa.me/919958556011"
+      "https://wa.me/918796564111"
     ]
   },
   {

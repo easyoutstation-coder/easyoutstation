@@ -63,7 +63,7 @@ function printInvoice(booking: any) {
     <div class="brand">
       <h1>EasyOutstation</h1>
       <p>Outstation Cab Service · Delhi NCR</p>
-      <p>easyoutstation@gmail.com · +91 9958556011</p>
+      <p>easyoutstation@gmail.com · +91 8796564111</p>
       <p>easyoutstation.com</p>
     </div>
     <div class="invoice-meta">
@@ -105,7 +105,7 @@ function printInvoice(booking: any) {
   </div>
 
   <div class="footer">
-    <p>Thank you for choosing EasyOutstation! For support: easyoutstation@gmail.com or WhatsApp +91-9958556011</p>
+    <p>Thank you for choosing EasyOutstation! For support: easyoutstation@gmail.com or WhatsApp +91-8796564111</p>
     <p style="margin-top:4px">This is a computer-generated receipt and does not require a signature.</p>
   </div>
 

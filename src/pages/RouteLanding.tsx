@@ -167,7 +167,7 @@ export default function RouteLanding() {
         "@type": "LocalBusiness",
         "name": "EasyOutstation",
         "url": "https://www.easyoutstation.com",
-        "telephone": "+91-9958556011",
+        "telephone": "+91-8796564111",
       },
       "areaServed": [data.from, data.to],
       "description": data.description,
@@ -253,7 +253,7 @@ export default function RouteLanding() {
                   className="bg-blue-600 hover:bg-blue-700 text-white px-8 h-12 text-base gap-2">
                   Book Now — From ₹{data.fare.min.toLocaleString("en-IN")} <ArrowRight className="w-4 h-4" />
                 </Button>
-                <a href="https://wa.me/919958556011?text=Hi%2C%20I%20want%20to%20book%20a%20cab%20from%20Delhi" target="_blank" rel="noopener noreferrer">
+                <a href="https://wa.me/918796564111?text=Hi%2C%20I%20want%20to%20book%20a%20cab%20from%20Delhi" target="_blank" rel="noopener noreferrer">
                   <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10 h-12 px-8 text-base w-full sm:w-auto">
                     WhatsApp Us
                   </Button>

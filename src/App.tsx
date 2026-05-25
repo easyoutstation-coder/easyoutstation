@@ -38,13 +38,13 @@ function MaintenancePage() {
         </p>
         <div className="bg-slate-800 rounded-2xl p-6 space-y-3 text-left">
           <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4">Need immediate help?</p>
-          <a href="tel:+919958556011" className="flex items-center gap-3 text-slate-300 hover:text-white transition-colors">
+          <a href="tel:+918796564111" className="flex items-center gap-3 text-slate-300 hover:text-white transition-colors">
             <div className="w-8 h-8 bg-blue-600/20 rounded-lg flex items-center justify-center">
               <Phone className="w-4 h-4 text-blue-400" />
             </div>
             <span className="text-sm">+91 99585 56011</span>
           </a>
-          <a href="https://wa.me/919958556011" className="flex items-center gap-3 text-slate-300 hover:text-white transition-colors">
+          <a href="https://wa.me/918796564111" className="flex items-center gap-3 text-slate-300 hover:text-white transition-colors">
             <div className="w-8 h-8 bg-green-600/20 rounded-lg flex items-center justify-center">
               <span className="text-sm">💬</span>
             </div>
