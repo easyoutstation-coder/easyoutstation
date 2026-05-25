@@ -42,7 +42,7 @@ function MaintenancePage() {
             <div className="w-8 h-8 bg-blue-600/20 rounded-lg flex items-center justify-center">
               <Phone className="w-4 h-4 text-blue-400" />
             </div>
-            <span className="text-sm">+91 99585 56011</span>
+            <span className="text-sm">+91 87965 64111</span>
           </a>
           <a href="https://wa.me/918796564111" className="flex items-center gap-3 text-slate-300 hover:text-white transition-colors">
             <div className="w-8 h-8 bg-green-600/20 rounded-lg flex items-center justify-center">

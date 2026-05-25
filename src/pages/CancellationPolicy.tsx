@@ -44,7 +44,7 @@ export default function CancellationPolicy() {
 
           <div className="bg-blue-50 rounded-xl border border-blue-100 p-5">
             <h3 className="font-semibold text-slate-900 mb-2">Driver No-Show Policy</h3>
-            <p className="text-sm text-slate-600">If our driver fails to show up without prior notice, you will receive a 100% refund and compensation. Contact us immediately at easyoutstation@gmail.com or WhatsApp +91-99585 56011.</p>
+            <p className="text-sm text-slate-600">If our driver fails to show up without prior notice, you will receive a 100% refund and compensation. Contact us immediately at easyoutstation@gmail.com or WhatsApp +91-87965 64111.</p>
           </div>
         </div>
       </main>
