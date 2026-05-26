@@ -10,6 +10,7 @@ import TestimonialsSection from "@/sections/TestimonialsSection";
 import CTASection from "@/sections/CTASection"
 import CorporateSection from "@/sections/CorporateSection";
 import { useSeo } from "@/hooks/useSeo";
+import { Link } from "react-router";
 
 const homeSchema = [
   {
@@ -121,6 +122,28 @@ export default function Home() {
         <PopularCarsSection />
         <FeaturesSection />
         <TestimonialsSection />
+
+        {/* Referral Banner */}
+        <section className="bg-gradient-to-r from-[#0B2447] to-[#19376D] py-14 px-4">
+          <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div className="text-center sm:text-left">
+              <div className="inline-flex items-center gap-2 bg-white/10 text-blue-200 text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-3">
+                🎁 Referral Program
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-bold text-white font-['DM_Serif_Display']">Give ₹200. Get ₹200.</h2>
+              <p className="text-blue-200 mt-2 text-sm max-w-md">
+                Invite friends to EasyOutstation. When they complete their first ride, you both earn ₹200 travel credit.
+              </p>
+            </div>
+            <Link
+              to="/referral"
+              className="shrink-0 bg-white hover:bg-blue-50 text-[#19376D] font-semibold px-8 py-3.5 rounded-xl transition-all hover:scale-105 text-sm whitespace-nowrap"
+            >
+              Start Referring →
+            </Link>
+          </div>
+        </section>
+
         <CTASection />
       </main>
       <Footer />
