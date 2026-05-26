@@ -197,8 +197,8 @@ export default function AdminPage() {
   const { data: referralStatsData, refetch: refetchReferralStats } = trpc.admin.getReferralStats.useQuery(undefined, { enabled: isSuperAdmin });
   const allocateDuePoints = trpc.admin.allocateDuePoints.useMutation({ onSuccess: () => refetchReferralStats() });
   const [referralForm, setReferralForm] = useState({
-    enabled: true, referrerAmount: 200, referredAmount: 200, pointsExpireDays: 90,
-    headline: "Give ₹200. Get ₹200.", subheadline: "", description: "", terms: "",
+    enabled: true, referrerAmount: 100, referredAmount: 100, pointsExpireDays: 90,
+    headline: "Give ₹100. Get ₹100.", subheadline: "", description: "", terms: "",
   });
   const [referralSaved, setReferralSaved] = useState(false);
   useEffect(() => {
@@ -1812,7 +1812,7 @@ export default function AdminPage() {
                     <div>
                       <p className="font-semibold text-slate-900">Referral Program is {referralForm.enabled ? "ACTIVE" : "INACTIVE"}</p>
                       <p className="text-xs text-slate-500 mt-0.5">
-                        {referralForm.enabled ? "Customers can refer friends and earn ₹200 credits." : "Program paused — no new referrals or credits are processed."}
+                        {referralForm.enabled ? "Customers can refer friends and earn ₹100 credits." : "Program paused — no new referrals or credits are processed."}
                       </p>
                     </div>
                   </div>
@@ -1843,7 +1843,7 @@ export default function AdminPage() {
                 <div className="flex items-center justify-between gap-4 flex-wrap">
                   <div>
                     <p className="font-semibold text-slate-900">Process Due Point Allocations</p>
-                    <p className="text-xs text-slate-500 mt-0.5">Allocates ₹200 to both users for rides completed 24+ hours ago.</p>
+                    <p className="text-xs text-slate-500 mt-0.5">Allocates ₹100 to both users for rides completed 24+ hours ago.</p>
                   </div>
                   <Button
                     onClick={() => allocateDuePoints.mutate()}
