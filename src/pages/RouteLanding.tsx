@@ -161,16 +161,12 @@ export default function RouteLanding() {
       ],
     },
     {
-      "@type": "Service",
-      "name": `${data.from} to ${data.to} Cab Service`,
-      "provider": {
-        "@type": "LocalBusiness",
-        "name": "EasyOutstation",
-        "url": "https://www.easyoutstation.com",
-        "telephone": "+91-8796564111",
-      },
-      "areaServed": [data.from, data.to],
+      "@type": "LocalBusiness",
+      "name": "EasyOutstation",
+      "url": "https://www.easyoutstation.com",
+      "telephone": "+91-8796564111",
       "description": data.description,
+      "areaServed": [data.from, data.to],
       "aggregateRating": {
         "@type": "AggregateRating",
         "ratingValue": "4.9",
