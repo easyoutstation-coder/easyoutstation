@@ -786,10 +786,9 @@ Thank you for choosing EasyOutstation.`;
   // ── Referral Program Admin ──────────────────────────────────────────────
   getReferralProgram: adminQuery.query(async () => {
     const db = getDb();
-    const rows = await db.select().from(siteSettings).where(eq(siteSettings.key, "referralProgram")).limit(1);
-    if (rows.length === 0) return defaultProgramConfig();
-    try { return { ...defaultProgramConfig(), ...JSON.parse(rows[0].value) }; }
-    catch { return defaultProgramConfig(); }
+    // reuse the same migration-aware config reader from referral-router
+    const { getProgramConfigForAdmin } = await import("./referral-router");
+    return getProgramConfigForAdmin(db);
   }),
 
   setReferralProgram: superAdminQuery

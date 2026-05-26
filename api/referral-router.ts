@@ -35,11 +35,39 @@ export function defaultProgramConfig() {
   };
 }
 
+export async function getProgramConfigForAdmin(db: ReturnType<typeof getDb>) {
+  return getProgramConfig(db);
+}
+
 async function getProgramConfig(db: ReturnType<typeof getDb>) {
   const rows = await db.select().from(siteSettings).where(eq(siteSettings.key, "referralProgram")).limit(1);
   if (rows.length === 0) return defaultProgramConfig();
-  try { return { ...defaultProgramConfig(), ...JSON.parse(rows[0].value) }; }
-  catch { return defaultProgramConfig(); }
+  try {
+    const stored = JSON.parse(rows[0].value);
+    const defaults = defaultProgramConfig();
+    let dirty = false;
+
+    // One-time migration: replace stale ₹200 amounts with ₹100
+    if (stored.referrerAmount === 200) { stored.referrerAmount = 100; dirty = true; }
+    if (stored.referredAmount === 200) { stored.referredAmount = 100; dirty = true; }
+    if (stored.headline === "Give ₹200. Get ₹200.") { stored.headline = defaults.headline; dirty = true; }
+    if (stored.subheadline?.includes("₹200")) { stored.subheadline = defaults.subheadline; dirty = true; }
+    if (stored.description?.includes("₹200")) { stored.description = defaults.description; dirty = true; }
+    if (stored.terms?.includes("₹200")) { stored.terms = defaults.terms; dirty = true; }
+    if (Array.isArray(stored.howItWorks)) {
+      const fixed = stored.howItWorks.map((s: string) => s.replace(/₹200/g, "₹100"));
+      if (JSON.stringify(fixed) !== JSON.stringify(stored.howItWorks)) { stored.howItWorks = fixed; dirty = true; }
+    }
+
+    if (dirty) {
+      await db.insert(siteSettings)
+        .values({ key: "referralProgram", value: JSON.stringify(stored) })
+        // @ts-ignore — Drizzle MySQL onDuplicateKeyUpdate
+        .onDuplicateKeyUpdate({ set: { value: JSON.stringify(stored) } });
+    }
+
+    return { ...defaults, ...stored };
+  } catch { return defaultProgramConfig(); }
 }
 
 export const referralRouter = createRouter({
