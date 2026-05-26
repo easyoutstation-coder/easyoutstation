@@ -137,9 +137,9 @@ export default function BookingDetail() {
   const referralLink = myCode?.code ? `https://easyoutstation.com/referral?ref=${myCode.code}` : "https://easyoutstation.com/referral";
 
   const handleShareReferral = () => {
-    const text = `Just booked my cab with EasyOutstation — verified drivers, fixed fares! Use my link for ₹200 off your first ride: ${referralLink}`;
+    const text = `Just booked my cab with EasyOutstation — verified drivers, fixed fares! Use my link for ₹100 off your first ride: ${referralLink}`;
     if (navigator.share) {
-      navigator.share({ title: "Get ₹200 off on EasyOutstation!", text, url: referralLink });
+      navigator.share({ title: "Get ₹100 off on EasyOutstation!", text, url: referralLink });
     } else {
       navigator.clipboard.writeText(referralLink).then(() => { setReferralCopied(true); setTimeout(() => setReferralCopied(false), 2000); });
     }
@@ -352,7 +352,7 @@ export default function BookingDetail() {
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-white text-sm">Enjoying EasyOutstation? Spread the word!</p>
                   <p className="text-blue-200 text-xs mt-1 leading-relaxed">
-                    Share your referral link with friends. When they complete their first ride, <strong className="text-white">you both earn ₹200</strong> travel credit.
+                    Share your referral link with friends. When they complete their first ride, <strong className="text-white">you both earn ₹100</strong> travel credit.
                   </p>
                   <div className="flex gap-2 mt-3 flex-wrap">
                     <button
@@ -360,7 +360,7 @@ export default function BookingDetail() {
                       className="flex items-center gap-1.5 bg-white text-[#19376D] font-semibold text-xs px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors"
                     >
                       <Share2 className="w-3.5 h-3.5" />
-                      {referralCopied ? "Link copied!" : "Share & Earn ₹200"}
+                      {referralCopied ? "Link copied!" : "Share & Earn ₹100"}
                     </button>
                     <Link to="/referral" className="flex items-center gap-1.5 bg-white/10 border border-white/20 text-white text-xs px-4 py-2 rounded-lg hover:bg-white/20 transition-colors">
                       Learn more

@@ -6,7 +6,7 @@ import { users, referralEvents, referralPoints, bookings, siteSettings } from "@
 import { eq, and, sql, desc, lt, isNull } from "drizzle-orm";
 import { sendReferralJoinNotification, sendReferralPointsNotification } from "./lib/notifications";
 
-const POINTS_AMOUNT = 200;
+const POINTS_AMOUNT = 100;
 const POINTS_EXPIRY_DAYS = 90;
 const ALLOCATION_DELAY_HOURS = 24;
 
@@ -23,15 +23,15 @@ export function defaultProgramConfig() {
     referrerAmount: POINTS_AMOUNT,
     referredAmount: POINTS_AMOUNT,
     pointsExpireDays: POINTS_EXPIRY_DAYS,
-    headline: "Give ₹200. Get ₹200.",
-    subheadline: "Invite friends to EasyOutstation. When they complete their first ride, you both earn ₹200 travel credit.",
-    description: "Share your unique referral link with anyone planning an outstation trip from Delhi. When they book and complete their first ride with EasyOutstation, you each receive ₹200 in travel credit — automatically credited within 24 hours of trip completion.",
+    headline: "Give ₹100. Get ₹100.",
+    subheadline: "Invite friends to EasyOutstation. When they complete their first ride, you both earn ₹100 travel credit.",
+    description: "Share your unique referral link with anyone planning an outstation trip from Delhi. When they book and complete their first ride with EasyOutstation, you each receive ₹100 in travel credit — automatically credited within 24 hours of trip completion.",
     howItWorks: [
       "Copy your unique referral link from your dashboard",
       "Share it with friends, family, or travel groups",
-      "When they complete their first ride, you both earn ₹200 credit"
+      "When they complete their first ride, you both earn ₹100 credit"
     ],
-    terms: "Terms & Conditions: (1) Referral credits of ₹200 are valid for 90 days from date of credit. (2) Credits are added within 24 hours of the referred friend's first completed ride. (3) No credits are issued for cancelled or refunded trips. (4) Credits cannot be transferred, encashed, or combined with other promotional offers. (5) One referral credit per referred user. Unlimited referrals allowed. (6) EasyOutstation reserves the right to withhold or cancel credits in cases of suspected fraudulent activity. (7) EasyOutstation may modify or discontinue the referral program at any time with prior notice.",
+    terms: "Terms & Conditions: (1) Referral credits of ₹100 are valid for 90 days from date of credit. (2) Credits are added within 24 hours of the referred friend's first completed ride. (3) No credits are issued for cancelled or refunded trips. (4) Credits cannot be transferred, encashed, or combined with other promotional offers. (5) One referral credit per referred user — each account can apply a referral code only once. Unlimited referrals allowed. (6) EasyOutstation reserves the right to withhold or cancel credits in cases of suspected fraudulent activity. (7) EasyOutstation may modify or discontinue the referral program at any time with prior notice.",
   };
 }
 
@@ -87,6 +87,13 @@ export const referralRouter = createRouter({
       .where(eq(referralEvents.referrerId, userId))
       .orderBy(desc(referralEvents.createdAt));
 
+    // Check if this user has already applied someone else's referral code
+    const [appliedCodeEvent] = await db
+      .select({ id: referralEvents.id })
+      .from(referralEvents)
+      .where(eq(referralEvents.referredUserId, userId))
+      .limit(1);
+
     const now = new Date();
     const points = await db
       .select()
@@ -116,6 +123,7 @@ export const referralRouter = createRouter({
 
     return {
       code: user?.referralCode ?? null,
+      hasBeenReferred: !!appliedCodeEvent,
       referrals: referrals.map(r => ({
         id: r.id,
         status: r.status,

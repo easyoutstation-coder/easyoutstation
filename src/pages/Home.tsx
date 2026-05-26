@@ -130,9 +130,9 @@ export default function Home() {
               <div className="inline-flex items-center gap-2 bg-white/10 text-blue-200 text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-3">
                 🎁 Referral Program
               </div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-white font-['DM_Serif_Display']">Give ₹200. Get ₹200.</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold text-white font-['DM_Serif_Display']">Give ₹100. Get ₹100.</h2>
               <p className="text-blue-200 mt-2 text-sm max-w-md">
-                Invite friends to EasyOutstation. When they complete their first ride, you both earn ₹200 travel credit.
+                Invite friends to EasyOutstation. When they complete their first ride, you both earn ₹100 travel credit.
               </p>
             </div>
             <Link

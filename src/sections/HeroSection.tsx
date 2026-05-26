@@ -499,7 +499,7 @@ export default function HeroSection() {
                 {/* Referral pill */}
                 <Link to="/referral" className="flex items-center justify-center gap-2 w-full py-2 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 hover:border-blue-300 transition-colors group">
                   <span className="text-base">🎁</span>
-                  <span className="text-xs font-semibold text-blue-700">Refer a friend — you both get <span className="text-blue-900 font-bold">₹200 off</span></span>
+                  <span className="text-xs font-semibold text-blue-700">Refer a friend — you both get <span className="text-blue-900 font-bold">₹100 off</span></span>
                   <ArrowRight className="w-3 h-3 text-blue-500 group-hover:translate-x-0.5 transition-transform" />
                 </Link>
 

@@ -44,6 +44,12 @@ export default function DashboardPage() {
   });
 
   const [referralCopied, setReferralCopied] = useState(false);
+  const [codeInput, setCodeInput] = useState("");
+  const [codeError, setCodeError] = useState("");
+  const applyCodeMutation = trpc.referral.applyReferralCode.useMutation({
+    onSuccess: () => { setCodeInput(""); setCodeError(""); },
+    onError: (e) => setCodeError(e.message),
+  });
 
   const { data: bookings, isLoading: bookingsLoading } = trpc.booking.getMyBookings.useQuery(
     undefined,
@@ -73,9 +79,9 @@ export default function DashboardPage() {
 
   const handleShareReferral = async () => {
     if (!referralLink) return;
-    const text = `Book your outstation cab with EasyOutstation and get ₹200 off! Fixed fares, verified drivers. Use my referral link: ${referralLink}`;
+    const text = `Book your outstation cab with EasyOutstation and get ₹100 off! Fixed fares, verified drivers. Use my referral link: ${referralLink}`;
     if (navigator.share) {
-      await navigator.share({ title: "EasyOutstation — ₹200 off!", text, url: referralLink });
+      await navigator.share({ title: "EasyOutstation — ₹100 off!", text, url: referralLink });
     } else {
       handleCopyReferral();
     }
@@ -364,7 +370,7 @@ export default function DashboardPage() {
                             </div>
                             <div>
                               <h3 className="font-semibold text-slate-900">Your Referral Link</h3>
-                              <p className="text-xs text-slate-500">Share and earn ₹200 for every friend who completes their first ride</p>
+                              <p className="text-xs text-slate-500">Share and earn ₹100 for every friend who completes their first ride</p>
                             </div>
                           </div>
                           {referralLink ? (
@@ -394,6 +400,52 @@ export default function DashboardPage() {
                           )}
                         </CardContent>
                       </Card>
+
+                      {/* Apply a referral code */}
+                      {!referralStats?.hasBeenReferred && (
+                        <Card className="border-amber-200 bg-amber-50/50">
+                          <CardContent className="p-5">
+                            <div className="flex items-center gap-2 mb-3">
+                              <Gift className="w-4 h-4 text-amber-600" />
+                              <h4 className="font-semibold text-sm text-slate-800">Have a referral code?</h4>
+                              <span className="text-xs text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full font-medium">One-time use</span>
+                            </div>
+                            <p className="text-xs text-slate-500 mb-3">Enter a friend's referral code. You'll both earn ₹100 credit after your first completed ride.</p>
+                            {applyCodeMutation.isSuccess ? (
+                              <div className="flex items-center gap-2 text-green-700 text-sm font-medium bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+                                <CheckCircle className="w-4 h-4 text-green-600" />
+                                Referral code applied! Credits will be added after your first completed ride.
+                              </div>
+                            ) : (
+                              <div className="flex gap-2">
+                                <input
+                                  type="text"
+                                  value={codeInput}
+                                  onChange={e => { setCodeInput(e.target.value.toUpperCase()); setCodeError(""); }}
+                                  placeholder="e.g. EOAB1234"
+                                  maxLength={20}
+                                  className="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+                                />
+                                <Button
+                                  size="sm"
+                                  onClick={() => { if (codeInput.length >= 6) applyCodeMutation.mutate({ code: codeInput }); }}
+                                  disabled={codeInput.length < 6 || applyCodeMutation.isPending}
+                                  className="bg-amber-500 hover:bg-amber-600 text-white shrink-0"
+                                >
+                                  {applyCodeMutation.isPending ? "Applying…" : "Apply"}
+                                </Button>
+                              </div>
+                            )}
+                            {codeError && <p className="text-xs text-red-500 mt-2">{codeError}</p>}
+                          </CardContent>
+                        </Card>
+                      )}
+                      {referralStats?.hasBeenReferred && (
+                        <div className="flex items-center gap-2 text-xs text-green-700 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+                          <CheckCircle className="w-3.5 h-3.5 text-green-600 shrink-0" />
+                          You've already applied a referral code — credits will be added after your first completed ride.
+                        </div>
+                      )}
 
                       {/* Points balance */}
                       <div className="grid grid-cols-3 gap-4">
@@ -489,7 +541,7 @@ export default function DashboardPage() {
                           <CardContent className="p-8 text-center">
                             <Gift className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
                             <h3 className="font-semibold mb-1">No referrals yet</h3>
-                            <p className="text-sm text-muted-foreground mb-4">Share your link to start earning ₹200 per friend.</p>
+                            <p className="text-sm text-muted-foreground mb-4">Share your link to start earning ₹100 per friend.</p>
                             <Button onClick={handleShareReferral} size="sm" className="bg-blue-600 hover:bg-blue-700">
                               <Share2 className="w-3.5 h-3.5 mr-1.5" />
                               Share Your Link

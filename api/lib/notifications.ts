@@ -225,13 +225,13 @@ export async function sendReferralJoinNotification(input: {
 
 Great news! ${input.referredName} has joined EasyOutstation using your referral link.
 
-You will earn ₹200 travel credit automatically within 24 hours of their first completed ride. No action needed from your side.
+You will earn ₹100 travel credit automatically within 24 hours of their first completed ride. No action needed from your side.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 WHAT HAPPENS NEXT?
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ✅ ${input.referredName} books and completes their first ride
-✅ ₹200 is credited to both your accounts within 24 hours
+✅ ₹100 is credited to both your accounts within 24 hours
 ✅ Credit valid for 90 days — use it on any future booking
 
 Keep sharing your referral link to earn more! There's no limit on referrals.
@@ -242,7 +242,7 @@ Warm regards,
 Team EasyOutstation`;
 
   if (input.referrerEmail) await sendResend(input.referrerEmail, subject, text);
-  if (input.referrerPhone) await sendSms(input.referrerPhone, `EasyOutstation: ${input.referredName} joined using your referral! Earn ₹200 after their first completed ride. Track: easyoutstation.com/dashboard`);
+  if (input.referrerPhone) await sendSms(input.referrerPhone, `EasyOutstation: ${input.referredName} joined using your referral! Earn ₹100 after their first completed ride. Track: easyoutstation.com/dashboard`);
 }
 
 export async function sendReferralPointsNotification(input: {
