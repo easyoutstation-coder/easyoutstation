@@ -23,6 +23,8 @@ export const users = mysqlTable("users", {
   role: mysqlEnum("role", ["user", "admin", "super_admin"]).default("user").notNull(),
   canManageContent: boolean("canManageContent").default(false).notNull(),
   fcmToken: text("fcmToken"),
+  referralCode: varchar("referralCode", { length: 20 }).unique(),
+  referredBy: bigint("referredBy", { mode: "number", unsigned: true }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt")
     .defaultNow()
@@ -163,6 +165,27 @@ export const subscriptions = mysqlTable("subscriptions", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
+export const referralEvents = mysqlTable("referralEvents", {
+  id: serial("id").primaryKey(),
+  referrerId: bigint("referrerId", { mode: "number", unsigned: true }).notNull(),
+  referredUserId: bigint("referredUserId", { mode: "number", unsigned: true }).notNull().unique(),
+  qualifyingBookingId: bigint("qualifyingBookingId", { mode: "number", unsigned: true }),
+  status: mysqlEnum("status", ["pending", "ride_completed", "points_allocated", "cancelled"]).default("pending").notNull(),
+  rideCompletedAt: timestamp("rideCompletedAt"),
+  pointsAllocatedAt: timestamp("pointsAllocatedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export const referralPoints = mysqlTable("referralPoints", {
+  id: serial("id").primaryKey(),
+  userId: bigint("userId", { mode: "number", unsigned: true }).notNull(),
+  amount: int("amount").notNull(),
+  referralEventId: bigint("referralEventId", { mode: "number", unsigned: true }),
+  status: mysqlEnum("status", ["active", "redeemed", "expired"]).default("active").notNull(),
+  expiresAt: timestamp("expiresAt").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type Car = typeof cars.$inferSelect;
@@ -183,3 +206,5 @@ export type Subscription = typeof subscriptions.$inferSelect;
 export type InsertSubscription = typeof subscriptions.$inferInsert;
 export type Faq = typeof faqs.$inferSelect;
 export type InsertFaq = typeof faqs.$inferInsert;
+export type ReferralEvent = typeof referralEvents.$inferSelect;
+export type ReferralPoint = typeof referralPoints.$inferSelect;

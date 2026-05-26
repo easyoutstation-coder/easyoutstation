@@ -2,8 +2,10 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createRouter, publicQuery, adminQuery, superAdminQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { users, bookings, drivers, expenses, siteSettings, faqs, routes, cars, userSearches, carReviews } from "@db/schema";
-import { eq, desc, sql, and, gte } from "drizzle-orm";
+import { users, bookings, drivers, expenses, siteSettings, faqs, routes, cars, userSearches, carReviews, referralEvents, referralPoints } from "@db/schema";
+import { eq, desc, sql, and, gte, lt, count } from "drizzle-orm";
+import { defaultProgramConfig } from "./referral-router";
+import { sendReferralPointsNotification } from "./lib/notifications";
 import { sendFcmNotification } from "./lib/fcm";
 
 // In-memory OTP store for data-clear verification (process-scoped, 10-min TTL)
@@ -780,6 +782,110 @@ Thank you for choosing EasyOutstation.`;
 
       return { success: true, deleted };
     }),
+
+  // ── Referral Program Admin ──────────────────────────────────────────────
+  getReferralProgram: adminQuery.query(async () => {
+    const db = getDb();
+    const rows = await db.select().from(siteSettings).where(eq(siteSettings.key, "referralProgram")).limit(1);
+    if (rows.length === 0) return defaultProgramConfig();
+    try { return { ...defaultProgramConfig(), ...JSON.parse(rows[0].value) }; }
+    catch { return defaultProgramConfig(); }
+  }),
+
+  setReferralProgram: superAdminQuery
+    .input(z.object({
+      enabled: z.boolean(),
+      referrerAmount: z.number().int().min(0).max(10000),
+      referredAmount: z.number().int().min(0).max(10000),
+      pointsExpireDays: z.number().int().min(1).max(365),
+      headline: z.string().min(1).max(200),
+      subheadline: z.string().min(1).max(500),
+      description: z.string().min(1).max(2000),
+      terms: z.string().min(1).max(5000),
+    }))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      const value = JSON.stringify(input);
+      await db.execute(sql`
+        INSERT INTO siteSettings (\`key\`, value) VALUES ('referralProgram', ${value})
+        ON DUPLICATE KEY UPDATE value = ${value}, updatedAt = NOW()
+      `);
+      return { success: true };
+    }),
+
+  getReferralStats: adminQuery.query(async () => {
+    const db = getDb();
+    const [total] = await db.select({ count: sql<number>`count(*)` }).from(referralEvents);
+    const [pending] = await db.select({ count: sql<number>`count(*)` }).from(referralEvents).where(eq(referralEvents.status, "pending"));
+    const [rideCompleted] = await db.select({ count: sql<number>`count(*)` }).from(referralEvents).where(eq(referralEvents.status, "ride_completed"));
+    const [allocated] = await db.select({ count: sql<number>`count(*)` }).from(referralEvents).where(eq(referralEvents.status, "points_allocated"));
+    const [totalPointsRow] = await db.select({ sum: sql<number>`coalesce(sum(amount),0)` }).from(referralPoints).where(eq(referralPoints.status, "active"));
+
+    const topReferrers = await db
+      .select({ userId: referralEvents.referrerId, name: users.name, phone: users.phone, referrals: sql<number>`count(*)` })
+      .from(referralEvents)
+      .leftJoin(users, eq(referralEvents.referrerId, users.id))
+      .groupBy(referralEvents.referrerId, users.name, users.phone)
+      .orderBy(desc(sql`count(*)`))
+      .limit(10);
+
+    const recentEvents = await db
+      .select({
+        id: referralEvents.id,
+        status: referralEvents.status,
+        createdAt: referralEvents.createdAt,
+        rideCompletedAt: referralEvents.rideCompletedAt,
+        referrerName: users.name,
+      })
+      .from(referralEvents)
+      .leftJoin(users, eq(referralEvents.referrerId, users.id))
+      .orderBy(desc(referralEvents.createdAt))
+      .limit(20);
+
+    return {
+      total: total.count,
+      pending: pending.count,
+      rideCompleted: rideCompleted.count,
+      allocated: allocated.count,
+      totalActivePoints: totalPointsRow.sum,
+      topReferrers,
+      recentEvents,
+    };
+  }),
+
+  allocateDuePoints: superAdminQuery.mutation(async () => {
+    const db = getDb();
+    const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const config = (() => {
+      return defaultProgramConfig();
+    })();
+
+    const dueEvents = await db.select().from(referralEvents)
+      .where(and(eq(referralEvents.status, "ride_completed"), lt(referralEvents.rideCompletedAt, cutoff)));
+
+    let allocated = 0;
+    for (const event of dueEvents) {
+      const expiresAt = new Date(Date.now() + config.pointsExpireDays * 24 * 60 * 60 * 1000);
+      await db.insert(referralPoints).values([
+        { userId: event.referrerId, amount: config.referrerAmount, referralEventId: event.id, status: "active", expiresAt },
+        { userId: event.referredUserId, amount: config.referredAmount, referralEventId: event.id, status: "active", expiresAt },
+      ]);
+      await db.update(referralEvents).set({ status: "points_allocated", pointsAllocatedAt: new Date() })
+        .where(eq(referralEvents.id, event.id));
+
+      const [referrer] = await db.select({ name: users.name, email: users.email, phone: users.phone }).from(users).where(eq(users.id, event.referrerId)).limit(1);
+      const [referred] = await db.select({ name: users.name, email: users.email, phone: users.phone }).from(users).where(eq(users.id, event.referredUserId)).limit(1);
+      if (referrer && referred) {
+        sendReferralPointsNotification({
+          referrerName: referrer.name ?? "there", referrerEmail: referrer.email ?? undefined, referrerPhone: referrer.phone ?? undefined,
+          referredName: referred.name ?? "your friend", referredEmail: referred.email ?? undefined, referredPhone: referred.phone ?? undefined,
+          amount: config.referrerAmount, expiresAt, terms: config.terms,
+        }).catch(console.error);
+      }
+      allocated++;
+    }
+    return { allocated };
+  }),
 
   // ── Corporate enquiry lead capture ─────────────────────────────────────
   submitCorporateEnquiry: publicQuery

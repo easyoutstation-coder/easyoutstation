@@ -21,9 +21,9 @@ export async function sendBookingSms(
 
   let message: string;
   if (type === "abandonment") {
-    message = `EasyOutstation: You left your booking incomplete! ${fromCity} to ${toCity} on ${pickupDate}. Fare: Rs ${totalPrice.toLocaleString("en-IN")}. Complete booking: https://easyoutstation.com/booking?resume=${bookingId} Help: 9958556011`;
+    message = `EasyOutstation: You left your booking incomplete! ${fromCity} to ${toCity} on ${pickupDate}. Fare: Rs ${totalPrice.toLocaleString("en-IN")}. Complete booking: https://easyoutstation.com/booking?resume=${bookingId} Help: 8796564111`;
   } else {
-    message = `EasyOutstation: Booking #${bookingId} CONFIRMED! ${fromCity} to ${toCity}. Pickup: ${pickupDate}${returnDate ? `. Return: ${returnDate}${returnTime ? ` at ${formatTime(returnTime)}` : ""}` : ""}. Fare: Rs ${totalPrice.toLocaleString("en-IN")}. Driver details within 60 mins. Help: 9958556011`;
+    message = `EasyOutstation: Booking #${bookingId} CONFIRMED! ${fromCity} to ${toCity}. Pickup: ${pickupDate}${returnDate ? `. Return: ${returnDate}${returnTime ? ` at ${formatTime(returnTime)}` : ""}` : ""}. Fare: Rs ${totalPrice.toLocaleString("en-IN")}. Driver details within 60 mins. Help: 8796564111`;
   }
 
   const params = new URLSearchParams({
@@ -183,7 +183,7 @@ WHAT HAPPENS NEXT?
 ✅ You will receive your driver's name & contact details
 ✅ Driver will call you 1 hour before pickup
 
-For any queries, call us: 9958556011
+For any queries, call us: 8796564111
 Or email: easyoutstation@gmail.com
 
 Have a wonderful journey! 🌟
@@ -193,4 +193,122 @@ Team EasyOutstation`,
       }),
     });
   }
+}
+
+async function sendResend(to: string, subject: string, text: string) {
+  const RESEND_API_KEY = process.env.RESEND_API_KEY;
+  if (!RESEND_API_KEY || !to) return;
+  await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${RESEND_API_KEY}` },
+    body: JSON.stringify({ from: "EasyOutstation <bookings@easyoutstation.com>", to: [to], subject, text }),
+  }).catch(console.error);
+}
+
+async function sendSms(phone: string, message: string) {
+  const apiKey = process.env.FAST2SMS_API_KEY?.trim();
+  if (!apiKey) return;
+  const number = phone.replace(/\D/g, "").slice(-10);
+  if (number.length !== 10) return;
+  const params = new URLSearchParams({ authorization: apiKey, route: "q", message, language: "english", flash: "0", numbers: number });
+  await fetch(`https://www.fast2sms.com/dev/bulkV2?${params.toString()}`).catch(console.error);
+}
+
+export async function sendReferralJoinNotification(input: {
+  referrerName: string;
+  referrerEmail?: string;
+  referrerPhone?: string;
+  referredName: string;
+}) {
+  const subject = `Your friend joined EasyOutstation using your referral!`;
+  const text = `Dear ${input.referrerName},
+
+Great news! ${input.referredName} has joined EasyOutstation using your referral link.
+
+You will earn ₹200 travel credit automatically within 24 hours of their first completed ride. No action needed from your side.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WHAT HAPPENS NEXT?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ ${input.referredName} books and completes their first ride
+✅ ₹200 is credited to both your accounts within 24 hours
+✅ Credit valid for 90 days — use it on any future booking
+
+Keep sharing your referral link to earn more! There's no limit on referrals.
+
+Track your referrals and points at: https://easyoutstation.com/dashboard
+
+Warm regards,
+Team EasyOutstation`;
+
+  if (input.referrerEmail) await sendResend(input.referrerEmail, subject, text);
+  if (input.referrerPhone) await sendSms(input.referrerPhone, `EasyOutstation: ${input.referredName} joined using your referral! Earn ₹200 after their first completed ride. Track: easyoutstation.com/dashboard`);
+}
+
+export async function sendReferralPointsNotification(input: {
+  referrerName: string;
+  referrerEmail?: string;
+  referrerPhone?: string;
+  referredName: string;
+  referredEmail?: string;
+  referredPhone?: string;
+  amount: number;
+  expiresAt: Date;
+  terms: string;
+}) {
+  const expiryStr = input.expiresAt.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+
+  // Email to referrer
+  const referrerText = `Dear ${input.referrerName},
+
+Your ₹${input.amount} referral credit has been added to your EasyOutstation account! 🎉
+
+${input.referredName} completed their first ride with us, and as promised, you've earned your reward.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CREDIT DETAILS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Amount        : ₹${input.amount}
+Valid Until   : ${expiryStr}
+How to use    : Credit will be applied automatically on your next booking
+
+Keep referring friends to earn more! Visit: https://easyoutstation.com/dashboard
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TERMS & CONDITIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${input.terms}
+
+Warm regards,
+Team EasyOutstation`;
+
+  // Email to referred user
+  const referredText = `Dear ${input.referredName},
+
+Welcome to the EasyOutstation family! 🎉
+
+Thank you for completing your first ride with us. As a token of appreciation, ₹${input.amount} travel credit has been added to your account.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CREDIT DETAILS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Amount        : ₹${input.amount}
+Valid Until   : ${expiryStr}
+How to use    : Credit will be applied automatically on your next booking
+
+You can also earn more by referring your friends! Share your unique link from: https://easyoutstation.com/dashboard
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TERMS & CONDITIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${input.terms}
+
+Warm regards,
+Team EasyOutstation`;
+
+  const creditSubject = `₹${input.amount} referral credit added to your account!`;
+  if (input.referrerEmail) await sendResend(input.referrerEmail, creditSubject, referrerText);
+  if (input.referredEmail) await sendResend(input.referredEmail, creditSubject, referredText);
+  if (input.referrerPhone) await sendSms(input.referrerPhone, `EasyOutstation: ₹${input.amount} referral credit added! Valid till ${expiryStr}. Use on your next booking at easyoutstation.com`);
+  if (input.referredPhone) await sendSms(input.referredPhone, `EasyOutstation: ₹${input.amount} welcome credit added! Valid till ${expiryStr}. Book at easyoutstation.com`);
 }

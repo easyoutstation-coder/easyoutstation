@@ -23,6 +23,11 @@ import {
   Pencil,
   Check,
   X,
+  Gift,
+  Copy,
+  Share2,
+  Clock,
+  CheckCircle,
 } from "lucide-react";
 
 export default function DashboardPage() {
@@ -38,6 +43,8 @@ export default function DashboardPage() {
     onSuccess: () => { setEditingName(false); refresh(); },
   });
 
+  const [referralCopied, setReferralCopied] = useState(false);
+
   const { data: bookings, isLoading: bookingsLoading } = trpc.booking.getMyBookings.useQuery(
     undefined,
     { enabled: isAuthenticated }
@@ -47,6 +54,32 @@ export default function DashboardPage() {
     undefined,
     { enabled: isAuthenticated }
   );
+
+  const { data: referralCode } = trpc.referral.getMyCode.useQuery(undefined, { enabled: isAuthenticated });
+  const { data: referralStats } = trpc.referral.getMyStats.useQuery(undefined, { enabled: isAuthenticated });
+  const { data: referralProgram } = trpc.referral.getProgram.useQuery();
+
+  const referralLink = referralCode?.code
+    ? `https://easyoutstation.com/referral?ref=${referralCode.code}`
+    : "";
+
+  const handleCopyReferral = () => {
+    if (!referralLink) return;
+    navigator.clipboard.writeText(referralLink).then(() => {
+      setReferralCopied(true);
+      setTimeout(() => setReferralCopied(false), 2000);
+    });
+  };
+
+  const handleShareReferral = async () => {
+    if (!referralLink) return;
+    const text = `Book your outstation cab with EasyOutstation and get ₹200 off! Fixed fares, verified drivers. Use my referral link: ${referralLink}`;
+    if (navigator.share) {
+      await navigator.share({ title: "EasyOutstation — ₹200 off!", text, url: referralLink });
+    } else {
+      handleCopyReferral();
+    }
+  };
 
   if (authLoading) {
     return (
@@ -120,6 +153,13 @@ export default function DashboardPage() {
                       <Search className="w-4 h-4" />
                       Search Rides
                     </button>
+                    <button
+                      onClick={() => navigate("/referral")}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:bg-muted transition-colors"
+                    >
+                      <Gift className="w-4 h-4" />
+                      Refer & Earn
+                    </button>
                   </div>
 
                   <div className="mt-6 pt-6 border-t">
@@ -138,7 +178,7 @@ export default function DashboardPage() {
             {/* Main Content */}
             <div className="lg:col-span-3 space-y-6">
               {/* Stats */}
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <Card>
                   <CardContent className="p-4">
                     <div className="text-2xl font-bold">{upcomingBookings.length}</div>
@@ -157,12 +197,22 @@ export default function DashboardPage() {
                     <div className="text-xs text-muted-foreground">Recent Searches</div>
                   </CardContent>
                 </Card>
+                <Card className="border-green-200 bg-green-50">
+                  <CardContent className="p-4">
+                    <div className="text-2xl font-bold text-green-700">₹{referralStats?.balance ?? 0}</div>
+                    <div className="text-xs text-green-600">Referral Credits</div>
+                  </CardContent>
+                </Card>
               </div>
 
               <Tabs defaultValue="bookings">
                 <TabsList className="w-full">
                   <TabsTrigger value="bookings" className="flex-1">My Bookings</TabsTrigger>
                   <TabsTrigger value="searches" className="flex-1">Recent Searches</TabsTrigger>
+                  <TabsTrigger value="referrals" className="flex-1">
+                    <Gift className="w-3.5 h-3.5 mr-1.5" />
+                    Refer & Earn
+                  </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="bookings" className="space-y-4">
@@ -290,6 +340,169 @@ export default function DashboardPage() {
                         </p>
                       </CardContent>
                     </Card>
+                  )}
+                </TabsContent>
+
+                {/* ── Referrals Tab ──────────────────────────────── */}
+                <TabsContent value="referrals" className="space-y-5">
+                  {referralProgram && !referralProgram.enabled ? (
+                    <Card>
+                      <CardContent className="p-8 text-center">
+                        <Gift className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                        <h3 className="font-semibold mb-1">Referral Program Paused</h3>
+                        <p className="text-sm text-muted-foreground">The referral program is currently inactive. Check back soon!</p>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <>
+                      {/* Referral link card */}
+                      <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-white">
+                        <CardContent className="p-6">
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center shrink-0">
+                              <Gift className="w-5 h-5 text-white" />
+                            </div>
+                            <div>
+                              <h3 className="font-semibold text-slate-900">Your Referral Link</h3>
+                              <p className="text-xs text-slate-500">Share and earn ₹200 for every friend who completes their first ride</p>
+                            </div>
+                          </div>
+                          {referralLink ? (
+                            <>
+                              <div className="flex items-center gap-2 bg-white border border-blue-200 rounded-xl px-4 py-3 mb-4">
+                                <span className="text-sm text-slate-700 truncate flex-1">{referralLink}</span>
+                                <button onClick={handleCopyReferral} className="text-blue-600 hover:text-blue-800 shrink-0">
+                                  {referralCopied ? <CheckCircle className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                                </button>
+                              </div>
+                              <div className="flex gap-3">
+                                <Button onClick={handleCopyReferral} variant="outline" className="flex-1 text-sm">
+                                  <Copy className="w-3.5 h-3.5 mr-1.5" />
+                                  {referralCopied ? "Copied!" : "Copy Link"}
+                                </Button>
+                                <Button onClick={handleShareReferral} className="flex-1 bg-blue-600 hover:bg-blue-700 text-sm">
+                                  <Share2 className="w-3.5 h-3.5 mr-1.5" />
+                                  Share
+                                </Button>
+                              </div>
+                              <p className="text-xs text-slate-400 mt-3 text-center">
+                                Your code: <span className="font-mono font-semibold text-slate-600">{referralCode?.code}</span>
+                              </p>
+                            </>
+                          ) : (
+                            <div className="animate-pulse bg-slate-100 h-10 rounded-xl" />
+                          )}
+                        </CardContent>
+                      </Card>
+
+                      {/* Points balance */}
+                      <div className="grid grid-cols-3 gap-4">
+                        <Card>
+                          <CardContent className="p-4 text-center">
+                            <div className="text-2xl font-bold text-green-600">₹{referralStats?.balance ?? 0}</div>
+                            <div className="text-xs text-muted-foreground mt-1">Credits Available</div>
+                          </CardContent>
+                        </Card>
+                        <Card>
+                          <CardContent className="p-4 text-center">
+                            <div className="text-2xl font-bold">{referralStats?.referrals.length ?? 0}</div>
+                            <div className="text-xs text-muted-foreground mt-1">Friends Referred</div>
+                          </CardContent>
+                        </Card>
+                        <Card>
+                          <CardContent className="p-4 text-center">
+                            <div className="text-2xl font-bold">
+                              {referralStats?.referrals.filter(r => r.status === "points_allocated").length ?? 0}
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-1">Rides Rewarded</div>
+                          </CardContent>
+                        </Card>
+                      </div>
+
+                      {/* Points history */}
+                      {referralStats?.pointsHistory && referralStats.pointsHistory.length > 0 && (
+                        <Card>
+                          <CardContent className="p-5">
+                            <h4 className="font-semibold text-sm mb-4">Credit History</h4>
+                            <div className="space-y-3">
+                              {referralStats.pointsHistory.map((p: any) => {
+                                const expired = new Date(p.expiresAt) < new Date();
+                                const isActive = p.status === "active" && !expired;
+                                return (
+                                  <div key={p.id} className="flex items-center justify-between text-sm">
+                                    <div className="flex items-center gap-3">
+                                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isActive ? "bg-green-100" : "bg-slate-100"}`}>
+                                        {isActive ? <CheckCircle className="w-4 h-4 text-green-600" /> : <Clock className="w-4 h-4 text-slate-400" />}
+                                      </div>
+                                      <div>
+                                        <div className="font-medium">₹{p.amount} referral credit</div>
+                                        <div className="text-xs text-muted-foreground">
+                                          {isActive ? `Expires ${new Date(p.expiresAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}` : p.status}
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <span className={`text-xs font-semibold px-2 py-1 rounded-full ${isActive ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500"}`}>
+                                      {isActive ? "Active" : p.status}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+
+                      {/* Referral list */}
+                      {referralStats?.referrals && referralStats.referrals.length > 0 ? (
+                        <Card>
+                          <CardContent className="p-5">
+                            <h4 className="font-semibold text-sm mb-4">Your Referrals</h4>
+                            <div className="space-y-3">
+                              {referralStats.referrals.map((r: any) => (
+                                <div key={r.id} className="flex items-center justify-between">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                                      <span className="text-xs font-bold text-blue-700">{r.referredName.charAt(0)}</span>
+                                    </div>
+                                    <div>
+                                      <div className="text-sm font-medium">{r.referredName}</div>
+                                      <div className="text-xs text-muted-foreground">
+                                        Joined {new Date(r.joinedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                                    r.status === "points_allocated" ? "bg-green-100 text-green-700" :
+                                    r.status === "ride_completed" ? "bg-blue-100 text-blue-700" :
+                                    "bg-amber-100 text-amber-700"
+                                  }`}>
+                                    {r.status === "points_allocated" ? "Rewarded" :
+                                     r.status === "ride_completed" ? "Ride Done" : "Pending Ride"}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ) : (
+                        <Card>
+                          <CardContent className="p-8 text-center">
+                            <Gift className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+                            <h3 className="font-semibold mb-1">No referrals yet</h3>
+                            <p className="text-sm text-muted-foreground mb-4">Share your link to start earning ₹200 per friend.</p>
+                            <Button onClick={handleShareReferral} size="sm" className="bg-blue-600 hover:bg-blue-700">
+                              <Share2 className="w-3.5 h-3.5 mr-1.5" />
+                              Share Your Link
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      )}
+
+                      <p className="text-xs text-center text-muted-foreground">
+                        Credits expire 90 days from the date they are added. Valid on any completed booking.{" "}
+                        <button onClick={() => navigate("/referral")} className="underline">Learn more</button>
+                      </p>
+                    </>
                   )}
                 </TabsContent>
               </Tabs>

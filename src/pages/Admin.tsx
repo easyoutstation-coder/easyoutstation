@@ -15,6 +15,7 @@ import {
   Phone, UserCog, StickyNote, CheckCheck, X, Plus, Pencil, Trash2,
   MessageCircle, Mail, AlertTriangle, TrendingUp, MapPin, Wallet, ShieldCheck,
   Globe, WifiOff, Search, FileText, Bot, Send, Loader2, ChevronRight, Tag,
+  Gift, Share2, RefreshCw,
 } from "lucide-react";
 
 type BookingStatus = "pending" | "confirmed" | "completed" | "cancelled";
@@ -190,6 +191,19 @@ export default function AdminPage() {
   useEffect(() => {
     if (discountData) setDiscountForm({ ...discountData, maxDiscount: discountData.maxDiscount?.toString() ?? "" });
   }, [discountData]);
+
+  const { data: referralProgramData, refetch: refetchReferralProgram } = trpc.admin.getReferralProgram.useQuery(undefined, { enabled: isSuperAdmin });
+  const setReferralProgram = trpc.admin.setReferralProgram.useMutation({ onSuccess: () => refetchReferralProgram() });
+  const { data: referralStatsData, refetch: refetchReferralStats } = trpc.admin.getReferralStats.useQuery(undefined, { enabled: isSuperAdmin });
+  const allocateDuePoints = trpc.admin.allocateDuePoints.useMutation({ onSuccess: () => refetchReferralStats() });
+  const [referralForm, setReferralForm] = useState({
+    enabled: true, referrerAmount: 200, referredAmount: 200, pointsExpireDays: 90,
+    headline: "Give ₹200. Get ₹200.", subheadline: "", description: "", terms: "",
+  });
+  const [referralSaved, setReferralSaved] = useState(false);
+  useEffect(() => {
+    if (referralProgramData) setReferralForm(f => ({ ...f, ...referralProgramData }));
+  }, [referralProgramData]);
 
   const { data: fleetPricing, refetch: refetchFleetPricing } = trpc.admin.getFleetPricing.useQuery(undefined, { enabled: isSuperAdmin });
   const updateCarPricing = trpc.admin.updateCarPricing.useMutation({
@@ -560,6 +574,7 @@ export default function AdminPage() {
             <TabsTrigger value="customers" className="gap-1.5"><Users className="w-4 h-4" />Customers</TabsTrigger>
             {canManageContent && <TabsTrigger value="content" className="gap-1.5"><FileText className="w-4 h-4" />Content</TabsTrigger>}
             {isSuperAdmin && <TabsTrigger value="financials" className="gap-1.5 text-emerald-700"><TrendingUp className="w-4 h-4" />Financials</TabsTrigger>}
+            {isSuperAdmin && <TabsTrigger value="referral" className="gap-1.5 text-pink-700"><Gift className="w-4 h-4" />Referral</TabsTrigger>}
             <TabsTrigger value="agent" className="gap-1.5 text-violet-700"><Bot className="w-4 h-4" />Agent</TabsTrigger>
           </TabsList>
 
@@ -1784,6 +1799,137 @@ export default function AdminPage() {
           )}
 
           {/* ── Agent ───────────────────────────────────────────────── */}
+          {/* ── Referral Program Tab ────────────────────────── */}
+          <TabsContent value="referral" className="space-y-6">
+            {/* Toggle */}
+            <Card className={`border-2 ${referralForm.enabled ? "border-pink-300 bg-pink-50" : "border-slate-200 bg-white"}`}>
+              <CardContent className="p-5">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${referralForm.enabled ? "bg-pink-100" : "bg-slate-100"}`}>
+                      <Gift className={`w-5 h-5 ${referralForm.enabled ? "text-pink-600" : "text-slate-500"}`} />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-slate-900">Referral Program is {referralForm.enabled ? "ACTIVE" : "INACTIVE"}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        {referralForm.enabled ? "Customers can refer friends and earn ₹200 credits." : "Program paused — no new referrals or credits are processed."}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setReferralForm(f => ({ ...f, enabled: !f.enabled }))}
+                    className={`relative inline-flex h-7 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${referralForm.enabled ? "bg-pink-500" : "bg-slate-300"}`}
+                    style={{ width: "52px" }}
+                  >
+                    <span className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-lg transition duration-200 ease-in-out ${referralForm.enabled ? "translate-x-6" : "translate-x-0"}`} />
+                  </button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Stats */}
+            {referralStatsData && (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <Card><CardContent className="p-4 text-center"><div className="text-2xl font-bold">{referralStatsData.total}</div><div className="text-xs text-muted-foreground">Total Referrals</div></CardContent></Card>
+                <Card><CardContent className="p-4 text-center"><div className="text-2xl font-bold text-amber-600">{referralStatsData.pending}</div><div className="text-xs text-muted-foreground">Awaiting Ride</div></CardContent></Card>
+                <Card><CardContent className="p-4 text-center"><div className="text-2xl font-bold text-blue-600">{referralStatsData.rideCompleted}</div><div className="text-xs text-muted-foreground">Ride Done (Pending Points)</div></CardContent></Card>
+                <Card><CardContent className="p-4 text-center"><div className="text-2xl font-bold text-green-600">{referralStatsData.allocated}</div><div className="text-xs text-muted-foreground">Points Allocated</div></CardContent></Card>
+              </div>
+            )}
+
+            {/* Allocate due points */}
+            <Card className="border-blue-200">
+              <CardContent className="p-5">
+                <div className="flex items-center justify-between gap-4 flex-wrap">
+                  <div>
+                    <p className="font-semibold text-slate-900">Process Due Point Allocations</p>
+                    <p className="text-xs text-slate-500 mt-0.5">Allocates ₹200 to both users for rides completed 24+ hours ago.</p>
+                  </div>
+                  <Button
+                    onClick={() => allocateDuePoints.mutate()}
+                    disabled={allocateDuePoints.isPending}
+                    className="bg-blue-600 hover:bg-blue-700 shrink-0"
+                  >
+                    {allocateDuePoints.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+                    {allocateDuePoints.data ? `Allocated ${allocateDuePoints.data.allocated} events` : "Run Allocation"}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Verbiage editor */}
+            <Card>
+              <CardContent className="p-5 space-y-4">
+                <h3 className="font-semibold text-slate-900">Program Copy & Amounts</h3>
+                <div className="grid sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1 block">Referrer Credit (₹)</label>
+                    <input type="number" value={referralForm.referrerAmount} onChange={e => setReferralForm(f => ({ ...f, referrerAmount: +e.target.value }))}
+                      className="w-full h-9 px-3 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400/30 focus:border-pink-400" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1 block">Referred Credit (₹)</label>
+                    <input type="number" value={referralForm.referredAmount} onChange={e => setReferralForm(f => ({ ...f, referredAmount: +e.target.value }))}
+                      className="w-full h-9 px-3 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400/30 focus:border-pink-400" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1 block">Points Expiry (Days)</label>
+                    <input type="number" value={referralForm.pointsExpireDays} onChange={e => setReferralForm(f => ({ ...f, pointsExpireDays: +e.target.value }))}
+                      className="w-full h-9 px-3 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400/30 focus:border-pink-400" />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1 block">Headline</label>
+                  <Input value={referralForm.headline} onChange={e => setReferralForm(f => ({ ...f, headline: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1 block">Subheadline</label>
+                  <Input value={referralForm.subheadline} onChange={e => setReferralForm(f => ({ ...f, subheadline: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1 block">Description</label>
+                  <Textarea rows={3} value={referralForm.description} onChange={e => setReferralForm(f => ({ ...f, description: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1 block">Terms & Conditions</label>
+                  <Textarea rows={5} value={referralForm.terms} onChange={e => setReferralForm(f => ({ ...f, terms: e.target.value }))} />
+                </div>
+                <div className="flex items-center gap-3">
+                  <Button
+                    onClick={() => setReferralProgram.mutate(referralForm, { onSuccess: () => { setReferralSaved(true); setTimeout(() => setReferralSaved(false), 2500); } })}
+                    disabled={setReferralProgram.isPending}
+                    className="bg-pink-600 hover:bg-pink-700"
+                  >
+                    {setReferralProgram.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                    Save Referral Program
+                  </Button>
+                  {referralSaved && <span className="text-sm text-green-600 font-medium flex items-center gap-1"><CheckCircle className="w-4 h-4" />Saved!</span>}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Top referrers */}
+            {referralStatsData?.topReferrers && referralStatsData.topReferrers.length > 0 && (
+              <Card>
+                <CardContent className="p-5">
+                  <h3 className="font-semibold text-slate-900 mb-4">Top Referrers</h3>
+                  <table className="w-full text-sm">
+                    <thead><tr className="text-xs text-slate-500 border-b"><th className="text-left pb-2">Name</th><th className="text-left pb-2">Phone</th><th className="text-right pb-2">Referrals</th></tr></thead>
+                    <tbody>
+                      {referralStatsData.topReferrers.map((r: any) => (
+                        <tr key={r.userId} className="border-b last:border-0">
+                          <td className="py-2">{r.name ?? "—"}</td>
+                          <td className="py-2 text-muted-foreground">{r.phone ?? "—"}</td>
+                          <td className="py-2 text-right font-bold">{r.referrals}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
           <TabsContent value="agent">
             <Card className="flex flex-col h-[600px]">
               <div className="flex items-center gap-3 px-5 py-4 border-b">

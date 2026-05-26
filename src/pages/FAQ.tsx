@@ -16,6 +16,10 @@ const FALLBACK_FAQS = [
   { question: "What types of vehicles are available?", answer: "Our fleet includes: Swift Dzire (economy sedan), Maruti Ertiga (MUV), Toyota Innova (MUV), Toyota Innova Crysta (premium), Toyota Innova Hycross (luxury hybrid), Force Urbania and Tempo Traveller (for larger groups), and BYD electric vehicles. All vehicles are fully AC, well-maintained, and driven by verified drivers." },
   { question: "Is it safe for solo women travelers?", answer: "Yes. All our drivers are verified and rated. We share the driver's name, photo, and vehicle number before every trip. Our support team is available 24/7." },
   { question: "How quickly will I get a confirmation?", answer: "Booking confirmation with driver details is sent within 60 minutes of booking. For same-day bookings, contact us on WhatsApp for fastest response." },
+  { question: "Does EasyOutstation have a referral program?", answer: "Yes! Refer a friend and you both earn ₹200 travel credit when they complete their first ride. Credits are added within 24 hours of trip completion and are valid for 90 days. There's no limit on referrals — refer as many people as you like and credits accumulate in your dashboard." },
+  { question: "How do I refer a friend?", answer: "Log in to your account, go to your Dashboard and click the 'Refer & Earn' tab. Copy your unique referral link and share it with friends. When they complete their first ride, you both earn ₹200." },
+  { question: "When are referral credits added to my account?", answer: "Referral credits are processed within 24 hours of your referred friend's first completed ride. You'll receive an email and SMS confirmation once the credits are added." },
+  { question: "Do referral credits expire?", answer: "Yes, referral credits expire 90 days from the date they are added to your account. You can view your credit balance and expiry dates in your dashboard under the Refer & Earn tab." },
 ];
 
 export default function FAQ() {
