@@ -873,6 +873,16 @@ Thank you for choosing EasyOutstation.`;
       await db.update(referralEvents).set({ status: "points_allocated", pointsAllocatedAt: new Date() })
         .where(eq(referralEvents.id, event.id));
 
+      // Milestone bonus: every 10th successful referral earns extra ₹200
+      const [milestoneCheck] = await db.select({ count: sql<number>`count(*)` }).from(referralEvents)
+        .where(and(eq(referralEvents.referrerId, event.referrerId), eq(referralEvents.status, "points_allocated")));
+      const totalAllocated = milestoneCheck?.count ?? 0;
+      if (totalAllocated % 10 === 0 && totalAllocated > 0) {
+        await db.insert(referralPoints).values({
+          userId: event.referrerId, amount: 200, referralEventId: event.id, status: "active", expiresAt,
+        });
+      }
+
       const [referrer] = await db.select({ name: users.name, email: users.email, phone: users.phone }).from(users).where(eq(users.id, event.referrerId)).limit(1);
       const [referred] = await db.select({ name: users.name, email: users.email, phone: users.phone }).from(users).where(eq(users.id, event.referredUserId)).limit(1);
       if (referrer && referred) {

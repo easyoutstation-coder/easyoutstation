@@ -49,7 +49,8 @@ export const carRouter = createRouter({
         filters.push(eq(cars.isPopular, true));
       }
 
-      const whereClause = filters.length > 0 ? and(...filters) : undefined;
+      filters.push(eq(cars.isAvailable, true));
+      const whereClause = and(...filters);
 
       const results = await db.query.cars.findMany({
         where: whereClause,

@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { MapPin, Clock, Shield, Star, Check, ArrowRight } from "lucide-react";
 import { getLandmark } from "@/data/routeImages";
+import { trpc } from "@/providers/trpc";
 
 const ROUTES: Record<string, {
   from: string; to: string; distance: number; duration: string;
@@ -146,6 +147,13 @@ export default function RouteLanding() {
   const navigate = useNavigate();
   const data = ROUTES[route || ""];
 
+  const { data: liveCars } = trpc.car.list.useQuery(undefined, { staleTime: 5 * 60 * 1000 });
+  const fareTableCars = liveCars
+    ? liveCars
+        .filter(c => !["tempo", "bus"].includes(c.category))
+        .sort((a, b) => parseFloat(a.pricePerKm) - parseFloat(b.pricePerKm))
+    : null;
+
   const canonicalUrl = `https://www.easyoutstation.com/cab/${route ?? ""}`;
   const pageTitle = data
     ? `${data.from} to ${data.to} Cab | ₹${data.fare.min.toLocaleString("en-IN")} Fixed Fare | EasyOutstation`
@@ -276,21 +284,22 @@ export default function RouteLanding() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {[
-                  { name: "Swift Dzire", seats: 4, rate: 12 },
-                  { name: "Toyota Etios", seats: 4, rate: 13 },
-                  { name: "Maruti Ertiga", seats: 6, rate: 15 },
-                  { name: "Toyota Innova", seats: 6, rate: 19 },
-                  { name: "Innova Crysta", seats: 6, rate: 20 },
-                  { name: "Innova Hycross", seats: 6, rate: 22 },
-                ].map((car) => {
-                  const oneway = Math.round(car.rate * data.distance + 250);
-                  const roundtrip = Math.round(car.rate * data.distance * 2 + 500);
+                {(fareTableCars ?? [
+                  { id: 0, name: "Swift Dzire", seats: 4, pricePerKm: "12.00", driverCharges: "250.00" },
+                  { id: 1, name: "Maruti Ertiga", seats: 6, pricePerKm: "15.00", driverCharges: "250.00" },
+                  { id: 2, name: "Toyota Innova", seats: 6, pricePerKm: "19.00", driverCharges: "250.00" },
+                  { id: 3, name: "Innova Crysta", seats: 6, pricePerKm: "20.00", driverCharges: "250.00" },
+                  { id: 4, name: "Innova Hycross", seats: 6, pricePerKm: "22.00", driverCharges: "250.00" },
+                ] as any[]).map((car) => {
+                  const rate = parseFloat(car.pricePerKm);
+                  const driverCharge = parseFloat(car.driverCharges ?? "250");
+                  const oneway = Math.round(rate * data.distance + driverCharge);
+                  const roundtrip = Math.round(rate * data.distance * 2 + driverCharge * 2);
                   return (
-                    <tr key={car.name} className="hover:bg-slate-50 transition-colors">
+                    <tr key={car.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-6 py-4 font-medium text-slate-900">{car.name}</td>
                       <td className="px-6 py-4 text-slate-600">{car.seats} seater</td>
-                      <td className="px-6 py-4 text-slate-600">₹{car.rate}/km</td>
+                      <td className="px-6 py-4 text-slate-600">₹{rate}/km</td>
                       <td className="px-6 py-4 font-semibold text-blue-700">₹{oneway.toLocaleString("en-IN")}</td>
                       <td className="px-6 py-4 text-slate-600">₹{roundtrip.toLocaleString("en-IN")}</td>
                     </tr>
