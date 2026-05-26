@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -7,8 +7,8 @@ import { trpc } from "@/providers/trpc";
 import { useAuth } from "@/hooks/useAuth";
 import { useSeo } from "@/hooks/useSeo";
 import {
-  Gift, Users, CheckCircle, ArrowRight, Star, Shield,
-  Clock, Zap, Share2, Copy, ChevronDown, TrendingUp, Award, Heart,
+  Gift, Users, CheckCircle, ArrowRight,
+  Clock, Zap, Share2, Copy, ChevronDown, Star, Shield,
 } from "lucide-react";
 
 function FAQItem({ q, a }: { q: string; a: string }) {
@@ -27,6 +27,126 @@ function FAQItem({ q, a }: { q: string; a: string }) {
   );
 }
 
+function AnimatedNumber({ value }: { value: number }) {
+  const [display, setDisplay] = useState(0);
+  const prev = useRef(0);
+  useEffect(() => {
+    const start = prev.current;
+    const end = value;
+    prev.current = end;
+    if (start === end) return;
+    const duration = 500;
+    const startTime = performance.now();
+    const tick = (now: number) => {
+      const t = Math.min((now - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setDisplay(Math.round(start + (end - start) * eased));
+      if (t < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, [value]);
+  return <>{display.toLocaleString("en-IN")}</>;
+}
+
+function NotificationMockup({ amount }: { amount: number }) {
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    const t1 = setTimeout(() => setStep(1), 600);
+    const t2 = setTimeout(() => setStep(2), 1800);
+    const t3 = setTimeout(() => setStep(3), 3200);
+    const t4 = setTimeout(() => { setStep(0); setTimeout(() => setStep(1), 400); }, 5500);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4); };
+  }, [amount]);
+
+  return (
+    <div className="relative w-[280px] mx-auto select-none">
+      {/* Phone frame */}
+      <div className="relative bg-slate-900 rounded-[2.5rem] p-3 shadow-2xl shadow-slate-900/50 border-4 border-slate-700">
+        {/* Notch */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-20 h-6 bg-slate-900 rounded-b-2xl z-10" />
+        <div className="bg-slate-800 rounded-[2rem] overflow-hidden" style={{ height: "480px" }}>
+          {/* Status bar */}
+          <div className="flex items-center justify-between px-5 pt-8 pb-2">
+            <span className="text-white text-xs font-semibold">9:41</span>
+            <div className="flex items-center gap-1">
+              <div className="flex gap-0.5 items-end h-3">
+                {[2,3,4,4].map((h,i) => <div key={i} className="w-1 bg-white rounded-sm" style={{ height: `${h*3}px` }} />)}
+              </div>
+              <svg className="w-4 h-3 text-white fill-white ml-1" viewBox="0 0 24 12"><rect x="0" y="0" width="22" height="12" rx="2" stroke="white" strokeWidth="1.5" fill="none"/><rect x="1.5" y="1.5" width="18" height="9" rx="1" fill="white"/><path d="M23 4v4a2 2 0 000-4z" fill="white"/></svg>
+            </div>
+          </div>
+
+          {/* Lock screen background */}
+          <div className="relative px-3 pt-2">
+            {/* Notification sliding in */}
+            <div className={`transition-all duration-700 ease-out ${step >= 1 ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4"}`}>
+              <div className="bg-white/15 backdrop-blur-sm rounded-2xl p-3 mb-2 border border-white/10">
+                <div className="flex items-start gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center shrink-0">
+                    <span className="text-white text-sm">🎁</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-white text-xs font-semibold">EasyOutstation</p>
+                    <p className="text-white/80 text-xs mt-0.5 leading-relaxed">
+                      ₹{amount} referral credit added to your account!
+                    </p>
+                    <p className="text-white/50 text-[10px] mt-1">now</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* SMS notification */}
+            <div className={`transition-all duration-700 ease-out delay-300 ${step >= 2 ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4"}`}>
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 mb-2 border border-white/10">
+                <div className="flex items-start gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-green-600 flex items-center justify-center shrink-0">
+                    <span className="text-white text-xs">✉️</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-white text-xs font-semibold">EasyOutstation</p>
+                    <p className="text-white/80 text-xs mt-0.5 leading-relaxed">
+                      Your friend completed their first ride! ₹{amount} is now in your account. Valid 90 days.
+                    </p>
+                    <p className="text-white/50 text-[10px] mt-1">now</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* WhatsApp message being sent */}
+            <div className={`transition-all duration-700 ease-out delay-500 ${step >= 3 ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4"}`}>
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/10">
+                <div className="flex items-start gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-[#25D366] flex items-center justify-center shrink-0">
+                    <span className="text-white text-xs">💬</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-white text-xs font-semibold">WhatsApp</p>
+                    <p className="text-white/80 text-xs mt-0.5 leading-relaxed">
+                      Rahul: "Bhai thanks for the referral link, just saved ₹200 on Manali trip! 🙌"
+                    </p>
+                    <p className="text-white/50 text-[10px] mt-1">now</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Clock in center */}
+            <div className={`text-center mt-6 transition-opacity duration-500 ${step === 0 ? "opacity-100" : "opacity-0"}`}>
+              <p className="text-white/30 text-5xl font-thin">9:41</p>
+              <p className="text-white/20 text-xs mt-1">Monday, 26 May</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Glow */}
+      <div className="absolute inset-0 rounded-[2.5rem] bg-blue-500/10 blur-2xl -z-10 scale-110" />
+    </div>
+  );
+}
+
 const REFERRAL_FAQS = [
   { q: "When do I get my ₹200 credit?", a: "Your ₹200 credit is added to your account within 24 hours of your referred friend completing their first ride with EasyOutstation. You'll receive an email and SMS confirmation." },
   { q: "Is there a limit on how many people I can refer?", a: "No limit at all. You can refer as many friends, family members, and colleagues as you like. Every completed referral earns you ₹200 — they accumulate in your dashboard." },
@@ -37,13 +157,12 @@ const REFERRAL_FAQS = [
   { q: "What if my friend signed up but hasn't booked yet?", a: "The referral stays active. As soon as your friend completes their first ride, your credit will be processed within 24 hours." },
 ];
 
-const SUGGESTED_FEATURES = [
-  { icon: TrendingUp, title: "Milestone Bonuses", desc: "Earn ₹500 bonus at 5 referrals, ₹1,500 at 10, ₹3,500 at 20 — rewarding your most loyal advocates." },
-  { icon: Award, title: "Referral Leaderboard", desc: "See where you rank among top referrers. Top 3 each month win free rides." },
-  { icon: Star, title: "Festive Multipliers", desc: "Double points during Diwali, Holi, and summer peak season." },
-  { icon: Heart, title: "Points for Reviews", desc: "Earn ₹50 credit for every verified review you leave after a trip." },
-  { icon: Shield, title: "Corporate Referral Track", desc: "Special higher rewards for referring businesses that book regular employee travel." },
-  { icon: Zap, title: "Referral Streaks", desc: "Refer 3 people in a month and unlock a ₹200 streak bonus on top of your regular credits." },
+const TRIPS = [
+  { destination: "Delhi → Shimla", fare: 4450 },
+  { destination: "Delhi → Jaipur", fare: 3450 },
+  { destination: "Delhi → Manali", fare: 6730 },
+  { destination: "Delhi → Agra", fare: 2200 },
+  { destination: "Delhi → Rishikesh", fare: 3300 },
 ];
 
 export default function ReferralProgram() {
@@ -52,6 +171,7 @@ export default function ReferralProgram() {
   const { user } = useAuth();
   const [copied, setCopied] = useState(false);
   const [refApplied, setRefApplied] = useState(false);
+  const [friends, setFriends] = useState(3);
 
   const { data: program } = trpc.referral.getProgram.useQuery();
   const { data: myStats } = trpc.referral.getMyStats.useQuery(undefined, { enabled: !!user });
@@ -62,6 +182,11 @@ export default function ReferralProgram() {
   const referralLink = myCode?.code
     ? `https://easyoutstation.com/referral?ref=${myCode.code}`
     : "https://easyoutstation.com/referral";
+
+  const baseEarnings = friends * 200;
+  const milestoneBonus = friends >= 10 ? 200 : 0;
+  const totalEarnings = baseEarnings + milestoneBonus;
+  const closestTrip = TRIPS.reduce((best, t) => Math.abs(t.fare - totalEarnings) < Math.abs(best.fare - totalEarnings) ? t : best);
 
   useSeo({
     title: "Refer & Earn ₹200 | EasyOutstation Referral Program",
@@ -219,6 +344,97 @@ export default function ReferralProgram() {
           </div>
         </section>
 
+        {/* ── Earnings Calculator + Phone Mockup ───────────────────── */}
+        <section className="py-20 px-4 bg-gradient-to-br from-[#0B2447] via-[#19376D] to-[#0f3460] overflow-hidden relative">
+          {/* Background dots */}
+          <div className="absolute inset-0 opacity-5" style={{ backgroundImage: "radial-gradient(circle, #ffffff 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
+
+          <div className="relative max-w-5xl mx-auto">
+            <div className="text-center mb-12">
+              <p className="text-xs font-bold uppercase tracking-widest text-blue-300 mb-3">See Your Potential</p>
+              <h2 className="text-3xl sm:text-4xl font-bold text-white font-['DM_Serif_Display']">How much can you earn?</h2>
+              <p className="text-blue-200 mt-3 text-sm">Drag the slider to see your earnings grow in real time</p>
+            </div>
+
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              {/* Calculator */}
+              <div className="bg-white/10 border border-white/15 rounded-3xl p-8 backdrop-blur-sm">
+                <div className="mb-8">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-blue-200 text-sm font-medium">Friends you refer</span>
+                    <span className="text-white font-bold text-lg">{friends} {friends === 1 ? "friend" : "friends"}</span>
+                  </div>
+                  <input
+                    type="range" min={1} max={20} value={friends}
+                    onChange={e => setFriends(+e.target.value)}
+                    className="w-full h-2 rounded-full appearance-none cursor-pointer"
+                    style={{ background: `linear-gradient(to right, #60a5fa 0%, #60a5fa ${(friends - 1) / 19 * 100}%, rgba(255,255,255,0.2) ${(friends - 1) / 19 * 100}%, rgba(255,255,255,0.2) 100%)` }}
+                  />
+                  <div className="flex justify-between text-xs text-blue-300/60 mt-1.5">
+                    <span>1</span><span>5</span><span>10</span><span>15</span><span>20</span>
+                  </div>
+                </div>
+
+                {/* Earnings breakdown */}
+                <div className="space-y-3 mb-6">
+                  <div className="flex items-center justify-between bg-white/5 rounded-xl px-4 py-3">
+                    <span className="text-blue-200 text-sm">Base earnings</span>
+                    <span className="text-white font-semibold">₹<AnimatedNumber value={baseEarnings} /></span>
+                  </div>
+                  <div className={`flex items-center justify-between rounded-xl px-4 py-3 transition-all duration-500 ${friends >= 10 ? "bg-yellow-400/15 border border-yellow-400/30" : "bg-white/5"}`}>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm" style={{ color: friends >= 10 ? "#fbbf24" : "rgba(147,197,253,0.6)" }}>🏆 Milestone bonus</span>
+                      {friends < 10 && <span className="text-xs text-blue-300/50">(at 10 referrals)</span>}
+                      {friends >= 10 && <span className="text-xs text-yellow-400 font-semibold">Unlocked!</span>}
+                    </div>
+                    <span className={`font-semibold transition-colors ${friends >= 10 ? "text-yellow-400" : "text-blue-300/40"}`}>
+                      +₹<AnimatedNumber value={milestoneBonus} />
+                    </span>
+                  </div>
+                </div>
+
+                {/* Total */}
+                <div className="bg-gradient-to-r from-blue-500/20 to-indigo-500/20 border border-blue-400/30 rounded-2xl px-6 py-5 text-center mb-5">
+                  <p className="text-blue-200 text-xs uppercase tracking-widest mb-1">Total you earn</p>
+                  <p className="text-5xl font-bold text-white font-['DM_Serif_Display']">
+                    ₹<AnimatedNumber value={totalEarnings} />
+                  </p>
+                </div>
+
+                {/* Equivalent trip */}
+                <div className="bg-white/5 rounded-xl px-4 py-3 text-center">
+                  <p className="text-blue-200 text-xs">
+                    That's almost a free{" "}
+                    <span className="text-white font-semibold">{closestTrip.destination}</span>{" "}
+                    cab worth <span className="text-white font-semibold">₹{closestTrip.fare.toLocaleString("en-IN")}</span>
+                  </p>
+                </div>
+
+                {/* Progress to milestone */}
+                {friends < 10 && (
+                  <div className="mt-4">
+                    <div className="flex justify-between text-xs text-blue-300/70 mb-1.5">
+                      <span>{friends} of 10 referrals</span>
+                      <span>{10 - friends} more for ₹200 bonus</span>
+                    </div>
+                    <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-blue-400 to-indigo-400 rounded-full transition-all duration-500"
+                        style={{ width: `${(friends / 10) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Phone Mockup */}
+              <div className="flex justify-center">
+                <NotificationMockup amount={200} />
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* ── Value Props ──────────────────────────────────────────── */}
         <section className="py-20 px-4 bg-white">
           <div className="max-w-5xl mx-auto">
@@ -236,7 +452,7 @@ export default function ReferralProgram() {
                 { icon: Star, title: "Credits Stack Up", desc: "All your earnings accumulate. Refer 5 friends and save ₹1,000 on your next big trip." },
                 { icon: Gift, title: "Both Sides Win", desc: "Your friend gets ₹200 credit too. Everyone benefits — no catches, no conditions." },
               ].map(f => (
-                <div key={f.title} className="bg-slate-50 rounded-2xl p-6 border border-slate-100">
+                <div key={f.title} className="bg-slate-50 rounded-2xl p-6 border border-slate-100 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
                   <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center mb-4">
                     <f.icon className="w-5 h-5 text-[#19376D]" />
                   </div>
@@ -281,29 +497,6 @@ export default function ReferralProgram() {
             </div>
           </section>
         )}
-
-        {/* ── Suggested Future Features ─────────────────────────────── */}
-        <section className="py-20 px-4 bg-slate-50">
-          <div className="max-w-5xl mx-auto">
-            <div className="text-center mb-14">
-              <p className="text-xs font-bold uppercase tracking-widest text-blue-600 mb-3">Coming Soon</p>
-              <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 font-['DM_Serif_Display']">More Rewards on the Way</h2>
-              <p className="text-slate-500 mt-4 max-w-xl mx-auto">We're building more ways for loyal customers to earn. Here's what's coming.</p>
-            </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {SUGGESTED_FEATURES.map(f => (
-                <div key={f.title} className="bg-white rounded-2xl p-6 border border-slate-100 opacity-80 relative overflow-hidden">
-                  <div className="absolute top-3 right-3 bg-blue-100 text-blue-700 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full">Soon</div>
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center mb-4">
-                    <f.icon className="w-5 h-5 text-blue-500" />
-                  </div>
-                  <h3 className="font-semibold text-slate-800 mb-2">{f.title}</h3>
-                  <p className="text-sm text-slate-400 leading-relaxed">{f.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
 
         {/* ── FAQ ──────────────────────────────────────────────────── */}
         <section className="py-20 px-4 bg-white">
