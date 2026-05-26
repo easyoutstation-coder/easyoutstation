@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -495,6 +495,13 @@ export default function HeroSection() {
                     : "See Available Vehicles & Fares"}
                   <ArrowRight className="w-4 h-4" />
                 </Button>
+
+                {/* Referral pill */}
+                <Link to="/referral" className="flex items-center justify-center gap-2 w-full py-2 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 hover:border-blue-300 transition-colors group">
+                  <span className="text-base">🎁</span>
+                  <span className="text-xs font-semibold text-blue-700">Refer a friend — you both get <span className="text-blue-900 font-bold">₹200 off</span></span>
+                  <ArrowRight className="w-3 h-3 text-blue-500 group-hover:translate-x-0.5 transition-transform" />
+                </Link>
 
                 {/* Guarantees */}
                 <div className="grid grid-cols-3 gap-2">
