@@ -17,7 +17,7 @@ export default function PopularRoutesSection() {
   const displayRoutes = routes?.length ? routes.slice(0, 4) : fallbackRoutes;
 
   return (
-    <section className="py-24 bg-slate-50">
+    <section className="py-12 sm:py-20 bg-slate-50">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
           <div className="space-y-2">

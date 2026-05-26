@@ -39,8 +39,8 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12">
           <div className="lg:col-span-2 space-y-6">
             <Link to="/" className="flex items-center gap-3 group">
               <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center">
@@ -77,40 +77,42 @@ export default function Footer() {
             </a>
           </div>
 
-          <div>
-            <h4 className="text-white font-semibold mb-5 text-xs uppercase tracking-wider">Popular Routes</h4>
-            <ul className="space-y-3">
-              {footerLinks.routes.map((link) => (
-                <li key={link.label}>
-                  <Link to={link.href} className="text-sm text-slate-400 hover:text-blue-400 transition-colors flex items-center gap-1.5 group">
-                    <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:col-span-3 gap-8">
+            <div>
+              <h4 className="text-white font-semibold mb-4 sm:mb-5 text-xs uppercase tracking-wider">Popular Routes</h4>
+              <ul className="space-y-2.5">
+                {footerLinks.routes.map((link) => (
+                  <li key={link.label}>
+                    <Link to={link.href} className="text-sm text-slate-400 hover:text-blue-400 transition-colors flex items-center gap-1.5 group">
+                      <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-          <div>
-            <h4 className="text-white font-semibold mb-5 text-xs uppercase tracking-wider">Company</h4>
-            <ul className="space-y-3">
-              {footerLinks.company.map((link) => (
-                <li key={link.label}>
-                  <Link to={link.href} className="text-sm text-slate-400 hover:text-blue-400 transition-colors">{link.label}</Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+            <div>
+              <h4 className="text-white font-semibold mb-4 sm:mb-5 text-xs uppercase tracking-wider">Company</h4>
+              <ul className="space-y-2.5">
+                {footerLinks.company.map((link) => (
+                  <li key={link.label}>
+                    <Link to={link.href} className="text-sm text-slate-400 hover:text-blue-400 transition-colors">{link.label}</Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-          <div>
-            <h4 className="text-white font-semibold mb-5 text-xs uppercase tracking-wider">Support</h4>
-            <ul className="space-y-3">
-              {footerLinks.support.map((link) => (
-                <li key={link.label}>
-                  <Link to={link.href} className="text-sm text-slate-400 hover:text-blue-400 transition-colors">{link.label}</Link>
-                </li>
-              ))}
-            </ul>
+            <div>
+              <h4 className="text-white font-semibold mb-4 sm:mb-5 text-xs uppercase tracking-wider">Support</h4>
+              <ul className="space-y-2.5">
+                {footerLinks.support.map((link) => (
+                  <li key={link.label}>
+                    <Link to={link.href} className="text-sm text-slate-400 hover:text-blue-400 transition-colors">{link.label}</Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
 

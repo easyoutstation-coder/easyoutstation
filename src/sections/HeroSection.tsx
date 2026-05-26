@@ -283,7 +283,7 @@ export default function HeroSection() {
 
           {/* Right - Booking Widget (first on mobile) */}
           <div className="order-first lg:order-last animate-scale-in">
-            <div className="bg-white rounded-2xl shadow-2xl p-6 lg:p-7">
+            <div className="bg-white rounded-2xl shadow-2xl p-4 sm:p-6 lg:p-7">
               <div className="flex items-center justify-between mb-5">
                 <div>
                   <h3 className="text-lg font-bold text-slate-900 font-['DM_Serif_Display']">Book Your Ride</h3>

@@ -47,10 +47,10 @@ function PhoneMockup({ amount }: { amount: number }) {
   }, [amount]);
 
   return (
-    <div className="relative w-[260px] mx-auto select-none">
+    <div className="relative w-[240px] sm:w-[260px] mx-auto select-none">
       <div className="relative bg-[#0a0a0a] rounded-[2.4rem] p-2.5 shadow-2xl border border-white/10">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[72px] h-5 bg-[#0a0a0a] rounded-b-2xl z-10" />
-        <div className="bg-[#111827] rounded-[2rem] overflow-hidden" style={{ height: 460 }}>
+        <div className="bg-[#111827] rounded-[2rem] overflow-hidden" style={{ height: 420 }}>
           <div className="flex items-center justify-between px-5 pt-7 pb-1.5">
             <span className="text-white text-xs font-semibold">9:41</span>
             <div className="flex items-center gap-1">
@@ -122,11 +122,11 @@ function FAQItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="border-b border-white/8 last:border-0">
-      <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between py-5 text-left gap-4 group">
+      <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between py-4 sm:py-5 text-left gap-4 group">
         <span className="font-medium text-slate-200 text-sm group-hover:text-white transition-colors">{q}</span>
         <ChevronDown className={`w-4 h-4 text-slate-500 shrink-0 transition-transform duration-300 ${open ? "rotate-180 text-blue-400" : ""}`} />
       </button>
-      {open && <p className="text-slate-400 text-sm pb-5 leading-relaxed">{a}</p>}
+      {open && <p className="text-slate-400 text-sm pb-4 sm:pb-5 leading-relaxed">{a}</p>}
     </div>
   );
 }
@@ -169,7 +169,7 @@ function ActivityTicker() {
     return () => clearInterval(iv);
   }, []);
   return (
-    <div className="inline-flex items-center gap-2 bg-white/8 border border-white/10 rounded-full px-4 py-2 text-xs text-slate-300 overflow-hidden max-w-[320px]">
+    <div className="inline-flex items-center gap-2 bg-white/8 border border-white/10 rounded-full px-4 py-2 text-xs text-slate-300 overflow-hidden max-w-full">
       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0 animate-pulse" />
       <span className={`transition-all duration-400 truncate ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1"}`}>
         {ACTIVITY[idx]}
@@ -265,7 +265,7 @@ export default function ReferralProgram() {
       <main>
 
         {/* ─────────────────────────────────────────────────────────────────────
-            HERO — cinematic dark, full-viewport
+            HERO
         ───────────────────────────────────────────────────────────────────── */}
         <section className="relative min-h-screen bg-[#050e1a] overflow-hidden flex flex-col">
           {/* Gradient orbs */}
@@ -280,46 +280,46 @@ export default function ReferralProgram() {
           }} />
 
           <div className="relative flex-1 flex items-center">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 w-full">
-              <div className="grid lg:grid-cols-2 gap-16 items-center">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-24 w-full">
+              <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
 
                 {/* Left col */}
                 <div>
                   {/* Pill */}
-                  <div className="inline-flex items-center gap-2 border border-white/10 bg-white/5 text-blue-300 text-[11px] font-bold uppercase tracking-[0.15em] px-4 py-2 rounded-full mb-8">
+                  <div className="inline-flex items-center gap-2 border border-white/10 bg-white/5 text-blue-300 text-[11px] font-bold uppercase tracking-[0.15em] px-4 py-2 rounded-full mb-6 sm:mb-8">
                     <Gift className="w-3 h-3" />
                     Referral Program
                   </div>
 
-                  {/* Headline */}
-                  <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black text-white leading-[1.05] tracking-tight mb-6 font-['DM_Serif_Display']">
-                    Give{" "}
+                  {/* Headline — clear, plain language */}
+                  <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white leading-[1.1] tracking-tight mb-5 sm:mb-6 font-['DM_Serif_Display']">
+                    Invite a Friend.
+                    <br />
                     <span className="bg-gradient-to-r from-blue-400 via-violet-400 to-blue-400 bg-clip-text text-transparent">
-                      ₹{amount}.
+                      You Both Get
                     </span>
                     <br />
-                    Get{" "}
-                    <span className="bg-gradient-to-r from-violet-400 via-blue-400 to-violet-400 bg-clip-text text-transparent">
-                      ₹{amount}.
-                    </span>
+                    ₹{amount} Off.
                   </h1>
 
-                  <p className="text-lg text-slate-400 leading-relaxed mb-8 max-w-md">
-                    Refer a friend to EasyOutstation. When they complete their first ride, you both earn{" "}
-                    <span className="text-white font-semibold">₹{amount} travel credit</span> — automatically, within 24 hours.
+                  {/* Plain-English explanation */}
+                  <p className="text-base sm:text-lg text-slate-400 leading-relaxed mb-6 sm:mb-8 max-w-md">
+                    Share your personal link with a friend. When they complete their first outstation trip,{" "}
+                    <span className="text-white font-semibold">₹{amount} travel credit lands in both accounts</span>{" "}
+                    — automatically, within 24 hours.
                   </p>
 
                   {/* Activity ticker */}
-                  <div className="mb-8">
+                  <div className="mb-6 sm:mb-8">
                     <ActivityTicker />
                   </div>
 
                   {/* CTA block */}
                   {user && myCode?.code ? (
-                    <div className="bg-white/5 border border-white/10 rounded-2xl p-5 max-w-md">
+                    <div className="bg-white/5 border border-white/10 rounded-2xl p-4 sm:p-5 max-w-md">
                       <p className="text-slate-400 text-xs uppercase tracking-widest mb-3 font-medium">Your referral link</p>
-                      <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-4 py-3 mb-4">
-                        <span className="text-slate-300 text-sm truncate flex-1 font-mono">{referralLink}</span>
+                      <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 sm:px-4 py-3 mb-4">
+                        <span className="text-slate-300 text-xs sm:text-sm truncate flex-1 font-mono">{referralLink}</span>
                         <button onClick={handleCopy} className="shrink-0 transition-colors">
                           {copied
                             ? <CheckCircle className="w-4 h-4 text-emerald-400" />
@@ -381,15 +381,15 @@ export default function ReferralProgram() {
 
           {/* Stats strip at bottom of hero */}
           <div className="relative border-t border-white/5 bg-white/2">
-            <div className="max-w-7xl mx-auto px-4 py-5 grid grid-cols-3 sm:grid-cols-3 gap-4 text-center">
+            <div className="max-w-7xl mx-auto px-4 py-4 sm:py-5 grid grid-cols-3 gap-3 sm:gap-4 text-center">
               {[
                 { val: `₹${amount}`, label: "You earn per referral" },
                 { val: `₹${amount}`, label: "Your friend saves" },
                 { val: "90 days", label: "Credit validity" },
               ].map(s => (
                 <div key={s.label}>
-                  <div className="text-xl sm:text-2xl font-black text-white font-['DM_Serif_Display']">{s.val}</div>
-                  <div className="text-[11px] text-slate-500 mt-0.5 uppercase tracking-wider">{s.label}</div>
+                  <div className="text-lg sm:text-2xl font-black text-white font-['DM_Serif_Display']">{s.val}</div>
+                  <div className="text-[10px] sm:text-[11px] text-slate-500 mt-0.5 uppercase tracking-wider leading-tight">{s.label}</div>
                 </div>
               ))}
             </div>
@@ -397,31 +397,31 @@ export default function ReferralProgram() {
         </section>
 
         {/* ─────────────────────────────────────────────────────────────────────
-            MECHANIC — the "give and get" visual
+            HOW IT WORKS
         ───────────────────────────────────────────────────────────────────── */}
-        <section id="how-it-works" className="py-24 px-4 bg-white">
+        <section id="how-it-works" className="py-12 sm:py-20 px-4 bg-white">
           <div className="max-w-5xl mx-auto">
-            <div className="text-center mb-16">
+            <div className="text-center mb-10 sm:mb-14">
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-600 mb-3">How It Works</p>
-              <h2 className="text-4xl sm:text-5xl font-black text-slate-900 font-['DM_Serif_Display'] tracking-tight">
-                Simple. Fast. Rewarding.
+              <h2 className="text-3xl sm:text-4xl font-black text-slate-900 font-['DM_Serif_Display'] tracking-tight">
+                3 Simple Steps to Free Rides
               </h2>
-              <p className="text-slate-500 mt-4 text-base max-w-lg mx-auto">Three steps between you and free cab rides.</p>
+              <p className="text-slate-500 mt-3 text-sm max-w-lg mx-auto">No complicated process. Share a link, your friend books, you both get credited.</p>
             </div>
 
-            {/* Give / Get cards */}
-            <div className="flex flex-col sm:flex-row items-stretch gap-0 mb-16 rounded-3xl overflow-hidden shadow-xl border border-slate-100">
-              <div className="flex-1 bg-gradient-to-br from-[#0B2447] to-[#19376D] p-8 sm:p-10 text-white">
-                <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-center mb-5 text-2xl">👤</div>
-                <p className="text-blue-200 text-xs font-bold uppercase tracking-widest mb-2">You</p>
-                <p className="text-4xl font-black font-['DM_Serif_Display'] mb-3">Give ₹{amount}</p>
+            {/* Share / Both Earn cards */}
+            <div className="flex flex-col sm:flex-row items-stretch gap-0 mb-12 sm:mb-16 rounded-3xl overflow-hidden shadow-xl border border-slate-100">
+              <div className="flex-1 bg-gradient-to-br from-[#0B2447] to-[#19376D] p-6 sm:p-10 text-white">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-center mb-4 sm:mb-5 text-xl sm:text-2xl">🔗</div>
+                <p className="text-blue-200 text-xs font-bold uppercase tracking-widest mb-2">You do</p>
+                <p className="text-2xl sm:text-3xl font-black font-['DM_Serif_Display'] mb-2 sm:mb-3">Share Your Link</p>
                 <p className="text-blue-200 text-sm leading-relaxed">
-                  Share your unique link with a friend planning an outstation trip. No strings attached.
+                  Copy your unique link and send it to a friend planning an outstation trip. Takes 10 seconds.
                 </p>
               </div>
 
               {/* Connector */}
-              <div className="flex items-center justify-center bg-slate-50 px-4 py-6 sm:py-0 sm:px-6">
+              <div className="flex items-center justify-center bg-slate-50 px-4 py-5 sm:py-0 sm:px-6">
                 <div className="flex sm:flex-col items-center gap-2">
                   <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-200">
                     <ArrowRight className="w-5 h-5 text-white rotate-0 sm:rotate-90" />
@@ -430,18 +430,18 @@ export default function ReferralProgram() {
                 </div>
               </div>
 
-              <div className="flex-1 bg-gradient-to-br from-emerald-600 to-teal-700 p-8 sm:p-10 text-white">
-                <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-center mb-5 text-2xl">👥</div>
-                <p className="text-emerald-100 text-xs font-bold uppercase tracking-widest mb-2">Both of you</p>
-                <p className="text-4xl font-black font-['DM_Serif_Display'] mb-3">Get ₹{amount}</p>
+              <div className="flex-1 bg-gradient-to-br from-emerald-600 to-teal-700 p-6 sm:p-10 text-white">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-center mb-4 sm:mb-5 text-xl sm:text-2xl">🎉</div>
+                <p className="text-emerald-100 text-xs font-bold uppercase tracking-widest mb-2">You both get</p>
+                <p className="text-2xl sm:text-3xl font-black font-['DM_Serif_Display'] mb-2 sm:mb-3">₹{amount} Credit Each</p>
                 <p className="text-emerald-100 text-sm leading-relaxed">
-                  Within 24 hours of their first completed ride, both accounts are credited ₹{amount}.
+                  After their first completed trip, ₹{amount} is automatically added to both accounts within 24 hours.
                 </p>
               </div>
             </div>
 
             {/* Steps */}
-            <div className="grid sm:grid-cols-3 gap-8">
+            <div className="grid sm:grid-cols-3 gap-6 sm:gap-8">
               {(program?.howItWorks ?? [
                 "Copy your unique referral link from your dashboard",
                 "Share it with friends, family, or travel groups",
@@ -464,16 +464,16 @@ export default function ReferralProgram() {
             APPLY CODE — for non-referred logged-in users
         ───────────────────────────────────────────────────────────────────── */}
         {user && !myStats?.hasBeenReferred && (
-          <section className="py-14 px-4 bg-slate-50 border-y border-slate-100">
+          <section className="py-10 sm:py-14 px-4 bg-slate-50 border-y border-slate-100">
             <div className="max-w-lg mx-auto text-center">
               <div className="inline-flex items-center gap-2 bg-amber-100 text-amber-700 text-[11px] font-bold uppercase tracking-[0.15em] px-3 py-1.5 rounded-full mb-4">
                 <Gift className="w-3 h-3" />
-                Have a referral code?
+                Got a friend's code?
               </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-2">Apply it here to earn ₹{amount}</h3>
-              <p className="text-slate-500 text-sm mb-6">
-                Enter a friend's code. You'll both get ₹{amount} after your first completed ride.{" "}
-                <span className="text-amber-700 font-semibold">One-time use per account.</span>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">Apply it to get ₹{amount} off your first trip</h3>
+              <p className="text-slate-500 text-sm mb-5">
+                Enter the referral code your friend shared with you. You'll get ₹{amount} credit after your first completed ride.{" "}
+                <span className="text-amber-700 font-semibold">One use per account.</span>
               </p>
               {applyCode.isSuccess || refApplied ? (
                 <div className="flex items-center justify-center gap-2 bg-emerald-50 border border-emerald-200 rounded-2xl px-6 py-4 text-emerald-700 font-medium text-sm">
@@ -517,23 +517,23 @@ export default function ReferralProgram() {
         {/* ─────────────────────────────────────────────────────────────────────
             EARNINGS CALCULATOR
         ───────────────────────────────────────────────────────────────────── */}
-        <section className="py-24 px-4 bg-[#050e1a] relative overflow-hidden">
+        <section className="py-12 sm:py-20 px-4 bg-[#050e1a] relative overflow-hidden">
           <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full bg-blue-600/8 blur-[100px] pointer-events-none" />
           <div className="absolute bottom-0 right-1/4 w-96 h-96 rounded-full bg-violet-600/8 blur-[100px] pointer-events-none" />
           <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "radial-gradient(circle, #ffffff 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
 
           <div className="relative max-w-5xl mx-auto">
-            <div className="text-center mb-14">
+            <div className="text-center mb-10 sm:mb-14">
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-400 mb-3">See Your Potential</p>
-              <h2 className="text-4xl sm:text-5xl font-black text-white font-['DM_Serif_Display'] tracking-tight">How much can you earn?</h2>
-              <p className="text-slate-500 mt-3 text-sm">Drag the slider and watch your earnings grow in real time.</p>
+              <h2 className="text-3xl sm:text-4xl font-black text-white font-['DM_Serif_Display'] tracking-tight">How much can you earn?</h2>
+              <p className="text-slate-500 mt-3 text-sm">Drag the slider to see how credits add up.</p>
             </div>
 
-            <div className="grid lg:grid-cols-2 gap-10 items-center">
+            <div className="grid lg:grid-cols-2 gap-8 sm:gap-10 items-center">
               {/* Calculator card */}
-              <div className="bg-white/5 border border-white/8 rounded-3xl p-8 backdrop-blur-sm">
+              <div className="bg-white/5 border border-white/8 rounded-3xl p-5 sm:p-8 backdrop-blur-sm">
                 {/* Slider */}
-                <div className="mb-8">
+                <div className="mb-6 sm:mb-8">
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-slate-400 text-sm">Friends you refer</span>
                     <span className="text-white font-bold text-base">{friends} {friends === 1 ? "friend" : "friends"}</span>
@@ -552,13 +552,13 @@ export default function ReferralProgram() {
                 </div>
 
                 {/* Breakdown */}
-                <div className="space-y-2.5 mb-6">
+                <div className="space-y-2.5 mb-5 sm:mb-6">
                   <div className="flex items-center justify-between bg-white/4 rounded-xl px-4 py-3">
                     <span className="text-slate-400 text-sm">Base earnings</span>
                     <span className="text-white font-semibold">₹<AnimatedNumber value={baseEarnings} /></span>
                   </div>
                   <div className={`flex items-center justify-between rounded-xl px-4 py-3 transition-all duration-500 ${friends >= 10 ? "bg-yellow-400/10 border border-yellow-400/20" : "bg-white/4"}`}>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className={`text-sm transition-colors ${friends >= 10 ? "text-yellow-400" : "text-slate-500"}`}>🏆 Milestone bonus</span>
                       {friends < 10
                         ? <span className="text-[11px] text-slate-600">{10 - friends} more to unlock</span>
@@ -573,7 +573,7 @@ export default function ReferralProgram() {
                 {/* Total */}
                 <div className="bg-gradient-to-r from-blue-600/20 to-violet-600/20 border border-blue-500/20 rounded-2xl px-6 py-5 text-center mb-4">
                   <p className="text-slate-400 text-[11px] uppercase tracking-widest mb-1">You earn</p>
-                  <p className="text-5xl font-black text-white font-['DM_Serif_Display']">
+                  <p className="text-4xl sm:text-5xl font-black text-white font-['DM_Serif_Display']">
                     ₹<AnimatedNumber value={totalEarnings} />
                   </p>
                 </div>
@@ -613,29 +613,29 @@ export default function ReferralProgram() {
         {/* ─────────────────────────────────────────────────────────────────────
             VALUE PROPS — why EasyOutstation
         ───────────────────────────────────────────────────────────────────── */}
-        <section className="py-24 px-4 bg-white">
+        <section className="py-12 sm:py-20 px-4 bg-white">
           <div className="max-w-5xl mx-auto">
-            <div className="text-center mb-14">
+            <div className="text-center mb-10 sm:mb-14">
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-600 mb-3">Why Refer Us</p>
-              <h2 className="text-4xl sm:text-5xl font-black text-slate-900 font-['DM_Serif_Display'] tracking-tight">More than a discount</h2>
-              <p className="text-slate-500 mt-4 text-sm max-w-lg mx-auto">
+              <h2 className="text-3xl sm:text-4xl font-black text-slate-900 font-['DM_Serif_Display'] tracking-tight">Your friends will thank you</h2>
+              <p className="text-slate-500 mt-3 sm:mt-4 text-sm max-w-lg mx-auto">
                 You're giving your friends verified drivers, fixed fares, and a service you already trust.
               </p>
             </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
               {[
-                { icon: Users, title: "Unlimited Referrals", desc: `No cap. Every completed referral earns you ₹${amount}. Refer 20 friends, earn ₹${20*amount}.` },
-                { icon: Clock, title: "24-Hour Credit", desc: "Points are processed automatically within 24 hours of your friend's first completed ride." },
+                { icon: Users, title: "No Limit on Referrals", desc: `Refer as many friends as you like. Every completed referral earns you ₹${amount}. Refer 20 friends, earn ₹${20*amount}.` },
+                { icon: Clock, title: "Credit in 24 Hours", desc: "Points are added automatically within 24 hours of your friend's first completed ride. No claiming needed." },
                 { icon: Zap, title: "Instant Notifications", desc: "SMS and email updates when someone joins your link — and again when your credit is added." },
-                { icon: Shield, title: "Link Never Expires", desc: "Your referral link works forever. If a friend books 6 months later, you still get credit." },
+                { icon: Shield, title: "Your Link Never Expires", desc: "Your referral link works forever. If a friend books 6 months later, you still get credit." },
                 { icon: Star, title: "Credits Stack Up", desc: `Refer 5 friends and save ₹${5*amount} on your next big trip. Refer 10 and unlock a ₹200 bonus.` },
-                { icon: Gift, title: "Both Sides Win", desc: `Your friend gets ₹${amount} too. No one loses. No hidden conditions.` },
+                { icon: Gift, title: "Your Friend Saves Too", desc: `Your friend gets ₹${amount} credit as well — not just you. No one loses. No hidden conditions.` },
               ].map(f => (
-                <div key={f.title} className="bg-slate-50 rounded-2xl p-6 border border-slate-100 hover:shadow-lg hover:border-blue-100 hover:-translate-y-1 transition-all duration-200">
+                <div key={f.title} className="bg-slate-50 rounded-2xl p-5 sm:p-6 border border-slate-100 hover:shadow-lg hover:border-blue-100 hover:-translate-y-1 transition-all duration-200">
                   <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center mb-4">
                     <f.icon className="w-5 h-5 text-white" />
                   </div>
-                  <h3 className="font-bold text-slate-900 mb-1.5">{f.title}</h3>
+                  <h3 className="font-bold text-slate-900 mb-1.5 text-sm sm:text-base">{f.title}</h3>
                   <p className="text-sm text-slate-500 leading-relaxed">{f.desc}</p>
                 </div>
               ))}
@@ -647,33 +647,33 @@ export default function ReferralProgram() {
             LOGGED-IN STATS (if user has referrals)
         ───────────────────────────────────────────────────────────────────── */}
         {user && myStats && (
-          <section className="py-16 px-4 bg-[#050e1a] relative overflow-hidden">
+          <section className="py-12 sm:py-16 px-4 bg-[#050e1a] relative overflow-hidden">
             <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "radial-gradient(circle, #ffffff 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
             <div className="relative max-w-3xl mx-auto">
-              <div className="bg-white/5 border border-white/8 rounded-3xl p-8 backdrop-blur-sm">
+              <div className="bg-white/5 border border-white/8 rounded-3xl p-6 sm:p-8 backdrop-blur-sm">
                 <p className="text-slate-400 text-xs uppercase tracking-widest text-center mb-6 font-bold">Your Referral Summary</p>
-                <div className="grid grid-cols-3 gap-6 text-center mb-8">
+                <div className="grid grid-cols-3 gap-4 sm:gap-6 text-center mb-6 sm:mb-8">
                   <div>
-                    <div className="text-4xl font-black text-white font-['DM_Serif_Display']">{myStats.referrals.length}</div>
+                    <div className="text-3xl sm:text-4xl font-black text-white font-['DM_Serif_Display']">{myStats.referrals.length}</div>
                     <div className="text-slate-500 text-xs mt-1 uppercase tracking-wider">Referred</div>
                   </div>
                   <div>
-                    <div className="text-4xl font-black text-white font-['DM_Serif_Display']">₹{myStats.balance}</div>
+                    <div className="text-3xl sm:text-4xl font-black text-white font-['DM_Serif_Display']">₹{myStats.balance}</div>
                     <div className="text-slate-500 text-xs mt-1 uppercase tracking-wider">Credits</div>
                   </div>
                   <div>
-                    <div className="text-4xl font-black text-white font-['DM_Serif_Display']">
+                    <div className="text-3xl sm:text-4xl font-black text-white font-['DM_Serif_Display']">
                       {myStats.referrals.filter(r => r.status === "points_allocated").length}
                     </div>
                     <div className="text-slate-500 text-xs mt-1 uppercase tracking-wider">Rewarded</div>
                   </div>
                 </div>
                 <div className="flex gap-3 justify-center flex-wrap">
-                  <button onClick={handleShare} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold px-7 py-3 rounded-xl transition-all text-sm">
+                  <button onClick={handleShare} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold px-6 sm:px-7 py-3 rounded-xl transition-all text-sm">
                     <Share2 className="w-4 h-4" />
                     Share Your Link
                   </button>
-                  <button onClick={() => navigate("/dashboard")} className="flex items-center gap-2 border border-white/15 text-slate-300 hover:bg-white/5 px-7 py-3 rounded-xl transition-all text-sm">
+                  <button onClick={() => navigate("/dashboard")} className="flex items-center gap-2 border border-white/15 text-slate-300 hover:bg-white/5 px-6 sm:px-7 py-3 rounded-xl transition-all text-sm">
                     View Dashboard
                   </button>
                 </div>
@@ -685,13 +685,13 @@ export default function ReferralProgram() {
         {/* ─────────────────────────────────────────────────────────────────────
             FAQ
         ───────────────────────────────────────────────────────────────────── */}
-        <section className="py-24 px-4 bg-[#050e1a] border-t border-white/5">
+        <section className="py-12 sm:py-20 px-4 bg-[#050e1a] border-t border-white/5">
           <div className="max-w-2xl mx-auto">
-            <div className="text-center mb-12">
+            <div className="text-center mb-8 sm:mb-12">
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-400 mb-3">Got Questions?</p>
-              <h2 className="text-4xl font-black text-white font-['DM_Serif_Display'] tracking-tight">FAQ</h2>
+              <h2 className="text-3xl sm:text-4xl font-black text-white font-['DM_Serif_Display'] tracking-tight">FAQ</h2>
             </div>
-            <div className="bg-white/4 border border-white/8 rounded-3xl px-6 py-2">
+            <div className="bg-white/4 border border-white/8 rounded-3xl px-4 sm:px-6 py-2">
               {FAQS.map((f, i) => <FAQItem key={i} q={f.q} a={f.a} />)}
             </div>
           </div>
@@ -700,7 +700,7 @@ export default function ReferralProgram() {
         {/* ─────────────────────────────────────────────────────────────────────
             TERMS
         ───────────────────────────────────────────────────────────────────── */}
-        <section className="py-10 px-4 bg-[#030810] border-t border-white/5">
+        <section className="py-8 sm:py-10 px-4 bg-[#030810] border-t border-white/5">
           <div className="max-w-3xl mx-auto">
             <h3 className="text-xs font-bold text-slate-600 uppercase tracking-widest mb-3">Terms & Conditions</h3>
             <p className="text-xs text-slate-700 leading-relaxed">
@@ -713,23 +713,23 @@ export default function ReferralProgram() {
             FINAL CTA (non-logged-in)
         ───────────────────────────────────────────────────────────────────── */}
         {!user && (
-          <section className="py-24 px-4 bg-[#050e1a] border-t border-white/5 relative overflow-hidden">
+          <section className="py-16 sm:py-24 px-4 bg-[#050e1a] border-t border-white/5 relative overflow-hidden">
             <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: "radial-gradient(circle, #ffffff 1px, transparent 1px)", backgroundSize: "36px 36px" }} />
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] rounded-full bg-blue-600/10 blur-[100px] pointer-events-none" />
             <div className="relative max-w-xl mx-auto text-center">
-              <div className="w-16 h-16 rounded-3xl bg-blue-600/15 border border-blue-500/20 flex items-center justify-center mx-auto mb-6">
-                <Gift className="w-8 h-8 text-blue-400" />
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-3xl bg-blue-600/15 border border-blue-500/20 flex items-center justify-center mx-auto mb-5 sm:mb-6">
+                <Gift className="w-7 h-7 sm:w-8 sm:h-8 text-blue-400" />
               </div>
-              <h2 className="text-4xl sm:text-5xl font-black text-white mb-4 font-['DM_Serif_Display'] tracking-tight">
+              <h2 className="text-3xl sm:text-4xl font-black text-white mb-3 sm:mb-4 font-['DM_Serif_Display'] tracking-tight">
                 Start earning today
               </h2>
-              <p className="text-slate-400 mb-10 text-base">
+              <p className="text-slate-400 mb-8 sm:mb-10 text-sm sm:text-base">
                 Create a free account and get your referral link in seconds.
                 <br />Earn ₹{amount} for every friend who completes their first ride.
               </p>
               <button
                 onClick={() => navigate("/login?redirect=/referral")}
-                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold px-10 py-4 rounded-xl text-base transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-blue-900/40"
+                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 sm:px-10 py-4 rounded-xl text-base transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-blue-900/40"
               >
                 Create Free Account
                 <ArrowRight className="w-5 h-5" />

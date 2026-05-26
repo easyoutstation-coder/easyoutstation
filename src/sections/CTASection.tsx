@@ -5,7 +5,7 @@ import { ArrowRight, MessageCircle, Mail, Phone } from "lucide-react";
 export default function CTASection() {
   const navigate = useNavigate();
   return (
-    <section className="py-24 bg-slate-900 relative overflow-hidden">
+    <section className="py-14 sm:py-24 bg-slate-900 relative overflow-hidden">
       <div className="absolute inset-0 bg-[url('/hero-bg.jpg')] bg-cover bg-center opacity-10" />
       <div className="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
         <p className="text-xs font-bold uppercase tracking-widest text-blue-400 mb-4">Ready to Travel?</p>
