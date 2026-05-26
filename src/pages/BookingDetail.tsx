@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowLeft, Car, MapPin, Calendar, Users, IndianRupee, Clock, Mail, Phone, Download, CalendarCheck } from "lucide-react";
+import { ArrowLeft, Car, MapPin, Calendar, Users, IndianRupee, Clock, Mail, Phone, Download, CalendarCheck, Gift, Share2 } from "lucide-react";
+import { Link } from "react-router";
 import { format, differenceInHours } from "date-fns";
 
 const statusColors: Record<string, string> = {
@@ -130,6 +131,19 @@ export default function BookingDetail() {
     { id: bookingId },
     { enabled: bookingId > 0 }
   );
+
+  const [referralCopied, setReferralCopied] = useState(false);
+  const { data: myCode } = trpc.referral.getMyCode.useQuery(undefined, { enabled: bookingId > 0 });
+  const referralLink = myCode?.code ? `https://easyoutstation.com/referral?ref=${myCode.code}` : "https://easyoutstation.com/referral";
+
+  const handleShareReferral = () => {
+    const text = `Just booked my cab with EasyOutstation — verified drivers, fixed fares! Use my link for ₹200 off your first ride: ${referralLink}`;
+    if (navigator.share) {
+      navigator.share({ title: "Get ₹200 off on EasyOutstation!", text, url: referralLink });
+    } else {
+      navigator.clipboard.writeText(referralLink).then(() => { setReferralCopied(true); setTimeout(() => setReferralCopied(false), 2000); });
+    }
+  };
 
   const cancelMutation = trpc.booking.cancel.useMutation({
     onSuccess: () => { setCancelDialogOpen(false); navigate("/dashboard"); },
@@ -323,6 +337,37 @@ export default function BookingDetail() {
               <p className="text-sm text-blue-800">
                 Driver details will be shared within <strong>60 minutes</strong> of booking. For queries, contact <strong>easyoutstation@gmail.com</strong>
               </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Referral Card — shown after booking confirmed/pending */}
+        {(booking.status === "confirmed" || booking.status === "pending") && (
+          <Card className="mb-6 bg-gradient-to-r from-[#0B2447] to-[#19376D] border-0 overflow-hidden">
+            <CardContent className="p-5">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center shrink-0 mt-0.5">
+                  <Gift className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-white text-sm">Enjoying EasyOutstation? Spread the word!</p>
+                  <p className="text-blue-200 text-xs mt-1 leading-relaxed">
+                    Share your referral link with friends. When they complete their first ride, <strong className="text-white">you both earn ₹200</strong> travel credit.
+                  </p>
+                  <div className="flex gap-2 mt-3 flex-wrap">
+                    <button
+                      onClick={handleShareReferral}
+                      className="flex items-center gap-1.5 bg-white text-[#19376D] font-semibold text-xs px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors"
+                    >
+                      <Share2 className="w-3.5 h-3.5" />
+                      {referralCopied ? "Link copied!" : "Share & Earn ₹200"}
+                    </button>
+                    <Link to="/referral" className="flex items-center gap-1.5 bg-white/10 border border-white/20 text-white text-xs px-4 py-2 rounded-lg hover:bg-white/20 transition-colors">
+                      Learn more
+                    </Link>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         )}
