@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { useAuth } from "@/hooks/useAuth";
 import { trpc } from "@/providers/trpc";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -322,7 +323,13 @@ export default function AdminPage() {
     onSuccess: () => { utils.admin.getExpenses.invalidate(); utils.admin.getFinancials.invalidate(); },
   });
   const setContentPermission = trpc.admin.setContentPermission.useMutation({ onSuccess: () => utils.admin.getCustomers.invalidate() });
-  const setTestUser = trpc.admin.setTestUser.useMutation({ onSuccess: () => utils.admin.getCustomers.invalidate() });
+  const setTestUser = trpc.admin.setTestUser.useMutation({
+    onSuccess: (_, vars) => {
+      utils.admin.getCustomers.invalidate();
+      toast.success(vars.isTestUser ? "Marked as test user — payment bypassed for this account" : "Test user flag removed");
+    },
+    onError: (e) => toast.error(`Failed: ${e.message}`),
+  });
 
   const { data: faqsList } = trpc.admin.getFaqs.useQuery(undefined, { enabled: isAdmin });
   const addFaq = trpc.admin.addFaq.useMutation({ onSuccess: () => { setFaqForm({ question: "", answer: "", position: "0" }); utils.admin.getFaqs.invalidate(); } });
