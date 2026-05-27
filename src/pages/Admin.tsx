@@ -1321,19 +1321,20 @@ export default function AdminPage() {
                                 <FileText className="w-3 h-3" />
                                 {(c as any).canManageContent ? "Remove Content" : "Grant Content"}
                               </Button>
-                              <Button
-                                size="sm" variant="outline"
-                                className={`h-7 text-xs gap-1 ${(c as any).isTestUser ? "border-violet-300 text-violet-700 hover:bg-violet-50 bg-violet-50" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}
-                                onClick={() => setTestUser.mutate({ userId: Number(c.id), isTestUser: !(c as any).isTestUser })}>
-                                <ShieldCheck className="w-3 h-3" />
-                                {(c as any).isTestUser ? "Test User ✓" : "Mark as Test"}
-                              </Button>
                               <Button size="sm" variant="ghost" className="h-7 text-xs text-red-500 hover:bg-red-50"
                                 onClick={() => setUserRole.mutate({ userId: Number(c.id), role: "user" })}>
                                 Remove
                               </Button>
                             </>
                           )}
+                          {/* Mark as Test — visible for all non-super-admin users */}
+                          <Button
+                            size="sm" variant="outline"
+                            className={`h-7 text-xs gap-1 ${(c as any).isTestUser ? "border-violet-300 text-violet-700 hover:bg-violet-50 bg-violet-50" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}
+                            onClick={() => setTestUser.mutate({ userId: Number(c.id), isTestUser: !(c as any).isTestUser })}>
+                            <ShieldCheck className="w-3 h-3" />
+                            {(c as any).isTestUser ? "Test User ✓" : "Mark as Test"}
+                          </Button>
                         </div>
                       )}
                     </div>
