@@ -11,7 +11,7 @@ const navLinks = [
   { label: "Our Fleet", href: "/cars" },
   { label: "Routes", href: "/routes" },
   { label: "About", href: "/about" },
-  { label: "For Business", href: "/#corporate" },
+  { label: "Corporate Enquiries", href: "/corporate" },
 ];
 
 export default function Navbar() {
@@ -51,21 +51,12 @@ export default function Navbar() {
         {/* Desktop Nav links */}
         <nav className="hidden lg:flex items-center gap-1">
           {navLinks.map((link) => {
-            const isCorporate = link.href === "/#corporate";
             const isActive = location.pathname === link.href;
             const cls = `text-sm font-medium px-3.5 py-1.5 rounded-full transition-all duration-200 ${
               isActive
                 ? "bg-white/15 text-white"
                 : "text-blue-100/90 hover:bg-white/10 hover:text-white"
             }`;
-            if (isCorporate) {
-              return (
-                <a key={link.href} href={link.href} className={cls}
-                  onClick={(e) => { e.preventDefault(); document.getElementById("corporate")?.scrollIntoView({ behavior: "smooth" }); }}>
-                  {link.label}
-                </a>
-              );
-            }
             return <Link key={link.href} to={link.href} className={cls}>{link.label}</Link>;
           })}
         </nav>
@@ -128,19 +119,10 @@ export default function Navbar() {
               </div>
               <nav className="px-4 py-4 flex flex-col gap-1">
                 {navLinks.map((link) => {
-                  const isCorporate = link.href === "/#corporate";
                   const isActive = location.pathname === link.href;
                   const cls = `flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                     isActive ? "bg-white/15 text-white" : "text-blue-100 hover:bg-white/10 hover:text-white"
                   }`;
-                  if (isCorporate) {
-                    return (
-                      <a key={link.href} href={link.href} className={cls}
-                        onClick={(e) => { e.preventDefault(); setMobileOpen(false); document.getElementById("corporate")?.scrollIntoView({ behavior: "smooth" }); }}>
-                        {link.label}
-                      </a>
-                    );
-                  }
                   return (
                     <Link key={link.href} to={link.href} onClick={() => setMobileOpen(false)} className={cls}>
                       {link.label}
