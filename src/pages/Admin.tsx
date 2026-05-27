@@ -15,7 +15,7 @@ import {
   Phone, UserCog, StickyNote, CheckCheck, X, Plus, Pencil, Trash2,
   MessageCircle, Mail, AlertTriangle, TrendingUp, MapPin, Wallet, ShieldCheck,
   Globe, WifiOff, Search, FileText, Bot, Send, Loader2, ChevronRight, Tag,
-  Gift, Share2, RefreshCw,
+  Gift, Share2, RefreshCw, Building2,
 } from "lucide-react";
 
 type BookingStatus = "pending" | "confirmed" | "completed" | "cancelled";
@@ -191,6 +191,11 @@ export default function AdminPage() {
   useEffect(() => {
     if (discountData) setDiscountForm({ ...discountData, maxDiscount: discountData.maxDiscount?.toString() ?? "" });
   }, [discountData]);
+
+  const { data: corporateLeads, refetch: refetchCorporateLeads } = trpc.admin.getCorporateEnquiries.useQuery(undefined, { enabled: isAdmin });
+  const updateLeadStatus = trpc.admin.updateCorporateEnquiryStatus.useMutation({ onSuccess: () => refetchCorporateLeads() });
+  const [leadNoteId, setLeadNoteId] = useState<number | null>(null);
+  const [leadNoteText, setLeadNoteText] = useState("");
 
   const { data: referralProgramData, refetch: refetchReferralProgram } = trpc.admin.getReferralProgram.useQuery(undefined, { enabled: isSuperAdmin });
   const setReferralProgram = trpc.admin.setReferralProgram.useMutation({ onSuccess: () => refetchReferralProgram() });
@@ -575,6 +580,14 @@ export default function AdminPage() {
             {canManageContent && <TabsTrigger value="content" className="gap-1.5"><FileText className="w-4 h-4" />Content</TabsTrigger>}
             {isSuperAdmin && <TabsTrigger value="financials" className="gap-1.5 text-emerald-700"><TrendingUp className="w-4 h-4" />Financials</TabsTrigger>}
             {isSuperAdmin && <TabsTrigger value="referral" className="gap-1.5 text-pink-700"><Gift className="w-4 h-4" />Referral</TabsTrigger>}
+            <TabsTrigger value="corporate" className="gap-1.5 text-blue-700">
+              <Building2 className="w-4 h-4" />Corporate
+              {(corporateLeads?.filter(l => l.status === "new").length ?? 0) > 0 && (
+                <span className="ml-1 bg-blue-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                  {corporateLeads!.filter(l => l.status === "new").length}
+                </span>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="agent" className="gap-1.5 text-violet-700"><Bot className="w-4 h-4" />Agent</TabsTrigger>
           </TabsList>
 
@@ -1927,6 +1940,99 @@ export default function AdminPage() {
                   </table>
                 </CardContent>
               </Card>
+            )}
+          </TabsContent>
+
+          {/* ── Corporate Leads ─────────────────────────────────────── */}
+          <TabsContent value="corporate" className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold">Corporate Enquiries</h2>
+                <p className="text-sm text-muted-foreground">{corporateLeads?.length ?? 0} total leads</p>
+              </div>
+              <button onClick={() => refetchCorporateLeads()} className="text-muted-foreground hover:text-foreground">
+                <RefreshCw className="w-4 h-4" />
+              </button>
+            </div>
+
+            {!corporateLeads || corporateLeads.length === 0 ? (
+              <Card><CardContent className="p-10 text-center text-muted-foreground text-sm">No corporate enquiries yet.</CardContent></Card>
+            ) : (
+              <div className="space-y-3">
+                {corporateLeads.map(lead => (
+                  <Card key={lead.id} className={`border-l-4 ${lead.status === "new" ? "border-l-blue-500" : lead.status === "called" ? "border-l-amber-500" : "border-l-slate-300"}`}>
+                    <CardContent className="p-4">
+                      <div className="flex flex-col sm:flex-row sm:items-start gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2 mb-1">
+                            <span className="font-semibold text-sm">{lead.name}</span>
+                            <span className="text-muted-foreground text-xs">·</span>
+                            <span className="text-sm text-muted-foreground">{lead.company}</span>
+                            {lead.designation && <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">{lead.designation}</span>}
+                          </div>
+                          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground mb-2">
+                            <a href={`tel:+91${lead.phone}`} className="flex items-center gap-1 hover:text-primary">
+                              <Phone className="w-3 h-3" />+91 {lead.phone}
+                            </a>
+                            {lead.teamSize && <span>Team: {lead.teamSize}</span>}
+                            {lead.requirement && <span>Need: {lead.requirement}</span>}
+                            <span>{new Date(lead.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
+                          </div>
+                          {lead.message && <p className="text-xs text-slate-600 bg-slate-50 rounded p-2 mb-2">{lead.message}</p>}
+                          {lead.adminNotes && <p className="text-xs text-amber-700 bg-amber-50 rounded p-2 mb-2">Note: {lead.adminNotes}</p>}
+
+                          {/* Inline note editor */}
+                          {leadNoteId === lead.id && (
+                            <div className="flex gap-2 mt-2">
+                              <input
+                                value={leadNoteText}
+                                onChange={e => setLeadNoteText(e.target.value)}
+                                placeholder="Add admin note…"
+                                className="flex-1 border border-input rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                              />
+                              <button
+                                onClick={() => {
+                                  updateLeadStatus.mutate({ id: lead.id, status: lead.status, adminNotes: leadNoteText });
+                                  setLeadNoteId(null);
+                                  setLeadNoteText("");
+                                }}
+                                className="text-xs bg-primary text-white px-3 py-1.5 rounded-lg hover:bg-primary/90"
+                              >Save</button>
+                              <button onClick={() => { setLeadNoteId(null); setLeadNoteText(""); }} className="text-xs text-muted-foreground hover:text-foreground px-2">✕</button>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex sm:flex-col gap-2 shrink-0">
+                          <div className="flex gap-1.5">
+                            {(["new", "called", "closed"] as const).map(s => (
+                              <button
+                                key={s}
+                                onClick={() => updateLeadStatus.mutate({ id: lead.id, status: s })}
+                                className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border transition-all ${
+                                  lead.status === s
+                                    ? s === "new" ? "bg-blue-500 text-white border-blue-500"
+                                      : s === "called" ? "bg-amber-500 text-white border-amber-500"
+                                      : "bg-slate-500 text-white border-slate-500"
+                                    : "bg-white text-muted-foreground border-slate-200 hover:border-slate-400"
+                                }`}
+                              >
+                                {s.charAt(0).toUpperCase() + s.slice(1)}
+                              </button>
+                            ))}
+                          </div>
+                          <button
+                            onClick={() => { setLeadNoteId(lead.id); setLeadNoteText(lead.adminNotes ?? ""); }}
+                            className="text-[10px] text-muted-foreground hover:text-primary flex items-center gap-1 border border-slate-200 rounded-full px-2.5 py-1 hover:border-primary"
+                          >
+                            <StickyNote className="w-3 h-3" /> Note
+                          </button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             )}
           </TabsContent>
 

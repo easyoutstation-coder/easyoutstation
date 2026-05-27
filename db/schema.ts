@@ -186,6 +186,20 @@ export const referralPoints = mysqlTable("referralPoints", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
+export const corporateEnquiries = mysqlTable("corporateEnquiries", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  phone: varchar("phone", { length: 10 }).notNull(),
+  company: varchar("company", { length: 255 }).notNull(),
+  designation: varchar("designation", { length: 255 }),
+  teamSize: varchar("teamSize", { length: 50 }),
+  requirement: varchar("requirement", { length: 255 }),
+  message: text("message"),
+  status: mysqlEnum("status", ["new", "called", "closed"]).default("new").notNull(),
+  adminNotes: text("adminNotes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type Car = typeof cars.$inferSelect;
@@ -208,3 +222,4 @@ export type Faq = typeof faqs.$inferSelect;
 export type InsertFaq = typeof faqs.$inferInsert;
 export type ReferralEvent = typeof referralEvents.$inferSelect;
 export type ReferralPoint = typeof referralPoints.$inferSelect;
+export type CorporateEnquiry = typeof corporateEnquiries.$inferSelect;

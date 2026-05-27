@@ -2,7 +2,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createRouter, publicQuery, adminQuery, superAdminQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { users, bookings, drivers, expenses, siteSettings, faqs, routes, cars, userSearches, carReviews, referralEvents, referralPoints } from "@db/schema";
+import { users, bookings, drivers, expenses, siteSettings, faqs, routes, cars, userSearches, carReviews, referralEvents, referralPoints, corporateEnquiries } from "@db/schema";
 import { eq, desc, sql, and, gte, lt, count } from "drizzle-orm";
 import { defaultProgramConfig } from "./referral-router";
 import { sendReferralPointsNotification } from "./lib/notifications";
@@ -26,6 +26,15 @@ async function sendEmail(to: string, subject: string, text: string) {
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
     body: JSON.stringify({ from: "EasyOutstation <bookings@easyoutstation.com>", to: [to], subject, text }),
   });
+}
+
+async function sendSms(phone: string, message: string) {
+  const apiKey = process.env.FAST2SMS_API_KEY?.trim();
+  if (!apiKey) return;
+  const number = phone.replace(/\D/g, "").slice(-10);
+  if (number.length !== 10) return;
+  const params = new URLSearchParams({ authorization: apiKey, route: "q", message, language: "english", flash: "0", numbers: number });
+  await fetch(`https://www.fast2sms.com/dev/bulkV2?${params.toString()}`).catch(console.error);
 }
 
 // Strip country code, keep only 10-digit mobile number
@@ -902,27 +911,70 @@ Thank you for choosing EasyOutstation.`;
       name: z.string().min(2),
       phone: z.string().length(10),
       company: z.string().min(2),
+      designation: z.string().optional(),
       teamSize: z.string().optional(),
+      requirement: z.string().optional(),
       message: z.string().optional(),
     }))
     .mutation(async ({ input }) => {
-      await sendEmail(
-        "easyoutstation@gmail.com",
-        `🏢 Corporate Enquiry — ${input.company} | EasyOutstation`,
-        `New corporate/B2B enquiry received!\n\n` +
-        `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
-        `LEAD DETAILS\n` +
-        `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
-        `Name        : ${input.name}\n` +
-        `Mobile      : +91-${input.phone}\n` +
-        `Company     : ${input.company}\n` +
-        `Team Size   : ${input.teamSize || "Not specified"}\n` +
-        `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
-        `REQUIREMENT\n` +
-        `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
-        `${input.message || "No additional details provided."}\n\n` +
-        `Reply directly to this email or call +91-${input.phone} to follow up.`
-      );
+      const db = getDb();
+      const [row] = await db.insert(corporateEnquiries).values({
+        name: input.name,
+        phone: input.phone,
+        company: input.company,
+        designation: input.designation ?? null,
+        teamSize: input.teamSize ?? null,
+        requirement: input.requirement ?? null,
+        message: input.message ?? null,
+        status: "new",
+      }).$returningId();
+
+      await Promise.all([
+        sendEmail(
+          "easyoutstation@gmail.com",
+          `🏢 Corporate Enquiry — ${input.company} | EasyOutstation`,
+          `New corporate/B2B enquiry received!\n\n` +
+          `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+          `LEAD DETAILS\n` +
+          `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+          `Name        : ${input.name}\n` +
+          `Mobile      : +91-${input.phone}\n` +
+          `Company     : ${input.company}\n` +
+          `Designation : ${input.designation || "Not specified"}\n` +
+          `Team Size   : ${input.teamSize || "Not specified"}\n` +
+          `Requirement : ${input.requirement || "Not specified"}\n` +
+          `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+          `NOTES\n` +
+          `━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+          `${input.message || "No additional details provided."}\n\n` +
+          `Lead ID: #${row.id} — Reply or call +91-${input.phone} to follow up.`
+        ),
+        sendSms(input.phone,
+          `EasyOutstation: Thanks ${input.name}! We received your corporate enquiry for ${input.company}. Our account manager will call you within 24 hours. Help: 8796564111`
+        ),
+      ]);
+
+      return { success: true };
+    }),
+
+  // ── Corporate enquiry admin queries ────────────────────────────────────
+  getCorporateEnquiries: adminQuery
+    .query(async () => {
+      const db = getDb();
+      return db.select().from(corporateEnquiries).orderBy(desc(corporateEnquiries.createdAt));
+    }),
+
+  updateCorporateEnquiryStatus: adminQuery
+    .input(z.object({
+      id: z.number(),
+      status: z.enum(["new", "called", "closed"]),
+      adminNotes: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      await db.update(corporateEnquiries)
+        .set({ status: input.status, ...(input.adminNotes !== undefined ? { adminNotes: input.adminNotes } : {}) })
+        .where(eq(corporateEnquiries.id, input.id));
       return { success: true };
     }),
 });

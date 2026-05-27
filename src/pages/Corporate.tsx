@@ -166,12 +166,15 @@ export default function Corporate() {
     if (!name.trim() || name.trim().length < 2) { setError("Please enter your full name."); return; }
     if (!phone || phone.length !== 10) { setError("Please enter a valid 10-digit mobile number."); return; }
     if (!company.trim() || company.trim().length < 2) { setError("Please enter your company name."); return; }
-    const fullMessage = [
-      designation && `Designation: ${designation}`,
-      requirement && `Requirement type: ${requirement}`,
-      message && `Details: ${message}`,
-    ].filter(Boolean).join("\n");
-    enquiry.mutate({ name: name.trim(), phone, company: company.trim(), teamSize, message: fullMessage || undefined });
+    enquiry.mutate({
+      name: name.trim(),
+      phone,
+      company: company.trim(),
+      designation: designation || undefined,
+      teamSize: teamSize || undefined,
+      requirement: requirement || undefined,
+      message: message || undefined,
+    });
   };
 
   const scrollToForm = () => document.getElementById("quote-form")?.scrollIntoView({ behavior: "smooth", block: "center" });
