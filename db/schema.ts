@@ -22,6 +22,7 @@ export const users = mysqlTable("users", {
   passwordHash: varchar("passwordHash", { length: 255 }),
   role: mysqlEnum("role", ["user", "admin", "super_admin"]).default("user").notNull(),
   canManageContent: boolean("canManageContent").default(false).notNull(),
+  isTestUser: boolean("isTestUser").default(false).notNull(),
   fcmToken: text("fcmToken"),
   referralCode: varchar("referralCode", { length: 20 }).unique(),
   referredBy: bigint("referredBy", { mode: "number", unsigned: true }),

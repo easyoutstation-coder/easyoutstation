@@ -408,6 +408,14 @@ Thank you for choosing EasyOutstation.`;
       return { success: true };
     }),
 
+  setTestUser: superAdminQuery
+    .input(z.object({ userId: z.number(), isTestUser: z.boolean() }))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      await db.update(users).set({ isTestUser: input.isTestUser }).where(eq(users.id, input.userId));
+      return { success: true };
+    }),
+
   // ── Financial Analytics (super_admin only) ────────────────────────────
   getFinancials: superAdminQuery.query(async () => {
     const db = getDb();

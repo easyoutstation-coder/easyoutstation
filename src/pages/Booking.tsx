@@ -23,7 +23,7 @@ import { format } from "date-fns";
 import {
   User, CreditCard, Check, ArrowRight, ArrowLeft,
   MapPin, CalendarDays, Mail, Users, Shield, Clock,
-  Route, Loader2, AlertCircle, LogIn, MessageCircle,
+  Route, Loader2, AlertCircle, LogIn, MessageCircle, ShieldCheck,
 } from "lucide-react";
 
 function fmtTime(t: string) {
@@ -135,6 +135,8 @@ export default function BookingPage() {
   const notifyAbandonedMutation = trpc.booking.notifyAbandoned.useMutation();
   const createOrderMutation = trpc.payment.createOrder.useMutation();
   const verifyPaymentMutation = trpc.payment.verifyPayment.useMutation();
+  const confirmTestBookingMutation = trpc.booking.confirmTestBooking.useMutation();
+  const isTestUser = !!(user as any)?.isTestUser;
 
   // Tracks the booking ID while Razorpay is open — used for mobile abandonment detection
   const pendingPaymentRef = useRef<number | null>(null);
@@ -480,6 +482,16 @@ export default function BookingPage() {
         setFormError(msg);
         setIsSubmitting(false);
       };
+
+      // Test accounts skip payment entirely
+      if (isTestUser) {
+        await confirmTestBookingMutation.mutateAsync({ bookingId });
+        setAdvancePaid(true);
+        setBookingId(bookingId);
+        setBookingComplete(true);
+        setIsSubmitting(false);
+        return;
+      }
 
       // Step 2: Create Razorpay order for 10% advance — payment is required
       let order: Awaited<ReturnType<typeof createOrderMutation.mutateAsync>>;
@@ -988,19 +1000,31 @@ export default function BookingPage() {
                         </div>
                       </div>
 
-                      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-semibold text-blue-800">Advance Payment Now (10%)</span>
-                          <span className="text-lg font-bold text-blue-700">₹{Math.max(100, Math.round(totalPrice * 0.1)).toLocaleString("en-IN")}</span>
+                      {isTestUser ? (
+                        <div className="bg-violet-50 border border-violet-300 rounded-xl p-4 flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-violet-200 flex items-center justify-center shrink-0">
+                            <ShieldCheck className="w-4 h-4 text-violet-700" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-violet-800">Test Mode — Payment Bypassed</p>
+                            <p className="text-xs text-violet-600">This account is marked as a test user. Booking will be confirmed without payment.</p>
+                          </div>
                         </div>
-                        <div className="flex items-center justify-between text-sm text-blue-600">
-                          <span>Balance Payment (To driver at pickup)</span>
-                          <span>₹{(totalPrice - Math.max(100, Math.round(totalPrice * 0.1))).toLocaleString("en-IN")}</span>
+                      ) : (
+                        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-semibold text-blue-800">Advance Payment Now (10%)</span>
+                            <span className="text-lg font-bold text-blue-700">₹{Math.max(100, Math.round(totalPrice * 0.1)).toLocaleString("en-IN")}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-sm text-blue-600">
+                            <span>Balance Payment (To driver at pickup)</span>
+                            <span>₹{(totalPrice - Math.max(100, Math.round(totalPrice * 0.1))).toLocaleString("en-IN")}</span>
+                          </div>
+                          <p className="text-[10px] text-blue-500">
+                            10% advance confirms your booking. 100% refundable on cancellation 24hrs before pickup.
+                          </p>
                         </div>
-                        <p className="text-[10px] text-blue-500">
-                          10% advance confirms your booking. 100% refundable on cancellation 24hrs before pickup.
-                        </p>
-                      </div>
+                      )}
 
                       <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex gap-2 text-sm text-amber-800">
                         <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />

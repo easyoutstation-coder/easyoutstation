@@ -322,6 +322,7 @@ export default function AdminPage() {
     onSuccess: () => { utils.admin.getExpenses.invalidate(); utils.admin.getFinancials.invalidate(); },
   });
   const setContentPermission = trpc.admin.setContentPermission.useMutation({ onSuccess: () => utils.admin.getCustomers.invalidate() });
+  const setTestUser = trpc.admin.setTestUser.useMutation({ onSuccess: () => utils.admin.getCustomers.invalidate() });
 
   const { data: faqsList } = trpc.admin.getFaqs.useQuery(undefined, { enabled: isAdmin });
   const addFaq = trpc.admin.addFaq.useMutation({ onSuccess: () => { setFaqForm({ question: "", answer: "", position: "0" }); utils.admin.getFaqs.invalidate(); } });
@@ -1278,6 +1279,7 @@ export default function AdminPage() {
                           {c.role === "admin" && <Badge className="bg-blue-100 text-blue-700 text-xs border-0">Admin</Badge>}
                           {c.role === "super_admin" && <Badge className="bg-purple-100 text-purple-700 text-xs border-0">Super Admin</Badge>}
                           {(c as any).canManageContent && c.role === "admin" && <Badge className="bg-amber-100 text-amber-700 text-xs border-0">Content</Badge>}
+                          {(c as any).isTestUser && <Badge className="bg-violet-100 text-violet-700 text-xs border-0">Test User</Badge>}
                         </div>
                         <div className="flex items-center gap-3 mt-0.5 flex-wrap">
                           {c.phone && (
@@ -1318,6 +1320,13 @@ export default function AdminPage() {
                                 onClick={() => setContentPermission.mutate({ userId: Number(c.id), canManage: !(c as any).canManageContent })}>
                                 <FileText className="w-3 h-3" />
                                 {(c as any).canManageContent ? "Remove Content" : "Grant Content"}
+                              </Button>
+                              <Button
+                                size="sm" variant="outline"
+                                className={`h-7 text-xs gap-1 ${(c as any).isTestUser ? "border-violet-300 text-violet-700 hover:bg-violet-50 bg-violet-50" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}
+                                onClick={() => setTestUser.mutate({ userId: Number(c.id), isTestUser: !(c as any).isTestUser })}>
+                                <ShieldCheck className="w-3 h-3" />
+                                {(c as any).isTestUser ? "Test User ✓" : "Mark as Test"}
                               </Button>
                               <Button size="sm" variant="ghost" className="h-7 text-xs text-red-500 hover:bg-red-50"
                                 onClick={() => setUserRole.mutate({ userId: Number(c.id), role: "user" })}>

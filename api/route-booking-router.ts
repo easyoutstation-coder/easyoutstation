@@ -300,6 +300,20 @@ export const bookingRouter = createRouter({
       await db.update(bookings).set({ pickupDate: new Date(input.newDate) }).where(eq(bookings.id, input.id));
       return { success: true };
     }),
+
+  // Test users (flagged by super admin) can confirm bookings without payment
+  confirmTestBooking: authedQuery
+    .input(z.object({ bookingId: z.number() }))
+    .mutation(async ({ input, ctx }) => {
+      if (!(ctx.user as any).isTestUser) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Not a test account" });
+      }
+      const db = getDb();
+      await db.update(bookings)
+        .set({ paymentStatus: "paid", status: "confirmed" })
+        .where(and(eq(bookings.id, input.bookingId), eq(bookings.userId, ctx.user.id)));
+      return { success: true };
+    }),
 });
 
 export const searchRouter = createRouter({

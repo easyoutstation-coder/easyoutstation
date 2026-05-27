@@ -71,6 +71,7 @@ async function runStartupMigrations() {
     try { await db.execute(sql.raw(`ALTER TABLE users ADD COLUMN fcmToken TEXT`)); } catch { /* already exists */ }
     // Content management permission column
     try { await db.execute(sql.raw(`ALTER TABLE users ADD COLUMN canManageContent BOOLEAN NOT NULL DEFAULT FALSE`)); } catch { /* already exists */ }
+    try { await db.execute(sql.raw(`ALTER TABLE users ADD COLUMN isTestUser BOOLEAN NOT NULL DEFAULT FALSE`)); } catch { /* already exists */ }
     // FAQs table
     try {
       await db.execute(sql.raw(`
