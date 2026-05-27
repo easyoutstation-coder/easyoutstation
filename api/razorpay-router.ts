@@ -77,7 +77,7 @@ export const razorpayRouter = createRouter({
       // Mark booking as paid + confirmed
       await db
         .update(bookings)
-        .set({ paymentStatus: "paid", status: "confirmed" })
+        .set({ paymentStatus: "paid", status: "confirmed", razorpayPaymentId: input.razorpayPaymentId })
         .where(eq(bookings.id, input.bookingId));
 
       // Fetch booking + fall back to user account for missing phone/email

@@ -465,3 +465,30 @@ Team EasyOutstation`;
   if (input.email) await sendResend(input.email, `Corporate Account Approved — ${input.companyName} | EasyOutstation`, text);
   if (input.phone) await sendSms(input.phone, `EasyOutstation: Corporate account for ${input.companyName} APPROVED! Login at easyoutstation.com/corporate-portal with join code: ${input.joinCode}. Help: 9958556011`);
 }
+
+export async function sendRefundNotification(input: {
+  customerName: string;
+  customerPhone?: string;
+  customerEmail?: string;
+  bookingId: number;
+  fromCity: string;
+  toCity: string;
+  amount: number;
+}) {
+  const text = `Hi ${input.customerName},
+
+Your refund for Booking #${input.bookingId} (${input.fromCity} → ${input.toCity}) has been processed.
+
+Refund Amount: ₹${input.amount.toLocaleString("en-IN")}
+
+The amount will reflect in your original payment method within 5-7 business days.
+
+If you have any questions, contact us:
+📞 +91-9958556011
+📧 easyoutstation@gmail.com
+
+Thank you for choosing EasyOutstation.`;
+
+  if (input.customerEmail) await sendResend(input.customerEmail, `Refund Processed — Booking #${input.bookingId} | EasyOutstation`, text);
+  if (input.customerPhone) await sendSms(input.customerPhone, `EasyOutstation: Refund of Rs.${input.amount} for Booking #${input.bookingId} (${input.fromCity} to ${input.toCity}) processed. Reflects in 5-7 days. Help: 9958556011`);
+}

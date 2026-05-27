@@ -118,6 +118,7 @@ async function runStartupMigrations() {
     try { await db.execute(sql.raw(`ALTER TABLE bookings ADD COLUMN reminderSentAt TIMESTAMP NULL`)); } catch { /* already exists */ }
     try { await db.execute(sql.raw(`ALTER TABLE bookings ADD COLUMN reviewSentAt TIMESTAMP NULL`)); } catch { /* already exists */ }
     try { await db.execute(sql.raw(`ALTER TABLE bookings ADD COLUMN abandonmentReminderSentAt TIMESTAMP NULL`)); } catch { /* already exists */ }
+    try { await db.execute(sql.raw(`ALTER TABLE bookings ADD COLUMN razorpayPaymentId VARCHAR(100)`)); } catch { /* already exists */ }
     // Corporate columns on users
     try { await db.execute(sql.raw(`ALTER TABLE users ADD COLUMN corporateAccountId BIGINT UNSIGNED NULL`)); } catch { /* already exists */ }
     try { await db.execute(sql.raw(`ALTER TABLE users ADD COLUMN corporateRole VARCHAR(20) NULL`)); } catch { /* already exists */ }

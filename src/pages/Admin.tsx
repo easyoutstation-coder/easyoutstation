@@ -331,6 +331,28 @@ export default function AdminPage() {
     onError: (e) => toast.error(`Failed: ${e.message}`),
   });
 
+  // Access grant
+  const [grantContact, setGrantContact] = useState("");
+  const [grantRole, setGrantRole] = useState<"admin" | "super_admin" | "user">("admin");
+  const grantAccess = trpc.admin.grantAccessByContact.useMutation({
+    onSuccess: (res) => { toast.success(`Access updated for ${res.name ?? grantContact}`); setGrantContact(""); utils.admin.getCustomers.invalidate(); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  // Payments
+  const { data: paymentsList, refetch: refetchPayments } = trpc.admin.getPayments.useQuery(undefined, { enabled: isSuperAdmin });
+  const processRefund = trpc.admin.processRefund.useMutation({
+    onSuccess: (res) => {
+      refetchPayments();
+      if (res.razorpayPaymentId) {
+        toast.success(`Refund processed. Razorpay Payment ID: ${res.razorpayPaymentId} — complete refund in Razorpay dashboard.`, { duration: 8000 });
+      } else {
+        toast.success("Refund marked and customer notified via SMS + email.");
+      }
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
   const { data: faqsList } = trpc.admin.getFaqs.useQuery(undefined, { enabled: isAdmin });
   const addFaq = trpc.admin.addFaq.useMutation({ onSuccess: () => { setFaqForm({ question: "", answer: "", position: "0" }); utils.admin.getFaqs.invalidate(); } });
   const updateFaq = trpc.admin.updateFaq.useMutation({ onSuccess: () => { setEditingFaq(null); utils.admin.getFaqs.invalidate(); } });
@@ -590,6 +612,7 @@ export default function AdminPage() {
             <TabsTrigger value="drivers" className="gap-1.5"><Car className="w-4 h-4" />Drivers</TabsTrigger>
             <TabsTrigger value="customers" className="gap-1.5"><Users className="w-4 h-4" />Customers</TabsTrigger>
             {canManageContent && <TabsTrigger value="content" className="gap-1.5"><FileText className="w-4 h-4" />Content</TabsTrigger>}
+            {isSuperAdmin && <TabsTrigger value="payments" className="gap-1.5 text-green-700"><IndianRupee className="w-4 h-4" />Payments</TabsTrigger>}
             {isSuperAdmin && <TabsTrigger value="financials" className="gap-1.5 text-emerald-700"><TrendingUp className="w-4 h-4" />Financials</TabsTrigger>}
             {isSuperAdmin && <TabsTrigger value="referral" className="gap-1.5 text-pink-700"><Gift className="w-4 h-4" />Referral</TabsTrigger>}
             <TabsTrigger value="corporate" className="gap-1.5 text-blue-700">
@@ -1047,6 +1070,48 @@ export default function AdminPage() {
               <StatCard icon={IndianRupee} label="Outstanding" value={stats ? `₹${(stats.totalRevenue - stats.paidRevenue).toLocaleString("en-IN")}` : "—"} sub="Not yet collected" />
               <StatCard icon={Users} label="Customers" value={stats?.customers ?? "—"} />
             </div>
+
+            {/* Grant / Revoke Access */}
+            {isSuperAdmin && (
+              <Card className="border-2 border-slate-200 bg-white mt-5">
+                <CardContent className="p-5">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center">
+                      <UserCog className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-slate-900">Grant / Revoke Access</p>
+                      <p className="text-xs text-slate-500 mt-0.5">Enter a user's email or phone number to assign or remove their role</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Input
+                      placeholder="Email or phone number"
+                      value={grantContact}
+                      onChange={e => setGrantContact(e.target.value)}
+                      className="h-9 text-sm flex-1"
+                    />
+                    <select
+                      value={grantRole}
+                      onChange={e => setGrantRole(e.target.value as any)}
+                      className="h-9 px-3 rounded-lg border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-purple-400/30 focus:border-purple-400 sm:w-40"
+                    >
+                      <option value="admin">Admin</option>
+                      <option value="super_admin">Super Admin</option>
+                      <option value="user">User (revoke)</option>
+                    </select>
+                    <Button
+                      size="sm"
+                      disabled={!grantContact.trim() || grantAccess.isPending}
+                      onClick={() => grantAccess.mutate({ contact: grantContact, role: grantRole })}
+                      className="bg-purple-600 hover:bg-purple-700 text-white h-9 px-4 shrink-0"
+                    >
+                      {grantAccess.isPending ? "Saving…" : "Apply"}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           {/* ── Bookings ─────────────────────────────────────────────── */}
@@ -1300,27 +1365,18 @@ export default function AdminPage() {
                           {Number(c.bookingCount)} booking{Number(c.bookingCount) !== 1 ? "s" : ""} · Joined {new Date(c.createdAt).toLocaleDateString("en-IN")}
                         </p>
                       </div>
-                      {/* Only super_admin can grant/revoke roles */}
-                      {isSuperAdmin && c.role !== "super_admin" && (
+                      {isSuperAdmin && (
                         <div className="flex flex-wrap gap-1">
-                          {c.role === "user" && (
-                            <>
-                              <Button size="sm" variant="outline" className="h-7 text-xs gap-1"
-                                onClick={() => setUserRole.mutate({ userId: Number(c.id), role: "admin" })}>
-                                <UserCog className="w-3 h-3" /> Make Admin
-                              </Button>
-                              <Button size="sm" variant="outline" className="h-7 text-xs gap-1 border-purple-200 text-purple-700 hover:bg-purple-50"
-                                onClick={() => setUserRole.mutate({ userId: Number(c.id), role: "super_admin" })}>
-                                <ShieldCheck className="w-3 h-3" /> Super Admin
-                              </Button>
-                            </>
+                          {/* Revoke super admin */}
+                          {c.role === "super_admin" && (
+                            <Button size="sm" variant="outline" className="h-7 text-xs gap-1 border-red-200 text-red-600 hover:bg-red-50"
+                              onClick={() => { setUserRole.mutate({ userId: Number(c.id), role: "user" }); toast.success("Super admin access revoked"); }}>
+                              <X className="w-3 h-3" /> Revoke Access
+                            </Button>
                           )}
+                          {/* Content permission for admins */}
                           {c.role === "admin" && (
                             <>
-                              <Button size="sm" variant="outline" className="h-7 text-xs gap-1 border-purple-200 text-purple-700 hover:bg-purple-50"
-                                onClick={() => setUserRole.mutate({ userId: Number(c.id), role: "super_admin" })}>
-                                <ShieldCheck className="w-3 h-3" /> Upgrade to Super
-                              </Button>
                               <Button
                                 size="sm" variant="outline"
                                 className={`h-7 text-xs gap-1 ${(c as any).canManageContent ? "border-amber-200 text-amber-700 hover:bg-amber-50" : "border-blue-200 text-blue-700 hover:bg-blue-50"}`}
@@ -1328,20 +1384,18 @@ export default function AdminPage() {
                                 <FileText className="w-3 h-3" />
                                 {(c as any).canManageContent ? "Remove Content" : "Grant Content"}
                               </Button>
-                              <Button size="sm" variant="ghost" className="h-7 text-xs text-red-500 hover:bg-red-50"
-                                onClick={() => setUserRole.mutate({ userId: Number(c.id), role: "user" })}>
-                                Remove
-                              </Button>
                             </>
                           )}
                           {/* Mark as Test — visible for all non-super-admin users */}
-                          <Button
-                            size="sm" variant="outline"
-                            className={`h-7 text-xs gap-1 ${(c as any).isTestUser ? "border-violet-300 text-violet-700 hover:bg-violet-50 bg-violet-50" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}
-                            onClick={() => setTestUser.mutate({ userId: Number(c.id), isTestUser: !(c as any).isTestUser })}>
-                            <ShieldCheck className="w-3 h-3" />
-                            {(c as any).isTestUser ? "Test User ✓" : "Mark as Test"}
-                          </Button>
+                          {c.role !== "super_admin" && (
+                            <Button
+                              size="sm" variant="outline"
+                              className={`h-7 text-xs gap-1 ${(c as any).isTestUser ? "border-violet-300 text-violet-700 hover:bg-violet-50 bg-violet-50" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}
+                              onClick={() => setTestUser.mutate({ userId: Number(c.id), isTestUser: !(c as any).isTestUser })}>
+                              <ShieldCheck className="w-3 h-3" />
+                              {(c as any).isTestUser ? "Test User ✓" : "Mark as Test"}
+                            </Button>
+                          )}
                         </div>
                       )}
                     </div>
@@ -1555,6 +1609,67 @@ export default function AdminPage() {
               )}
             </div>
           </TabsContent>
+
+          {/* ── Payments (super_admin only) ───────────────────────── */}
+          {isSuperAdmin && (
+            <TabsContent value="payments" className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold">Payments Received</h2>
+                  <p className="text-sm text-muted-foreground">{paymentsList?.filter(p => p.paymentStatus === "paid").length ?? 0} paid · {paymentsList?.filter(p => p.paymentStatus === "refunded").length ?? 0} refunded</p>
+                </div>
+                <button onClick={() => refetchPayments()} className="text-muted-foreground hover:text-foreground"><RefreshCw className="w-4 h-4" /></button>
+              </div>
+              {!paymentsList?.length ? (
+                <Card><CardContent className="p-10 text-center text-muted-foreground text-sm">No payments yet.</CardContent></Card>
+              ) : (
+                <div className="space-y-2">
+                  {paymentsList.map(p => (
+                    <Card key={p.id} className={`border-l-4 ${p.paymentStatus === "refunded" ? "border-l-orange-400" : "border-l-emerald-500"}`}>
+                      <CardContent className="p-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-wrap items-center gap-2 mb-1">
+                              <span className="text-xs font-mono text-muted-foreground">#{p.id}</span>
+                              <span className="font-semibold text-sm">{p.customerName}</span>
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${p.paymentStatus === "refunded" ? "bg-orange-100 text-orange-700" : "bg-emerald-100 text-emerald-700"}`}>
+                                {p.paymentStatus === "refunded" ? "Refunded" : "Paid ✓"}
+                              </span>
+                            </div>
+                            <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
+                              {p.resolvedEmail && <span>{p.resolvedEmail}</span>}
+                              {p.resolvedPhone && <a href={`tel:+91${p.resolvedPhone}`} className="hover:text-primary flex items-center gap-1"><Phone className="w-3 h-3" />+91 {p.resolvedPhone}</a>}
+                              <span>{p.fromCity} → {p.toCity}</span>
+                              <span>{new Date(p.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+                              {p.razorpayPaymentId && <span className="font-mono">RZP: {p.razorpayPaymentId}</span>}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3 shrink-0">
+                            <span className="font-bold text-lg text-emerald-700">₹{parseFloat(p.totalPrice).toLocaleString("en-IN")}</span>
+                            {p.paymentStatus === "paid" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-8 text-xs gap-1 border-orange-200 text-orange-700 hover:bg-orange-50"
+                                disabled={processRefund.isPending}
+                                onClick={() => {
+                                  if (confirm(`Refund ₹${parseFloat(p.totalPrice).toLocaleString("en-IN")} for booking #${p.id}? This will notify the customer.`)) {
+                                    processRefund.mutate({ bookingId: Number(p.id) });
+                                  }
+                                }}
+                              >
+                                <IndianRupee className="w-3 h-3" /> Refund
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          )}
 
           {/* ── Financials (super_admin only) ─────────────────────── */}
           {isSuperAdmin && (

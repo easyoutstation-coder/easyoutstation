@@ -5,7 +5,7 @@ import { getDb } from "./queries/connection";
 import { users, bookings, drivers, expenses, siteSettings, faqs, routes, cars, userSearches, carReviews, referralEvents, referralPoints, corporateEnquiries, corporateAccounts } from "@db/schema";
 import { eq, desc, sql, and, gte, lt, count } from "drizzle-orm";
 import { defaultProgramConfig } from "./referral-router";
-import { sendReferralPointsNotification, sendDriverAssignmentSms, sendCorporateApprovalEmail } from "./lib/notifications";
+import { sendReferralPointsNotification, sendDriverAssignmentSms, sendCorporateApprovalEmail, sendRefundNotification } from "./lib/notifications";
 import { sendFcmNotification } from "./lib/fcm";
 
 // In-memory OTP store for data-clear verification (process-scoped, 10-min TTL)
@@ -414,6 +414,90 @@ Thank you for choosing EasyOutstation.`;
       const db = getDb();
       await db.update(users).set({ isTestUser: input.isTestUser }).where(eq(users.id, input.userId));
       return { success: true };
+    }),
+
+  // Grant or revoke role by email or phone (super admin only)
+  grantAccessByContact: superAdminQuery
+    .input(z.object({ contact: z.string().min(1), role: z.enum(["user", "admin", "super_admin"]) }))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      const contact = input.contact.trim();
+      const [u] = await db.select({ id: users.id, name: users.name })
+        .from(users)
+        .where(sql`${users.email} = ${contact} OR ${users.phone} = ${contact}`)
+        .limit(1);
+      if (!u) throw new TRPCError({ code: "NOT_FOUND", message: "No account found with that email or phone" });
+      await db.update(users).set({ role: input.role as any }).where(eq(users.id, u.id));
+      return { success: true, name: u.name };
+    }),
+
+  // Payments list — all paid bookings
+  getPayments: superAdminQuery.query(async () => {
+    const db = getDb();
+    const rows = await db.select({
+      id: bookings.id,
+      customerName: bookings.customerName,
+      customerEmail: bookings.customerEmail,
+      customerPhone: bookings.customerPhone,
+      fromCity: bookings.fromCity,
+      toCity: bookings.toCity,
+      totalPrice: bookings.totalPrice,
+      paymentStatus: bookings.paymentStatus,
+      razorpayPaymentId: bookings.razorpayPaymentId,
+      createdAt: bookings.createdAt,
+      userId: bookings.userId,
+    })
+      .from(bookings)
+      .where(sql`${bookings.paymentStatus} IN ('paid','refunded')`)
+      .orderBy(desc(bookings.createdAt));
+    // Resolve email/phone from users for bookings missing contact info
+    const userIds = [...new Set(rows.map(r => r.userId).filter(Boolean))];
+    const userMap: Record<number, { phone: string | null; email: string | null }> = {};
+    if (userIds.length > 0) {
+      const uRows = await db.select({ id: users.id, phone: users.phone, email: users.email }).from(users).where(sql`id IN (${sql.join(userIds.map(id => sql`${id}`), sql`, `)})`);
+      uRows.forEach(u => { userMap[u.id] = { phone: u.phone, email: u.email }; });
+    }
+    return rows.map(r => ({
+      ...r,
+      totalPrice: r.totalPrice,
+      resolvedEmail: r.customerEmail || userMap[r.userId]?.email || null,
+      resolvedPhone: r.customerPhone || userMap[r.userId]?.phone || null,
+    }));
+  }),
+
+  // Process refund — mark as refunded + send notifications
+  processRefund: superAdminQuery
+    .input(z.object({ bookingId: z.number() }))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      const booking = await db.query.bookings.findFirst({ where: eq(bookings.id, input.bookingId) });
+      if (!booking) throw new TRPCError({ code: "NOT_FOUND" });
+      if (booking.paymentStatus !== "paid") throw new TRPCError({ code: "BAD_REQUEST", message: "Booking is not in paid status" });
+
+      await db.update(bookings).set({ paymentStatus: "refunded", status: "cancelled" }).where(eq(bookings.id, input.bookingId));
+
+      // Resolve contact
+      let phone = booking.customerPhone ?? null;
+      let email = booking.customerEmail ?? null;
+      if ((!phone || !email) && booking.userId) {
+        const [u] = await db.select({ phone: users.phone, email: users.email }).from(users).where(eq(users.id, booking.userId)).limit(1);
+        if (!phone) phone = u?.phone ?? null;
+        if (!email) email = u?.email ?? null;
+      }
+
+      try {
+        await sendRefundNotification({
+          customerName: booking.customerName,
+          customerPhone: phone ?? undefined,
+          customerEmail: email ?? undefined,
+          bookingId: booking.id,
+          fromCity: booking.fromCity,
+          toCity: booking.toCity,
+          amount: parseFloat(booking.totalPrice),
+        });
+      } catch (e) { console.error("[processRefund] Notification failed:", e); }
+
+      return { success: true, razorpayPaymentId: booking.razorpayPaymentId ?? null };
     }),
 
   // ── Financial Analytics (super_admin only) ────────────────────────────

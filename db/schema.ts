@@ -95,6 +95,7 @@ export const bookings = mysqlTable("bookings", {
   driverName: varchar("driverName", { length: 255 }),
   driverPhone: varchar("driverPhone", { length: 20 }),
   adminNotes: text("adminNotes"),
+  razorpayPaymentId: varchar("razorpayPaymentId", { length: 100 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
