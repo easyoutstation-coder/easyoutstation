@@ -200,6 +200,13 @@ Questions? Call us: +91-9958556011
 
 Have a wonderful journey! 🌟`;
 
+      // SMS to customer with driver details
+      if (booking?.resolvedPhone) {
+        sendSms(booking.resolvedPhone,
+          `EasyOutstation: Booking #${input.id} CONFIRMED! ${route}. Date: ${date}. Driver: ${input.driverName}, +91-${input.driverPhone}. Driver will call 1hr before pickup. Help: 9958556011`
+        ).catch(console.error);
+      }
+
       // SMS to driver so they have trip + customer details immediately
       if (booking) {
         sendDriverAssignmentSms({
