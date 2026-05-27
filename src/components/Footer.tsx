@@ -18,9 +18,9 @@ const footerLinks = {
   company: [
     { label: "About Us", href: "/about" },
     { label: "Vehicles", href: "/cars" },
+    { label: "For Business", href: "/corporate" },
     { label: "Refer & Earn ₹100", href: "/referral" },
     { label: "How It Works", href: "/#features" },
-    { label: "Testimonials", href: "/#testimonials" },
   ],
   support: [
     { label: "FAQs", href: "/faq" },
