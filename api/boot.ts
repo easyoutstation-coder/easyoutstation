@@ -63,8 +63,8 @@ async function runStartupMigrations() {
       `));
       await db.execute(sql.raw(`INSERT IGNORE INTO siteSettings (\`key\`, value) VALUES ('siteOnline', 'true')`));
     } catch { /* already exists */ }
-    // Update driver charges to ₹250/day across all cars
-    await db.execute(sql.raw(`UPDATE cars SET driverCharges = 250.00`));
+    // Driver charges default — only set on cars that still have the old hardcoded 0 value
+    await db.execute(sql.raw(`UPDATE cars SET driverCharges = 250.00 WHERE driverCharges = 0 OR driverCharges IS NULL`));
     // Return pickup time column for round trips
     try { await db.execute(sql.raw(`ALTER TABLE bookings ADD COLUMN returnTime VARCHAR(5)`)); } catch { /* already exists */ }
     // FCM push notification token column
