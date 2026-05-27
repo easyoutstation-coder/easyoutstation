@@ -80,10 +80,10 @@ function SiteGate({ children }: { children: React.ReactNode }) {
   })
   const { user, isLoading: authLoading } = useAuth()
   const { state: notifState, enable: enableNotif, dismiss: dismissNotif } = usePushNotifications(!!user)
-  const { pathname } = useLocation()
+  const { pathname, hash } = useLocation()
 
-  // Scroll to top on every page navigation
-  useEffect(() => { window.scrollTo(0, 0); }, [pathname])
+  // Scroll to top on page navigation, but skip if navigating to a hash anchor
+  useEffect(() => { if (!hash) window.scrollTo(0, 0); }, [pathname, hash])
 
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin'
   const isOffline = data?.online === false

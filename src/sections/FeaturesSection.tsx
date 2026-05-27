@@ -12,7 +12,7 @@ const features = [
 
 export default function FeaturesSection() {
   return (
-    <section className="py-12 sm:py-20 bg-white">
+    <section id="features" className="py-12 sm:py-20 bg-white">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-2xl mx-auto mb-16">
           <p className="text-xs font-bold uppercase tracking-widest text-blue-600 mb-3">Why Travelers Choose Us</p>
