@@ -19,6 +19,7 @@ import Admin from './pages/Admin'
 import ExecutiveTeam from './pages/ExecutiveTeam'
 import ReferralProgram from './pages/ReferralProgram'
 import Corporate from './pages/Corporate'
+import CorporatePortal from './pages/CorporatePortal'
 import { trpc } from './providers/trpc'
 import { useAuth } from './hooks/useAuth'
 import { usePushNotifications } from './hooks/usePushNotifications'
@@ -135,6 +136,7 @@ export default function App() {
         <Route path="/executive-team" element={<ExecutiveTeam />} />
         <Route path="/referral" element={<ReferralProgram />} />
         <Route path="/corporate" element={<Corporate />} />
+        <Route path="/corporate-portal" element={<CorporatePortal />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </SiteGate>

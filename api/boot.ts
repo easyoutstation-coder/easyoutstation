@@ -7,7 +7,9 @@ import { appRouter } from "./router";
 import { createContext } from "./context";
 import { env } from "./lib/env";
 import { getDb } from "./queries/connection";
-import { sql } from "drizzle-orm";
+import { sql, eq, and } from "drizzle-orm";
+import { bookings } from "@db/schema";
+import { sendTripReminder, sendReviewRequest } from "./lib/notifications";
 
 async function runStartupMigrations() {
   try {
@@ -111,6 +113,32 @@ async function runStartupMigrations() {
       } catch (e) { console.error(`[startup] Failed to insert ${v.name}:`, e); }
     }
 
+    // Post-booking automation columns
+    try { await db.execute(sql.raw(`ALTER TABLE bookings ADD COLUMN reminderSentAt TIMESTAMP NULL`)); } catch { /* already exists */ }
+    try { await db.execute(sql.raw(`ALTER TABLE bookings ADD COLUMN reviewSentAt TIMESTAMP NULL`)); } catch { /* already exists */ }
+    // Corporate columns on users
+    try { await db.execute(sql.raw(`ALTER TABLE users ADD COLUMN corporateAccountId BIGINT UNSIGNED NULL`)); } catch { /* already exists */ }
+    try { await db.execute(sql.raw(`ALTER TABLE users ADD COLUMN corporateRole VARCHAR(20) NULL`)); } catch { /* already exists */ }
+    // Corporate accounts table
+    try {
+      await db.execute(sql.raw(`
+        CREATE TABLE IF NOT EXISTS corporateAccounts (
+          id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+          companyName VARCHAR(255) NOT NULL,
+          gstin VARCHAR(15),
+          email VARCHAR(320),
+          phone VARCHAR(20),
+          address TEXT,
+          joinCode VARCHAR(10) NOT NULL UNIQUE,
+          status ENUM('pending','active','suspended') NOT NULL DEFAULT 'pending',
+          adminUserId BIGINT UNSIGNED NOT NULL,
+          monthlyLimit INT,
+          notes TEXT,
+          createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+      `));
+    } catch { /* already exists */ }
+
     // Master accounts always get super_admin
     await db.execute(sql.raw(
       `UPDATE users SET role = 'super_admin' WHERE phone = '9958556011' OR email = 'parmindersinghtalwar@gmail.com'`
@@ -119,6 +147,68 @@ async function runStartupMigrations() {
   } catch (e) {
     console.error("[startup] Migration error:", e);
   }
+}
+
+// ── Daily reminder cron (runs every hour, sends once per booking) ─────────────
+async function runDailyReminders() {
+  try {
+    const db = getDb();
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().slice(0, 10);
+    const pending = await db.select().from(bookings).where(
+      and(
+        eq(bookings.status, "confirmed"),
+        sql`DATE(${bookings.pickupDate}) = ${tomorrowStr}`,
+        sql`${bookings.reminderSentAt} IS NULL`,
+        sql`${bookings.driverName} IS NOT NULL`
+      )
+    );
+    for (const b of pending) {
+      await sendTripReminder({
+        customerName: b.customerName,
+        customerPhone: b.customerPhone,
+        customerEmail: b.customerEmail,
+        driverName: b.driverName!,
+        driverPhone: b.driverPhone!,
+        fromCity: b.fromCity,
+        toCity: b.toCity,
+        pickupDate: new Date(b.pickupDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
+        pickupAddress: b.pickupAddress,
+        bookingId: b.id,
+      });
+      await db.execute(sql.raw(`UPDATE bookings SET reminderSentAt = NOW() WHERE id = ${b.id}`));
+      console.log(`[cron] Reminder sent for booking #${b.id}`);
+    }
+  } catch (e) { console.error("[cron] runDailyReminders error:", e); }
+}
+
+async function runPostTripReviews() {
+  try {
+    const db = getDb();
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().slice(0, 10);
+    const done = await db.select().from(bookings).where(
+      and(
+        eq(bookings.status, "confirmed"),
+        sql`DATE(${bookings.pickupDate}) = ${yesterdayStr}`,
+        sql`${bookings.reviewSentAt} IS NULL`
+      )
+    );
+    for (const b of done) {
+      await sendReviewRequest({
+        customerName: b.customerName,
+        customerPhone: b.customerPhone,
+        customerEmail: b.customerEmail,
+        fromCity: b.fromCity,
+        toCity: b.toCity,
+        bookingId: b.id,
+      });
+      await db.execute(sql.raw(`UPDATE bookings SET reviewSentAt = NOW(), status = 'completed' WHERE id = ${b.id}`));
+      console.log(`[cron] Review request sent for booking #${b.id}`);
+    }
+  } catch (e) { console.error("[cron] runPostTripReviews error:", e); }
 }
 
 const app = new Hono<{ Bindings: HttpBindings }>();
@@ -176,5 +266,13 @@ if (env.isProduction) {
   serve({ fetch: app.fetch, port }, async () => {
     console.log(`Server running on http://localhost:${port}/`);
     await runStartupMigrations();
+    // Start hourly cron for post-booking automation
+    await runDailyReminders();
+    await runPostTripReviews();
+    setInterval(async () => {
+      await runDailyReminders();
+      await runPostTripReviews();
+    }, 60 * 60 * 1000); // every hour
+    console.log("[cron] Post-booking automation started.");
   });
 }

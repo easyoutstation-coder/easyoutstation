@@ -312,3 +312,156 @@ Team EasyOutstation`;
   if (input.referrerPhone) await sendSms(input.referrerPhone, `EasyOutstation: ₹${input.amount} referral credit added! Valid till ${expiryStr}. Use on your next booking at easyoutstation.com`);
   if (input.referredPhone) await sendSms(input.referredPhone, `EasyOutstation: ₹${input.amount} welcome credit added! Valid till ${expiryStr}. Book at easyoutstation.com`);
 }
+
+// ── Post-booking automation ──────────────────────────────────────────────────
+
+export async function sendDriverAssignmentSms(input: {
+  driverPhone: string;
+  driverName: string;
+  customerName: string;
+  customerPhone: string;
+  fromCity: string;
+  toCity: string;
+  pickupDate: string;
+  pickupAddress?: string | null;
+  bookingId: number;
+}) {
+  const msg = `EasyOutstation: Trip #${input.bookingId} assigned to you. Customer: ${input.customerName} (+91-${input.customerPhone}). Route: ${input.fromCity} to ${input.toCity}. Date: ${input.pickupDate}.${input.pickupAddress ? ` Pickup: ${input.pickupAddress}.` : ""} Help: 9958556011`;
+  await sendSms(input.driverPhone, msg);
+}
+
+export async function sendTripReminder(input: {
+  customerName: string;
+  customerPhone?: string | null;
+  customerEmail?: string | null;
+  driverName: string;
+  driverPhone: string;
+  fromCity: string;
+  toCity: string;
+  pickupDate: string;
+  pickupAddress?: string | null;
+  bookingId: number;
+}) {
+  const route = `${input.fromCity} to ${input.toCity}`;
+
+  // SMS to customer
+  if (input.customerPhone) {
+    await sendSms(input.customerPhone,
+      `EasyOutstation: Reminder! Your trip ${route} is TOMORROW (${input.pickupDate}). Driver: ${input.driverName}, call +91-${input.driverPhone}.${input.pickupAddress ? ` Pickup: ${input.pickupAddress}.` : ""} Help: 9958556011`
+    );
+  }
+
+  // Email to customer
+  if (input.customerEmail) {
+    await sendResend(input.customerEmail,
+      `Trip Reminder — Tomorrow: ${route} | EasyOutstation`,
+      `Dear ${input.customerName},
+
+Your trip is TOMORROW! Here's everything you need.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TRIP DETAILS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Booking ID   : #${input.bookingId}
+Route        : ${route}
+Date         : ${input.pickupDate}
+${input.pickupAddress ? `Pickup       : ${input.pickupAddress}\n` : ""}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+YOUR DRIVER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Name         : ${input.driverName}
+Mobile       : +91-${input.driverPhone}
+(Your driver will call you 1 hour before pickup)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+IMPORTANT REMINDERS
+• Keep your pickup address handy
+• Toll & parking are paid at actuals during the trip
+• For any issues, call us: +91-9958556011
+
+Have a safe and wonderful journey!
+Team EasyOutstation`
+    );
+  }
+
+  // SMS to driver
+  await sendSms(input.driverPhone,
+    `EasyOutstation: Reminder! Trip #${input.bookingId} tomorrow (${input.pickupDate}). Customer: ${input.customerName}${input.customerPhone ? `, +91-${input.customerPhone}` : ""}. Route: ${route}.${input.pickupAddress ? ` Pickup: ${input.pickupAddress}.` : ""} Help: 9958556011`
+  );
+}
+
+export async function sendReviewRequest(input: {
+  customerName: string;
+  customerPhone?: string | null;
+  customerEmail?: string | null;
+  fromCity: string;
+  toCity: string;
+  bookingId: number;
+}) {
+  const route = `${input.fromCity} to ${input.toCity}`;
+
+  if (input.customerPhone) {
+    await sendSms(input.customerPhone,
+      `EasyOutstation: Hope your trip ${route} was great! Rate your experience at easyoutstation.com/dashboard — takes 30 seconds & helps future travelers. Thank you!`
+    );
+  }
+
+  if (input.customerEmail) {
+    await sendResend(input.customerEmail,
+      `How was your trip ${route}? Leave a quick review | EasyOutstation`,
+      `Dear ${input.customerName},
+
+We hope you had a wonderful journey from ${input.fromCity} to ${input.toCity}! 🌟
+
+Your experience matters — a quick 30-second review helps future travelers choose confidently, and helps us keep improving.
+
+Leave your review here: https://easyoutstation.com/dashboard
+(Log in → Bookings → Rate your trip)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Booking ID: #${input.bookingId}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Thank you for choosing EasyOutstation. We look forward to your next journey!
+
+Warm regards,
+Team EasyOutstation
++91-9958556011 | easyoutstation@gmail.com`
+    );
+  }
+}
+
+export async function sendCorporateApprovalEmail(input: {
+  companyName: string;
+  contactName: string;
+  email?: string | null;
+  phone?: string | null;
+  joinCode: string;
+}) {
+  const text = `Dear ${input.contactName},
+
+Congratulations! Your corporate account for ${input.companyName} has been approved on EasyOutstation. 🎉
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+YOUR CORPORATE ACCOUNT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Company      : ${input.companyName}
+Join Code    : ${input.joinCode}
+Portal       : https://easyoutstation.com/corporate-portal
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+WHAT'S NEXT?
+1. Log in to your corporate portal at easyoutstation.com/corporate-portal
+2. Share your Join Code (${input.joinCode}) with team members so they can link their accounts
+3. Book trips — all company bookings will be tracked together with GST invoices
+
+For any help, contact your dedicated account manager:
+📞 +91-9958556011
+📧 easyoutstation@gmail.com
+
+Welcome aboard!
+Team EasyOutstation`;
+
+  if (input.email) await sendResend(input.email, `Corporate Account Approved — ${input.companyName} | EasyOutstation`, text);
+  if (input.phone) await sendSms(input.phone, `EasyOutstation: Corporate account for ${input.companyName} APPROVED! Login at easyoutstation.com/corporate-portal with join code: ${input.joinCode}. Help: 9958556011`);
+}

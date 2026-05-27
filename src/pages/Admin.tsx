@@ -193,6 +193,10 @@ export default function AdminPage() {
   }, [discountData]);
 
   const { data: corporateLeads, refetch: refetchCorporateLeads } = trpc.admin.getCorporateEnquiries.useQuery(undefined, { enabled: isAdmin });
+  const { data: corporateAccountsList, refetch: refetchCorporateAccounts } = trpc.admin.getCorporateAccounts.useQuery(undefined, { enabled: isAdmin });
+  const updateCorpAccountStatus = trpc.admin.updateCorporateAccountStatus.useMutation({ onSuccess: () => refetchCorporateAccounts() });
+  const [corpNoteId, setCorpNoteId] = useState<number | null>(null);
+  const [corpNoteText, setCorpNoteText] = useState("");
   const updateLeadStatus = trpc.admin.updateCorporateEnquiryStatus.useMutation({ onSuccess: () => refetchCorporateLeads() });
   const [leadNoteId, setLeadNoteId] = useState<number | null>(null);
   const [leadNoteText, setLeadNoteText] = useState("");
@@ -581,10 +585,18 @@ export default function AdminPage() {
             {isSuperAdmin && <TabsTrigger value="financials" className="gap-1.5 text-emerald-700"><TrendingUp className="w-4 h-4" />Financials</TabsTrigger>}
             {isSuperAdmin && <TabsTrigger value="referral" className="gap-1.5 text-pink-700"><Gift className="w-4 h-4" />Referral</TabsTrigger>}
             <TabsTrigger value="corporate" className="gap-1.5 text-blue-700">
-              <Building2 className="w-4 h-4" />Corporate
+              <Building2 className="w-4 h-4" />Corp Leads
               {(corporateLeads?.filter(l => l.status === "new").length ?? 0) > 0 && (
                 <span className="ml-1 bg-blue-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                   {corporateLeads!.filter(l => l.status === "new").length}
+                </span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="corp-accounts" className="gap-1.5 text-indigo-700">
+              <Building2 className="w-4 h-4" />Corp Accounts
+              {(corporateAccountsList?.filter(a => a.status === "pending").length ?? 0) > 0 && (
+                <span className="ml-1 bg-indigo-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                  {corporateAccountsList!.filter(a => a.status === "pending").length}
                 </span>
               )}
             </TabsTrigger>
@@ -2025,6 +2037,73 @@ export default function AdminPage() {
                             onClick={() => { setLeadNoteId(lead.id); setLeadNoteText(lead.adminNotes ?? ""); }}
                             className="text-[10px] text-muted-foreground hover:text-primary flex items-center gap-1 border border-slate-200 rounded-full px-2.5 py-1 hover:border-primary"
                           >
+                            <StickyNote className="w-3 h-3" /> Note
+                          </button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* ── Corporate Accounts ──────────────────────────────────── */}
+          <TabsContent value="corp-accounts" className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold">Corporate Accounts</h2>
+                <p className="text-sm text-muted-foreground">{corporateAccountsList?.length ?? 0} registered companies</p>
+              </div>
+              <button onClick={() => refetchCorporateAccounts()} className="text-muted-foreground hover:text-foreground"><RefreshCw className="w-4 h-4" /></button>
+            </div>
+            {!corporateAccountsList || corporateAccountsList.length === 0 ? (
+              <Card><CardContent className="p-10 text-center text-muted-foreground text-sm">No corporate accounts yet.</CardContent></Card>
+            ) : (
+              <div className="space-y-3">
+                {corporateAccountsList.map(acc => (
+                  <Card key={acc.id} className={`border-l-4 ${acc.status === "active" ? "border-l-green-500" : acc.status === "pending" ? "border-l-amber-400" : "border-l-slate-300"}`}>
+                    <CardContent className="p-4">
+                      <div className="flex flex-col sm:flex-row sm:items-start gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2 mb-1">
+                            <span className="font-semibold text-sm">{acc.companyName}</span>
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${acc.status === "active" ? "bg-green-100 text-green-700" : acc.status === "pending" ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-600"}`}>
+                              {acc.status}
+                            </span>
+                            <span className="text-xs text-muted-foreground">· {acc.memberCount} member{acc.memberCount !== 1 ? "s" : ""}</span>
+                          </div>
+                          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground mb-2">
+                            {acc.phone && <a href={`tel:+91${acc.phone}`} className="flex items-center gap-1 hover:text-primary"><Phone className="w-3 h-3" />+91 {acc.phone}</a>}
+                            {acc.email && <a href={`mailto:${acc.email}`} className="flex items-center gap-1 hover:text-primary"><Mail className="w-3 h-3" />{acc.email}</a>}
+                            {acc.gstin && <span>GSTIN: {acc.gstin}</span>}
+                            <span>Join Code: <strong className="font-mono">{acc.joinCode}</strong></span>
+                            <span>{new Date(acc.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
+                          </div>
+                          {acc.notes && <p className="text-xs text-amber-700 bg-amber-50 rounded p-2 mb-2">Note: {acc.notes}</p>}
+                          {corpNoteId === acc.id && (
+                            <div className="flex gap-2 mt-2">
+                              <input value={corpNoteText} onChange={e => setCorpNoteText(e.target.value)} placeholder="Add admin note…"
+                                className="flex-1 border border-input rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary" />
+                              <button onClick={() => { updateCorpAccountStatus.mutate({ id: acc.id, status: acc.status as any, notes: corpNoteText }); setCorpNoteId(null); setCorpNoteText(""); }}
+                                className="text-xs bg-primary text-white px-3 py-1.5 rounded-lg hover:bg-primary/90">Save</button>
+                              <button onClick={() => { setCorpNoteId(null); setCorpNoteText(""); }} className="text-xs text-muted-foreground hover:text-foreground px-2">✕</button>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex sm:flex-col gap-2 shrink-0">
+                          <div className="flex gap-1.5">
+                            {(["pending", "active", "suspended"] as const).map(s => (
+                              <button key={s} onClick={() => updateCorpAccountStatus.mutate({ id: acc.id, status: s })}
+                                className={`text-[10px] font-semibold px-2.5 py-1 rounded-full border transition-all ${acc.status === s
+                                  ? s === "active" ? "bg-green-500 text-white border-green-500" : s === "pending" ? "bg-amber-500 text-white border-amber-500" : "bg-slate-500 text-white border-slate-500"
+                                  : "bg-white text-muted-foreground border-slate-200 hover:border-slate-400"}`}>
+                                {s.charAt(0).toUpperCase() + s.slice(1)}
+                              </button>
+                            ))}
+                          </div>
+                          <button onClick={() => { setCorpNoteId(acc.id); setCorpNoteText(acc.notes ?? ""); }}
+                            className="text-[10px] text-muted-foreground hover:text-primary flex items-center gap-1 border border-slate-200 rounded-full px-2.5 py-1 hover:border-primary">
                             <StickyNote className="w-3 h-3" /> Note
                           </button>
                         </div>

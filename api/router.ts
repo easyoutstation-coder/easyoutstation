@@ -8,6 +8,7 @@ import { adminRouter } from "./admin-router";
 import { agentRouter } from "./agent-router";
 import { executiveRouter } from "./executive-router";
 import { referralRouter } from "./referral-router";
+import { corporateRouter } from "./corporate-router";
 import { createRouter, publicQuery, superAdminQuery } from "./middleware";
 import { z } from "zod";
 
@@ -25,6 +26,7 @@ export const appRouter = createRouter({
   agent: agentRouter,
   executive: executiveRouter,
   referral: referralRouter,
+  corporate: corporateRouter,
   testSms: superAdminQuery
     .input(z.object({ phone: z.string() }))
     .mutation(async ({ input }) => {

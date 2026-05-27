@@ -351,6 +351,10 @@ export default function Corporate() {
                           <a href="https://wa.me/918796564111?text=Hi%2C+I'd+like+to+enquire+about+a+corporate+account." target="_blank" rel="noopener noreferrer" className="text-emerald-500 hover:text-emerald-400 transition-colors font-medium">WhatsApp us</a>
                           {" "}for urgent queries.
                         </p>
+                        <p className="text-center text-[11px] text-slate-500 pt-1">
+                          Already a client?{" "}
+                          <a href="/corporate-portal" className="text-blue-400 hover:text-blue-300 font-medium transition-colors">Access your portal →</a>
+                        </p>
                       </div>
                     )}
                   </div>

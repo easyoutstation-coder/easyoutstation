@@ -2,10 +2,10 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createRouter, publicQuery, adminQuery, superAdminQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { users, bookings, drivers, expenses, siteSettings, faqs, routes, cars, userSearches, carReviews, referralEvents, referralPoints, corporateEnquiries } from "@db/schema";
+import { users, bookings, drivers, expenses, siteSettings, faqs, routes, cars, userSearches, carReviews, referralEvents, referralPoints, corporateEnquiries, corporateAccounts } from "@db/schema";
 import { eq, desc, sql, and, gte, lt, count } from "drizzle-orm";
 import { defaultProgramConfig } from "./referral-router";
-import { sendReferralPointsNotification } from "./lib/notifications";
+import { sendReferralPointsNotification, sendDriverAssignmentSms, sendCorporateApprovalEmail } from "./lib/notifications";
 import { sendFcmNotification } from "./lib/fcm";
 
 // In-memory OTP store for data-clear verification (process-scoped, 10-min TTL)
@@ -199,6 +199,21 @@ Your driver will call you 1 hour before pickup.
 Questions? Call us: +91-9958556011
 
 Have a wonderful journey! 🌟`;
+
+      // SMS to driver so they have trip + customer details immediately
+      if (booking) {
+        sendDriverAssignmentSms({
+          driverPhone: input.driverPhone,
+          driverName: input.driverName,
+          customerName: name,
+          customerPhone: booking.resolvedPhone ?? "",
+          fromCity: booking.fromCity ?? "",
+          toCity: booking.toCity ?? "",
+          pickupDate: date,
+          pickupAddress: booking.pickupAddress ?? null,
+          bookingId: input.id,
+        }).catch(console.error);
+      }
 
       return {
         success: true,
@@ -975,6 +990,47 @@ Thank you for choosing EasyOutstation.`;
       await db.update(corporateEnquiries)
         .set({ status: input.status, ...(input.adminNotes !== undefined ? { adminNotes: input.adminNotes } : {}) })
         .where(eq(corporateEnquiries.id, input.id));
+      return { success: true };
+    }),
+
+  // ── Corporate account management ───────────────────────────────────────
+  getCorporateAccounts: adminQuery
+    .query(async () => {
+      const db = getDb();
+      const accounts = await db.select().from(corporateAccounts).orderBy(desc(corporateAccounts.createdAt));
+      // Count members for each account
+      const memberCounts = await db.select({
+        corporateAccountId: sql<number>`corporateAccountId`,
+        count: count(),
+      }).from(users).where(sql`corporateAccountId IS NOT NULL`).groupBy(sql`corporateAccountId`);
+      const countMap = Object.fromEntries(memberCounts.map(r => [r.corporateAccountId, r.count]));
+      return accounts.map(a => ({ ...a, memberCount: countMap[a.id] ?? 0 }));
+    }),
+
+  updateCorporateAccountStatus: adminQuery
+    .input(z.object({
+      id: z.number(),
+      status: z.enum(["pending", "active", "suspended"]),
+      notes: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      const [account] = await db.select().from(corporateAccounts).where(eq(corporateAccounts.id, input.id)).limit(1);
+      if (!account) throw new TRPCError({ code: "NOT_FOUND" });
+      await db.update(corporateAccounts)
+        .set({ status: input.status, ...(input.notes !== undefined ? { notes: input.notes } : {}) })
+        .where(eq(corporateAccounts.id, input.id));
+      // Send approval notification
+      if (input.status === "active" && account.status !== "active") {
+        const adminUser = await db.select().from(users).where(eq(users.id, account.adminUserId)).limit(1);
+        sendCorporateApprovalEmail({
+          companyName: account.companyName,
+          contactName: adminUser[0]?.name ?? account.companyName,
+          email: account.email ?? adminUser[0]?.email,
+          phone: account.phone ?? adminUser[0]?.phone,
+          joinCode: account.joinCode,
+        }).catch(console.error);
+      }
       return { success: true };
     }),
 });
