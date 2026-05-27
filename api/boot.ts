@@ -9,7 +9,7 @@ import { env } from "./lib/env";
 import { getDb } from "./queries/connection";
 import { sql, eq, and } from "drizzle-orm";
 import { bookings, users } from "@db/schema";
-import { sendTripReminder, sendReviewRequest } from "./lib/notifications";
+import { sendTripReminder, sendReviewRequest, sendBookingEmails, sendBookingSms } from "./lib/notifications";
 
 async function runStartupMigrations() {
   try {
@@ -116,6 +116,7 @@ async function runStartupMigrations() {
     // Post-booking automation columns
     try { await db.execute(sql.raw(`ALTER TABLE bookings ADD COLUMN reminderSentAt TIMESTAMP NULL`)); } catch { /* already exists */ }
     try { await db.execute(sql.raw(`ALTER TABLE bookings ADD COLUMN reviewSentAt TIMESTAMP NULL`)); } catch { /* already exists */ }
+    try { await db.execute(sql.raw(`ALTER TABLE bookings ADD COLUMN abandonmentReminderSentAt TIMESTAMP NULL`)); } catch { /* already exists */ }
     // Corporate columns on users
     try { await db.execute(sql.raw(`ALTER TABLE users ADD COLUMN corporateAccountId BIGINT UNSIGNED NULL`)); } catch { /* already exists */ }
     try { await db.execute(sql.raw(`ALTER TABLE users ADD COLUMN corporateRole VARCHAR(20) NULL`)); } catch { /* already exists */ }
@@ -230,6 +231,71 @@ async function runPostTripReviews() {
   } catch (e) { console.error("[cron] runPostTripReviews error:", e); }
 }
 
+// ── Abandoned booking reminders (runs every hour, sends once per booking) ──────
+async function runAbandonedReminders() {
+  try {
+    const db = getDb();
+    const cutoff = new Date(Date.now() - 30 * 60 * 1000); // 30 minutes ago
+
+    const abandoned = await db.select().from(bookings).where(
+      and(
+        sql`${bookings.paymentStatus} = 'pending'`,
+        sql`${bookings.status} != 'cancelled'`,
+        sql`${bookings.createdAt} < ${cutoff.toISOString().slice(0, 19).replace('T', ' ')}`,
+        sql`abandonmentReminderSentAt IS NULL`
+      )
+    );
+
+    if (!abandoned.length) return;
+
+    const userIds = [...new Set(abandoned.map(b => b.userId).filter(Boolean))];
+    const userMap: Record<number, { phone: string | null; email: string | null }> = {};
+    if (userIds.length > 0) {
+      const rows = await db.select({ id: users.id, phone: users.phone, email: users.email }).from(users).where(sql`id IN (${sql.join(userIds.map(id => sql`${id}`), sql`, `)})`);
+      rows.forEach(u => { userMap[u.id] = { phone: u.phone, email: u.email }; });
+    }
+
+    const fmt = (d: Date | string | null) => d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : undefined;
+
+    for (const b of abandoned) {
+      const phone = b.customerPhone || userMap[b.userId]?.phone || null;
+      const email = b.customerEmail || userMap[b.userId]?.email || null;
+      const pickupDateStr = fmt(b.pickupDate) ?? String(b.pickupDate);
+      const returnDateStr = b.returnDate ? fmt(b.returnDate) : undefined;
+      const price = parseFloat(b.totalPrice);
+
+      try {
+        await sendBookingEmails({
+          bookingId: b.id,
+          customerName: b.customerName,
+          customerEmail: email ?? undefined,
+          customerPhone: phone ?? undefined,
+          fromCity: b.fromCity,
+          toCity: b.toCity,
+          pickupDate: pickupDateStr,
+          returnDate: returnDateStr,
+          returnTime: b.returnTime ?? undefined,
+          totalKm: b.totalKm,
+          totalPrice: price,
+          tripType: b.tripType,
+          passengerCount: b.passengerCount ?? 1,
+          pickupAddress: b.pickupAddress ?? undefined,
+          specialRequests: b.specialRequests ?? undefined,
+        }, "abandonment");
+      } catch (e) { console.error(`[cron] Abandonment email failed for booking #${b.id}:`, e); }
+
+      if (phone) {
+        try {
+          await sendBookingSms(phone, b.id, b.fromCity, b.toCity, pickupDateStr, price, "abandonment");
+        } catch (e) { console.error(`[cron] Abandonment SMS failed for booking #${b.id}:`, e); }
+      }
+
+      await db.execute(sql.raw(`UPDATE bookings SET abandonmentReminderSentAt = NOW() WHERE id = ${b.id}`));
+      console.log(`[cron] Abandonment reminder sent for booking #${b.id}`);
+    }
+  } catch (e) { console.error("[cron] runAbandonedReminders error:", e); }
+}
+
 const app = new Hono<{ Bindings: HttpBindings }>();
 
 app.use(bodyLimit({ maxSize: 50 * 1024 * 1024 }));
@@ -288,9 +354,11 @@ if (env.isProduction) {
     // Start hourly cron for post-booking automation
     await runDailyReminders();
     await runPostTripReviews();
+    await runAbandonedReminders();
     setInterval(async () => {
       await runDailyReminders();
       await runPostTripReviews();
+      await runAbandonedReminders();
     }, 60 * 60 * 1000); // every hour
     console.log("[cron] Post-booking automation started.");
   });
