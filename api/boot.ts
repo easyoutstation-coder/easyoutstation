@@ -8,7 +8,7 @@ import { createContext } from "./context";
 import { env } from "./lib/env";
 import { getDb } from "./queries/connection";
 import { sql, eq, and } from "drizzle-orm";
-import { bookings } from "@db/schema";
+import { bookings, users } from "@db/schema";
 import { sendTripReminder, sendReviewRequest } from "./lib/notifications";
 
 async function runStartupMigrations() {
@@ -164,11 +164,21 @@ async function runDailyReminders() {
         sql`${bookings.driverName} IS NOT NULL`
       )
     );
+    // Resolve missing phone/email from user accounts
+    const userIds = [...new Set(pending.map(b => b.userId).filter(Boolean))];
+    const userMap: Record<number, { phone: string | null; email: string | null }> = {};
+    if (userIds.length > 0) {
+      const rows = await db.select({ id: users.id, phone: users.phone, email: users.email }).from(users).where(sql`id IN (${sql.join(userIds.map(id => sql`${id}`), sql`, `)})`);
+      rows.forEach(u => { userMap[u.id] = { phone: u.phone, email: u.email }; });
+    }
+
     for (const b of pending) {
+      const phone = b.customerPhone || userMap[b.userId]?.phone || null;
+      const email = b.customerEmail || userMap[b.userId]?.email || null;
       await sendTripReminder({
         customerName: b.customerName,
-        customerPhone: b.customerPhone,
-        customerEmail: b.customerEmail,
+        customerPhone: phone,
+        customerEmail: email,
         driverName: b.driverName!,
         driverPhone: b.driverPhone!,
         fromCity: b.fromCity,
@@ -196,11 +206,20 @@ async function runPostTripReviews() {
         sql`${bookings.reviewSentAt} IS NULL`
       )
     );
+    const doneUserIds = [...new Set(done.map(b => b.userId).filter(Boolean))];
+    const doneUserMap: Record<number, { phone: string | null; email: string | null }> = {};
+    if (doneUserIds.length > 0) {
+      const rows = await db.select({ id: users.id, phone: users.phone, email: users.email }).from(users).where(sql`id IN (${sql.join(doneUserIds.map(id => sql`${id}`), sql`, `)})`);
+      rows.forEach(u => { doneUserMap[u.id] = { phone: u.phone, email: u.email }; });
+    }
+
     for (const b of done) {
+      const phone = b.customerPhone || doneUserMap[b.userId]?.phone || null;
+      const email = b.customerEmail || doneUserMap[b.userId]?.email || null;
       await sendReviewRequest({
         customerName: b.customerName,
-        customerPhone: b.customerPhone,
-        customerEmail: b.customerEmail,
+        customerPhone: phone,
+        customerEmail: email,
         fromCity: b.fromCity,
         toCity: b.toCity,
         bookingId: b.id,

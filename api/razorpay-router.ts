@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createRouter, publicQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { bookings } from "@db/schema";
+import { bookings, users } from "@db/schema";
 import { eq } from "drizzle-orm";
 import { sendBookingEmails, sendBookingSms } from "./lib/notifications";
 
@@ -80,10 +80,13 @@ export const razorpayRouter = createRouter({
         .set({ paymentStatus: "paid", status: "confirmed" })
         .where(eq(bookings.id, input.bookingId));
 
-      // Fetch booking details for notifications
-      const booking = await db.query.bookings.findFirst({
-        where: eq(bookings.id, input.bookingId),
-      });
+      // Fetch booking + fall back to user account for missing phone/email
+      const booking = await db.query.bookings.findFirst({ where: eq(bookings.id, input.bookingId) });
+      if (booking && booking.userId) {
+        const [u] = await db.select({ phone: users.phone, email: users.email }).from(users).where(eq(users.id, booking.userId)).limit(1);
+        if (!booking.customerPhone && u?.phone) (booking as any).customerPhone = u.phone;
+        if (!booking.customerEmail && u?.email) (booking as any).customerEmail = u.email;
+      }
 
       if (booking) {
         const fmt = (d: Date | string | null) => d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : undefined;

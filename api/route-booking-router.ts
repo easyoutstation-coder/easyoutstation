@@ -2,7 +2,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createRouter, publicQuery, authedQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { routes, bookings, userSearches } from "@db/schema";
+import { routes, bookings, userSearches, users } from "@db/schema";
 import { eq, and, like, desc, sql, lt, isNull, ne } from "drizzle-orm";
 import { differenceInHours, subMinutes } from "date-fns";
 import { sendBookingEmails, sendBookingSms } from "./lib/notifications";
@@ -127,8 +127,18 @@ export const bookingRouter = createRouter({
       });
 
       const fmt = (d: Date | string | null) => d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : undefined;
+      // Resolve missing phone/email from user accounts in one batch query
+      const userIds = [...new Set(abandoned.map(b => b.userId).filter(Boolean))];
+      const userMap: Record<number, { phone: string | null; email: string | null }> = {};
+      if (userIds.length > 0) {
+        const rows = await db.select({ id: users.id, phone: users.phone, email: users.email }).from(users).where(sql`id IN (${sql.join(userIds.map(id => sql`${id}`), sql`, `)})`);
+        rows.forEach(u => { userMap[u.id] = { phone: u.phone, email: u.email }; });
+      }
+
       let sent = 0;
       for (const booking of abandoned) {
+        const resolvedPhone = booking.customerPhone || userMap[booking.userId]?.phone || null;
+        const resolvedEmail = booking.customerEmail || userMap[booking.userId]?.email || null;
         const pickupDateStr = fmt(booking.pickupDate) ?? String(booking.pickupDate);
         const returnDateStr = booking.returnDate ? fmt(booking.returnDate) : undefined;
         const price = parseFloat(booking.totalPrice);
@@ -138,8 +148,8 @@ export const bookingRouter = createRouter({
             {
               bookingId: booking.id,
               customerName: booking.customerName,
-              customerEmail: booking.customerEmail ?? undefined,
-              customerPhone: booking.customerPhone ?? undefined,
+              customerEmail: resolvedEmail ?? undefined,
+              customerPhone: resolvedPhone ?? undefined,
               fromCity: booking.fromCity,
               toCity: booking.toCity,
               pickupDate: pickupDateStr,
@@ -158,9 +168,9 @@ export const bookingRouter = createRouter({
           console.error(`[Abandoned] Email failed for booking #${booking.id}:`, e);
         }
 
-        if (booking.customerPhone) {
+        if (resolvedPhone) {
           try {
-            await sendBookingSms(booking.customerPhone, booking.id, booking.fromCity, booking.toCity, pickupDateStr, price, "abandonment");
+            await sendBookingSms(resolvedPhone, booking.id, booking.fromCity, booking.toCity, pickupDateStr, price, "abandonment");
           } catch (e) {
             console.error(`[Abandoned] SMS failed for booking #${booking.id}:`, e);
           }
@@ -175,10 +185,17 @@ export const bookingRouter = createRouter({
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input }) => {
       const db = getDb();
-      const booking = await db.query.bookings.findFirst({
-        where: eq(bookings.id, input.id),
-      });
+      const booking = await db.query.bookings.findFirst({ where: eq(bookings.id, input.id) });
       if (!booking || booking.paymentStatus === "paid") return { success: false };
+
+      // Resolve phone/email from user account if missing from booking
+      let resolvedPhone = booking.customerPhone ?? null;
+      let resolvedEmail = booking.customerEmail ?? null;
+      if ((!resolvedPhone || !resolvedEmail) && booking.userId) {
+        const [u] = await db.select({ phone: users.phone, email: users.email }).from(users).where(eq(users.id, booking.userId)).limit(1);
+        if (!resolvedPhone) resolvedPhone = u?.phone ?? null;
+        if (!resolvedEmail) resolvedEmail = u?.email ?? null;
+      }
 
       const fmt = (d: Date | string | null) => d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : undefined;
       const pickupDateStr = fmt(booking.pickupDate) ?? String(booking.pickupDate);
@@ -190,8 +207,8 @@ export const bookingRouter = createRouter({
           {
             bookingId: booking.id,
             customerName: booking.customerName,
-            customerEmail: booking.customerEmail ?? undefined,
-            customerPhone: booking.customerPhone ?? undefined,
+            customerEmail: resolvedEmail ?? undefined,
+            customerPhone: resolvedPhone ?? undefined,
             fromCity: booking.fromCity,
             toCity: booking.toCity,
             pickupDate: pickupDateStr,
@@ -209,9 +226,9 @@ export const bookingRouter = createRouter({
         console.error(`[notifyAbandoned] Email failed for booking #${booking.id}:`, e);
       }
 
-      if (booking.customerPhone) {
+      if (resolvedPhone) {
         try {
-          await sendBookingSms(booking.customerPhone, booking.id, booking.fromCity, booking.toCity, pickupDateStr, price, "abandonment");
+          await sendBookingSms(resolvedPhone, booking.id, booking.fromCity, booking.toCity, pickupDateStr, price, "abandonment");
         } catch (e) {
           console.error(`[notifyAbandoned] SMS failed for booking #${booking.id}:`, e);
         }
