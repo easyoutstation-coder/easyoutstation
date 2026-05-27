@@ -1010,7 +1010,7 @@ export default function BookingPage() {
                       <div className="flex items-start gap-3">
                         <Checkbox id="terms" checked={agreeTerms} onCheckedChange={(v) => setAgreeTerms(v as boolean)} className="mt-0.5" />
                         <label htmlFor="terms" className="text-sm text-muted-foreground cursor-pointer">
-                          I agree to the <span className="text-primary underline">Terms & Conditions</span> and <span className="text-primary underline">Cancellation Policy</span>
+                          I agree to the <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary underline hover:text-primary/80">Terms & Conditions</a> and <a href="/cancellation" target="_blank" rel="noopener noreferrer" className="text-primary underline hover:text-primary/80">Cancellation Policy</a>
                         </label>
                       </div>
                     </div>
