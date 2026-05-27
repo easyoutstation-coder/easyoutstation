@@ -2055,7 +2055,13 @@ export default function AdminPage() {
                 <h2 className="text-lg font-semibold">Corporate Accounts</h2>
                 <p className="text-sm text-muted-foreground">{corporateAccountsList?.length ?? 0} registered companies</p>
               </div>
-              <button onClick={() => refetchCorporateAccounts()} className="text-muted-foreground hover:text-foreground"><RefreshCw className="w-4 h-4" /></button>
+              <div className="flex items-center gap-2">
+                <a href="/corporate-portal" target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors">
+                  <Building2 className="w-3.5 h-3.5" /> Open Portal
+                </a>
+                <button onClick={() => refetchCorporateAccounts()} className="text-muted-foreground hover:text-foreground"><RefreshCw className="w-4 h-4" /></button>
+              </div>
             </div>
             {!corporateAccountsList || corporateAccountsList.length === 0 ? (
               <Card><CardContent className="p-10 text-center text-muted-foreground text-sm">No corporate accounts yet.</CardContent></Card>
