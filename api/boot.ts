@@ -322,46 +322,43 @@ app.use("/api/test-sms", async (c) => {
 });
 
 // ── WhatsApp webhook ──────────────────────────────────────────────────────────
-// GET: Meta one-time verification handshake
-app.get("/api/webhooks/whatsapp", (c) => {
-  const mode = c.req.query("hub.mode");
-  const token = c.req.query("hub.verify_token");
-  const challenge = c.req.query("hub.challenge");
-  if (mode === "subscribe" && token === process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN) {
-    console.log("[WA Webhook] Meta verification successful");
-    return c.text(challenge ?? "");
-  }
-  return c.json({ error: "Forbidden" }, 403);
-});
-
-// POST: incoming events (messages, delivery status updates)
-app.post("/api/webhooks/whatsapp", async (c) => {
-  const rawBody = await c.req.text();
-
-  // Signature verification (optional — set WHATSAPP_APP_SECRET to enable)
-  const appSecret = process.env.WHATSAPP_APP_SECRET;
-  if (appSecret) {
-    const { createHmac } = await import("node:crypto");
-    const sig = c.req.header("x-hub-signature-256") ?? "";
-    const expected = "sha256=" + createHmac("sha256", appSecret).update(rawBody).digest("hex");
-    if (sig !== expected) {
-      console.warn("[WA Webhook] Invalid signature — rejected");
-      return c.json({ error: "Forbidden" }, 403);
+app.use("/api/webhooks/whatsapp", async (c) => {
+  if (c.req.method === "GET") {
+    const mode = c.req.query("hub.mode");
+    const token = c.req.query("hub.verify_token");
+    const challenge = c.req.query("hub.challenge");
+    if (mode === "subscribe" && token === process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN) {
+      console.log("[WA Webhook] Meta verification successful");
+      return c.text(challenge ?? "");
     }
+    return c.json({ error: "Forbidden" }, 403);
   }
 
-  // Enqueue for async processing — must respond to Meta within 5s
-  const queue = getWhatsAppInboundQueue();
-  if (queue) {
-    queue.add(`wa-inbound-${Date.now()}`, { payload: JSON.parse(rawBody) })
-      .catch(e => console.error("[WA Webhook] Enqueue failed:", e));
+  if (c.req.method === "POST") {
+    const rawBody = await c.req.text();
+    const appSecret = process.env.WHATSAPP_APP_SECRET;
+    if (appSecret) {
+      const { createHmac } = await import("node:crypto");
+      const sig = c.req.header("x-hub-signature-256") ?? "";
+      const expected = "sha256=" + createHmac("sha256", appSecret).update(rawBody).digest("hex");
+      if (sig !== expected) {
+        console.warn("[WA Webhook] Invalid signature — rejected");
+        return c.json({ error: "Forbidden" }, 403);
+      }
+    }
+    const queue = getWhatsAppInboundQueue();
+    if (queue) {
+      queue.add(`wa-inbound-${Date.now()}`, { payload: JSON.parse(rawBody) })
+        .catch(e => console.error("[WA Webhook] Enqueue failed:", e));
+    }
+    return c.json({ status: "ok" });
   }
 
-  return c.json({ status: "ok" });
+  return c.json({ error: "Method not allowed" }, 405);
 });
 
 // WhatsApp test endpoint — same key as SMS test
-app.get("/api/test-whatsapp", async (c) => {
+app.use("/api/test-whatsapp", async (c) => {
   const validKey = process.env.SMS_TEST_KEY || "";
   if (!validKey || c.req.query("key") !== validKey) return c.json({ error: "forbidden" }, 403);
   const phone = c.req.query("phone") || "9958556011";
