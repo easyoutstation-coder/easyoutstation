@@ -10,6 +10,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   LayoutDashboard,
   Calendar,
@@ -28,6 +30,7 @@ import {
   Share2,
   Clock,
   CheckCircle,
+  Star,
 } from "lucide-react";
 
 export default function DashboardPage() {
@@ -41,6 +44,20 @@ export default function DashboardPage() {
 
   const updateProfileMutation = trpc.auth.updateProfile.useMutation({
     onSuccess: () => { setEditingName(false); refresh(); },
+  });
+
+  const [reviewBookingId, setReviewBookingId] = useState<number | null>(null);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewHover, setReviewHover] = useState(0);
+  const [reviewComment, setReviewComment] = useState("");
+  const utils = trpc.useUtils();
+  const submitReviewMutation = trpc.review.submit.useMutation({
+    onSuccess: () => {
+      setReviewBookingId(null);
+      setReviewRating(0);
+      setReviewComment("");
+      utils.booking.getMyBookings.invalidate();
+    },
   });
 
   const [referralCopied, setReferralCopied] = useState(false);
@@ -279,15 +296,33 @@ export default function DashboardPage() {
                                 <span className="font-bold text-primary">
                                   ₹{parseFloat(booking.totalPrice.toString()).toLocaleString()}
                                 </span>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => navigate(`/booking/${booking.id}`)}
-                                  className="text-xs"
-                                >
-                                  Details
-                                  <ChevronRight className="w-3 h-3 ml-1" />
-                                </Button>
+                                <div className="flex items-center gap-2">
+                                  {booking.status === "completed" && !(booking as any).hasReview && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => { setReviewBookingId(booking.id); setReviewRating(0); setReviewComment(""); }}
+                                      className="text-xs border-amber-300 text-amber-700 hover:bg-amber-50"
+                                    >
+                                      <Star className="w-3 h-3 mr-1" />
+                                      Rate Trip
+                                    </Button>
+                                  )}
+                                  {booking.status === "completed" && (booking as any).hasReview && (
+                                    <span className="text-xs text-green-600 flex items-center gap-1">
+                                      <CheckCircle className="w-3 h-3" /> Reviewed
+                                    </span>
+                                  )}
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => navigate(`/booking/${booking.id}`)}
+                                    className="text-xs"
+                                  >
+                                    Details
+                                    <ChevronRight className="w-3 h-3 ml-1" />
+                                  </Button>
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -563,6 +598,67 @@ export default function DashboardPage() {
         </div>
       </main>
       <Footer />
+
+      <Dialog open={reviewBookingId !== null} onOpenChange={(open) => { if (!open) setReviewBookingId(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Rate Your Trip</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div>
+              <p className="text-sm text-muted-foreground mb-3">How was your experience?</p>
+              <div className="flex gap-2 justify-center">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setReviewRating(star)}
+                    onMouseEnter={() => setReviewHover(star)}
+                    onMouseLeave={() => setReviewHover(0)}
+                    className="text-3xl transition-transform hover:scale-110"
+                  >
+                    <Star
+                      className={`w-8 h-8 ${(reviewHover || reviewRating) >= star ? "fill-amber-400 text-amber-400" : "text-slate-300"}`}
+                    />
+                  </button>
+                ))}
+              </div>
+              {reviewRating > 0 && (
+                <p className="text-center text-sm text-muted-foreground mt-1">
+                  {["", "Poor", "Fair", "Good", "Very Good", "Excellent"][reviewRating]}
+                </p>
+              )}
+            </div>
+            <Textarea
+              placeholder="Share your experience (optional)"
+              value={reviewComment}
+              onChange={(e) => setReviewComment(e.target.value)}
+              className="resize-none"
+              rows={3}
+              maxLength={500}
+            />
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={() => setReviewBookingId(null)}>
+                Cancel
+              </Button>
+              <Button
+                className="flex-1 bg-primary hover:bg-primary/90"
+                disabled={reviewRating === 0 || submitReviewMutation.isPending}
+                onClick={() => {
+                  if (!reviewBookingId || reviewRating === 0) return;
+                  submitReviewMutation.mutate({
+                    bookingId: reviewBookingId,
+                    rating: reviewRating,
+                    comment: reviewComment || undefined,
+                  });
+                }}
+              >
+                {submitReviewMutation.isPending ? "Submitting..." : "Submit Review"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

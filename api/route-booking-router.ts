@@ -2,7 +2,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createRouter, publicQuery, authedQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { routes, bookings, userSearches, users } from "@db/schema";
+import { routes, bookings, userSearches, users, carReviews } from "@db/schema";
 import { eq, and, like, desc, sql, lt, isNull, ne } from "drizzle-orm";
 import { differenceInHours, subMinutes } from "date-fns";
 import { sendBookingEmails, sendBookingSms } from "./lib/notifications";
@@ -242,13 +242,16 @@ export const bookingRouter = createRouter({
   getMyBookings: authedQuery.query(async ({ ctx }) => {
     const db = getDb();
     const userId = ctx.user.id;
-    return await db.query.bookings.findMany({
+    const myBookings = await db.query.bookings.findMany({
       where: eq(bookings.userId, userId),
       orderBy: [desc(bookings.createdAt)],
-      with: {
-        car: true,
-      },
+      with: { car: true },
     });
+    const reviews = await db.select({ bookingId: carReviews.bookingId })
+      .from(carReviews)
+      .where(eq(carReviews.userId, userId));
+    const reviewedIds = new Set(reviews.map(r => r.bookingId).filter(Boolean));
+    return myBookings.map(b => ({ ...b, hasReview: reviewedIds.has(b.id) }));
   }),
 
   getById: publicQuery

@@ -119,6 +119,7 @@ export const carReviews = mysqlTable("carReviews", {
   id: serial("id").primaryKey(),
   carId: bigint("carId", { mode: "number", unsigned: true }).notNull(),
   userId: bigint("userId", { mode: "number", unsigned: true }).notNull(),
+  bookingId: bigint("bookingId", { mode: "number", unsigned: true }),
   rating: int("rating").notNull(),
   comment: text("comment"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

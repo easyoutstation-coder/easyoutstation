@@ -164,6 +164,8 @@ async function runStartupMigrations() {
       `));
     } catch { /* already exists */ }
 
+    // Review bookingId column for dedup
+    try { await db.execute(sql.raw(`ALTER TABLE carReviews ADD COLUMN bookingId BIGINT UNSIGNED NULL`)); } catch { /* already exists */ }
     // WhatsApp opt-in/out columns
     try { await db.execute(sql.raw(`ALTER TABLE users ADD COLUMN whatsappOptOut BOOLEAN NOT NULL DEFAULT FALSE`)); } catch { /* already exists */ }
     try { await db.execute(sql.raw(`ALTER TABLE users ADD COLUMN whatsappOptIn BOOLEAN NOT NULL DEFAULT FALSE`)); } catch { /* already exists */ }
