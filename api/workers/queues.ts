@@ -1,8 +1,8 @@
 import { Queue } from "bullmq";
 import { getRedis } from "../lib/redis";
 
-export const QUEUE_NOTIFICATIONS = "eo:notifications";
-export const QUEUE_CRON = "eo:cron";
+export const QUEUE_NOTIFICATIONS = "eo-notifications";
+export const QUEUE_CRON = "eo-cron";
 
 // ── Job type definitions ──────────────────────────────────────────────────────
 
