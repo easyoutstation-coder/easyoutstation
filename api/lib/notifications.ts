@@ -139,7 +139,9 @@ export async function sendBookingSms(
   returnDate?: string,
   returnTime?: string,
   carId?: number,
-  totalKm?: number
+  totalKm?: number,
+  customerName?: string,
+  carName?: string
 ) {
   const number = phone.replace(/\D/g, "").slice(-10);
   if (number.length !== 10) { console.warn("[Fast2SMS] Invalid phone:", phone); return; }
@@ -162,11 +164,12 @@ export async function sendBookingSms(
       [{
         type: "body",
         parameters: [
-          { type: "text", text: String(bookingId) },
+          { type: "text", text: customerName || "Customer" },
           { type: "text", text: fromCity },
           { type: "text", text: toCity },
           { type: "text", text: pickupDate },
-          { type: "text", text: `Rs ${totalPrice.toLocaleString("en-IN")}` },
+          { type: "text", text: carName || "Car" },
+          { type: "text", text: totalPrice.toLocaleString("en-IN") },
         ],
       }],
       { bookingId, notificationType: "confirmation" },

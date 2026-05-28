@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createRouter, publicQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { bookings, users } from "@db/schema";
+import { bookings, users, cars } from "@db/schema";
 import { eq } from "drizzle-orm";
 import { sendBookingEmails, sendBookingSms } from "./lib/notifications";
 
@@ -118,7 +118,12 @@ export const razorpayRouter = createRouter({
 
         if (booking.customerPhone) {
           try {
-            await sendBookingSms(booking.customerPhone, booking.id, booking.fromCity, booking.toCity, pickupDateStr, price, "confirmation", returnDateStr, booking.returnTime ?? undefined);
+            let carName = "Car";
+            if (booking.carId) {
+              const car = await db.select({ name: cars.name }).from(cars).where(eq(cars.id, booking.carId)).limit(1);
+              if (car[0]) carName = car[0].name;
+            }
+            await sendBookingSms(booking.customerPhone, booking.id, booking.fromCity, booking.toCity, pickupDateStr, price, "confirmation", returnDateStr, booking.returnTime ?? undefined, booking.carId ?? undefined, booking.totalKm ?? undefined, booking.customerName, carName);
           } catch (e) {
             console.error("[verifyPayment] SMS send failed:", e);
           }
