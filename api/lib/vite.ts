@@ -23,9 +23,15 @@ export function serveStaticFiles(app: App) {
     ? path.resolve(distPublic, "index.html")
     : path.resolve(distRoot, "index.html");
 
-  app.use("*", serveStatic({ root: staticPath }));
+  app.use("*", async (c, next) => {
+    if (c.req.path.startsWith("/api/")) return next();
+    return serveStatic({ root: staticPath })(c, next);
+  });
 
   app.notFound((c) => {
+    if (c.req.path.startsWith("/api/")) {
+      return c.json({ error: "Not Found" }, 404);
+    }
     const accept = c.req.header("accept") ?? "";
     if (!accept.includes("text/html")) {
       return c.json({ error: "Not Found" }, 404);

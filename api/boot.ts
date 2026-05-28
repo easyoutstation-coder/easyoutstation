@@ -216,38 +216,36 @@ async function runStartupMigrations() {
 
 const app = new Hono<{ Bindings: HttpBindings }>();
 
-// ── WhatsApp webhook — registered FIRST, before all middleware ────────────────
-app.use("/api/webhooks/whatsapp", async (c) => {
-  if (c.req.method === "GET") {
-    const mode = c.req.query("hub.mode");
-    const token = c.req.query("hub.verify_token");
-    const challenge = c.req.query("hub.challenge");
-    if (mode === "subscribe" && token === process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN) {
-      console.log("[WA Webhook] Meta verification successful");
-      return c.text(challenge ?? "");
-    }
-    return c.json({ error: "Forbidden" }, 403);
+// ── WhatsApp webhook — registered FIRST as explicit route handlers ────────────
+app.get("/api/webhooks/whatsapp", async (c) => {
+  const mode = c.req.query("hub.mode");
+  const token = c.req.query("hub.verify_token");
+  const challenge = c.req.query("hub.challenge");
+  if (mode === "subscribe" && token === process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN) {
+    console.log("[WA Webhook] Meta verification successful");
+    return c.text(challenge ?? "");
   }
-  if (c.req.method === "POST") {
-    const rawBody = await c.req.text();
-    const appSecret = process.env.WHATSAPP_APP_SECRET;
-    if (appSecret) {
-      const { createHmac } = await import("node:crypto");
-      const sig = c.req.header("x-hub-signature-256") ?? "";
-      const expected = "sha256=" + createHmac("sha256", appSecret).update(rawBody).digest("hex");
-      if (sig !== expected) {
-        console.warn("[WA Webhook] Invalid signature — rejected");
-        return c.json({ error: "Forbidden" }, 403);
-      }
+  return c.json({ error: "Forbidden" }, 403);
+});
+
+app.post("/api/webhooks/whatsapp", async (c) => {
+  const rawBody = await c.req.text();
+  const appSecret = process.env.WHATSAPP_APP_SECRET;
+  if (appSecret) {
+    const { createHmac } = await import("node:crypto");
+    const sig = c.req.header("x-hub-signature-256") ?? "";
+    const expected = "sha256=" + createHmac("sha256", appSecret).update(rawBody).digest("hex");
+    if (sig !== expected) {
+      console.warn("[WA Webhook] Invalid signature — rejected");
+      return c.json({ error: "Forbidden" }, 403);
     }
-    const queue = getWhatsAppInboundQueue();
-    if (queue) {
-      queue.add(`wa-inbound-${Date.now()}`, { payload: JSON.parse(rawBody) })
-        .catch(e => console.error("[WA Webhook] Enqueue failed:", e));
-    }
-    return c.json({ status: "ok" });
   }
-  return c.json({ error: "Method not allowed" }, 405);
+  const queue = getWhatsAppInboundQueue();
+  if (queue) {
+    queue.add(`wa-inbound-${Date.now()}`, { payload: JSON.parse(rawBody) })
+      .catch(e => console.error("[WA Webhook] Enqueue failed:", e));
+  }
+  return c.json({ status: "ok" });
 });
 
 app.use(bodyLimit({ maxSize: 50 * 1024 * 1024 }));
