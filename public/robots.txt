@@ -1,4 +1,9 @@
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /corporate-portal
+Disallow: /booking
+Disallow: /api/
 
 Sitemap: https://www.easyoutstation.com/sitemap.xml

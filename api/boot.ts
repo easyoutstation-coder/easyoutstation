@@ -302,6 +302,69 @@ const app = new Hono<{ Bindings: HttpBindings }>();
 
 app.use(bodyLimit({ maxSize: 50 * 1024 * 1024 }));
 
+// ── Security headers ──────────────────────────────────────────────────────────
+app.use("*", async (c, next) => {
+  await next();
+  // Prevent clickjacking / iframing
+  c.header("X-Frame-Options", "DENY");
+  c.header("X-Content-Type-Options", "nosniff");
+  c.header("Referrer-Policy", "strict-origin-when-cross-origin");
+  c.header("Permissions-Policy", "geolocation=(), microphone=(), camera=()");
+  // HSTS — tell browsers to always use HTTPS (1 year)
+  c.header("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  // Content Security Policy — locks down what scripts/styles/frames can load
+  c.header("Content-Security-Policy", [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://www.googletagmanager.com https://www.google-analytics.com https://www.clarity.ms",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com",
+    "img-src 'self' data: blob: https:",
+    "connect-src 'self' https://api.razorpay.com https://www.google-analytics.com https://www.clarity.ms https://www.fast2sms.com https://api.resend.com",
+    "frame-src https://api.razorpay.com",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+  ].join("; "));
+});
+
+// ── In-memory rate limiter ────────────────────────────────────────────────────
+// Sliding window: tracks request timestamps per IP per bucket
+const rateLimitStore = new Map<string, number[]>();
+// Clean up old entries every 5 minutes to prevent memory growth
+setInterval(() => {
+  const cutoff = Date.now() - 60_000;
+  for (const [key, timestamps] of rateLimitStore) {
+    const fresh = timestamps.filter(t => t > cutoff);
+    if (fresh.length === 0) rateLimitStore.delete(key);
+    else rateLimitStore.set(key, fresh);
+  }
+}, 5 * 60 * 1000);
+
+function rateLimit(bucket: string, maxPerMinute: number) {
+  return async (c: any, next: () => Promise<void>) => {
+    const ip = c.req.header("x-forwarded-for")?.split(",")[0]?.trim() || c.req.header("x-real-ip") || "unknown";
+    const key = `${bucket}:${ip}`;
+    const now = Date.now();
+    const window = 60_000;
+    const timestamps = (rateLimitStore.get(key) || []).filter(t => t > now - window);
+    if (timestamps.length >= maxPerMinute) {
+      return c.json({ error: "Too many requests. Please wait a moment and try again." }, 429);
+    }
+    timestamps.push(now);
+    rateLimitStore.set(key, timestamps);
+    await next();
+  };
+}
+
+// Apply rate limits to sensitive endpoints
+app.use("/api/trpc/auth.login", rateLimit("auth", 10));
+app.use("/api/trpc/auth.signup", rateLimit("auth", 10));
+app.use("/api/trpc/auth.loginWithPhone", rateLimit("auth", 10));
+app.use("/api/trpc/auth.verifyOtp", rateLimit("otp", 10));
+app.use("/api/trpc/payment.*", rateLimit("payment", 20));
+// General API — 120 req/min per IP
+app.use("/api/trpc/*", rateLimit("api", 120));
+
 // Allow requests from your Vercel frontend
 app.use("*", cors({
   origin: [
@@ -327,9 +390,11 @@ app.use("/api/trpc/*", async (c) => {
   headers.set("Cache-Control", "no-store");
   return new Response(res.body, { status: res.status, headers });
 });
-// SMS test — /api/test-sms?phone=9999999999&key=easytest
+
+// SMS test — secured with env var key (not hardcoded "easytest")
 app.use("/api/test-sms", async (c) => {
-  if (c.req.query("key") !== "easytest") return c.json({ error: "forbidden" }, 403);
+  const validKey = process.env.SMS_TEST_KEY || "";
+  if (!validKey || c.req.query("key") !== validKey) return c.json({ error: "forbidden" }, 403);
   const phone = c.req.query("phone") || "9958556011";
   const apiKey = process.env.FAST2SMS_API_KEY?.trim();
   if (!apiKey) return c.json({ error: "FAST2SMS_API_KEY not set in Railway" });

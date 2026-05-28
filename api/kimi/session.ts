@@ -9,7 +9,7 @@ export async function signSessionToken(payload: SessionPayload): Promise<string>
   return new jose.SignJWT(payload as unknown as jose.JWTPayload)
     .setProtectedHeader({ alg: JWT_ALG })
     .setIssuedAt()
-    .setExpirationTime("1 year")
+    .setExpirationTime("30 days")
     .sign(secret);
 }
 
