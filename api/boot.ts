@@ -8,6 +8,7 @@ import { createContext } from "./context";
 import { env } from "./lib/env";
 import { getDb } from "./queries/connection";
 import { sql } from "drizzle-orm";
+import { routes as routesTable } from "@db/schema";
 import { runDailyReminders, runPostTripReviews, runAbandonedReminders } from "./workers/cronJobs";
 import { startNotificationWorker } from "./workers/notificationWorker";
 import { startCronWorker } from "./workers/cronWorker";
@@ -364,6 +365,44 @@ app.use("/api/test-whatsapp", async (c) => {
   const { dispatchWhatsApp } = await import("./lib/whatsapp");
   await dispatchWhatsApp(phone, "hello_world", "en_US", [], { notificationType: "test" });
   return c.json({ message: "WhatsApp test dispatched", phone });
+});
+
+// Dynamic sitemap — combines static pages + all routes from DB
+app.get("/sitemap.xml", async (c) => {
+  const today = new Date().toISOString().split("T")[0];
+  const base = "https://www.easyoutstation.com";
+
+  const staticPages = [
+    { path: "/",            priority: "1.0", changefreq: "daily"   },
+    { path: "/cars",        priority: "0.9", changefreq: "daily"   },
+    { path: "/routes",      priority: "0.9", changefreq: "weekly"  },
+    { path: "/faq",         priority: "0.8", changefreq: "monthly" },
+    { path: "/referral",    priority: "0.7", changefreq: "monthly" },
+    { path: "/about",       priority: "0.7", changefreq: "monthly" },
+    { path: "/cancellation",priority: "0.5", changefreq: "monthly" },
+    { path: "/terms",       priority: "0.4", changefreq: "monthly" },
+    { path: "/privacy",     priority: "0.4", changefreq: "monthly" },
+  ];
+
+  const toUrl = (loc: string, priority: string, changefreq: string) =>
+    `  <url><loc>${loc}</loc><lastmod>${today}</lastmod><changefreq>${changefreq}</changefreq><priority>${priority}</priority></url>`;
+
+  const staticXml = staticPages.map(p => toUrl(`${base}${p.path}`, p.priority, p.changefreq));
+
+  let routeXml: string[] = [];
+  try {
+    const db = getDb();
+    const allRoutes = await db.select({ fromCity: routesTable.fromCity, toCity: routesTable.toCity }).from(routesTable);
+    routeXml = allRoutes.map(r => {
+      const slug = `${r.fromCity.toLowerCase().replace(/\s+/g, "-")}-to-${r.toCity.toLowerCase().replace(/\s+/g, "-")}`;
+      return toUrl(`${base}/cab/${slug}`, "0.9", "weekly");
+    });
+  } catch (e) {
+    console.error("[sitemap] DB error:", e);
+  }
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${[...staticXml, ...routeXml].join("\n")}\n</urlset>`;
+  return new Response(xml, { headers: { "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600" } });
 });
 
 app.all("/api/*", (c) => c.json({ error: "Not Found" }, 404));
