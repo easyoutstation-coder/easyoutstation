@@ -171,6 +171,8 @@ export default function BookingPage() {
       const d = new Date(resumeBooking.pickupDate);
       if (!isNaN(d.getTime())) setPickupDate(d);
     }
+    // Fall back to booking's stored km if distance is not in the URL params
+    if (!defaultDistance && resumeBooking.totalKm) setManualDistance(resumeBooking.totalKm);
     setCurrentStep(3);
   }, [resumeBooking]);
 

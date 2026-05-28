@@ -150,6 +150,7 @@ export const bookingRouter = createRouter({
               customerName: booking.customerName,
               customerEmail: resolvedEmail ?? undefined,
               customerPhone: resolvedPhone ?? undefined,
+              carId: booking.carId ?? undefined,
               fromCity: booking.fromCity,
               toCity: booking.toCity,
               pickupDate: pickupDateStr,
@@ -170,7 +171,7 @@ export const bookingRouter = createRouter({
 
         if (resolvedPhone) {
           try {
-            await sendBookingSms(resolvedPhone, booking.id, booking.fromCity, booking.toCity, pickupDateStr, price, "abandonment");
+            await sendBookingSms(resolvedPhone, booking.id, booking.fromCity, booking.toCity, pickupDateStr, price, "abandonment", undefined, undefined, booking.carId ?? undefined, booking.totalKm ?? undefined);
           } catch (e) {
             console.error(`[Abandoned] SMS failed for booking #${booking.id}:`, e);
           }
@@ -209,6 +210,7 @@ export const bookingRouter = createRouter({
             customerName: booking.customerName,
             customerEmail: resolvedEmail ?? undefined,
             customerPhone: resolvedPhone ?? undefined,
+            carId: booking.carId ?? undefined,
             fromCity: booking.fromCity,
             toCity: booking.toCity,
             pickupDate: pickupDateStr,
@@ -228,7 +230,7 @@ export const bookingRouter = createRouter({
 
       if (resolvedPhone) {
         try {
-          await sendBookingSms(resolvedPhone, booking.id, booking.fromCity, booking.toCity, pickupDateStr, price, "abandonment");
+          await sendBookingSms(resolvedPhone, booking.id, booking.fromCity, booking.toCity, pickupDateStr, price, "abandonment", undefined, undefined, booking.carId ?? undefined, booking.totalKm ?? undefined);
         } catch (e) {
           console.error(`[notifyAbandoned] SMS failed for booking #${booking.id}:`, e);
         }

@@ -12,7 +12,9 @@ export async function sendBookingSms(
   totalPrice: number,
   type: "confirmation" | "abandonment" = "confirmation",
   returnDate?: string,
-  returnTime?: string
+  returnTime?: string,
+  carId?: number,
+  totalKm?: number
 ) {
   const apiKey = process.env.FAST2SMS_API_KEY?.trim();
   if (!apiKey) { console.warn("[Fast2SMS] FAST2SMS_API_KEY not set"); return; }
@@ -21,7 +23,11 @@ export async function sendBookingSms(
 
   let message: string;
   if (type === "abandonment") {
-    message = `EasyOutstation: You left your booking incomplete! ${fromCity} to ${toCity} on ${pickupDate}. Fare: Rs ${totalPrice.toLocaleString("en-IN")}. Complete booking: https://easyoutstation.com/booking?resume=${bookingId} Help: 8796564111`;
+    const p = new URLSearchParams({ resume: String(bookingId), from: fromCity, to: toCity });
+    if (carId) p.set("carId", String(carId));
+    if (totalKm) p.set("distance", String(totalKm));
+    const resumeUrl = `https://easyoutstation.com/booking?${p.toString()}`;
+    message = `EasyOutstation: You left your booking incomplete! ${fromCity} to ${toCity} on ${pickupDate}. Fare: Rs ${totalPrice.toLocaleString("en-IN")}. Complete booking: ${resumeUrl} Help: 8796564111`;
   } else {
     message = `EasyOutstation: Booking #${bookingId} CONFIRMED! ${fromCity} to ${toCity}. Pickup: ${pickupDate}${returnDate ? `. Return: ${returnDate}${returnTime ? ` at ${formatTime(returnTime)}` : ""}` : ""}. Fare: Rs ${totalPrice.toLocaleString("en-IN")}. Driver details within 60 mins. Help: 8796564111`;
   }
@@ -53,6 +59,7 @@ export async function sendBookingEmails(
     customerName: string;
     customerEmail?: string;
     customerPhone?: string;
+    carId?: number;
     fromCity: string;
     toCity: string;
     pickupDate: string;
@@ -99,7 +106,9 @@ ${input.pickupAddress || "Not provided"}
 ${input.specialRequests ? `\nNotes: ${input.specialRequests}` : ""}
   `.trim();
 
-  const resumeLink = `https://easyoutstation.com/booking?resume=${input.bookingId}`;
+  const rp = new URLSearchParams({ resume: String(input.bookingId), from: input.fromCity, to: input.toCity, distance: String(input.totalKm), tripType: input.tripType });
+  if (input.carId) rp.set("carId", String(input.carId));
+  const resumeLink = `https://easyoutstation.com/booking?${rp.toString()}`;
 
   if (type === "abandonment") {
     // Only send to team — they can follow up — and to customer if email available

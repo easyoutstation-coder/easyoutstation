@@ -272,6 +272,7 @@ async function runAbandonedReminders() {
           customerName: b.customerName,
           customerEmail: email ?? undefined,
           customerPhone: phone ?? undefined,
+          carId: b.carId ?? undefined,
           fromCity: b.fromCity,
           toCity: b.toCity,
           pickupDate: pickupDateStr,
@@ -288,7 +289,7 @@ async function runAbandonedReminders() {
 
       if (phone) {
         try {
-          await sendBookingSms(phone, b.id, b.fromCity, b.toCity, pickupDateStr, price, "abandonment");
+          await sendBookingSms(phone, b.id, b.fromCity, b.toCity, pickupDateStr, price, "abandonment", undefined, undefined, b.carId ?? undefined, b.totalKm ?? undefined);
         } catch (e) { console.error(`[cron] Abandonment SMS failed for booking #${b.id}:`, e); }
       }
 
