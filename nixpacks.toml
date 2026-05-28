@@ -1,5 +1,5 @@
 [phases.install]
-cmds = ["npm ci"]
+cmds = ["npm ci --include=dev"]
 
 [phases.build]
 cmds = ["PATH=$(pwd)/node_modules/.bin:$PATH npm run build:server"]
