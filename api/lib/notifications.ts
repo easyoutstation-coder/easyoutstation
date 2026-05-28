@@ -1,6 +1,7 @@
 import { getDb } from "../queries/connection";
 import { notificationLogs } from "@db/schema";
 import { getNotificationQueue } from "../workers/queues";
+import { dispatchWhatsApp } from "./whatsapp";
 
 function formatTime(t: string) {
   const [h, m] = t.split(":").map(Number);
@@ -150,11 +151,28 @@ export async function sendBookingSms(
     if (totalKm) p.set("distance", String(totalKm));
     const resumeUrl = `https://easyoutstation.com/booking?${p.toString()}`;
     message = `EasyOutstation: You left your booking incomplete! ${fromCity} to ${toCity} on ${pickupDate}. Fare: Rs ${totalPrice.toLocaleString("en-IN")}. Complete booking: ${resumeUrl} Help: 8796564111`;
+    await dispatchSms(number, message, { bookingId, notificationType: type });
   } else {
     message = `EasyOutstation: Booking #${bookingId} CONFIRMED! ${fromCity} to ${toCity}. Pickup: ${pickupDate}${returnDate ? `. Return: ${returnDate}${returnTime ? ` at ${formatTime(returnTime)}` : ""}` : ""}. Fare: Rs ${totalPrice.toLocaleString("en-IN")}. Driver details within 60 mins. Help: 8796564111`;
+    // Send via WhatsApp first; SMS fires automatically if WA fails permanently
+    await dispatchWhatsApp(
+      number,
+      "eo_booking_confirmed",
+      "en",
+      [{
+        type: "body",
+        parameters: [
+          { type: "text", text: String(bookingId) },
+          { type: "text", text: fromCity },
+          { type: "text", text: toCity },
+          { type: "text", text: pickupDate },
+          { type: "text", text: `Rs ${totalPrice.toLocaleString("en-IN")}` },
+        ],
+      }],
+      { bookingId, notificationType: "confirmation" },
+      message // SMS fallback text
+    );
   }
-
-  await dispatchSms(number, message, { bookingId, notificationType: type });
 }
 
 export async function sendBookingEmails(

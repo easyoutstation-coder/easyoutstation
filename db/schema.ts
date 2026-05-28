@@ -10,6 +10,7 @@ import {
   boolean,
   bigint,
   date,
+  json,
 } from "drizzle-orm/mysql-core";
 
 export const users = mysqlTable("users", {
@@ -257,3 +258,33 @@ export const notificationLogs = mysqlTable("notificationLogs", {
 });
 
 export type NotificationLog = typeof notificationLogs.$inferSelect;
+
+export const whatsappLogs = mysqlTable("whatsappLogs", {
+  id: serial("id").primaryKey(),
+  bookingId: bigint("bookingId", { mode: "number", unsigned: true }),
+  userId: bigint("userId", { mode: "number", unsigned: true }),
+  direction: mysqlEnum("direction", ["outbound", "inbound"]).notNull(),
+  waMessageId: varchar("waMessageId", { length: 100 }),
+  templateName: varchar("templateName", { length: 100 }),
+  phone: varchar("phone", { length: 20 }).notNull(),
+  messageBody: text("messageBody"),
+  waStatus: mysqlEnum("waStatus", ["sent", "delivered", "read", "failed"]).default("sent"),
+  failureReason: varchar("failureReason", { length: 255 }),
+  sentAt: timestamp("sentAt"),
+  deliveredAt: timestamp("deliveredAt"),
+  readAt: timestamp("readAt"),
+  fallbackSent: boolean("fallbackSent").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export const whatsappConversations = mysqlTable("whatsappConversations", {
+  id: serial("id").primaryKey(),
+  phone: varchar("phone", { length: 20 }).notNull().unique(),
+  state: varchar("state", { length: 50 }).notNull().default("idle"),
+  contextJson: json("contextJson"),
+  expiresAt: timestamp("expiresAt").notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull().$onUpdate(() => new Date()),
+});
+
+export type WhatsappLog = typeof whatsappLogs.$inferSelect;
+export type WhatsappConversation = typeof whatsappConversations.$inferSelect;

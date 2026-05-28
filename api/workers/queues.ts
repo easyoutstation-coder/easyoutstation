@@ -3,6 +3,8 @@ import { getRedis } from "../lib/redis";
 
 export const QUEUE_NOTIFICATIONS = "eo-notifications";
 export const QUEUE_CRON = "eo-cron";
+export const QUEUE_WHATSAPP = "eo-whatsapp";
+export const QUEUE_WHATSAPP_INBOUND = "eo-whatsapp-inbound";
 
 // ── Job type definitions ──────────────────────────────────────────────────────
 
@@ -43,6 +45,28 @@ export type CronJobData = {
   task: "run-daily-reminders" | "run-post-trip-reviews" | "run-abandoned-reminders";
 };
 
+export type WhatsAppTemplateComponent = {
+  type: "header" | "body" | "button";
+  parameters: Array<{ type: "text"; text: string } | { type: "payload"; payload: string }>;
+  index?: number;
+  sub_type?: string;
+};
+
+export type WhatsAppOutboundJobData = {
+  logId: number;
+  phone: string;
+  templateName: string;
+  language: string;
+  components: WhatsAppTemplateComponent[];
+  bookingId?: number;
+  notificationType: string;
+  fallbackSmsMessage?: string;
+};
+
+export type WhatsAppInboundJobData = {
+  payload: unknown;
+};
+
 // ── Queue instances (singletons) ─────────────────────────────────────────────
 
 let notificationQueue: Queue<NotificationJobData> | null = null;
@@ -81,4 +105,43 @@ export function getCronQueue(): Queue<CronJobData> | null {
     cronQueue.on("error", (err) => console.error("[Queue:cron] Error:", err.message));
   }
   return cronQueue;
+}
+
+let whatsappQueue: Queue<WhatsAppOutboundJobData> | null = null;
+let whatsappInboundQueue: Queue<WhatsAppInboundJobData> | null = null;
+
+export function getWhatsAppQueue(): Queue<WhatsAppOutboundJobData> | null {
+  const redis = getRedis();
+  if (!redis) return null;
+  if (!whatsappQueue) {
+    whatsappQueue = new Queue<WhatsAppOutboundJobData>(QUEUE_WHATSAPP, {
+      connection: redis,
+      defaultJobOptions: {
+        attempts: 3,
+        backoff: { type: "exponential", delay: 5000 },
+        removeOnComplete: { count: 500 },
+        removeOnFail: { count: 200 },
+      },
+    });
+    whatsappQueue.on("error", (err) => console.error("[Queue:whatsapp] Error:", err.message));
+  }
+  return whatsappQueue;
+}
+
+export function getWhatsAppInboundQueue(): Queue<WhatsAppInboundJobData> | null {
+  const redis = getRedis();
+  if (!redis) return null;
+  if (!whatsappInboundQueue) {
+    whatsappInboundQueue = new Queue<WhatsAppInboundJobData>(QUEUE_WHATSAPP_INBOUND, {
+      connection: redis,
+      defaultJobOptions: {
+        attempts: 2,
+        backoff: { type: "fixed", delay: 2000 },
+        removeOnComplete: { count: 1000 },
+        removeOnFail: { count: 200 },
+      },
+    });
+    whatsappInboundQueue.on("error", (err) => console.error("[Queue:whatsapp-inbound] Error:", err.message));
+  }
+  return whatsappInboundQueue;
 }

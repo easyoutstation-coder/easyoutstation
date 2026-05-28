@@ -11,6 +11,9 @@ import { sql } from "drizzle-orm";
 import { runDailyReminders, runPostTripReviews, runAbandonedReminders } from "./workers/cronJobs";
 import { startNotificationWorker } from "./workers/notificationWorker";
 import { startCronWorker } from "./workers/cronWorker";
+import { startWhatsAppWorker } from "./workers/whatsappWorker";
+import { startWhatsAppInboundWorker } from "./workers/whatsappInboundWorker";
+import { getWhatsAppInboundQueue } from "./workers/queues";
 
 async function runStartupMigrations() {
   try {
@@ -161,6 +164,46 @@ async function runStartupMigrations() {
       `));
     } catch { /* already exists */ }
 
+    // WhatsApp opt-in/out columns
+    try { await db.execute(sql.raw(`ALTER TABLE users ADD COLUMN whatsappOptOut BOOLEAN NOT NULL DEFAULT FALSE`)); } catch { /* already exists */ }
+    try { await db.execute(sql.raw(`ALTER TABLE users ADD COLUMN whatsappOptIn BOOLEAN NOT NULL DEFAULT FALSE`)); } catch { /* already exists */ }
+    try { await db.execute(sql.raw(`ALTER TABLE users ADD COLUMN whatsappOptInAt TIMESTAMP NULL`)); } catch { /* already exists */ }
+    // WhatsApp audit log table
+    try {
+      await db.execute(sql.raw(`
+        CREATE TABLE IF NOT EXISTS whatsappLogs (
+          id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+          bookingId BIGINT UNSIGNED NULL,
+          userId BIGINT UNSIGNED NULL,
+          direction ENUM('outbound','inbound') NOT NULL,
+          waMessageId VARCHAR(100) NULL,
+          templateName VARCHAR(100) NULL,
+          phone VARCHAR(20) NOT NULL,
+          messageBody TEXT NULL,
+          waStatus ENUM('sent','delivered','read','failed') DEFAULT 'sent',
+          failureReason VARCHAR(255) NULL,
+          sentAt TIMESTAMP NULL,
+          deliveredAt TIMESTAMP NULL,
+          readAt TIMESTAMP NULL,
+          fallbackSent BOOLEAN NOT NULL DEFAULT FALSE,
+          createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+      `));
+    } catch { /* already exists */ }
+    // WhatsApp conversation state table
+    try {
+      await db.execute(sql.raw(`
+        CREATE TABLE IF NOT EXISTS whatsappConversations (
+          id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+          phone VARCHAR(20) NOT NULL UNIQUE,
+          state VARCHAR(50) NOT NULL DEFAULT 'idle',
+          contextJson JSON NULL,
+          expiresAt TIMESTAMP NOT NULL,
+          updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        )
+      `));
+    } catch { /* already exists */ }
+
     // Master accounts always get super_admin
     await db.execute(sql.raw(
       `UPDATE users SET role = 'super_admin' WHERE phone = '9958556011' OR email = 'parmindersinghtalwar@gmail.com'`
@@ -278,6 +321,55 @@ app.use("/api/test-sms", async (c) => {
   return c.json(data);
 });
 
+// ── WhatsApp webhook ──────────────────────────────────────────────────────────
+// GET: Meta one-time verification handshake
+app.get("/api/webhooks/whatsapp", (c) => {
+  const mode = c.req.query("hub.mode");
+  const token = c.req.query("hub.verify_token");
+  const challenge = c.req.query("hub.challenge");
+  if (mode === "subscribe" && token === process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN) {
+    console.log("[WA Webhook] Meta verification successful");
+    return c.text(challenge ?? "");
+  }
+  return c.json({ error: "Forbidden" }, 403);
+});
+
+// POST: incoming events (messages, delivery status updates)
+app.post("/api/webhooks/whatsapp", async (c) => {
+  const rawBody = await c.req.text();
+
+  // Signature verification (optional — set WHATSAPP_APP_SECRET to enable)
+  const appSecret = process.env.WHATSAPP_APP_SECRET;
+  if (appSecret) {
+    const { createHmac } = await import("node:crypto");
+    const sig = c.req.header("x-hub-signature-256") ?? "";
+    const expected = "sha256=" + createHmac("sha256", appSecret).update(rawBody).digest("hex");
+    if (sig !== expected) {
+      console.warn("[WA Webhook] Invalid signature — rejected");
+      return c.json({ error: "Forbidden" }, 403);
+    }
+  }
+
+  // Enqueue for async processing — must respond to Meta within 5s
+  const queue = getWhatsAppInboundQueue();
+  if (queue) {
+    queue.add(`wa-inbound-${Date.now()}`, { payload: JSON.parse(rawBody) })
+      .catch(e => console.error("[WA Webhook] Enqueue failed:", e));
+  }
+
+  return c.json({ status: "ok" });
+});
+
+// WhatsApp test endpoint — same key as SMS test
+app.get("/api/test-whatsapp", async (c) => {
+  const validKey = process.env.SMS_TEST_KEY || "";
+  if (!validKey || c.req.query("key") !== validKey) return c.json({ error: "forbidden" }, 403);
+  const phone = c.req.query("phone") || "9958556011";
+  const { dispatchWhatsApp } = await import("./lib/whatsapp");
+  await dispatchWhatsApp(phone, "hello_world", "en_US", [], { notificationType: "test" });
+  return c.json({ message: "WhatsApp test dispatched", phone });
+});
+
 app.all("/api/*", (c) => c.json({ error: "Not Found" }, 404));
 
 export default app;
@@ -292,6 +384,8 @@ if (env.isProduction) {
     console.log(`Server running on http://localhost:${port}/`);
     await runStartupMigrations();
     startNotificationWorker();
+    startWhatsAppWorker();
+    startWhatsAppInboundWorker();
     await startCronWorker();
     // Run cron jobs immediately on boot, then BullMQ handles hourly repeats
     await runDailyReminders();
