@@ -241,3 +241,19 @@ export type ReferralEvent = typeof referralEvents.$inferSelect;
 export type ReferralPoint = typeof referralPoints.$inferSelect;
 export type CorporateEnquiry = typeof corporateEnquiries.$inferSelect;
 export type CorporateAccount = typeof corporateAccounts.$inferSelect;
+
+export const notificationLogs = mysqlTable("notificationLogs", {
+  id: serial("id").primaryKey(),
+  bookingId: bigint("bookingId", { mode: "number", unsigned: true }),
+  userId: bigint("userId", { mode: "number", unsigned: true }),
+  notificationType: varchar("notificationType", { length: 50 }).notNull(),
+  channel: mysqlEnum("channel", ["sms", "email", "push"]).notNull(),
+  recipient: varchar("recipient", { length: 320 }).notNull(),
+  status: mysqlEnum("status", ["queued", "sent", "failed", "dead"]).default("queued").notNull(),
+  attempts: int("attempts").default(0).notNull(),
+  errorMessage: text("errorMessage"),
+  sentAt: timestamp("sentAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type NotificationLog = typeof notificationLogs.$inferSelect;

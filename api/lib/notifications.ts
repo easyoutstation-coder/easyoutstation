@@ -1,7 +1,131 @@
+import { getDb } from "../queries/connection";
+import { notificationLogs } from "@db/schema";
+import { getNotificationQueue } from "../workers/queues";
+
 function formatTime(t: string) {
   const [h, m] = t.split(":").map(Number);
   return `${h === 0 ? 12 : h > 12 ? h - 12 : h}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
 }
+
+// ── Notification meta type ────────────────────────────────────────────────────
+
+type NotificationMeta = {
+  bookingId?: number;
+  notificationType: string;
+};
+
+// ── Core dispatch helpers (enqueue or fallback to direct send) ────────────────
+
+async function dispatchSms(phone: string, message: string, meta: NotificationMeta): Promise<void> {
+  const number = phone.replace(/\D/g, "").slice(-10);
+  if (number.length !== 10) { console.warn("[Notify] Invalid phone:", phone); return; }
+
+  const queue = getNotificationQueue();
+  if (queue) {
+    try {
+      const db = getDb();
+      const [result] = await db.insert(notificationLogs).values({
+        bookingId: meta.bookingId,
+        notificationType: meta.notificationType,
+        channel: "sms",
+        recipient: number,
+        status: "queued",
+        attempts: 0,
+      });
+      const logId = Number((result as any).insertId);
+      await queue.add(`sms-${meta.notificationType}-${Date.now()}`, {
+        channel: "sms",
+        logId,
+        phone: number,
+        message,
+        bookingId: meta.bookingId,
+        notificationType: meta.notificationType,
+      });
+      return;
+    } catch (e) {
+      console.error("[Notify] Enqueue SMS failed, falling back to direct:", e);
+    }
+  }
+  // Direct fallback
+  await sendSmsDirectly(number, message);
+}
+
+async function dispatchEmail(
+  to: string,
+  subject: string,
+  text: string,
+  meta: NotificationMeta,
+  from?: string
+): Promise<void> {
+  if (!to) return;
+
+  const queue = getNotificationQueue();
+  if (queue) {
+    try {
+      const db = getDb();
+      const [result] = await db.insert(notificationLogs).values({
+        bookingId: meta.bookingId,
+        notificationType: meta.notificationType,
+        channel: "email",
+        recipient: to,
+        status: "queued",
+        attempts: 0,
+      });
+      const logId = Number((result as any).insertId);
+      await queue.add(`email-${meta.notificationType}-${Date.now()}`, {
+        channel: "email",
+        logId,
+        to,
+        subject,
+        text,
+        from,
+        bookingId: meta.bookingId,
+        notificationType: meta.notificationType,
+      });
+      return;
+    } catch (e) {
+      console.error("[Notify] Enqueue email failed, falling back to direct:", e);
+    }
+  }
+  // Direct fallback
+  await sendEmailDirectly(to, subject, text, from);
+}
+
+// ── Direct send functions (used as fallback + by worker) ─────────────────────
+
+async function sendSmsDirectly(number: string, message: string): Promise<void> {
+  const apiKey = process.env.FAST2SMS_API_KEY?.trim();
+  if (!apiKey) { console.warn("[Fast2SMS] FAST2SMS_API_KEY not set"); return; }
+  const params = new URLSearchParams({
+    authorization: apiKey, route: "q", message, language: "english", flash: "0", numbers: number,
+  });
+  try {
+    const res = await fetch(`https://www.fast2sms.com/dev/bulkV2?${params.toString()}`);
+    const data = await res.json() as any;
+    if (data.return === true) {
+      console.log(`[Fast2SMS] SMS sent to ${number}, request_id: ${data.request_id}`);
+    } else {
+      console.error("[Fast2SMS] Failed:", JSON.stringify(data));
+    }
+  } catch (e) { console.error("[Fast2SMS] Request error:", e); }
+}
+
+async function sendEmailDirectly(to: string, subject: string, text: string, from?: string): Promise<void> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey || !to) return;
+  await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      from: from ?? "EasyOutstation <bookings@easyoutstation.com>",
+      to: [to],
+      subject,
+      text,
+    }),
+  }).catch(console.error);
+}
+
+// ── Public notification functions ─────────────────────────────────────────────
 
 export async function sendBookingSms(
   phone: string,
@@ -16,8 +140,6 @@ export async function sendBookingSms(
   carId?: number,
   totalKm?: number
 ) {
-  const apiKey = process.env.FAST2SMS_API_KEY?.trim();
-  if (!apiKey) { console.warn("[Fast2SMS] FAST2SMS_API_KEY not set"); return; }
   const number = phone.replace(/\D/g, "").slice(-10);
   if (number.length !== 10) { console.warn("[Fast2SMS] Invalid phone:", phone); return; }
 
@@ -32,25 +154,7 @@ export async function sendBookingSms(
     message = `EasyOutstation: Booking #${bookingId} CONFIRMED! ${fromCity} to ${toCity}. Pickup: ${pickupDate}${returnDate ? `. Return: ${returnDate}${returnTime ? ` at ${formatTime(returnTime)}` : ""}` : ""}. Fare: Rs ${totalPrice.toLocaleString("en-IN")}. Driver details within 60 mins. Help: 8796564111`;
   }
 
-  const params = new URLSearchParams({
-    authorization: apiKey,
-    route: "q",
-    message,
-    language: "english",
-    flash: "0",
-    numbers: number,
-  });
-  try {
-    const res = await fetch(`https://www.fast2sms.com/dev/bulkV2?${params.toString()}`);
-    const data = await res.json() as any;
-    if (data.return === true) {
-      console.log(`[Fast2SMS] SMS (${type}) sent to ${number}, request_id: ${data.request_id}`);
-    } else {
-      console.error("[Fast2SMS] Failed:", JSON.stringify(data));
-    }
-  } catch (e) {
-    console.error("[Fast2SMS] Request error:", e);
-  }
+  await dispatchSms(number, message, { bookingId, notificationType: type });
 }
 
 export async function sendBookingEmails(
@@ -74,9 +178,6 @@ export async function sendBookingEmails(
   },
   type: "confirmation" | "abandonment" = "confirmation"
 ) {
-  const RESEND_API_KEY = process.env.RESEND_API_KEY;
-  if (!RESEND_API_KEY) return;
-
   const bookingDetails = `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 BOOKING DETAILS
@@ -110,30 +211,21 @@ ${input.specialRequests ? `\nNotes: ${input.specialRequests}` : ""}
   if (input.carId) rp.set("carId", String(input.carId));
   const resumeLink = `https://easyoutstation.com/booking?${rp.toString()}`;
 
-  if (type === "abandonment") {
-    // Only send to team — they can follow up — and to customer if email available
-    const teamBody = `Abandoned booking alert!\n\nCustomer started but did not complete payment.\nResume link: ${resumeLink}\n\n${bookingDetails}`;
+  const meta: NotificationMeta = { bookingId: input.bookingId, notificationType: type };
 
-    await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${RESEND_API_KEY}` },
-      body: JSON.stringify({
-        from: "EasyOutstation Bookings <bookings@easyoutstation.com>",
-        to: ["easyoutstation@gmail.com"],
-        subject: `⚠️ Abandoned Booking #${input.bookingId} — ${input.fromCity} → ${input.toCity}`,
-        text: teamBody,
-      }),
-    });
+  if (type === "abandonment") {
+    const teamBody = `Abandoned booking alert!\n\nCustomer started but did not complete payment.\nResume link: ${resumeLink}\n\n${bookingDetails}`;
+    await dispatchEmail("easyoutstation@gmail.com",
+      `⚠️ Abandoned Booking #${input.bookingId} — ${input.fromCity} → ${input.toCity}`,
+      teamBody,
+      { ...meta, notificationType: "abandonment-team" },
+      "EasyOutstation Bookings <bookings@easyoutstation.com>"
+    );
 
     if (input.customerEmail) {
-      await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${RESEND_API_KEY}` },
-        body: JSON.stringify({
-          from: "EasyOutstation <bookings@easyoutstation.com>",
-          to: [input.customerEmail],
-          subject: `Complete Your Booking — ${input.fromCity} → ${input.toCity} | EasyOutstation`,
-          text: `Dear ${input.customerName},
+      await dispatchEmail(input.customerEmail,
+        `Complete Your Booking — ${input.fromCity} → ${input.toCity} | EasyOutstation`,
+        `Dear ${input.customerName},
 
 We noticed you started a booking but didn't complete the payment.
 
@@ -153,33 +245,24 @@ WHY BOOK WITH US?
 If you have questions or need help, email us at: easyoutstation@gmail.com
 
 Team EasyOutstation`,
-        }),
-      });
+        meta
+      );
     }
     return;
   }
 
-  // Confirmation emails
-  await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${RESEND_API_KEY}` },
-    body: JSON.stringify({
-      from: "EasyOutstation Bookings <bookings@easyoutstation.com>",
-      to: ["easyoutstation@gmail.com"],
-      subject: `✅ Booking Confirmed #${input.bookingId} — ${input.fromCity} → ${input.toCity} | ${input.pickupDate}`,
-      text: `Payment received! Booking confirmed.\n\n${bookingDetails}`,
-    }),
-  });
+  // Confirmation
+  await dispatchEmail("easyoutstation@gmail.com",
+    `✅ Booking Confirmed #${input.bookingId} — ${input.fromCity} → ${input.toCity} | ${input.pickupDate}`,
+    `Payment received! Booking confirmed.\n\n${bookingDetails}`,
+    { ...meta, notificationType: "confirmation-team" },
+    "EasyOutstation Bookings <bookings@easyoutstation.com>"
+  );
 
   if (input.customerEmail) {
-    await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${RESEND_API_KEY}` },
-      body: JSON.stringify({
-        from: "EasyOutstation <bookings@easyoutstation.com>",
-        to: [input.customerEmail],
-        subject: `Booking Confirmed #${input.bookingId} — ${input.fromCity} → ${input.toCity} | EasyOutstation`,
-        text: `Dear ${input.customerName},
+    await dispatchEmail(input.customerEmail,
+      `Booking Confirmed #${input.bookingId} — ${input.fromCity} → ${input.toCity} | EasyOutstation`,
+      `Dear ${input.customerName},
 
 Your booking is CONFIRMED! 🎉 We've received your advance payment.
 
@@ -199,28 +282,9 @@ Have a wonderful journey! 🌟
 
 Warm regards,
 Team EasyOutstation`,
-      }),
-    });
+      meta
+    );
   }
-}
-
-async function sendResend(to: string, subject: string, text: string) {
-  const RESEND_API_KEY = process.env.RESEND_API_KEY;
-  if (!RESEND_API_KEY || !to) return;
-  await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${RESEND_API_KEY}` },
-    body: JSON.stringify({ from: "EasyOutstation <bookings@easyoutstation.com>", to: [to], subject, text }),
-  }).catch(console.error);
-}
-
-async function sendSms(phone: string, message: string) {
-  const apiKey = process.env.FAST2SMS_API_KEY?.trim();
-  if (!apiKey) return;
-  const number = phone.replace(/\D/g, "").slice(-10);
-  if (number.length !== 10) return;
-  const params = new URLSearchParams({ authorization: apiKey, route: "q", message, language: "english", flash: "0", numbers: number });
-  await fetch(`https://www.fast2sms.com/dev/bulkV2?${params.toString()}`).catch(console.error);
 }
 
 export async function sendReferralJoinNotification(input: {
@@ -250,8 +314,9 @@ Track your referrals and points at: https://easyoutstation.com/dashboard
 Warm regards,
 Team EasyOutstation`;
 
-  if (input.referrerEmail) await sendResend(input.referrerEmail, subject, text);
-  if (input.referrerPhone) await sendSms(input.referrerPhone, `EasyOutstation: ${input.referredName} joined using your referral! Earn ₹100 after their first completed ride. Track: easyoutstation.com/dashboard`);
+  const meta: NotificationMeta = { notificationType: "referral-join" };
+  if (input.referrerEmail) await dispatchEmail(input.referrerEmail, subject, text, meta);
+  if (input.referrerPhone) await dispatchSms(input.referrerPhone, `EasyOutstation: ${input.referredName} joined using your referral! Earn ₹100 after their first completed ride. Track: easyoutstation.com/dashboard`, meta);
 }
 
 export async function sendReferralPointsNotification(input: {
@@ -266,8 +331,8 @@ export async function sendReferralPointsNotification(input: {
   terms: string;
 }) {
   const expiryStr = input.expiresAt.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+  const meta: NotificationMeta = { notificationType: "referral-points" };
 
-  // Email to referrer
   const referrerText = `Dear ${input.referrerName},
 
 Your ₹${input.amount} referral credit has been added to your EasyOutstation account! 🎉
@@ -291,7 +356,6 @@ ${input.terms}
 Warm regards,
 Team EasyOutstation`;
 
-  // Email to referred user
   const referredText = `Dear ${input.referredName},
 
 Welcome to the EasyOutstation family! 🎉
@@ -316,13 +380,11 @@ Warm regards,
 Team EasyOutstation`;
 
   const creditSubject = `₹${input.amount} referral credit added to your account!`;
-  if (input.referrerEmail) await sendResend(input.referrerEmail, creditSubject, referrerText);
-  if (input.referredEmail) await sendResend(input.referredEmail, creditSubject, referredText);
-  if (input.referrerPhone) await sendSms(input.referrerPhone, `EasyOutstation: ₹${input.amount} referral credit added! Valid till ${expiryStr}. Use on your next booking at easyoutstation.com`);
-  if (input.referredPhone) await sendSms(input.referredPhone, `EasyOutstation: ₹${input.amount} welcome credit added! Valid till ${expiryStr}. Book at easyoutstation.com`);
+  if (input.referrerEmail) await dispatchEmail(input.referrerEmail, creditSubject, referrerText, meta);
+  if (input.referredEmail) await dispatchEmail(input.referredEmail, creditSubject, referredText, meta);
+  if (input.referrerPhone) await dispatchSms(input.referrerPhone, `EasyOutstation: ₹${input.amount} referral credit added! Valid till ${expiryStr}. Use on your next booking at easyoutstation.com`, meta);
+  if (input.referredPhone) await dispatchSms(input.referredPhone, `EasyOutstation: ₹${input.amount} welcome credit added! Valid till ${expiryStr}. Book at easyoutstation.com`, meta);
 }
-
-// ── Post-booking automation ──────────────────────────────────────────────────
 
 export async function sendDriverAssignmentSms(input: {
   driverPhone: string;
@@ -336,7 +398,7 @@ export async function sendDriverAssignmentSms(input: {
   bookingId: number;
 }) {
   const msg = `EasyOutstation: Trip #${input.bookingId} assigned to you. Customer: ${input.customerName} (+91-${input.customerPhone}). Route: ${input.fromCity} to ${input.toCity}. Date: ${input.pickupDate}.${input.pickupAddress ? ` Pickup: ${input.pickupAddress}.` : ""} Help: 9958556011`;
-  await sendSms(input.driverPhone, msg);
+  await dispatchSms(input.driverPhone, msg, { bookingId: input.bookingId, notificationType: "driver-assignment" });
 }
 
 export async function sendTripReminder(input: {
@@ -352,17 +414,17 @@ export async function sendTripReminder(input: {
   bookingId: number;
 }) {
   const route = `${input.fromCity} to ${input.toCity}`;
+  const meta: NotificationMeta = { bookingId: input.bookingId, notificationType: "trip-reminder" };
 
-  // SMS to customer
   if (input.customerPhone) {
-    await sendSms(input.customerPhone,
-      `EasyOutstation: Reminder! Your trip ${route} is TOMORROW (${input.pickupDate}). Driver: ${input.driverName}, call +91-${input.driverPhone}.${input.pickupAddress ? ` Pickup: ${input.pickupAddress}.` : ""} Help: 9958556011`
+    await dispatchSms(input.customerPhone,
+      `EasyOutstation: Reminder! Your trip ${route} is TOMORROW (${input.pickupDate}). Driver: ${input.driverName}, call +91-${input.driverPhone}.${input.pickupAddress ? ` Pickup: ${input.pickupAddress}.` : ""} Help: 9958556011`,
+      meta
     );
   }
 
-  // Email to customer
   if (input.customerEmail) {
-    await sendResend(input.customerEmail,
+    await dispatchEmail(input.customerEmail,
       `Trip Reminder — Tomorrow: ${route} | EasyOutstation`,
       `Dear ${input.customerName},
 
@@ -389,13 +451,15 @@ IMPORTANT REMINDERS
 • For any issues, call us: +91-9958556011
 
 Have a safe and wonderful journey!
-Team EasyOutstation`
+Team EasyOutstation`,
+      meta
     );
   }
 
   // SMS to driver
-  await sendSms(input.driverPhone,
-    `EasyOutstation: Reminder! Trip #${input.bookingId} tomorrow (${input.pickupDate}). Customer: ${input.customerName}${input.customerPhone ? `, +91-${input.customerPhone}` : ""}. Route: ${route}.${input.pickupAddress ? ` Pickup: ${input.pickupAddress}.` : ""} Help: 9958556011`
+  await dispatchSms(input.driverPhone,
+    `EasyOutstation: Reminder! Trip #${input.bookingId} tomorrow (${input.pickupDate}). Customer: ${input.customerName}${input.customerPhone ? `, +91-${input.customerPhone}` : ""}. Route: ${route}.${input.pickupAddress ? ` Pickup: ${input.pickupAddress}.` : ""} Help: 9958556011`,
+    { bookingId: input.bookingId, notificationType: "driver-reminder" }
   );
 }
 
@@ -408,15 +472,17 @@ export async function sendReviewRequest(input: {
   bookingId: number;
 }) {
   const route = `${input.fromCity} to ${input.toCity}`;
+  const meta: NotificationMeta = { bookingId: input.bookingId, notificationType: "review-request" };
 
   if (input.customerPhone) {
-    await sendSms(input.customerPhone,
-      `EasyOutstation: Hope your trip ${route} was great! Rate your experience at easyoutstation.com/dashboard — takes 30 seconds & helps future travelers. Thank you!`
+    await dispatchSms(input.customerPhone,
+      `EasyOutstation: Hope your trip ${route} was great! Rate your experience at easyoutstation.com/dashboard — takes 30 seconds & helps future travelers. Thank you!`,
+      meta
     );
   }
 
   if (input.customerEmail) {
-    await sendResend(input.customerEmail,
+    await dispatchEmail(input.customerEmail,
       `How was your trip ${route}? Leave a quick review | EasyOutstation`,
       `Dear ${input.customerName},
 
@@ -435,7 +501,8 @@ Thank you for choosing EasyOutstation. We look forward to your next journey!
 
 Warm regards,
 Team EasyOutstation
-+91-9958556011 | easyoutstation@gmail.com`
++91-9958556011 | easyoutstation@gmail.com`,
+      meta
     );
   }
 }
@@ -471,8 +538,9 @@ For any help, contact your dedicated account manager:
 Welcome aboard!
 Team EasyOutstation`;
 
-  if (input.email) await sendResend(input.email, `Corporate Account Approved — ${input.companyName} | EasyOutstation`, text);
-  if (input.phone) await sendSms(input.phone, `EasyOutstation: Corporate account for ${input.companyName} APPROVED! Login at easyoutstation.com/corporate-portal with join code: ${input.joinCode}. Help: 9958556011`);
+  const meta: NotificationMeta = { notificationType: "corporate-approval" };
+  if (input.email) await dispatchEmail(input.email, `Corporate Account Approved — ${input.companyName} | EasyOutstation`, text, meta);
+  if (input.phone) await dispatchSms(input.phone, `EasyOutstation: Corporate account for ${input.companyName} APPROVED! Login at easyoutstation.com/corporate-portal with join code: ${input.joinCode}. Help: 9958556011`, meta);
 }
 
 export async function sendRefundNotification(input: {
@@ -498,6 +566,7 @@ If you have any questions, contact us:
 
 Thank you for choosing EasyOutstation.`;
 
-  if (input.customerEmail) await sendResend(input.customerEmail, `Refund Processed — Booking #${input.bookingId} | EasyOutstation`, text);
-  if (input.customerPhone) await sendSms(input.customerPhone, `EasyOutstation: Refund of Rs.${input.amount} for Booking #${input.bookingId} (${input.fromCity} to ${input.toCity}) processed. Reflects in 5-7 days. Help: 9958556011`);
+  const meta: NotificationMeta = { bookingId: input.bookingId, notificationType: "refund" };
+  if (input.customerEmail) await dispatchEmail(input.customerEmail, `Refund Processed — Booking #${input.bookingId} | EasyOutstation`, text, meta);
+  if (input.customerPhone) await dispatchSms(input.customerPhone, `EasyOutstation: Refund of Rs.${input.amount} for Booking #${input.bookingId} (${input.fromCity} to ${input.toCity}) processed. Reflects in 5-7 days. Help: 9958556011`, meta);
 }
