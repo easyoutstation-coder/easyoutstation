@@ -69,6 +69,7 @@ export default function DriverPage() {
   const { user, isAuthenticated, isLoading } = useAuth({ redirectOnUnauthenticated: true });
   const utils = trpc.useUtils();
 
+  const isSuperAdmin = (user as any)?.role === "super_admin";
   const { data: driverProfile, isLoading: profileLoading } = trpc.driver.getProfile.useQuery(undefined, { enabled: isAuthenticated });
   const { data: myTrips, isLoading: tripsLoading } = trpc.driver.getMyTrips.useQuery(undefined, { enabled: !!driverProfile });
 
@@ -166,7 +167,7 @@ export default function DriverPage() {
     return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading…</div>;
   }
 
-  if (!driverProfile) {
+  if (!driverProfile && !isSuperAdmin) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-6">
         <Car className="w-12 h-12 text-muted-foreground" />
@@ -179,14 +180,20 @@ export default function DriverPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      {/* Admin preview banner */}
+      {isSuperAdmin && !driverProfile && (
+        <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 text-center text-xs text-amber-700 font-medium">
+          Admin Preview Mode — this is how drivers see the portal
+        </div>
+      )}
       {/* Header */}
-      <div className="bg-white border-b px-4 py-4 flex items-center justify-between">
+      <div className="bg-white border-b px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-green-600 flex items-center justify-center">
+          <div className="w-9 h-9 rounded-xl bg-green-600 flex items-center justify-center shrink-0">
             <Car className="w-5 h-5 text-white" />
           </div>
           <div>
-            <p className="font-semibold text-sm">{driverProfile.name}</p>
+            <p className="font-semibold text-sm">{driverProfile?.name ?? (isSuperAdmin ? "Admin Preview" : "")}</p>
             <p className="text-xs text-muted-foreground">Driver Portal</p>
           </div>
         </div>
@@ -194,12 +201,15 @@ export default function DriverPage() {
           <Button
             size="sm"
             variant={pushEnabled ? "outline" : "default"}
-            className="gap-1.5 text-xs"
+            className="gap-1.5 text-xs hidden sm:flex"
             onClick={handleEnablePush}
             disabled={pushEnabled || registerFcm.isPending}
           >
             {pushEnabled ? <BellOff className="w-3.5 h-3.5" /> : <Bell className="w-3.5 h-3.5" />}
-            {pushEnabled ? "Notifications on" : "Enable notifications"}
+            <span className="hidden sm:inline">{pushEnabled ? "Alerts on" : "Enable alerts"}</span>
+          </Button>
+          <Button size="sm" variant="ghost" className="sm:hidden" onClick={handleEnablePush} disabled={pushEnabled || registerFcm.isPending}>
+            {pushEnabled ? <BellOff className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
           </Button>
           <Button size="sm" variant="ghost" onClick={() => navigate("/dashboard")}>
             <LogOut className="w-4 h-4" />

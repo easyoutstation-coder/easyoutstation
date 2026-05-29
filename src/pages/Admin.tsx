@@ -651,19 +651,19 @@ export default function AdminPage() {
         )}
 
         <Tabs defaultValue="bookings">
-          <TabsList className="mb-6 flex-wrap h-auto gap-1">
-            <TabsTrigger value="overview" className="gap-1.5"><LayoutDashboard className="w-4 h-4" />Overview</TabsTrigger>
-            <TabsTrigger value="bookings" className="gap-1.5">
+          <TabsList className="mb-6 flex overflow-x-auto h-auto gap-1 pb-1 no-scrollbar w-full justify-start">
+            <TabsTrigger value="overview" className="gap-1.5 shrink-0"><LayoutDashboard className="w-4 h-4" />Overview</TabsTrigger>
+            <TabsTrigger value="bookings" className="gap-1.5 shrink-0">
               <Car className="w-4 h-4" />Bookings
               {(stats?.pending ?? 0) > 0 && <span className="ml-1 bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{stats!.pending}</span>}
             </TabsTrigger>
-            <TabsTrigger value="drivers" className="gap-1.5"><Car className="w-4 h-4" />Drivers</TabsTrigger>
-            <TabsTrigger value="customers" className="gap-1.5"><Users className="w-4 h-4" />Customers</TabsTrigger>
-            {canManageContent && <TabsTrigger value="content" className="gap-1.5"><FileText className="w-4 h-4" />Content</TabsTrigger>}
-            {isSuperAdmin && <TabsTrigger value="payments" className="gap-1.5 text-green-700"><IndianRupee className="w-4 h-4" />Payments</TabsTrigger>}
-            {isSuperAdmin && <TabsTrigger value="financials" className="gap-1.5 text-emerald-700"><TrendingUp className="w-4 h-4" />Financials</TabsTrigger>}
-            {isSuperAdmin && <TabsTrigger value="referral" className="gap-1.5 text-pink-700"><Gift className="w-4 h-4" />Referral</TabsTrigger>}
-            <TabsTrigger value="corporate" className="gap-1.5 text-blue-700">
+            <TabsTrigger value="drivers" className="gap-1.5 shrink-0"><Car className="w-4 h-4" />Drivers</TabsTrigger>
+            <TabsTrigger value="customers" className="gap-1.5 shrink-0"><Users className="w-4 h-4" />Customers</TabsTrigger>
+            {canManageContent && <TabsTrigger value="content" className="gap-1.5 shrink-0"><FileText className="w-4 h-4" />Content</TabsTrigger>}
+            {isSuperAdmin && <TabsTrigger value="payments" className="gap-1.5 text-green-700 shrink-0"><IndianRupee className="w-4 h-4" />Payments</TabsTrigger>}
+            {isSuperAdmin && <TabsTrigger value="financials" className="gap-1.5 text-emerald-700 shrink-0"><TrendingUp className="w-4 h-4" />Financials</TabsTrigger>}
+            {isSuperAdmin && <TabsTrigger value="referral" className="gap-1.5 text-pink-700 shrink-0"><Gift className="w-4 h-4" />Referral</TabsTrigger>}
+            <TabsTrigger value="corporate" className="gap-1.5 text-blue-700 shrink-0">
               <Building2 className="w-4 h-4" />Corp Leads
               {(corporateLeads?.filter(l => l.status === "new").length ?? 0) > 0 && (
                 <span className="ml-1 bg-blue-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
@@ -671,7 +671,7 @@ export default function AdminPage() {
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="corp-accounts" className="gap-1.5 text-indigo-700">
+            <TabsTrigger value="corp-accounts" className="gap-1.5 text-indigo-700 shrink-0">
               <Building2 className="w-4 h-4" />Corp Accounts
               {(corporateAccountsList?.filter(a => a.status === "pending").length ?? 0) > 0 && (
                 <span className="ml-1 bg-indigo-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
@@ -679,11 +679,11 @@ export default function AdminPage() {
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="vendors" className="gap-1.5 text-cyan-700"><Truck className="w-4 h-4" />Vendors</TabsTrigger>
-            <TabsTrigger value="analytics" className="gap-1.5 text-orange-700"><TrendingUp className="w-4 h-4" />Analytics</TabsTrigger>
-            <TabsTrigger value="agent" className="gap-1.5 text-violet-700"><Bot className="w-4 h-4" />Agent</TabsTrigger>
-            <TabsTrigger value="wa-logs" className="gap-1.5 text-green-700"><MessageCircle className="w-4 h-4" />WA Logs</TabsTrigger>
-            <TabsTrigger value="live" className="gap-1.5 text-red-600 font-semibold">
+            <TabsTrigger value="vendors" className="gap-1.5 text-cyan-700 shrink-0"><Truck className="w-4 h-4" />Vendors</TabsTrigger>
+            <TabsTrigger value="analytics" className="gap-1.5 text-orange-700 shrink-0"><TrendingUp className="w-4 h-4" />Analytics</TabsTrigger>
+            <TabsTrigger value="agent" className="gap-1.5 text-violet-700 shrink-0"><Bot className="w-4 h-4" />Agent</TabsTrigger>
+            <TabsTrigger value="wa-logs" className="gap-1.5 text-green-700 shrink-0"><MessageCircle className="w-4 h-4" />WA Logs</TabsTrigger>
+            <TabsTrigger value="live" className="gap-1.5 text-red-600 font-semibold shrink-0">
               <Map className="w-4 h-4" />Live
               {(liveTrips?.length ?? 0) > 0 && (
                 <span className="ml-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{liveTrips!.length}</span>

@@ -35,6 +35,7 @@ export default function Vendor() {
   const [selectedDriver, setSelectedDriver] = useState<Record<number, string>>({});
   const [rejectReason, setRejectReason] = useState<Record<number, string>>({});
 
+  const isSuperAdmin = (user as any)?.role === "super_admin";
   const { data: profile, isLoading: profileLoading } = trpc.vendor.getProfile.useQuery();
   const { data: myDrivers } = trpc.vendor.getMyDrivers.useQuery(undefined, { enabled: !!profile });
   const { data: myTrips, refetch: refetchTrips } = trpc.vendor.getMyTrips.useQuery(undefined, { enabled: !!profile });
@@ -75,7 +76,7 @@ export default function Vendor() {
     return <div className="min-h-screen flex items-center justify-center text-muted-foreground text-sm">Loading...</div>;
   }
 
-  if (!profile) {
+  if (!profile && !isSuperAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="w-full max-w-sm">
@@ -97,6 +98,12 @@ export default function Vendor() {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      {/* Admin preview banner */}
+      {isSuperAdmin && !profile && (
+        <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 text-center text-xs text-amber-700 font-medium sticky top-0 z-20">
+          Admin Preview Mode — this is how vendors see the portal
+        </div>
+      )}
       {/* Header */}
       <div className="bg-white border-b sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
@@ -105,8 +112,8 @@ export default function Vendor() {
               <Truck className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="font-semibold text-sm leading-tight">{profile.name}</p>
-              <p className="text-[11px] text-muted-foreground">{profile.company ?? "Vendor"} · {profile.city ?? ""}</p>
+              <p className="font-semibold text-sm leading-tight">{profile?.name ?? (isSuperAdmin ? "Admin Preview" : "")}</p>
+              <p className="text-[11px] text-muted-foreground">{profile?.company ?? "Vendor"} · {profile?.city ?? ""}</p>
             </div>
           </div>
           <Button variant="ghost" size="sm" className="gap-1.5 text-slate-500"
@@ -118,7 +125,7 @@ export default function Vendor() {
 
       <div className="max-w-2xl mx-auto px-4 py-5 space-y-5">
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3">
           <Card><CardContent className="p-4 text-center">
             <p className="text-2xl font-bold text-primary">{myDrivers?.length ?? 0}</p>
             <p className="text-xs text-muted-foreground mt-0.5">Drivers</p>
