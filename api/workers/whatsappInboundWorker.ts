@@ -2,7 +2,8 @@ import { Worker, type Job } from "bullmq";
 import { eq, sql } from "drizzle-orm";
 import { getRedis } from "../lib/redis";
 import { getDb } from "../queries/connection";
-import { whatsappLogs, whatsappConversations, bookings } from "@db/schema";
+import { whatsappLogs, whatsappConversations, bookings, drivers } from "@db/schema";
+import { logBookingEvent } from "../lib/bookingEvents";
 import { QUEUE_WHATSAPP_INBOUND, type WhatsAppInboundJobData } from "./queues";
 import { sendWhatsAppTextRaw, toWaPhone } from "../lib/whatsapp";
 
@@ -121,6 +122,7 @@ async function handleIncomingMessage(message: any, waPhone: string): Promise<voi
         await sendWhatsAppTextRaw(toWaPhone(ADMIN_PHONE),
           `✅ Vendor confirmed driver for Booking #${bookingId}: ${driverName}, +91-${mobile}`
         );
+        logBookingEvent(bookingId, "vendor_confirmed", { driverName, driverPhone: mobile }).catch(() => {});
       }
       await sendWhatsAppTextRaw(waPhone,
         `✅ Confirmed! ${driverName} (+91-${mobile}) has been registered as driver${bookingId ? ` for Trip #${bookingId}` : ""}. Safe driving! 🚗`

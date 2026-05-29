@@ -1,7 +1,7 @@
 import { Worker, type Job } from "bullmq";
 import { getRedis } from "../lib/redis";
 import { getCronQueue, QUEUE_CRON, type CronJobData } from "./queues";
-import { runDailyReminders, runPostTripReviews, runAbandonedReminders } from "./cronJobs";
+import { runDailyReminders, runPostTripReviews, runAbandonedReminders, runEscalationAlerts } from "./cronJobs";
 
 const EVERY_HOUR_MS = 60 * 60 * 1000;
 
@@ -28,6 +28,10 @@ export async function startCronWorker() {
     repeat: { every: EVERY_HOUR_MS },
     jobId: "run-abandoned-reminders",
   });
+  await queue.add("run-escalation-alerts", { task: "run-escalation-alerts" }, {
+    repeat: { every: EVERY_HOUR_MS },
+    jobId: "run-escalation-alerts",
+  });
 
   const worker = new Worker<CronJobData>(
     QUEUE_CRON,
@@ -37,6 +41,7 @@ export async function startCronWorker() {
         case "run-daily-reminders":    await runDailyReminders();    break;
         case "run-post-trip-reviews":  await runPostTripReviews();   break;
         case "run-abandoned-reminders": await runAbandonedReminders(); break;
+        case "run-escalation-alerts":   await runEscalationAlerts();   break;
       }
     },
     { connection: redis, concurrency: 1 }

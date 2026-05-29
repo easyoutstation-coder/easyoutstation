@@ -167,6 +167,21 @@ async function runStartupMigrations() {
 
     // Trip verification PIN column
     try { await db.execute(sql.raw(`ALTER TABLE bookings ADD COLUMN tripPin VARCHAR(6) NULL`)); } catch { /* already exists */ }
+    // Escalation alert tracking
+    try { await db.execute(sql.raw(`ALTER TABLE bookings ADD COLUMN escalationSentAt TIMESTAMP NULL`)); } catch { /* already exists */ }
+    // Booking events audit trail
+    try {
+      await db.execute(sql.raw(`
+        CREATE TABLE IF NOT EXISTS bookingEvents (
+          id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+          bookingId BIGINT UNSIGNED NOT NULL,
+          event VARCHAR(50) NOT NULL,
+          metaJson JSON NULL,
+          createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          INDEX idx_bookingEvents_bookingId (bookingId)
+        )
+      `));
+    } catch { /* already exists */ }
     // Extend bookings status enum to include driver_assigned
     try {
       await db.execute(sql.raw(

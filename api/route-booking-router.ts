@@ -5,6 +5,7 @@ import { getDb } from "./queries/connection";
 import { routes, bookings, userSearches, users, carReviews } from "@db/schema";
 import { eq, and, like, desc, sql, lt, isNull, ne } from "drizzle-orm";
 import { getRedis } from "./lib/redis";
+import { logBookingEvent } from "./lib/bookingEvents";
 
 const LOCATION_TTL = 7200;
 import { differenceInHours, subMinutes } from "date-fns";
@@ -111,7 +112,7 @@ export const bookingRouter = createRouter({
       });
 
       const bookingId = Number((result as any).insertId) || Math.floor(Math.random() * 90000 + 10000);
-
+      logBookingEvent(bookingId, "booking_created", { fromCity: input.fromCity, toCity: input.toCity }).catch(() => {});
       return { success: true, bookingId };
     }),
 
@@ -290,6 +291,7 @@ export const bookingRouter = createRouter({
         .set({ status: "cancelled" as const })
         .where(and(eq(bookings.id, input.id), eq(bookings.userId, userId)));
 
+      logBookingEvent(input.id, "cancelled", { by: "customer" }).catch(() => {});
       return { success: true };
     }),
 

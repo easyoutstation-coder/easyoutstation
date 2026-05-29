@@ -4,6 +4,7 @@ import { getDb } from "./queries/connection";
 import { bookings, users, cars } from "@db/schema";
 import { eq } from "drizzle-orm";
 import { sendBookingEmails, sendBookingSms } from "./lib/notifications";
+import { logBookingEvent } from "./lib/bookingEvents";
 
 const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID || "";
 const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_SECRET || process.env.RAZORPAY_KEY_SECRET || "";
@@ -79,6 +80,7 @@ export const razorpayRouter = createRouter({
         .update(bookings)
         .set({ paymentStatus: "paid", status: "confirmed", razorpayPaymentId: input.razorpayPaymentId })
         .where(eq(bookings.id, input.bookingId));
+      logBookingEvent(input.bookingId, "payment_received", { paymentId: input.razorpayPaymentId }).catch(() => {});
 
       // Fetch booking + fall back to user account for missing phone/email
       const booking = await db.query.bookings.findFirst({ where: eq(bookings.id, input.bookingId) });

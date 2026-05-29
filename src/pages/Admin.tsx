@@ -16,8 +16,31 @@ import {
   Phone, UserCog, StickyNote, CheckCheck, X, Plus, Pencil, Trash2,
   MessageCircle, Mail, AlertTriangle, TrendingUp, MapPin, Wallet, ShieldCheck,
   Globe, WifiOff, Search, FileText, Bot, Send, Loader2, ChevronRight, Tag,
-  Gift, Share2, RefreshCw, Building2,
+  Gift, Share2, RefreshCw, Building2, Activity, Map,
 } from "lucide-react";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+
+// Fix Leaflet default icon URLs for Vite/webpack bundlers
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+});
+const greenIcon = new L.Icon({
+  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41],
+});
+function MapFitBounds({ positions }: { positions: [number, number][] }) {
+  const map = useMap();
+  useEffect(() => {
+    if (positions.length > 0) map.fitBounds(positions, { padding: [40, 40] });
+  }, [positions, map]);
+  return null;
+}
 
 type BookingStatus = "pending" | "confirmed" | "driver_assigned" | "completed" | "cancelled";
 type PaymentStatus = "pending" | "paid" | "refunded";
@@ -362,6 +385,12 @@ export default function AdminPage() {
   const { data: adminRoutes } = trpc.admin.getAdminRoutes.useQuery(undefined, { enabled: isAdmin });
   const [waLogsPage, setWaLogsPage] = useState(1);
   const { data: waLogsData } = trpc.admin.getWhatsappLogs.useQuery({ page: waLogsPage }, { enabled: isAdmin });
+  const { data: liveTrips, refetch: refetchLive } = trpc.admin.getLiveTrips.useQuery(undefined, { enabled: isAdmin, refetchInterval: 30_000 });
+  const [expandedBookingId, setExpandedBookingId] = useState<number | null>(null);
+  const { data: bookingTimeline } = trpc.admin.getBookingTimeline.useQuery(
+    { bookingId: expandedBookingId! },
+    { enabled: expandedBookingId !== null }
+  );
   const addRoute = trpc.admin.addRoute.useMutation({ onSuccess: () => { setRouteForm({ fromCity: "", toCity: "", distanceKm: "", durationHours: "", basePrice: "", isPopular: false }); utils.admin.getAdminRoutes.invalidate(); } });
   const updateRoute = trpc.admin.updateRoute.useMutation({ onSuccess: () => { setEditingRoute(null); utils.admin.getAdminRoutes.invalidate(); } });
   const deleteRoute = trpc.admin.deleteRoute.useMutation({ onSuccess: () => utils.admin.getAdminRoutes.invalidate() });
@@ -636,6 +665,12 @@ export default function AdminPage() {
             </TabsTrigger>
             <TabsTrigger value="agent" className="gap-1.5 text-violet-700"><Bot className="w-4 h-4" />Agent</TabsTrigger>
             <TabsTrigger value="wa-logs" className="gap-1.5 text-green-700"><MessageCircle className="w-4 h-4" />WA Logs</TabsTrigger>
+            <TabsTrigger value="live" className="gap-1.5 text-red-600 font-semibold">
+              <Map className="w-4 h-4" />Live
+              {(liveTrips?.length ?? 0) > 0 && (
+                <span className="ml-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{liveTrips!.length}</span>
+              )}
+            </TabsTrigger>
           </TabsList>
 
           {/* ── Overview ────────────────────────────────────────────── */}
@@ -1255,7 +1290,39 @@ export default function AdminPage() {
                               onClick={() => { setNoteModal({ open: true, bookingId: Number(b.id), currentNote: bx.adminNotes ?? "" }); setNoteText(bx.adminNotes ?? ""); }}>
                               <StickyNote className="w-3 h-3" /> Note
                             </Button>
+
+                            {/* Timeline toggle */}
+                            <Button size="sm" variant="outline" className="h-8 text-xs gap-1"
+                              onClick={() => setExpandedBookingId(expandedBookingId === Number(b.id) ? null : Number(b.id))}>
+                              <Activity className="w-3 h-3" /> Timeline
+                            </Button>
                           </div>
+
+                          {/* ── Timeline ── */}
+                          {expandedBookingId === Number(b.id) && (
+                            <div className="border-t border-slate-100 pt-3 mt-1">
+                              {!bookingTimeline ? (
+                                <p className="text-xs text-muted-foreground">Loading...</p>
+                              ) : bookingTimeline.length === 0 ? (
+                                <p className="text-xs text-muted-foreground">No events recorded yet.</p>
+                              ) : (
+                                <ol className="relative border-l border-slate-200 ml-2 space-y-3">
+                                  {bookingTimeline.map(ev => (
+                                    <li key={ev.id} className="pl-4">
+                                      <span className="absolute -left-1.5 mt-0.5 w-3 h-3 rounded-full bg-primary border-2 border-white" />
+                                      <p className="text-xs font-medium text-slate-800 capitalize">{ev.event.replace(/_/g, " ")}</p>
+                                      <p className="text-[10px] text-muted-foreground">
+                                        {new Date(ev.createdAt).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                                        {ev.metaJson && Object.keys(ev.metaJson as object).length > 0 && (
+                                          <span className="ml-1 text-slate-500">· {JSON.stringify(ev.metaJson).replace(/[{}"]/g, "").replace(/,/g, ", ")}</span>
+                                        )}
+                                      </p>
+                                    </li>
+                                  ))}
+                                </ol>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
@@ -2387,6 +2454,91 @@ export default function AdminPage() {
                 <span className="text-sm text-muted-foreground">Page {waLogsPage} of {Math.ceil(waLogsData.total / waLogsData.pageSize)}</span>
                 <Button variant="outline" size="sm" disabled={waLogsPage >= Math.ceil(waLogsData.total / waLogsData.pageSize)} onClick={() => setWaLogsPage(p => p + 1)}>Next</Button>
               </div>
+            )}
+          </TabsContent>
+
+          {/* ── Live Ops Map ─────────────────────────────────────── */}
+          <TabsContent value="live" className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-base">Live Trips Today</h3>
+                <p className="text-xs text-muted-foreground">{liveTrips?.length ?? 0} active booking{(liveTrips?.length ?? 0) !== 1 ? "s" : ""} · refreshes every 30s</p>
+              </div>
+              <Button variant="outline" size="sm" className="gap-1.5" onClick={() => refetchLive()}>
+                <RefreshCw className="w-3.5 h-3.5" /> Refresh
+              </Button>
+            </div>
+
+            {(!liveTrips || liveTrips.length === 0) ? (
+              <Card><CardContent className="p-8 text-center text-muted-foreground text-sm">No active trips today.</CardContent></Card>
+            ) : (
+              <>
+                {/* Map */}
+                {liveTrips.some(t => t.driverLoc) && (
+                  <Card className="overflow-hidden">
+                    <CardContent className="p-0">
+                      <div style={{ height: 380 }}>
+                        <MapContainer center={[20.5937, 78.9629]} zoom={5} style={{ height: "100%", width: "100%" }}>
+                          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                            attribution="© OpenStreetMap contributors" />
+                          <MapFitBounds positions={liveTrips.filter(t => t.driverLoc).map(t => [t.driverLoc!.lat, t.driverLoc!.lng])} />
+                          {liveTrips.map(t => t.driverLoc ? (
+                            <Marker key={t.id} position={[t.driverLoc.lat, t.driverLoc.lng]} icon={greenIcon}>
+                              <Popup>
+                                <strong>#{t.id} {t.customerName}</strong><br />
+                                {t.fromCity} → {t.toCity}<br />
+                                {t.driverName && <>Driver: {t.driverName}<br /></>}
+                                {t.driverPhone && <a href={`tel:+91${t.driverPhone}`}>+91-{t.driverPhone}</a>}
+                              </Popup>
+                            </Marker>
+                          ) : null)}
+                        </MapContainer>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Trip list */}
+                <div className="space-y-3">
+                  {liveTrips.map(trip => (
+                    <Card key={trip.id} className="overflow-hidden">
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                              <span className="text-xs font-mono text-muted-foreground">#{trip.id}</span>
+                              <span className="font-semibold text-sm">{trip.customerName}</span>
+                              {trip.customerPhone && (
+                                <a href={`tel:+91${trip.customerPhone}`} className="text-xs text-primary hover:underline flex items-center gap-1">
+                                  <Phone className="w-3 h-3" />{trip.customerPhone}
+                                </a>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground">{trip.fromCity} → {trip.toCity} · {new Date(trip.pickupDate!).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</p>
+                            {trip.driverName && (
+                              <p className="text-xs text-green-700 mt-1">👨‍✈️ {trip.driverName}{trip.driverPhone && ` · +91-${trip.driverPhone}`}</p>
+                            )}
+                            {trip.pickupAddress && <p className="text-xs text-muted-foreground mt-0.5">📍 {trip.pickupAddress}</p>}
+                          </div>
+                          <div className="flex flex-col items-end gap-1.5 shrink-0">
+                            <Badge className={`${statusColors[trip.status as BookingStatus]} text-xs border-0`}>
+                              {trip.status.replace("_", " ")}
+                            </Badge>
+                            {trip.driverLoc ? (
+                              <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">📍 Live GPS</span>
+                            ) : (
+                              <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">No GPS</span>
+                            )}
+                            {trip.tripPin && (
+                              <span className="text-[10px] font-mono bg-amber-50 text-amber-700 px-2 py-0.5 rounded">PIN: {trip.tripPin}</span>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </>
             )}
           </TabsContent>
         </Tabs>

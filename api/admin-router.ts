@@ -2,10 +2,12 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createRouter, publicQuery, adminQuery, superAdminQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { users, bookings, drivers, expenses, siteSettings, faqs, routes, cars, userSearches, carReviews, referralEvents, referralPoints, corporateEnquiries, corporateAccounts, whatsappLogs } from "@db/schema";
+import { users, bookings, drivers, expenses, siteSettings, faqs, routes, cars, userSearches, carReviews, referralEvents, referralPoints, corporateEnquiries, corporateAccounts, whatsappLogs, bookingEvents } from "@db/schema";
+import { getRedis } from "./lib/redis";
 import { eq, desc, sql, and, gte, lt, count } from "drizzle-orm";
 import { defaultProgramConfig } from "./referral-router";
 import { sendReferralPointsNotification, sendDriverAssignmentSms, sendCorporateApprovalEmail, sendRefundNotification } from "./lib/notifications";
+import { logBookingEvent } from "./lib/bookingEvents";
 import { sendFcmNotification } from "./lib/fcm";
 
 // In-memory OTP store for data-clear verification (process-scoped, 10-min TTL)
@@ -210,6 +212,8 @@ Have a wonderful journey! 🌟`;
         ).catch(console.error);
       }
 
+      logBookingEvent(input.id, "driver_assigned", { driverName: input.driverName, driverPhone: input.driverPhone, tripPin }).catch(() => {});
+
       // FCM push to driver if they have a web push token
       const driverPhone10 = input.driverPhone.replace(/\D/g, "").slice(-10);
       const driverUser = await db.select({ fcmToken: users.fcmToken })
@@ -307,6 +311,7 @@ We apologize for the inconvenience. Please contact us:
 
 Thank you for choosing EasyOutstation.`;
 
+      logBookingEvent(input.id, "cancelled", { by: "admin", reason: input.reason }).catch(() => {});
       return {
         success: true,
         whatsappLink: booking?.resolvedPhone ? waLink(booking.resolvedPhone, waMsg) : null,
@@ -1161,5 +1166,52 @@ Thank you for choosing EasyOutstation.`;
         db.select({ total: sql<number>`COUNT(*)` }).from(whatsappLogs),
       ]);
       return { logs, total: Number(total), page, pageSize };
+    }),
+
+  getLiveTrips: adminQuery.query(async () => {
+    const db = getDb();
+    const redis = getRedis();
+    const today = new Date().toISOString().slice(0, 10);
+    const active = await db.select({
+      id: bookings.id,
+      customerName: bookings.customerName,
+      customerPhone: bookings.customerPhone,
+      fromCity: bookings.fromCity,
+      toCity: bookings.toCity,
+      pickupDate: bookings.pickupDate,
+      pickupAddress: bookings.pickupAddress,
+      driverName: bookings.driverName,
+      driverPhone: bookings.driverPhone,
+      status: bookings.status,
+      tripPin: bookings.tripPin,
+    }).from(bookings).where(
+      and(
+        sql`${bookings.status} IN ('confirmed', 'driver_assigned')`,
+        sql`DATE(${bookings.pickupDate}) = ${today}`
+      )
+    );
+
+    const trips = await Promise.all(active.map(async (b) => {
+      let driverLoc: { lat: number; lng: number } | null = null;
+      if (redis) {
+        try {
+          const raw = await redis.get(`driver:loc:${b.id}`);
+          if (raw) driverLoc = JSON.parse(raw);
+        } catch {}
+      }
+      return { ...b, driverLoc };
+    }));
+
+    return trips;
+  }),
+
+  getBookingTimeline: adminQuery
+    .input(z.object({ bookingId: z.number() }))
+    .query(async ({ input }) => {
+      const db = getDb();
+      const events = await db.select().from(bookingEvents)
+        .where(eq(bookingEvents.bookingId, input.bookingId))
+        .orderBy(bookingEvents.createdAt);
+      return events;
     }),
 });

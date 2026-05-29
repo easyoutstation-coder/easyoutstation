@@ -2,6 +2,10 @@ import { and, eq, sql } from "drizzle-orm";
 import { getDb } from "../queries/connection";
 import { bookings, users } from "@db/schema";
 import { sendTripReminder, sendReviewRequest, sendBookingEmails, sendBookingSms } from "../lib/notifications";
+import { logBookingEvent } from "../lib/bookingEvents";
+import { sendWhatsAppTextRaw, toWaPhone } from "../lib/whatsapp";
+
+const ADMIN_PHONE = process.env.ADMIN_PHONE || "8796564111";
 
 function fmt(d: Date | string | null): string | undefined {
   return d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : undefined;
@@ -49,6 +53,7 @@ export async function runDailyReminders(): Promise<void> {
         bookingId: b.id,
       });
       await db.execute(sql.raw(`UPDATE bookings SET reminderSentAt = NOW() WHERE id = ${b.id}`));
+      logBookingEvent(b.id, "reminder_sent").catch(() => {});
       console.log(`[cron] Trip reminder queued for booking #${b.id}`);
     }
   } catch (e) {
@@ -93,10 +98,48 @@ export async function runPostTripReviews(): Promise<void> {
         bookingId: b.id,
       });
       await db.execute(sql.raw(`UPDATE bookings SET reviewSentAt = NOW(), status = 'completed' WHERE id = ${b.id}`));
+      logBookingEvent(b.id, "review_sent").catch(() => {});
+      logBookingEvent(b.id, "completed").catch(() => {});
       console.log(`[cron] Review request queued for booking #${b.id}`);
     }
   } catch (e) {
     console.error("[cron] runPostTripReviews error:", e);
+  }
+}
+
+export async function runEscalationAlerts(): Promise<void> {
+  try {
+    const db = getDb();
+    // Trips confirmed but no driver assigned, starting within 4 hours
+    const cutoff = new Date(Date.now() + 4 * 60 * 60 * 1000);
+    const cutoffStr = cutoff.toISOString().slice(0, 19).replace("T", " ");
+
+    const unassigned = await db.select().from(bookings).where(
+      and(
+        eq(bookings.status, "confirmed"),
+        sql`${bookings.driverName} IS NULL`,
+        sql`${bookings.pickupDate} <= ${cutoffStr}`,
+        sql`${bookings.pickupDate} >= NOW()`,
+        sql`${bookings.escalationSentAt} IS NULL`
+      )
+    );
+
+    if (!unassigned.length) return;
+
+    for (const b of unassigned) {
+      const pickupStr = fmt(b.pickupDate) ?? String(b.pickupDate);
+      const msg = `🚨 ESCALATION: Booking #${b.id} — ${b.fromCity} to ${b.toCity} on ${pickupStr} has NO driver assigned and pickup is within 4 hours. Immediate action needed!`;
+
+      try {
+        await sendWhatsAppTextRaw(toWaPhone(ADMIN_PHONE), msg);
+      } catch (e) { console.error(`[cron] Escalation WA failed for #${b.id}:`, e); }
+
+      await db.execute(sql.raw(`UPDATE bookings SET escalationSentAt = NOW() WHERE id = ${b.id}`));
+      logBookingEvent(b.id, "escalation_sent").catch(() => {});
+      console.log(`[cron] Escalation alert sent for booking #${b.id}`);
+    }
+  } catch (e) {
+    console.error("[cron] runEscalationAlerts error:", e);
   }
 }
 

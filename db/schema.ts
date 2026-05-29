@@ -96,6 +96,7 @@ export const bookings = mysqlTable("bookings", {
   driverName: varchar("driverName", { length: 255 }),
   driverPhone: varchar("driverPhone", { length: 20 }),
   tripPin: varchar("tripPin", { length: 6 }),
+  escalationSentAt: timestamp("escalationSentAt"),
   adminNotes: text("adminNotes"),
   razorpayPaymentId: varchar("razorpayPaymentId", { length: 100 }),
   reminderSentAt: timestamp("reminderSentAt"),
@@ -293,3 +294,11 @@ export const whatsappConversations = mysqlTable("whatsappConversations", {
 
 export type WhatsappLog = typeof whatsappLogs.$inferSelect;
 export type WhatsappConversation = typeof whatsappConversations.$inferSelect;
+
+export const bookingEvents = mysqlTable("bookingEvents", {
+  id: serial("id").primaryKey(),
+  bookingId: bigint("bookingId", { mode: "number", unsigned: true }).notNull(),
+  event: varchar("event", { length: 50 }).notNull(),
+  metaJson: json("metaJson"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
