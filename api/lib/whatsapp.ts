@@ -2,7 +2,7 @@ import { getDb } from "../queries/connection";
 import { whatsappLogs } from "@db/schema";
 import { getWhatsAppQueue, type WhatsAppTemplateComponent } from "../workers/queues";
 
-const WA_API_BASE = "https://graph.facebook.com/v20.0";
+const WA_API_BASE = "https://graph.facebook.com/v25.0";
 
 export function toWaPhone(phone: string): string {
   const digits = phone.replace(/\D/g, "").slice(-10);
