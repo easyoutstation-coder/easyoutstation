@@ -1,7 +1,8 @@
 import { getDb } from "../queries/connection";
-import { notificationLogs } from "@db/schema";
+import { notificationLogs, whatsappConversations } from "@db/schema";
 import { getNotificationQueue } from "../workers/queues";
-import { dispatchWhatsApp } from "./whatsapp";
+import { dispatchWhatsApp, toWaPhone } from "./whatsapp";
+import { sql } from "drizzle-orm";
 
 function formatTime(t: string) {
   const [h, m] = t.split(":").map(Number);
@@ -418,8 +419,29 @@ export async function sendDriverAssignmentSms(input: {
   pickupAddress?: string | null;
   bookingId: number;
 }) {
-  const msg = `EasyOutstation: Trip #${input.bookingId} assigned to you. Customer: ${input.customerName} (+91-${input.customerPhone}). Route: ${input.fromCity} to ${input.toCity}. Date: ${input.pickupDate}.${input.pickupAddress ? ` Pickup: ${input.pickupAddress}.` : ""} Help: 9958556011`;
+  const msg = `EasyOutstation: Trip #${input.bookingId} assigned to you. Customer: ${input.customerName} (+91-${input.customerPhone}). Route: ${input.fromCity} to ${input.toCity}. Date: ${input.pickupDate}.${input.pickupAddress ? ` Pickup: ${input.pickupAddress}.` : ""} Help: 8796564111`;
   await dispatchSms(input.driverPhone, msg, { bookingId: input.bookingId, notificationType: "driver-assignment" });
+
+  // WhatsApp to customer with driver details
+  const smsFallback = `EasyOutstation: Your driver for ${input.fromCity} to ${input.toCity} on ${input.pickupDate} is ${input.driverName}, +91-${input.driverPhone}. Help: 8796564111`;
+  await dispatchWhatsApp(
+    input.customerPhone,
+    "eo_driver_assigned",
+    "en",
+    [{
+      type: "body",
+      parameters: [
+        { type: "text", text: input.customerName },
+        { type: "text", text: input.fromCity },
+        { type: "text", text: input.toCity },
+        { type: "text", text: input.pickupDate },
+        { type: "text", text: input.driverName },
+        { type: "text", text: input.driverPhone },
+      ],
+    }],
+    { bookingId: input.bookingId, notificationType: "driver-assigned" },
+    smsFallback
+  );
 }
 
 export async function sendTripReminder(input: {
@@ -439,7 +461,7 @@ export async function sendTripReminder(input: {
 
   if (input.customerPhone) {
     await dispatchSms(input.customerPhone,
-      `EasyOutstation: Reminder! Your trip ${route} is TOMORROW (${input.pickupDate}). Driver: ${input.driverName}, call +91-${input.driverPhone}.${input.pickupAddress ? ` Pickup: ${input.pickupAddress}.` : ""} Help: 9958556011`,
+      `EasyOutstation: Reminder! Your trip ${route} is TOMORROW (${input.pickupDate}). Driver: ${input.driverName}, call +91-${input.driverPhone}.${input.pickupAddress ? ` Pickup: ${input.pickupAddress}.` : ""} Help: 8796564111`,
       meta
     );
   }
@@ -479,9 +501,32 @@ Team EasyOutstation`,
 
   // SMS to driver
   await dispatchSms(input.driverPhone,
-    `EasyOutstation: Reminder! Trip #${input.bookingId} tomorrow (${input.pickupDate}). Customer: ${input.customerName}${input.customerPhone ? `, +91-${input.customerPhone}` : ""}. Route: ${route}.${input.pickupAddress ? ` Pickup: ${input.pickupAddress}.` : ""} Help: 9958556011`,
+    `EasyOutstation: Reminder! Trip #${input.bookingId} tomorrow (${input.pickupDate}). Customer: ${input.customerName}${input.customerPhone ? `, +91-${input.customerPhone}` : ""}. Route: ${route}.${input.pickupAddress ? ` Pickup: ${input.pickupAddress}.` : ""} Help: 8796564111`,
     { bookingId: input.bookingId, notificationType: "driver-reminder" }
   );
+
+  // WhatsApp to customer
+  if (input.customerPhone) {
+    const smsFallback = `EasyOutstation: Reminder! Your trip ${route} is TOMORROW (${input.pickupDate}). Driver: ${input.driverName}, +91-${input.driverPhone}. Help: 8796564111`;
+    await dispatchWhatsApp(
+      input.customerPhone,
+      "eo_trip_reminder",
+      "en",
+      [{
+        type: "body",
+        parameters: [
+          { type: "text", text: input.customerName },
+          { type: "text", text: input.fromCity },
+          { type: "text", text: input.toCity },
+          { type: "text", text: input.pickupDate },
+          { type: "text", text: input.driverName },
+          { type: "text", text: input.driverPhone },
+        ],
+      }],
+      { bookingId: input.bookingId, notificationType: "trip-reminder" },
+      smsFallback
+    );
+  }
 }
 
 export async function sendReviewRequest(input: {
@@ -500,6 +545,36 @@ export async function sendReviewRequest(input: {
       `EasyOutstation: Hope your trip ${route} was great! Rate your experience at easyoutstation.com/dashboard — takes 30 seconds & helps future travelers. Thank you!`,
       meta
     );
+
+    // WhatsApp review request with conversational reply (customer replies 1-5)
+    await dispatchWhatsApp(
+      input.customerPhone,
+      "eo_review_request",
+      "en",
+      [{
+        type: "body",
+        parameters: [
+          { type: "text", text: input.customerName },
+          { type: "text", text: input.fromCity },
+          { type: "text", text: input.toCity },
+        ],
+      }],
+      { bookingId: input.bookingId, notificationType: "review-request" }
+    );
+
+    // Set conversation state so inbound worker handles their 1-5 reply
+    try {
+      const db = getDb();
+      const waPhone = toWaPhone(input.customerPhone);
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      await db.execute(sql`
+        INSERT INTO whatsappConversations (phone, state, expiresAt)
+        VALUES (${waPhone}, 'awaiting_review_rating', ${expiresAt})
+        ON DUPLICATE KEY UPDATE state = 'awaiting_review_rating', expiresAt = ${expiresAt}
+      `);
+    } catch (e) {
+      console.error("[Notify] Failed to set WA conversation state:", e);
+    }
   }
 
   if (input.customerEmail) {
