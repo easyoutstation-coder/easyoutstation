@@ -2,7 +2,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createRouter, publicQuery, adminQuery, superAdminQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { users, bookings, drivers, expenses, siteSettings, faqs, routes, cars, userSearches, carReviews, referralEvents, referralPoints, corporateEnquiries, corporateAccounts, whatsappLogs, bookingEvents } from "@db/schema";
+import { users, bookings, drivers, vendors, expenses, siteSettings, faqs, routes, cars, userSearches, carReviews, referralEvents, referralPoints, corporateEnquiries, corporateAccounts, whatsappLogs, bookingEvents } from "@db/schema";
 import { getRedis } from "./lib/redis";
 import { eq, desc, sql, and, gte, lt, count } from "drizzle-orm";
 import { defaultProgramConfig } from "./referral-router";
@@ -390,6 +390,63 @@ Thank you for choosing EasyOutstation.`;
       return { success: true };
     }),
 
+  assignDriverToVendor: adminQuery
+    .input(z.object({ driverId: z.number(), vendorId: z.number().nullable() }))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      await db.update(drivers).set({ vendorId: input.vendorId } as any).where(eq(drivers.id, input.driverId));
+      return { success: true };
+    }),
+
+  // ── Vendors ───────────────────────────────────────────────────────────
+  getVendors: adminQuery.query(async () => {
+    const db = getDb();
+    const vendorList = await db.select().from(vendors).where(eq(vendors.isActive, true)).orderBy(vendors.name);
+    const driverList = await db.select({ id: drivers.id, name: drivers.name, phone: drivers.phone, vendorId: drivers.vendorId })
+      .from(drivers).where(eq(drivers.isActive, true));
+    return vendorList.map(v => ({
+      ...v,
+      drivers: driverList.filter(d => d.vendorId === v.id),
+    }));
+  }),
+
+  addVendor: adminQuery
+    .input(z.object({
+      name: z.string().min(1),
+      phone: z.string().min(10),
+      email: z.string().optional(),
+      company: z.string().optional(),
+      city: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      await db.insert(vendors).values({ name: input.name, phone: input.phone, email: input.email, company: input.company, city: input.city, isActive: true });
+      return { success: true };
+    }),
+
+  updateVendor: adminQuery
+    .input(z.object({
+      id: z.number(),
+      name: z.string().min(1),
+      phone: z.string().min(10),
+      email: z.string().optional(),
+      company: z.string().optional(),
+      city: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      await db.update(vendors).set({ name: input.name, phone: input.phone, email: input.email ?? null, company: input.company ?? null, city: input.city ?? null }).where(eq(vendors.id, input.id));
+      return { success: true };
+    }),
+
+  removeVendor: adminQuery
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      await db.update(vendors).set({ isActive: false }).where(eq(vendors.id, input.id));
+      return { success: true };
+    }),
+
   // ── Customers ─────────────────────────────────────────────────────────
   getCustomers: adminQuery.query(async () => {
     const db = getDb();
@@ -400,6 +457,7 @@ Thank you for choosing EasyOutstation.`;
         email: users.email,
         phone: users.phone,
         role: users.role,
+        tag: users.tag,
         canManageContent: users.canManageContent,
         createdAt: users.createdAt,
         lastSignInAt: users.lastSignInAt,
@@ -410,6 +468,32 @@ Thank you for choosing EasyOutstation.`;
       .groupBy(users.id)
       .orderBy(desc(users.createdAt));
   }),
+
+  getCustomerProfile: adminQuery
+    .input(z.object({ userId: z.number() }))
+    .query(async ({ input }) => {
+      const db = getDb();
+      const [user] = await db.select().from(users).where(eq(users.id, input.userId)).limit(1);
+      if (!user) return null;
+      const userBookings = await db.query.bookings.findMany({
+        where: eq(bookings.userId, input.userId),
+        orderBy: [desc(bookings.createdAt)],
+        with: { car: true },
+      });
+      const totalSpend = userBookings
+        .filter(b => b.paymentStatus === "paid")
+        .reduce((sum, b) => sum + parseFloat(b.totalPrice.toString()), 0);
+      const lastTrip = userBookings.find(b => b.status === "completed") ?? userBookings[0] ?? null;
+      return { user, bookings: userBookings, totalSpend, lastTrip };
+    }),
+
+  setCustomerTag: adminQuery
+    .input(z.object({ userId: z.number(), tag: z.enum(["normal", "vip", "blacklisted"]) }))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      await db.update(users).set({ tag: input.tag } as any).where(eq(users.id, input.userId));
+      return { success: true };
+    }),
 
   // Only super_admin can change roles
   setUserRole: superAdminQuery
@@ -1213,5 +1297,91 @@ Thank you for choosing EasyOutstation.`;
         .where(eq(bookingEvents.bookingId, input.bookingId))
         .orderBy(bookingEvents.createdAt);
       return events;
+    }),
+
+  getAnalytics: adminQuery
+    .input(z.object({ days: z.number().min(7).max(90).default(30) }).optional())
+    .query(async ({ input }) => {
+      const db = getDb();
+      const days = input?.days ?? 30;
+      const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+      const sinceStr = since.toISOString().slice(0, 10);
+
+      const [dailyRows, routeRows, funnelRows, tripTypeRows] = await Promise.all([
+        // Daily revenue + booking count for the period
+        db.execute(sql.raw(`
+          SELECT DATE(createdAt) as day,
+                 COUNT(*) as bookings,
+                 COALESCE(SUM(CASE WHEN paymentStatus='paid' THEN totalPrice ELSE 0 END), 0) as revenue
+          FROM bookings
+          WHERE DATE(createdAt) >= '${sinceStr}'
+          GROUP BY DATE(createdAt)
+          ORDER BY day ASC
+        `)),
+        // Top 10 routes by booking count
+        db.execute(sql.raw(`
+          SELECT fromCity, toCity,
+                 COUNT(*) as bookings,
+                 COALESCE(SUM(CASE WHEN paymentStatus='paid' THEN totalPrice ELSE 0 END), 0) as revenue
+          FROM bookings
+          WHERE DATE(createdAt) >= '${sinceStr}'
+          GROUP BY fromCity, toCity
+          ORDER BY bookings DESC
+          LIMIT 10
+        `)),
+        // Conversion funnel (all time for context)
+        db.execute(sql.raw(`
+          SELECT
+            COUNT(*) as total,
+            SUM(CASE WHEN paymentStatus='paid' THEN 1 ELSE 0 END) as paid,
+            SUM(CASE WHEN status IN ('confirmed','driver_assigned','completed') THEN 1 ELSE 0 END) as confirmed,
+            SUM(CASE WHEN status='completed' THEN 1 ELSE 0 END) as completed,
+            SUM(CASE WHEN status='cancelled' THEN 1 ELSE 0 END) as cancelled
+          FROM bookings
+          WHERE DATE(createdAt) >= '${sinceStr}'
+        `)),
+        // Trip type breakdown
+        db.execute(sql.raw(`
+          SELECT tripType, COUNT(*) as bookings,
+                 COALESCE(SUM(CASE WHEN paymentStatus='paid' THEN totalPrice ELSE 0 END), 0) as revenue
+          FROM bookings
+          WHERE DATE(createdAt) >= '${sinceStr}'
+          GROUP BY tripType
+        `)),
+      ]);
+
+      const daily = (dailyRows as any[]).map((r: any) => ({
+        day: r.day instanceof Date ? r.day.toISOString().slice(0, 10) : String(r.day),
+        bookings: Number(r.bookings),
+        revenue: parseFloat(r.revenue),
+      }));
+
+      const routes = (routeRows as any[]).map((r: any) => ({
+        route: `${r.fromCity} → ${r.toCity}`,
+        bookings: Number(r.bookings),
+        revenue: parseFloat(r.revenue),
+      }));
+
+      const funnel = (funnelRows as any[])[0] ?? {};
+
+      const tripTypes = (tripTypeRows as any[]).map((r: any) => ({
+        type: String(r.tripType).replace("_", " "),
+        bookings: Number(r.bookings),
+        revenue: parseFloat(r.revenue),
+      }));
+
+      return {
+        daily,
+        routes,
+        tripTypes,
+        funnel: {
+          total: Number(funnel.total ?? 0),
+          paid: Number(funnel.paid ?? 0),
+          confirmed: Number(funnel.confirmed ?? 0),
+          completed: Number(funnel.completed ?? 0),
+          cancelled: Number(funnel.cancelled ?? 0),
+        },
+        days,
+      };
     }),
 });

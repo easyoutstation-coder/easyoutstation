@@ -230,6 +230,24 @@ async function runStartupMigrations() {
       `));
     } catch { /* already exists */ }
 
+    // Phase 7/8/10 migrations
+    try { await db.execute(sql.raw(`ALTER TABLE users ADD COLUMN tag ENUM('normal','vip','blacklisted') NOT NULL DEFAULT 'normal'`)); } catch { /* already exists */ }
+    try { await db.execute(sql.raw(`ALTER TABLE drivers ADD COLUMN vendorId BIGINT UNSIGNED NULL`)); } catch { /* already exists */ }
+    try {
+      await db.execute(sql.raw(`
+        CREATE TABLE IF NOT EXISTS vendors (
+          id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+          name VARCHAR(255) NOT NULL,
+          phone VARCHAR(20) NOT NULL UNIQUE,
+          email VARCHAR(320) NULL,
+          company VARCHAR(255) NULL,
+          city VARCHAR(100) NULL,
+          isActive BOOLEAN NOT NULL DEFAULT TRUE,
+          createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+      `));
+    } catch { /* already exists */ }
+
     // Master accounts always get super_admin
     await db.execute(sql.raw(
       `UPDATE users SET role = 'super_admin' WHERE phone = '9958556011' OR email = 'parmindersinghtalwar@gmail.com'`

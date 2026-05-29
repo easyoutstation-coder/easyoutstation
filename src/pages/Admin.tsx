@@ -16,9 +16,10 @@ import {
   Phone, UserCog, StickyNote, CheckCheck, X, Plus, Pencil, Trash2,
   MessageCircle, Mail, AlertTriangle, TrendingUp, MapPin, Wallet, ShieldCheck,
   Globe, WifiOff, Search, FileText, Bot, Send, Loader2, ChevronRight, Tag,
-  Gift, Share2, RefreshCw, Building2, Activity, Map,
+  Gift, Share2, RefreshCw, Building2, Activity, Map, Truck,
 } from "lucide-react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -205,6 +206,19 @@ export default function AdminPage() {
   );
   const { data: driversList } = trpc.admin.getDrivers.useQuery(undefined, { enabled: isAdmin });
   const { data: customers } = trpc.admin.getCustomers.useQuery(undefined, { enabled: isAdmin });
+  const [expandedCustomerId, setExpandedCustomerId] = useState<number | null>(null);
+  const { data: customerProfile } = trpc.admin.getCustomerProfile.useQuery(
+    { userId: expandedCustomerId! },
+    { enabled: expandedCustomerId !== null }
+  );
+  const setCustomerTag = trpc.admin.setCustomerTag.useMutation({ onSuccess: () => utils.admin.getCustomers.invalidate() });
+  const { data: vendorsList, refetch: refetchVendors } = trpc.admin.getVendors.useQuery(undefined, { enabled: isAdmin });
+  const addVendorMut = trpc.admin.addVendor.useMutation({ onSuccess: () => { setVendorForm({ name: "", phone: "", email: "", company: "", city: "" }); refetchVendors(); toast.success("Vendor added"); } });
+  const updateVendorMut = trpc.admin.updateVendor.useMutation({ onSuccess: () => { setEditingVendor(null); refetchVendors(); } });
+  const removeVendorMut = trpc.admin.removeVendor.useMutation({ onSuccess: () => refetchVendors() });
+  const assignDriverToVendorMut = trpc.admin.assignDriverToVendor.useMutation({ onSuccess: () => { refetchVendors(); utils.admin.getDrivers.invalidate(); toast.success("Driver assigned"); } });
+  const [vendorForm, setVendorForm] = useState({ name: "", phone: "", email: "", company: "", city: "" });
+  const [editingVendor, setEditingVendor] = useState<any | null>(null);
   const { data: financials } = trpc.admin.getFinancials.useQuery(undefined, { enabled: isSuperAdmin });
   const { data: expensesList } = trpc.admin.getExpenses.useQuery(undefined, { enabled: isSuperAdmin });
   const { data: siteStatus, refetch: refetchSiteStatus } = trpc.admin.getSiteStatus.useQuery(undefined, { enabled: isSuperAdmin });
@@ -386,6 +400,8 @@ export default function AdminPage() {
   const [waLogsPage, setWaLogsPage] = useState(1);
   const { data: waLogsData } = trpc.admin.getWhatsappLogs.useQuery({ page: waLogsPage }, { enabled: isAdmin });
   const { data: liveTrips, refetch: refetchLive } = trpc.admin.getLiveTrips.useQuery(undefined, { enabled: isAdmin, refetchInterval: 30_000 });
+  const [analyticsDays, setAnalyticsDays] = useState(30);
+  const { data: analytics } = trpc.admin.getAnalytics.useQuery({ days: analyticsDays }, { enabled: isAdmin });
   const [expandedBookingId, setExpandedBookingId] = useState<number | null>(null);
   const { data: bookingTimeline } = trpc.admin.getBookingTimeline.useQuery(
     { bookingId: expandedBookingId! },
@@ -663,6 +679,8 @@ export default function AdminPage() {
                 </span>
               )}
             </TabsTrigger>
+            <TabsTrigger value="vendors" className="gap-1.5 text-cyan-700"><Truck className="w-4 h-4" />Vendors</TabsTrigger>
+            <TabsTrigger value="analytics" className="gap-1.5 text-orange-700"><TrendingUp className="w-4 h-4" />Analytics</TabsTrigger>
             <TabsTrigger value="agent" className="gap-1.5 text-violet-700"><Bot className="w-4 h-4" />Agent</TabsTrigger>
             <TabsTrigger value="wa-logs" className="gap-1.5 text-green-700"><MessageCircle className="w-4 h-4" />WA Logs</TabsTrigger>
             <TabsTrigger value="live" className="gap-1.5 text-red-600 font-semibold">
@@ -1421,8 +1439,10 @@ export default function AdminPage() {
                           <h4 className="font-semibold text-sm">{c.name || "No Name"}</h4>
                           {c.role === "admin" && <Badge className="bg-blue-100 text-blue-700 text-xs border-0">Admin</Badge>}
                           {c.role === "super_admin" && <Badge className="bg-purple-100 text-purple-700 text-xs border-0">Super Admin</Badge>}
-                          {(c as any).canManageContent && c.role === "admin" && <Badge className="bg-amber-100 text-amber-700 text-xs border-0">Content</Badge>}
+                            {(c as any).canManageContent && c.role === "admin" && <Badge className="bg-amber-100 text-amber-700 text-xs border-0">Content</Badge>}
                           {(c as any).isTestUser && <Badge className="bg-violet-100 text-violet-700 text-xs border-0">Test User</Badge>}
+                          {(c as any).tag === "vip" && <Badge className="bg-yellow-100 text-yellow-700 text-xs border-0">⭐ VIP</Badge>}
+                          {(c as any).tag === "blacklisted" && <Badge className="bg-red-100 text-red-700 text-xs border-0">🚫 Blacklisted</Badge>}
                         </div>
                         <div className="flex items-center gap-3 mt-0.5 flex-wrap">
                           {c.phone && (
@@ -1466,6 +1486,53 @@ export default function AdminPage() {
                               <ShieldCheck className="w-3 h-3" />
                               {(c as any).isTestUser ? "Test User ✓" : "Mark as Test"}
                             </Button>
+                          )}
+                        </div>
+                      )}
+                      {/* CRM tag + profile expand */}
+                      <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 mt-2">
+                        <Button size="sm" variant="outline"
+                          className={`h-7 text-xs gap-1 ${(c as any).tag === "vip" ? "bg-yellow-50 border-yellow-300 text-yellow-700" : "border-slate-200 text-slate-600"}`}
+                          onClick={() => setCustomerTag.mutate({ userId: Number(c.id), tag: (c as any).tag === "vip" ? "normal" : "vip" })}>
+                          ⭐ {(c as any).tag === "vip" ? "Remove VIP" : "Mark VIP"}
+                        </Button>
+                        <Button size="sm" variant="outline"
+                          className={`h-7 text-xs gap-1 ${(c as any).tag === "blacklisted" ? "bg-red-50 border-red-300 text-red-700" : "border-slate-200 text-slate-600"}`}
+                          onClick={() => setCustomerTag.mutate({ userId: Number(c.id), tag: (c as any).tag === "blacklisted" ? "normal" : "blacklisted" })}>
+                          🚫 {(c as any).tag === "blacklisted" ? "Remove Block" : "Blacklist"}
+                        </Button>
+                        <Button size="sm" variant="outline" className="h-7 text-xs gap-1 ml-auto"
+                          onClick={() => setExpandedCustomerId(expandedCustomerId === Number(c.id) ? null : Number(c.id))}>
+                          <Activity className="w-3 h-3" /> {expandedCustomerId === Number(c.id) ? "Hide" : "View History"}
+                        </Button>
+                      </div>
+
+                      {/* Customer profile expand */}
+                      {expandedCustomerId === Number(c.id) && (
+                        <div className="border-t border-slate-100 pt-3 mt-1 space-y-2">
+                          {!customerProfile ? (
+                            <p className="text-xs text-muted-foreground">Loading...</p>
+                          ) : (
+                            <>
+                              <div className="flex gap-4 text-sm">
+                                <div><p className="text-xs text-muted-foreground">Total Spend</p><p className="font-bold text-emerald-700">₹{customerProfile.totalSpend.toLocaleString("en-IN")}</p></div>
+                                <div><p className="text-xs text-muted-foreground">Trips</p><p className="font-bold">{customerProfile.bookings.length}</p></div>
+                                {customerProfile.lastTrip && <div><p className="text-xs text-muted-foreground">Last Trip</p><p className="text-xs font-medium">{customerProfile.lastTrip.fromCity} → {customerProfile.lastTrip.toCity}</p></div>}
+                              </div>
+                              {customerProfile.bookings.length > 0 && (
+                                <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                                  {customerProfile.bookings.slice(0, 8).map(bk => (
+                                    <div key={bk.id} className="flex items-center justify-between text-xs bg-slate-50 rounded px-2 py-1.5">
+                                      <span className="font-mono text-muted-foreground">#{bk.id}</span>
+                                      <span>{bk.fromCity} → {bk.toCity}</span>
+                                      <span className="text-muted-foreground">{new Date(bk.pickupDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
+                                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${statusColors[bk.status as BookingStatus]}`}>{bk.status.replace("_", " ")}</span>
+                                      <span className="font-medium text-primary">₹{parseFloat(bk.totalPrice.toString()).toLocaleString("en-IN")}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </>
                           )}
                         </div>
                       )}
@@ -2317,6 +2384,214 @@ export default function AdminPage() {
                           </button>
                         </div>
                       </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* ── Vendors ─────────────────────────────────────────────── */}
+          <TabsContent value="vendors" className="space-y-5">
+            {/* Add / Edit Vendor form */}
+            <Card className="border-dashed border-2 border-cyan-200">
+              <CardContent className="p-4 space-y-3">
+                <p className="text-sm font-medium">{editingVendor ? `Editing ${editingVendor.name}` : "Add Vendor"}</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div><label className="text-xs font-medium mb-1 block">Name *</label>
+                    <Input className="text-sm" placeholder="Vendor name" value={editingVendor ? editingVendor.name : vendorForm.name}
+                      onChange={e => editingVendor ? setEditingVendor((v: any) => ({ ...v, name: e.target.value })) : setVendorForm(f => ({ ...f, name: e.target.value }))} /></div>
+                  <div><label className="text-xs font-medium mb-1 block">Phone *</label>
+                    <Input className="text-sm" placeholder="10-digit mobile" value={editingVendor ? editingVendor.phone : vendorForm.phone}
+                      onChange={e => editingVendor ? setEditingVendor((v: any) => ({ ...v, phone: e.target.value })) : setVendorForm(f => ({ ...f, phone: e.target.value }))} /></div>
+                  <div><label className="text-xs font-medium mb-1 block">Company</label>
+                    <Input className="text-sm" placeholder="Company name" value={editingVendor ? editingVendor.company ?? "" : vendorForm.company}
+                      onChange={e => editingVendor ? setEditingVendor((v: any) => ({ ...v, company: e.target.value })) : setVendorForm(f => ({ ...f, company: e.target.value }))} /></div>
+                  <div><label className="text-xs font-medium mb-1 block">City</label>
+                    <Input className="text-sm" placeholder="Base city" value={editingVendor ? editingVendor.city ?? "" : vendorForm.city}
+                      onChange={e => editingVendor ? setEditingVendor((v: any) => ({ ...v, city: e.target.value })) : setVendorForm(f => ({ ...f, city: e.target.value }))} /></div>
+                  <div className="col-span-2"><label className="text-xs font-medium mb-1 block">Email</label>
+                    <Input className="text-sm" placeholder="vendor@example.com" value={editingVendor ? editingVendor.email ?? "" : vendorForm.email}
+                      onChange={e => editingVendor ? setEditingVendor((v: any) => ({ ...v, email: e.target.value })) : setVendorForm(f => ({ ...f, email: e.target.value }))} /></div>
+                </div>
+                <div className="flex gap-2">
+                  {editingVendor ? (
+                    <>
+                      <Button size="sm" className="gap-1" onClick={() => updateVendorMut.mutate({ id: editingVendor.id, ...editingVendor })} disabled={updateVendorMut.isPending}>
+                        <CheckCheck className="w-3 h-3" /> Save
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setEditingVendor(null)}>Cancel</Button>
+                    </>
+                  ) : (
+                    <Button size="sm" className="gap-1" onClick={() => addVendorMut.mutate(vendorForm)} disabled={!vendorForm.name || !vendorForm.phone || addVendorMut.isPending}>
+                      <Plus className="w-3 h-3" /> Add Vendor
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Vendor list */}
+            {(!vendorsList || vendorsList.length === 0) ? (
+              <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">No vendors yet.</CardContent></Card>
+            ) : (
+              <div className="space-y-3">
+                {vendorsList.map(v => (
+                  <Card key={v.id}>
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-semibold text-sm">{v.name}</span>
+                            {v.company && <span className="text-xs text-muted-foreground">{v.company}</span>}
+                            {v.city && <span className="text-xs bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">{v.city}</span>}
+                          </div>
+                          <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+                            <a href={`tel:+91${v.phone}`} className="flex items-center gap-1 text-xs text-primary hover:underline">
+                              <Phone className="w-3 h-3" />{v.phone}
+                            </a>
+                            {v.email && <span className="text-xs text-muted-foreground">{v.email}</span>}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5">{v.drivers.length} driver{v.drivers.length !== 1 ? "s" : ""} linked</p>
+                        </div>
+                        <div className="flex gap-1.5">
+                          <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setEditingVendor(v)}>
+                            <Pencil className="w-3 h-3" />
+                          </Button>
+                          <Button size="sm" variant="outline" className="h-7 text-xs border-red-200 text-red-600 hover:bg-red-50"
+                            onClick={() => { if (confirm("Remove vendor?")) removeVendorMut.mutate({ id: v.id }); }}>
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Drivers linked */}
+                      {v.drivers.length > 0 && (
+                        <div className="bg-slate-50 rounded-lg p-2.5 space-y-1.5">
+                          <p className="text-xs font-medium text-slate-600">Linked Drivers</p>
+                          {v.drivers.map(d => (
+                            <div key={d.id} className="flex items-center justify-between text-xs">
+                              <span>{d.name} · {d.phone}</span>
+                              <Button size="sm" variant="ghost" className="h-6 text-[10px] text-red-500 px-1"
+                                onClick={() => assignDriverToVendorMut.mutate({ driverId: d.id, vendorId: null })}>
+                                Unlink
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Link unassigned driver */}
+                      {(driversList ?? []).filter(d => !d.vendorId).length > 0 && (
+                        <div className="flex items-center gap-2">
+                          <Select onValueChange={dId => assignDriverToVendorMut.mutate({ driverId: Number(dId), vendorId: v.id })}>
+                            <SelectTrigger className="h-7 text-xs flex-1"><SelectValue placeholder="Link a driver..." /></SelectTrigger>
+                            <SelectContent>
+                              {(driversList ?? []).filter(d => !d.vendorId).map(d => (
+                                <SelectItem key={d.id} value={String(d.id)}>{d.name} · {d.phone}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* ── Analytics ───────────────────────────────────────────── */}
+          <TabsContent value="analytics" className="space-y-5">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <h3 className="font-semibold text-base">Revenue & Booking Analytics</h3>
+              <div className="flex gap-2">
+                {[7, 30, 60, 90].map(d => (
+                  <Button key={d} size="sm" variant={analyticsDays === d ? "default" : "outline"}
+                    className="h-8 text-xs" onClick={() => setAnalyticsDays(d)}>
+                    {d}d
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Funnel stat cards */}
+            {analytics && (
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                {[
+                  { label: "Total Bookings", value: analytics.funnel.total, color: "text-slate-700" },
+                  { label: "Paid", value: analytics.funnel.paid, color: "text-emerald-700" },
+                  { label: "Confirmed", value: analytics.funnel.confirmed, color: "text-green-700" },
+                  { label: "Completed", value: analytics.funnel.completed, color: "text-blue-700" },
+                  { label: "Cancelled", value: analytics.funnel.cancelled, color: "text-red-600" },
+                ].map(s => (
+                  <Card key={s.label}>
+                    <CardContent className="p-4 text-center">
+                      <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{s.label}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+
+            {/* Revenue trend */}
+            <Card>
+              <CardContent className="p-5">
+                <p className="text-sm font-medium mb-4">Daily Revenue (₹) & Bookings</p>
+                {!analytics ? (
+                  <div className="h-56 flex items-center justify-center text-muted-foreground text-sm">Loading...</div>
+                ) : analytics.daily.length === 0 ? (
+                  <div className="h-56 flex items-center justify-center text-muted-foreground text-sm">No data yet.</div>
+                ) : (
+                  <ResponsiveContainer width="100%" height={220}>
+                    <LineChart data={analytics.daily} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis dataKey="day" tick={{ fontSize: 10 }}
+                        tickFormatter={d => new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short" })} />
+                      <YAxis yAxisId="rev" tick={{ fontSize: 10 }} tickFormatter={v => `₹${(v/1000).toFixed(0)}k`} />
+                      <YAxis yAxisId="bk" orientation="right" tick={{ fontSize: 10 }} />
+                      <Tooltip formatter={(v: any, name: string) => name === "revenue" ? `₹${Number(v).toLocaleString("en-IN")}` : v}
+                        labelFormatter={d => new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })} />
+                      <Legend />
+                      <Line yAxisId="rev" type="monotone" dataKey="revenue" stroke="#16a34a" strokeWidth={2} dot={false} name="Revenue" />
+                      <Line yAxisId="bk" type="monotone" dataKey="bookings" stroke="#2563eb" strokeWidth={2} dot={false} name="Bookings" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Top routes */}
+            <Card>
+              <CardContent className="p-5">
+                <p className="text-sm font-medium mb-4">Top Routes by Bookings</p>
+                {!analytics || analytics.routes.length === 0 ? (
+                  <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">No data yet.</div>
+                ) : (
+                  <ResponsiveContainer width="100%" height={220}>
+                    <BarChart data={analytics.routes} layout="vertical" margin={{ top: 0, right: 16, left: 8, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
+                      <XAxis type="number" tick={{ fontSize: 10 }} />
+                      <YAxis dataKey="route" type="category" tick={{ fontSize: 10 }} width={130} />
+                      <Tooltip formatter={(v: any, name: string) => name === "revenue" ? `₹${Number(v).toLocaleString("en-IN")}` : v} />
+                      <Legend />
+                      <Bar dataKey="bookings" fill="#2563eb" name="Bookings" radius={[0, 3, 3, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Trip type breakdown */}
+            {analytics && analytics.tripTypes.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {analytics.tripTypes.map(t => (
+                  <Card key={t.type}>
+                    <CardContent className="p-4">
+                      <p className="text-xs text-muted-foreground capitalize">{t.type}</p>
+                      <p className="text-xl font-bold mt-1">{t.bookings} <span className="text-sm font-normal text-muted-foreground">trips</span></p>
+                      <p className="text-sm text-emerald-700 font-medium">₹{t.revenue.toLocaleString("en-IN")}</p>
                     </CardContent>
                   </Card>
                 ))}

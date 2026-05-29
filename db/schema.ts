@@ -25,6 +25,7 @@ export const users = mysqlTable("users", {
   canManageContent: boolean("canManageContent").default(false).notNull(),
   isTestUser: boolean("isTestUser").default(false).notNull(),
   fcmToken: text("fcmToken"),
+  tag: mysqlEnum("tag", ["normal", "vip", "blacklisted"]).default("normal").notNull(),
   referralCode: varchar("referralCode", { length: 20 }).unique(),
   referredBy: bigint("referredBy", { mode: "number", unsigned: true }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -137,12 +138,24 @@ export const expenses = mysqlTable("expenses", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
+export const vendors = mysqlTable("vendors", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  phone: varchar("phone", { length: 20 }).notNull().unique(),
+  email: varchar("email", { length: 320 }),
+  company: varchar("company", { length: 255 }),
+  city: varchar("city", { length: 100 }),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
 export const drivers = mysqlTable("drivers", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
   phone: varchar("phone", { length: 20 }).notNull(),
   vehicleInfo: varchar("vehicleInfo", { length: 255 }),
   isActive: boolean("isActive").default(true).notNull(),
+  vendorId: bigint("vendorId", { mode: "number", unsigned: true }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
