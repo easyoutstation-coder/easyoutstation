@@ -594,7 +594,7 @@ export default function BookingPage() {
         <Navbar />
         <main className="pt-20">
           <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-16">
-            <Card className="text-center p-8 shadow-xl border-0">
+            <Card className="text-center p-5 sm:p-8 shadow-xl border-0">
               <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
                 <Check className="w-10 h-10 text-green-600" />
               </div>
@@ -695,7 +695,7 @@ export default function BookingPage() {
             {/* Main Form */}
             <div className="lg:col-span-2">
               <Card className="shadow-sm border-0">
-                <CardContent className="p-6">
+                <CardContent className="p-4 sm:p-6">
 
                   {/* STEP 1 */}
                   {currentStep === 1 && (

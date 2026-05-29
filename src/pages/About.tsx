@@ -15,7 +15,7 @@ export default function About() {
       <Navbar />
       <main className="pt-20">
         {/* Hero */}
-        <div className="bg-slate-900 py-20 px-4">
+        <div className="bg-slate-900 py-12 sm:py-20 px-4">
           <div className="max-w-4xl mx-auto text-center">
             <p className="text-xs font-bold uppercase tracking-widest text-blue-400 mb-3">Our Story</p>
             <h1 className="text-4xl lg:text-5xl font-bold text-white font-['DM_Serif_Display'] mb-5">
@@ -38,7 +38,7 @@ export default function About() {
               { num: "4.9★", label: "Average Rating" },
             ].map((s, i) => (
               <div key={i}>
-                <div className="text-3xl font-bold text-blue-700 font-['DM_Serif_Display']">{s.num}</div>
+                <div className="text-2xl sm:text-3xl font-bold text-blue-700 font-['DM_Serif_Display']">{s.num}</div>
                 <div className="text-sm text-slate-500 mt-1">{s.label}</div>
               </div>
             ))}
@@ -47,7 +47,7 @@ export default function About() {
 
         {/* Mission */}
         <div className="max-w-5xl mx-auto px-4 py-16">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
+          <div className="grid md:grid-cols-2 gap-6 md:gap-12 items-center">
             <div>
               <p className="text-xs font-bold uppercase tracking-widest text-blue-600 mb-3">Our Mission</p>
               <h2 className="text-3xl font-bold text-slate-900 font-['DM_Serif_Display'] mb-5">

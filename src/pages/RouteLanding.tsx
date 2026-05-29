@@ -230,10 +230,10 @@ export default function RouteLanding() {
               src={lm.image}
               alt={lm.landmark}
               className="w-full object-cover"
-              style={{ height: 420, objectPosition: lm.objectPosition }}
+              style={{ height: "clamp(220px, 55vw, 420px)", objectPosition: lm.objectPosition }}
             />
           )}
-          {!lm && <div style={{ height: 420 }} />}
+          {!lm && <div style={{ height: "clamp(220px, 55vw, 420px)" }} />}
           {/* Dark overlay */}
           <div className="absolute inset-0 bg-gradient-to-b from-slate-900/55 via-slate-900/50 to-slate-900/80" />
           {/* Text centered over image */}

@@ -98,7 +98,7 @@ export default function Login() {
         </button>
 
         <Card className="shadow-xl border-0">
-          <CardContent className="p-8">
+          <CardContent className="p-5 sm:p-8">
             <div className="text-center mb-8">
               <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
                 <Car className="w-8 h-8 text-primary" />
@@ -236,7 +236,7 @@ export default function Login() {
             )}
 
             <div className="mt-6 pt-6 border-t">
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-2 sm:gap-3">
                 <div className="text-center">
                   <Shield className="w-5 h-5 text-primary mx-auto mb-1" />
                   <div className="text-xs text-muted-foreground">Secure Login</div>

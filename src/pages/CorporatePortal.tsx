@@ -42,7 +42,7 @@ function LoginPanel() {
   return (
     <div className="max-w-md mx-auto">
       <Card>
-        <CardContent className="p-8">
+        <CardContent className="p-5 sm:p-8">
           <div className="text-center mb-6">
             <div className="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center mx-auto mb-4">
               <Building2 className="w-7 h-7 text-white" />
@@ -130,7 +130,7 @@ function RegisterForm({ onDone }: { onDone: () => void }) {
   return (
     <div className="max-w-lg mx-auto">
       <Card>
-        <CardContent className="p-8">
+        <CardContent className="p-5 sm:p-8">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center">
               <Building2 className="w-5 h-5 text-white" />
@@ -274,11 +274,11 @@ function Dashboard({ account, myRole, members, onRefresh }: {
       )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="flex-wrap h-auto gap-1">
-          <TabsTrigger value="overview" className="gap-1.5"><TrendingUp className="w-3.5 h-3.5" />Overview</TabsTrigger>
-          <TabsTrigger value="trips" className="gap-1.5"><Car className="w-3.5 h-3.5" />Trips</TabsTrigger>
-          <TabsTrigger value="statement" className="gap-1.5"><FileText className="w-3.5 h-3.5" />Statement</TabsTrigger>
-          {myRole === "admin" && <TabsTrigger value="team" className="gap-1.5"><Users className="w-3.5 h-3.5" />Team</TabsTrigger>}
+        <TabsList className="flex overflow-x-auto h-auto gap-1 pb-1 no-scrollbar w-full justify-start">
+          <TabsTrigger value="overview" className="gap-1.5 shrink-0"><TrendingUp className="w-3.5 h-3.5" />Overview</TabsTrigger>
+          <TabsTrigger value="trips" className="gap-1.5 shrink-0"><Car className="w-3.5 h-3.5" />Trips</TabsTrigger>
+          <TabsTrigger value="statement" className="gap-1.5 shrink-0"><FileText className="w-3.5 h-3.5" />Statement</TabsTrigger>
+          {myRole === "admin" && <TabsTrigger value="team" className="gap-1.5 shrink-0"><Users className="w-3.5 h-3.5" />Team</TabsTrigger>}
         </TabsList>
 
         {/* ── Overview ── */}
@@ -534,7 +534,7 @@ export default function CorporatePortal() {
               <h1 className="text-2xl sm:text-3xl font-bold text-white font-['DM_Serif_Display']">Business Travel, Organised.</h1>
               <p className="text-slate-400 text-sm mt-1">Track trips, manage your team, and download monthly statements — all in one place.</p>
             </div>
-            <div className="flex gap-4 text-center shrink-0">
+            <div className="hidden sm:flex gap-4 text-center shrink-0">
               {[
                 { label: "GST Invoices", icon: FileText },
                 { label: "Team Management", icon: Users },
