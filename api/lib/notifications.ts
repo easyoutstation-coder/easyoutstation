@@ -672,14 +672,12 @@ Team EasyOutstation`;
     await dispatchSms(input.phone, `EasyOutstation: Corporate account for ${input.companyName} APPROVED! Login at easyoutstation.com/corporate-portal with join code: ${input.joinCode}. Help: 8796564111`, meta);
     await dispatchWhatsApp(
       input.phone,
-      "eo_corporate_approved",
+      "eo_corp_account_active",
       "en",
       [{
         type: "body",
         parameters: [
-          { type: "text", text: input.contactName },
           { type: "text", text: input.companyName },
-          { type: "text", text: input.joinCode },
         ],
       }],
       { notificationType: "corporate-approval" }
