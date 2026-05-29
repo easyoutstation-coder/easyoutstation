@@ -6,7 +6,7 @@ import { users, bookings, drivers, vendors, expenses, siteSettings, faqs, routes
 import { getRedis } from "./lib/redis";
 import { eq, desc, sql, and, gte, lt, count } from "drizzle-orm";
 import { defaultProgramConfig } from "./referral-router";
-import { sendReferralPointsNotification, sendDriverAssignmentSms, sendCorporateApprovalEmail, sendRefundNotification } from "./lib/notifications";
+import { sendReferralPointsNotification, sendDriverAssignmentSms, sendCorporateApprovalEmail, sendRefundNotification, sendBookingSms } from "./lib/notifications";
 import { logBookingEvent } from "./lib/bookingEvents";
 import { sendFcmNotification } from "./lib/fcm";
 
@@ -133,6 +133,13 @@ export const adminRouter = createRouter({
     }))
     .mutation(async ({ input }) => {
       const db = getDb();
+
+      // Check current status before update — if still pending (not Razorpay-paid),
+      // we need to send the booking confirmation WhatsApp template ourselves.
+      const [pre] = await db.select({ paymentStatus: bookings.paymentStatus, status: bookings.status })
+        .from(bookings).where(eq(bookings.id, input.id)).limit(1);
+      const needsConfirmationMsg = pre?.paymentStatus !== "paid";
+
       const PIN_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
       const tripPin = Array.from({ length: 6 }, () => PIN_CHARS[Math.floor(Math.random() * PIN_CHARS.length)]).join("");
       await db.update(bookings).set({
@@ -240,6 +247,26 @@ Have a wonderful journey! 🌟`;
           pickupAddress: booking.pickupAddress ?? null,
           bookingId: input.id,
         }).catch(console.error);
+      }
+
+      // For non-Razorpay bookings (test / cash / manual), fire the eo_booking_confirmed
+      // WhatsApp template since Razorpay webhook won't have done it.
+      if (needsConfirmationMsg && booking?.resolvedPhone) {
+        sendBookingSms(
+          booking.resolvedPhone,
+          input.id,
+          booking.fromCity ?? "",
+          booking.toCity ?? "",
+          date,
+          parseFloat(booking.totalPrice ?? "0"),
+          "confirmation",
+          undefined,
+          undefined,
+          booking.carId ?? undefined,
+          booking.totalKm ?? undefined,
+          name,
+          booking.car?.name ?? undefined,
+        ).catch(console.error);
       }
 
       return {
