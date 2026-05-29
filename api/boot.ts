@@ -165,6 +165,12 @@ async function runStartupMigrations() {
       `));
     } catch { /* already exists */ }
 
+    // Extend bookings status enum to include driver_assigned
+    try {
+      await db.execute(sql.raw(
+        `ALTER TABLE bookings MODIFY COLUMN status ENUM('pending','confirmed','driver_assigned','completed','cancelled') NOT NULL DEFAULT 'pending'`
+      ));
+    } catch { /* already updated */ }
     // Review bookingId column for dedup
     try { await db.execute(sql.raw(`ALTER TABLE carReviews ADD COLUMN bookingId BIGINT UNSIGNED NULL`)); } catch { /* already exists */ }
     // WhatsApp opt-in/out columns

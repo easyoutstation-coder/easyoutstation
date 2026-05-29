@@ -2,7 +2,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createRouter, publicQuery, adminQuery, superAdminQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { users, bookings, drivers, expenses, siteSettings, faqs, routes, cars, userSearches, carReviews, referralEvents, referralPoints, corporateEnquiries, corporateAccounts } from "@db/schema";
+import { users, bookings, drivers, expenses, siteSettings, faqs, routes, cars, userSearches, carReviews, referralEvents, referralPoints, corporateEnquiries, corporateAccounts, whatsappLogs } from "@db/schema";
 import { eq, desc, sql, and, gte, lt, count } from "drizzle-orm";
 import { defaultProgramConfig } from "./referral-router";
 import { sendReferralPointsNotification, sendDriverAssignmentSms, sendCorporateApprovalEmail, sendRefundNotification } from "./lib/notifications";
@@ -113,7 +113,7 @@ export const adminRouter = createRouter({
     .query(async ({ input }) => {
       const db = getDb();
       const where = input?.status && input.status !== "all"
-        ? eq(bookings.status, input.status as "pending" | "confirmed" | "completed" | "cancelled")
+        ? eq(bookings.status, input.status as "pending" | "confirmed" | "driver_assigned" | "completed" | "cancelled")
         : undefined;
       return await db.query.bookings.findMany({
         where,
@@ -1131,5 +1131,19 @@ Thank you for choosing EasyOutstation.`;
         }).catch(console.error);
       }
       return { success: true };
+    }),
+
+  getWhatsappLogs: adminQuery
+    .input(z.object({ page: z.number().min(1).default(1) }).optional())
+    .query(async ({ input }) => {
+      const db = getDb();
+      const page = input?.page ?? 1;
+      const pageSize = 50;
+      const offset = (page - 1) * pageSize;
+      const [logs, [{ total }]] = await Promise.all([
+        db.select().from(whatsappLogs).orderBy(desc(whatsappLogs.createdAt)).limit(pageSize).offset(offset),
+        db.select({ total: sql<number>`COUNT(*)` }).from(whatsappLogs),
+      ]);
+      return { logs, total: Number(total), page, pageSize };
     }),
 });

@@ -19,12 +19,13 @@ import {
   Gift, Share2, RefreshCw, Building2,
 } from "lucide-react";
 
-type BookingStatus = "pending" | "confirmed" | "completed" | "cancelled";
+type BookingStatus = "pending" | "confirmed" | "driver_assigned" | "completed" | "cancelled";
 type PaymentStatus = "pending" | "paid" | "refunded";
 
 const statusColors: Record<BookingStatus, string> = {
   pending: "bg-amber-100 text-amber-700",
   confirmed: "bg-green-100 text-green-700",
+  driver_assigned: "bg-teal-100 text-teal-700",
   completed: "bg-blue-100 text-blue-700",
   cancelled: "bg-red-100 text-red-700",
 };
@@ -359,6 +360,8 @@ export default function AdminPage() {
   const deleteFaq = trpc.admin.deleteFaq.useMutation({ onSuccess: () => utils.admin.getFaqs.invalidate() });
 
   const { data: adminRoutes } = trpc.admin.getAdminRoutes.useQuery(undefined, { enabled: isAdmin });
+  const [waLogsPage, setWaLogsPage] = useState(1);
+  const { data: waLogsData } = trpc.admin.getWhatsappLogs.useQuery({ page: waLogsPage }, { enabled: isAdmin });
   const addRoute = trpc.admin.addRoute.useMutation({ onSuccess: () => { setRouteForm({ fromCity: "", toCity: "", distanceKm: "", durationHours: "", basePrice: "", isPopular: false }); utils.admin.getAdminRoutes.invalidate(); } });
   const updateRoute = trpc.admin.updateRoute.useMutation({ onSuccess: () => { setEditingRoute(null); utils.admin.getAdminRoutes.invalidate(); } });
   const deleteRoute = trpc.admin.deleteRoute.useMutation({ onSuccess: () => utils.admin.getAdminRoutes.invalidate() });
@@ -632,6 +635,7 @@ export default function AdminPage() {
               )}
             </TabsTrigger>
             <TabsTrigger value="agent" className="gap-1.5 text-violet-700"><Bot className="w-4 h-4" />Agent</TabsTrigger>
+            <TabsTrigger value="wa-logs" className="gap-1.5 text-green-700"><MessageCircle className="w-4 h-4" />WA Logs</TabsTrigger>
           </TabsList>
 
           {/* ── Overview ────────────────────────────────────────────── */}
@@ -2314,6 +2318,76 @@ export default function AdminPage() {
                 </Button>
               </div>
             </Card>
+          </TabsContent>
+
+          {/* ── WA Logs ─────────────────────────────────────────────── */}
+          <TabsContent value="wa-logs" className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">WhatsApp Message Log</h2>
+              {waLogsData && <p className="text-sm text-muted-foreground">{waLogsData.total} total messages</p>}
+            </div>
+            <Card>
+              <CardContent className="p-0 overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b bg-slate-50 text-left text-xs text-muted-foreground uppercase tracking-wide">
+                      <th className="px-4 py-3">Date/Time</th>
+                      <th className="px-4 py-3">Phone</th>
+                      <th className="px-4 py-3">Direction</th>
+                      <th className="px-4 py-3">Template</th>
+                      <th className="px-4 py-3">Status</th>
+                      <th className="px-4 py-3">Booking</th>
+                      <th className="px-4 py-3">Fallback SMS</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {!waLogsData && (
+                      <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Loading…</td></tr>
+                    )}
+                    {waLogsData?.logs.length === 0 && (
+                      <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">No WhatsApp messages yet.</td></tr>
+                    )}
+                    {waLogsData?.logs.map(log => (
+                      <tr key={log.id} className="border-b last:border-0 hover:bg-slate-50/50">
+                        <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
+                          {new Date(log.createdAt).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                        </td>
+                        <td className="px-4 py-3 font-mono text-xs">{log.phone}</td>
+                        <td className="px-4 py-3">
+                          <Badge className={log.direction === "outbound" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"}>
+                            {log.direction}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3 text-xs">{log.templateName ?? <span className="text-muted-foreground">—</span>}</td>
+                        <td className="px-4 py-3">
+                          <Badge className={
+                            log.waStatus === "read" ? "bg-green-100 text-green-700" :
+                            log.waStatus === "delivered" ? "bg-emerald-100 text-emerald-700" :
+                            log.waStatus === "sent" ? "bg-blue-100 text-blue-700" :
+                            "bg-red-100 text-red-700"
+                          }>
+                            {log.waStatus ?? "—"}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3 text-xs">
+                          {log.bookingId ? <span className="font-medium">#{log.bookingId}</span> : <span className="text-muted-foreground">—</span>}
+                        </td>
+                        <td className="px-4 py-3 text-xs">
+                          {log.fallbackSent ? <Badge className="bg-amber-100 text-amber-700">Sent</Badge> : <span className="text-muted-foreground">—</span>}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </CardContent>
+            </Card>
+            {waLogsData && waLogsData.total > waLogsData.pageSize && (
+              <div className="flex items-center justify-center gap-3">
+                <Button variant="outline" size="sm" disabled={waLogsPage === 1} onClick={() => setWaLogsPage(p => p - 1)}>Previous</Button>
+                <span className="text-sm text-muted-foreground">Page {waLogsPage} of {Math.ceil(waLogsData.total / waLogsData.pageSize)}</span>
+                <Button variant="outline" size="sm" disabled={waLogsPage >= Math.ceil(waLogsData.total / waLogsData.pageSize)} onClick={() => setWaLogsPage(p => p + 1)}>Next</Button>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>

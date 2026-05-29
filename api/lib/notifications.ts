@@ -442,6 +442,38 @@ export async function sendDriverAssignmentSms(input: {
     { bookingId: input.bookingId, notificationType: "driver-assigned" },
     smsFallback
   );
+
+  // WhatsApp to vendor asking to confirm with driver name + number
+  await dispatchWhatsApp(
+    input.driverPhone,
+    "eo_vendor_trip_assigned",
+    "en",
+    [{
+      type: "body",
+      parameters: [
+        { type: "text", text: String(input.bookingId) },
+        { type: "text", text: input.fromCity },
+        { type: "text", text: input.toCity },
+        { type: "text", text: input.pickupDate },
+        { type: "text", text: input.customerName },
+      ],
+    }],
+    { bookingId: input.bookingId, notificationType: "vendor-assignment" }
+  );
+
+  // Set conversation state so inbound worker handles vendor's reply
+  try {
+    const db = getDb();
+    const waVendorPhone = toWaPhone(input.driverPhone);
+    const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
+    await db.execute(sql`
+      INSERT INTO whatsappConversations (phone, state, contextJson, expiresAt)
+      VALUES (${waVendorPhone}, 'awaiting_driver_confirm', ${JSON.stringify({ bookingId: input.bookingId })}, ${expiresAt})
+      ON DUPLICATE KEY UPDATE state = 'awaiting_driver_confirm', contextJson = ${JSON.stringify({ bookingId: input.bookingId })}, expiresAt = ${expiresAt}
+    `);
+  } catch (e) {
+    console.error("[Notify] Failed to set vendor WA conversation state:", e);
+  }
 }
 
 export async function sendTripReminder(input: {
@@ -636,7 +668,23 @@ Team EasyOutstation`;
 
   const meta: NotificationMeta = { notificationType: "corporate-approval" };
   if (input.email) await dispatchEmail(input.email, `Corporate Account Approved — ${input.companyName} | EasyOutstation`, text, meta);
-  if (input.phone) await dispatchSms(input.phone, `EasyOutstation: Corporate account for ${input.companyName} APPROVED! Login at easyoutstation.com/corporate-portal with join code: ${input.joinCode}. Help: 9958556011`, meta);
+  if (input.phone) {
+    await dispatchSms(input.phone, `EasyOutstation: Corporate account for ${input.companyName} APPROVED! Login at easyoutstation.com/corporate-portal with join code: ${input.joinCode}. Help: 8796564111`, meta);
+    await dispatchWhatsApp(
+      input.phone,
+      "eo_corporate_approved",
+      "en",
+      [{
+        type: "body",
+        parameters: [
+          { type: "text", text: input.contactName },
+          { type: "text", text: input.companyName },
+          { type: "text", text: input.joinCode },
+        ],
+      }],
+      { notificationType: "corporate-approval" }
+    );
+  }
 }
 
 export async function sendRefundNotification(input: {

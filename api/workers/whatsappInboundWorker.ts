@@ -2,9 +2,11 @@ import { Worker, type Job } from "bullmq";
 import { eq, sql } from "drizzle-orm";
 import { getRedis } from "../lib/redis";
 import { getDb } from "../queries/connection";
-import { whatsappLogs, whatsappConversations } from "@db/schema";
+import { whatsappLogs, whatsappConversations, bookings } from "@db/schema";
 import { QUEUE_WHATSAPP_INBOUND, type WhatsAppInboundJobData } from "./queues";
-import { sendWhatsAppTextRaw } from "../lib/whatsapp";
+import { sendWhatsAppTextRaw, toWaPhone } from "../lib/whatsapp";
+
+const ADMIN_PHONE = process.env.ADMIN_PHONE || "8796564111";
 
 async function handleStatusUpdate(status: any): Promise<void> {
   const { id: wamid, status: waStatus, timestamp } = status;
@@ -73,16 +75,49 @@ async function handleIncomingMessage(message: any, waPhone: string): Promise<voi
     }
 
     case "awaiting_driver_confirm": {
-      if (text === "CONFIRM") {
-        await sendWhatsAppTextRaw(waPhone, "Trip confirmed! ✅ The customer has been notified. Safe driving! 🚗");
-      } else if (text === "ISSUE") {
-        await sendWhatsAppTextRaw(waPhone, "Noted. Our team has been alerted and will contact you shortly.");
-      } else {
+      const ctx = conv.contextJson as { bookingId?: number } | null;
+      const bookingId = ctx?.bookingId;
+
+      if (text === "ISSUE") {
+        await sendWhatsAppTextRaw(waPhone, "Noted. Our operations team has been alerted and will contact you shortly.");
+        if (bookingId) {
+          await sendWhatsAppTextRaw(toWaPhone(ADMIN_PHONE),
+            `⚠️ Vendor reported ISSUE on Booking #${bookingId}. Call vendor: +91-${waPhone.slice(-10)}`
+          );
+        }
+        await db.update(whatsappConversations).set({ state: "idle" }).where(eq(whatsappConversations.phone, waPhone));
         break;
       }
-      await db.update(whatsappConversations)
-        .set({ state: "idle" })
-        .where(eq(whatsappConversations.phone, waPhone));
+
+      // Parse "Driver Name, 9876543210" — name is everything before the last comma/space before number
+      const mobileMatch = rawText.match(/(\d{10})/);
+      if (!mobileMatch) {
+        await sendWhatsAppTextRaw(waPhone,
+          "Please reply with your driver's name and mobile number.\nExample: Suresh Kumar, 9876543210"
+        );
+        break;
+      }
+      const mobile = mobileMatch[1];
+      const driverName = rawText.replace(mobile, "").replace(/[,\s]+$/, "").trim();
+      if (!driverName) {
+        await sendWhatsAppTextRaw(waPhone,
+          "Please include the driver's name too.\nExample: Suresh Kumar, 9876543210"
+        );
+        break;
+      }
+
+      if (bookingId) {
+        await db.update(bookings)
+          .set({ driverName, driverPhone: mobile, status: "driver_assigned" })
+          .where(eq(bookings.id, bookingId));
+        await sendWhatsAppTextRaw(toWaPhone(ADMIN_PHONE),
+          `✅ Vendor confirmed driver for Booking #${bookingId}: ${driverName}, +91-${mobile}`
+        );
+      }
+      await sendWhatsAppTextRaw(waPhone,
+        `✅ Confirmed! ${driverName} (+91-${mobile}) has been registered as driver${bookingId ? ` for Trip #${bookingId}` : ""}. Safe driving! 🚗`
+      );
+      await db.update(whatsappConversations).set({ state: "idle" }).where(eq(whatsappConversations.phone, waPhone));
       break;
     }
 

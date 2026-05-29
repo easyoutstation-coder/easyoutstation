@@ -86,7 +86,7 @@ export const bookings = mysqlTable("bookings", {
   passengerCount: int("passengerCount").default(1),
   totalKm: int("totalKm").notNull(),
   totalPrice: decimal("totalPrice", { precision: 12, scale: 2 }).notNull(),
-  status: mysqlEnum("status", ["pending", "confirmed", "completed", "cancelled"]).default("pending").notNull(),
+  status: mysqlEnum("status", ["pending", "confirmed", "driver_assigned", "completed", "cancelled"]).default("pending").notNull(),
   paymentStatus: mysqlEnum("paymentStatus", ["pending", "paid", "refunded"]).default("pending").notNull(),
   customerName: varchar("customerName", { length: 255 }).notNull(),
   customerPhone: varchar("customerPhone", { length: 20 }),
