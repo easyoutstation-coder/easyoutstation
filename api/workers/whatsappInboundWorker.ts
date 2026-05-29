@@ -110,6 +110,14 @@ async function handleIncomingMessage(message: any, waPhone: string): Promise<voi
         await db.update(bookings)
           .set({ driverName, driverPhone: mobile, status: "driver_assigned" })
           .where(eq(bookings.id, bookingId));
+
+        // Auto-register driver in drivers table if not already there
+        const existing = await db.select({ id: drivers.id }).from(drivers).where(eq(drivers.phone, mobile)).limit(1);
+        if (!existing[0]) {
+          await db.insert(drivers).values({ name: driverName, phone: mobile, isActive: true });
+          console.log(`[WA Inbound] Auto-registered driver: ${driverName} (${mobile})`);
+        }
+
         await sendWhatsAppTextRaw(toWaPhone(ADMIN_PHONE),
           `✅ Vendor confirmed driver for Booking #${bookingId}: ${driverName}, +91-${mobile}`
         );
