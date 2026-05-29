@@ -459,7 +459,7 @@ export async function sendDriverAssignmentSms(input: {
       ],
     }],
     { bookingId: input.bookingId, notificationType: "vendor-assignment" },
-    undefined,
+    `EasyOutstation: Trip #${input.bookingId} assigned to you — ${input.fromCity} to ${input.toCity} on ${input.pickupDate}. Customer: ${input.customerName}. Reply with driver name and mobile to confirm. Example: Suresh Kumar, 9876543210. Reply ISSUE if problem. Help: 8796564111`,
     true // vendor — skip opt-out check
   );
 
