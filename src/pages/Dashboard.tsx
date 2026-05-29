@@ -1,6 +1,6 @@
 import { useSeo } from "@/hooks/useSeo";
 import { useNavigate } from "react-router";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { trpc } from "@/providers/trpc";
 import Navbar from "@/components/Navbar";
@@ -12,6 +12,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import {
   LayoutDashboard,
   Calendar,
@@ -31,7 +34,151 @@ import {
   Clock,
   CheckCircle,
   Star,
+  Navigation,
+  KeyRound,
 } from "lucide-react";
+
+// Fix Leaflet default marker icons broken by Vite
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+});
+const driverMapIcon = new L.Icon({
+  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34],
+});
+const customerMapIcon = new L.Icon({
+  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34],
+});
+
+function MapFitter({ positions }: { positions: [number, number][] }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!positions.length) return;
+    if (positions.length === 1) { map.setView(positions[0], 14); return; }
+    map.fitBounds(L.latLngBounds(positions), { padding: [40, 40] });
+  }, [positions.map(p => p.join(",")).join("|")]);
+  return null;
+}
+
+async function getOsrmEta(fLat: number, fLng: number, tLat: number, tLng: number) {
+  try {
+    const r = await fetch(`https://router.project-osrm.org/route/v1/driving/${fLng},${fLat};${tLng},${tLat}?overview=false`);
+    const d = await r.json();
+    const route = d?.routes?.[0];
+    if (!route) return null;
+    return { mins: Math.round(route.duration / 60), km: Math.round(route.distance / 100) / 10 };
+  } catch { return null; }
+}
+
+function LiveTrackingSection({ bookingId, driverName }: { bookingId: number; driverName?: string | null }) {
+  const [sharing, setSharing] = useState(false);
+  const [myLat, setMyLat] = useState<number | null>(null);
+  const [myLng, setMyLng] = useState<number | null>(null);
+  const [eta, setEta] = useState<{ mins: number; km: number } | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval>>();
+
+  const { data: driverLoc, refetch: refetchDriver } = trpc.booking.getDriverLocation.useQuery(
+    { bookingId },
+    { refetchInterval: 30_000 }
+  );
+  const updateMyLoc = trpc.booking.updateCustomerLocation.useMutation();
+  const stopMySharing = trpc.booking.stopCustomerSharing.useMutation();
+
+  useEffect(() => {
+    if (!driverLoc || myLat === null || myLng === null) { setEta(null); return; }
+    getOsrmEta(driverLoc.lat, driverLoc.lng, myLat, myLng).then(setEta);
+  }, [driverLoc?.lat, driverLoc?.lng, myLat, myLng]);
+
+  const startSharing = () => {
+    if (!navigator.geolocation) return;
+    const send = () => navigator.geolocation.getCurrentPosition(pos => {
+      setMyLat(pos.coords.latitude);
+      setMyLng(pos.coords.longitude);
+      updateMyLoc.mutate({ bookingId, lat: pos.coords.latitude, lng: pos.coords.longitude });
+    });
+    send();
+    intervalRef.current = setInterval(send, 30_000);
+    setSharing(true);
+  };
+
+  const stopSharing = () => {
+    clearInterval(intervalRef.current);
+    stopMySharing.mutate({ bookingId });
+    setSharing(false);
+    setMyLat(null);
+    setMyLng(null);
+    setEta(null);
+  };
+
+  useEffect(() => () => clearInterval(intervalRef.current), []);
+
+  const mapPositions: [number, number][] = [
+    ...(driverLoc ? [[driverLoc.lat, driverLoc.lng] as [number, number]] : []),
+    ...(myLat !== null && myLng !== null ? [[myLat, myLng] as [number, number]] : []),
+  ];
+
+  return (
+    <div className="mt-3 space-y-2">
+      {/* ETA banner */}
+      {driverLoc && eta && (
+        <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-sm text-green-800 flex items-center gap-2">
+          <Navigation className="w-3.5 h-3.5 shrink-0" />
+          <span>Driver is ~<strong>{eta.mins} mins</strong> away ({eta.km} km)</span>
+        </div>
+      )}
+      {driverLoc && !eta && (
+        <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-sm text-green-800 flex items-center gap-2">
+          <Navigation className="w-3.5 h-3.5 shrink-0 animate-pulse" />
+          <span>Driver is sharing live location</span>
+        </div>
+      )}
+
+      {/* Location sharing toggle */}
+      <div className="flex items-center gap-2">
+        {!sharing ? (
+          <Button size="sm" variant="outline" className="text-xs gap-1.5" onClick={startSharing}>
+            <MapPin className="w-3 h-3" />Share my location with driver
+          </Button>
+        ) : (
+          <Button size="sm" variant="outline" className="text-xs gap-1.5 border-red-200 text-red-600 hover:bg-red-50" onClick={stopSharing}>
+            <X className="w-3 h-3" />Stop sharing location
+          </Button>
+        )}
+      </div>
+
+      {/* Live map */}
+      {(driverLoc || (myLat !== null)) && (
+        <div className="rounded-xl overflow-hidden border" style={{ height: 220 }}>
+          <MapContainer
+            center={driverLoc ? [driverLoc.lat, driverLoc.lng] : [myLat!, myLng!]}
+            zoom={13}
+            style={{ height: "100%", width: "100%" }}
+            zoomControl={false}
+          >
+            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='© OpenStreetMap' />
+            <MapFitter positions={mapPositions} />
+            {driverLoc && (
+              <Marker position={[driverLoc.lat, driverLoc.lng]} icon={driverMapIcon}>
+                <Popup>{driverName ?? "Your driver"} 🚗</Popup>
+              </Marker>
+            )}
+            {myLat !== null && myLng !== null && (
+              <Marker position={[myLat, myLng]} icon={customerMapIcon}>
+                <Popup>Your location 📍</Popup>
+              </Marker>
+            )}
+          </MapContainer>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function DashboardPage() {
   useSeo({ title: "My Bookings | EasyOutstation", description: "View and manage your EasyOutstation cab bookings.", noindex: true });
@@ -267,6 +414,8 @@ export default function DashboardPage() {
                                   className={
                                     booking.status === "confirmed"
                                       ? "bg-green-100 text-green-700 hover:bg-green-100"
+                                      : booking.status === "driver_assigned"
+                                      ? "bg-teal-100 text-teal-700 hover:bg-teal-100"
                                       : booking.status === "pending"
                                       ? "bg-amber-100 text-amber-700 hover:bg-amber-100"
                                       : booking.status === "cancelled"
@@ -274,7 +423,7 @@ export default function DashboardPage() {
                                       : "bg-slate-100 text-slate-700 hover:bg-slate-100"
                                   }
                                 >
-                                  {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                                  {booking.status === "driver_assigned" ? "Driver Assigned" : booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
                                 </Badge>
                               </div>
                               <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground mb-2">
@@ -292,6 +441,15 @@ export default function DashboardPage() {
                                   {booking.tripType.replace("_", " ")}
                                 </span>
                               </div>
+                              {/* Trip PIN — shown for confirmed/driver_assigned bookings */}
+                              {(booking.status === "confirmed" || booking.status === "driver_assigned") && (booking as any).tripPin && (
+                                <div className="my-2 flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                                  <KeyRound className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                                  <span className="text-xs text-amber-800">Trip PIN: <strong className="font-mono tracking-widest text-sm">{(booking as any).tripPin}</strong></span>
+                                  <span className="text-xs text-amber-600 ml-1">— share with your driver</span>
+                                </div>
+                              )}
+
                               <div className="flex items-center justify-between">
                                 <span className="font-bold text-primary">
                                   ₹{parseFloat(booking.totalPrice.toString()).toLocaleString()}
@@ -326,6 +484,13 @@ export default function DashboardPage() {
                               </div>
                             </div>
                           </div>
+                          {/* Live tracking for confirmed/driver_assigned bookings */}
+                          {(booking.status === "confirmed" || booking.status === "driver_assigned") && (
+                            <LiveTrackingSection
+                              bookingId={booking.id}
+                              driverName={(booking as any).driverName}
+                            />
+                          )}
                         </CardContent>
                       </Card>
                     ))

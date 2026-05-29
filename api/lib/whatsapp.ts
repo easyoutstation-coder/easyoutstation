@@ -1,5 +1,6 @@
 import { getDb } from "../queries/connection";
-import { whatsappLogs } from "@db/schema";
+import { whatsappLogs, users } from "@db/schema";
+import { eq } from "drizzle-orm";
 import { getWhatsAppQueue, type WhatsAppTemplateComponent } from "../workers/queues";
 
 const WA_API_BASE = "https://graph.facebook.com/v25.0";
@@ -73,9 +74,22 @@ export async function dispatchWhatsApp(
   language: string,
   components: WhatsAppTemplateComponent[],
   meta: { bookingId?: number; notificationType: string },
-  fallbackSmsMessage?: string
+  fallbackSmsMessage?: string,
+  skipOptOutCheck = false
 ): Promise<void> {
   const waPhone = toWaPhone(phone);
+
+  if (!skipOptOutCheck) {
+    try {
+      const db = getDb();
+      const localPhone = phone.replace(/\D/g, "").slice(-10);
+      const [u] = await db.select({ whatsappOptOut: users.whatsappOptOut }).from(users).where(eq(users.phone, localPhone)).limit(1);
+      if (u?.whatsappOptOut) {
+        console.log(`[WA] Skipping — user ${localPhone} opted out`);
+        return;
+      }
+    } catch { /* non-fatal */ }
+  }
 
   const queue = getWhatsAppQueue();
   if (queue) {

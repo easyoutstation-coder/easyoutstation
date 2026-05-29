@@ -131,10 +131,13 @@ export const adminRouter = createRouter({
     }))
     .mutation(async ({ input }) => {
       const db = getDb();
+      const PIN_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      const tripPin = Array.from({ length: 6 }, () => PIN_CHARS[Math.floor(Math.random() * PIN_CHARS.length)]).join("");
       await db.update(bookings).set({
         status: "confirmed",
         driverName: input.driverName,
         driverPhone: input.driverPhone,
+        tripPin,
       } as any).where(eq(bookings.id, input.id));
 
       const booking = await getBookingWithContact(input.id);
@@ -205,6 +208,19 @@ Have a wonderful journey! 🌟`;
         sendSms(booking.resolvedPhone,
           `EasyOutstation: Booking #${input.id} CONFIRMED! ${route}. Date: ${date}. Driver: ${input.driverName}, +91-${input.driverPhone}. Driver will call 1hr before pickup. Help: 9958556011`
         ).catch(console.error);
+      }
+
+      // FCM push to driver if they have a web push token
+      const driverPhone10 = input.driverPhone.replace(/\D/g, "").slice(-10);
+      const driverUser = await db.select({ fcmToken: users.fcmToken })
+        .from(users).where(eq(users.phone, driverPhone10)).limit(1);
+      if (driverUser[0]?.fcmToken) {
+        sendFcmNotification(
+          driverUser[0].fcmToken,
+          "Trip Assigned 🚗",
+          `Booking #${input.id} — ${booking?.fromCity} → ${booking?.toCity} on ${date}. Customer: ${name}`,
+          { url: "/driver" }
+        ).catch(() => {});
       }
 
       // SMS to driver so they have trip + customer details immediately

@@ -110,6 +110,7 @@ export default function BookingPage() {
     if (user?.email && !customerEmail) setCustomerEmail(user.email);
   }, [user]);
   const [agreeTerms, setAgreeTerms] = useState(false);
+  const [waOptOut, setWaOptOut] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [otpVerified, setOtpVerified] = useState(false);
   const [otpInput, setOtpInput] = useState("");
@@ -136,6 +137,7 @@ export default function BookingPage() {
   const createOrderMutation = trpc.payment.createOrder.useMutation();
   const verifyPaymentMutation = trpc.payment.verifyPayment.useMutation();
   const confirmTestBookingMutation = trpc.booking.confirmTestBooking.useMutation();
+  const setWaOptOutMutation = trpc.booking.setWhatsappOptOut.useMutation();
   const isTestUser = !!(user as any)?.isTestUser;
 
   // Tracks the booking ID while Razorpay is open — used for mobile abandonment detection
@@ -488,6 +490,7 @@ export default function BookingPage() {
       // Test accounts skip payment entirely
       if (isTestUser) {
         await confirmTestBookingMutation.mutateAsync({ bookingId });
+        if (waOptOut) setWaOptOutMutation.mutate({ optOut: true });
         setAdvancePaid(true);
         setBookingId(bookingId);
         setBookingComplete(true);
@@ -536,6 +539,7 @@ export default function BookingPage() {
               razorpaySignature: response.razorpay_signature,
               bookingId,
             });
+            if (waOptOut) setWaOptOutMutation.mutate({ optOut: true });
             setAdvancePaid(true);
             setBookingId(bookingId);
             setBookingComplete(true);
@@ -1037,6 +1041,12 @@ export default function BookingPage() {
                         <Checkbox id="terms" checked={agreeTerms} onCheckedChange={(v) => setAgreeTerms(v as boolean)} className="mt-0.5" />
                         <label htmlFor="terms" className="text-sm text-muted-foreground cursor-pointer">
                           I agree to the <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary underline hover:text-primary/80">Terms & Conditions</a> and <a href="/cancellation" target="_blank" rel="noopener noreferrer" className="text-primary underline hover:text-primary/80">Cancellation Policy</a>
+                        </label>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <Checkbox id="wa-optin" checked={!waOptOut} onCheckedChange={(v) => setWaOptOut(!(v as boolean))} className="mt-0.5" />
+                        <label htmlFor="wa-optin" className="text-sm text-muted-foreground cursor-pointer">
+                          Receive trip updates & driver details on WhatsApp
                         </label>
                       </div>
                     </div>

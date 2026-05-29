@@ -165,6 +165,8 @@ async function runStartupMigrations() {
       `));
     } catch { /* already exists */ }
 
+    // Trip verification PIN column
+    try { await db.execute(sql.raw(`ALTER TABLE bookings ADD COLUMN tripPin VARCHAR(6) NULL`)); } catch { /* already exists */ }
     // Extend bookings status enum to include driver_assigned
     try {
       await db.execute(sql.raw(

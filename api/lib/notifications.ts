@@ -458,7 +458,9 @@ export async function sendDriverAssignmentSms(input: {
         { type: "text", text: input.customerName },
       ],
     }],
-    { bookingId: input.bookingId, notificationType: "vendor-assignment" }
+    { bookingId: input.bookingId, notificationType: "vendor-assignment" },
+    undefined,
+    true // vendor — skip opt-out check
   );
 
   // Set conversation state so inbound worker handles vendor's reply

@@ -95,6 +95,7 @@ export const bookings = mysqlTable("bookings", {
   specialRequests: text("specialRequests"),
   driverName: varchar("driverName", { length: 255 }),
   driverPhone: varchar("driverPhone", { length: 20 }),
+  tripPin: varchar("tripPin", { length: 6 }),
   adminNotes: text("adminNotes"),
   razorpayPaymentId: varchar("razorpayPaymentId", { length: 100 }),
   reminderSentAt: timestamp("reminderSentAt"),

@@ -4,6 +4,9 @@ import { createRouter, publicQuery, authedQuery } from "./middleware";
 import { getDb } from "./queries/connection";
 import { routes, bookings, userSearches, users, carReviews } from "@db/schema";
 import { eq, and, like, desc, sql, lt, isNull, ne } from "drizzle-orm";
+import { getRedis } from "./lib/redis";
+
+const LOCATION_TTL = 7200;
 import { differenceInHours, subMinutes } from "date-fns";
 import { sendBookingEmails, sendBookingSms } from "./lib/notifications";
 
@@ -318,6 +321,55 @@ export const bookingRouter = createRouter({
         .set({ paymentStatus: "paid", status: "confirmed" })
         .where(and(eq(bookings.id, input.bookingId), eq(bookings.userId, ctx.user.id)));
       return { success: true };
+    }),
+
+  // Save WhatsApp opt-out preference at time of booking
+  setWhatsappOptOut: authedQuery
+    .input(z.object({ optOut: z.boolean() }))
+    .mutation(async ({ input, ctx }) => {
+      const db = getDb();
+      await db.update(users).set({ whatsappOptOut: input.optOut }).where(eq(users.id, ctx.user.id));
+    }),
+
+  // Read driver's live location from Redis (customer polls this)
+  getDriverLocation: authedQuery
+    .input(z.object({ bookingId: z.number() }))
+    .query(async ({ input, ctx }) => {
+      const db = getDb();
+      const [booking] = await db.select({ userId: bookings.userId })
+        .from(bookings).where(eq(bookings.id, input.bookingId)).limit(1);
+      if (!booking || booking.userId !== ctx.user.id) return null;
+      const redis = getRedis();
+      if (!redis) return null;
+      const raw = await redis.get(`driver:loc:${input.bookingId}`);
+      if (!raw) return null;
+      return JSON.parse(raw) as { lat: number; lng: number; ts: number };
+    }),
+
+  // Customer shares their location (driver sees it)
+  updateCustomerLocation: authedQuery
+    .input(z.object({ bookingId: z.number(), lat: z.number(), lng: z.number() }))
+    .mutation(async ({ input, ctx }) => {
+      const db = getDb();
+      const [booking] = await db.select({ userId: bookings.userId })
+        .from(bookings).where(eq(bookings.id, input.bookingId)).limit(1);
+      if (!booking || booking.userId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
+      const redis = getRedis();
+      if (!redis) return;
+      await redis.set(`customer:loc:${input.bookingId}`, JSON.stringify({ lat: input.lat, lng: input.lng, ts: Date.now() }), "EX", LOCATION_TTL);
+    }),
+
+  // Stop customer location sharing
+  stopCustomerSharing: authedQuery
+    .input(z.object({ bookingId: z.number() }))
+    .mutation(async ({ input, ctx }) => {
+      const db = getDb();
+      const [booking] = await db.select({ userId: bookings.userId })
+        .from(bookings).where(eq(bookings.id, input.bookingId)).limit(1);
+      if (!booking || booking.userId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN" });
+      const redis = getRedis();
+      if (!redis) return;
+      await redis.del(`customer:loc:${input.bookingId}`);
     }),
 });
 
