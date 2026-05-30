@@ -154,7 +154,20 @@
   --secondary-foreground: 215 20% 70%;
   --accent-foreground: 210 40% 96%;
   --border: 217 19% 20%;
+  /* BASE: all children inherit light text unless they have an explicit color class */
+  color: #e2e8f0;
 }
+
+/* All heading levels (body base only covers h1-h3) */
+.dark-panel h1,
+.dark-panel h2,
+.dark-panel h3,
+.dark-panel h4,
+.dark-panel h5,
+.dark-panel h6 { color: #f1f5f9 !important; }
+
+/* Plain paragraph / span / label / td / th without explicit color → inherit #e2e8f0 */
+/* No rule needed — they inherit from .dark-panel { color } above */
 
 /* ── Tabs ── */
 .dark-panel [data-slot="tabs-list"] {
@@ -220,11 +233,6 @@
    protected by their own !important white-bg/dark-text rules.
    ════════════════════════════════════════════════════════════ */
 
-/* h1/h2/h3 base CSS hard-codes #0F172A — override here */
-.dark-panel h1,
-.dark-panel h2,
-.dark-panel h3 { color: #f1f5f9 !important; }
-
 /* Slate / gray text → light */
 .dark-panel .text-slate-900,
 .dark-panel .text-gray-900,
@@ -244,10 +252,10 @@
 
 .dark-panel .text-slate-500,
 .dark-panel .text-gray-500,
-.dark-panel .text-zinc-500 { color: #64748b !important; }
+.dark-panel .text-zinc-500 { color: #7a93ad !important; }
 
 .dark-panel .text-foreground { color: #f1f5f9 !important; }
-.dark-panel .text-muted-foreground { color: #64748b !important; }
+.dark-panel .text-muted-foreground { color: #7a93ad !important; }
 
 /* Semantic colour text: flip dark shades → light pastel equivalents */
 .dark-panel .text-blue-700,
