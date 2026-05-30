@@ -156,6 +156,7 @@
   --border: 217 19% 20%;
 }
 
+/* ── Tabs ── */
 .dark-panel [data-slot="tabs-list"] {
   background-color: rgba(255,255,255,0.05) !important;
   border: 1px solid rgba(255,255,255,0.08) !important;
@@ -178,6 +179,8 @@
   color: white !important;
   box-shadow: 0 0 0 1px rgba(59,130,246,0.3) !important;
 }
+
+/* ── Glassmorphism card primitives ── */
 .dark-panel .dp-card {
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.07);
@@ -189,28 +192,6 @@
   border-color: rgba(255,255,255,0.12);
   transition: background 0.2s, border-color 0.2s;
 }
-/* Cards inside dark panel become glassmorphism */
-.dark-panel [data-slot="card"] {
-  background: rgba(255,255,255,0.04) !important;
-  border-color: rgba(255,255,255,0.07) !important;
-  box-shadow: none !important;
-}
-.dark-panel [data-slot="card"]:hover {
-  background: rgba(255,255,255,0.06) !important;
-  border-color: rgba(255,255,255,0.11) !important;
-}
-/* Ensure text inside dark-panel cards stays readable */
-.dark-panel [data-slot="card"] .text-slate-900,
-.dark-panel [data-slot="card"] .text-foreground { color: rgb(241,245,249) !important; }
-.dark-panel [data-slot="card"] .text-slate-700 { color: rgb(203,213,225) !important; }
-.dark-panel [data-slot="card"] .text-slate-600 { color: rgb(148,163,184) !important; }
-.dark-panel [data-slot="card"] .text-slate-500 { color: rgb(100,116,139) !important; }
-.dark-panel [data-slot="card"] .border-slate-100,
-.dark-panel [data-slot="card"] .border-slate-200 { border-color: rgba(255,255,255,0.07) !important; }
-.dark-panel [data-slot="card"] .bg-slate-50,
-.dark-panel [data-slot="card"] .bg-slate-100 { background-color: rgba(255,255,255,0.05) !important; }
-.dark-panel [data-slot="card"] .divide-y > * + * { border-color: rgba(255,255,255,0.06) !important; }
-
 .dark-panel .dp-stat {
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.07);
@@ -221,6 +202,161 @@
   background: rgba(255,255,255,0.08);
   transform: translateY(-2px);
 }
+
+/* ── shadcn Card → glassmorphism ── */
+.dark-panel [data-slot="card"] {
+  background: rgba(255,255,255,0.04) !important;
+  border-color: rgba(255,255,255,0.07) !important;
+  box-shadow: none !important;
+}
+.dark-panel [data-slot="card"]:hover {
+  background: rgba(255,255,255,0.06) !important;
+  border-color: rgba(255,255,255,0.11) !important;
+}
+
+/* ════════════════════════════════════════════════════════════
+   BROAD TEXT READABILITY — applies everywhere inside dark-panel
+   (not just inside Cards). Inputs/textareas/selects are
+   protected by their own !important white-bg/dark-text rules.
+   ════════════════════════════════════════════════════════════ */
+
+/* h1/h2/h3 base CSS hard-codes #0F172A — override here */
+.dark-panel h1,
+.dark-panel h2,
+.dark-panel h3 { color: #f1f5f9 !important; }
+
+/* Slate / gray text → light */
+.dark-panel .text-slate-900,
+.dark-panel .text-gray-900,
+.dark-panel .text-zinc-900 { color: #f1f5f9 !important; }
+
+.dark-panel .text-slate-800,
+.dark-panel .text-gray-800,
+.dark-panel .text-zinc-800 { color: #e2e8f0 !important; }
+
+.dark-panel .text-slate-700,
+.dark-panel .text-gray-700,
+.dark-panel .text-zinc-700 { color: #cbd5e1 !important; }
+
+.dark-panel .text-slate-600,
+.dark-panel .text-gray-600,
+.dark-panel .text-zinc-600 { color: #94a3b8 !important; }
+
+.dark-panel .text-slate-500,
+.dark-panel .text-gray-500,
+.dark-panel .text-zinc-500 { color: #64748b !important; }
+
+.dark-panel .text-foreground { color: #f1f5f9 !important; }
+.dark-panel .text-muted-foreground { color: #64748b !important; }
+
+/* Semantic colour text: flip dark shades → light pastel equivalents */
+.dark-panel .text-blue-700,
+.dark-panel .text-blue-800 { color: #93c5fd !important; }
+.dark-panel .text-blue-600 { color: #60a5fa !important; }
+
+.dark-panel .text-green-700,
+.dark-panel .text-green-800 { color: #86efac !important; }
+.dark-panel .text-green-600 { color: #4ade80 !important; }
+
+.dark-panel .text-emerald-700,
+.dark-panel .text-emerald-800 { color: #6ee7b7 !important; }
+.dark-panel .text-emerald-600 { color: #34d399 !important; }
+
+.dark-panel .text-teal-700,
+.dark-panel .text-teal-800 { color: #5eead4 !important; }
+
+.dark-panel .text-amber-700,
+.dark-panel .text-amber-800 { color: #fcd34d !important; }
+.dark-panel .text-amber-600 { color: #fbbf24 !important; }
+
+.dark-panel .text-orange-700,
+.dark-panel .text-orange-800 { color: #fb923c !important; }
+.dark-panel .text-orange-600 { color: #f97316 !important; }
+
+.dark-panel .text-red-700,
+.dark-panel .text-red-800 { color: #fca5a5 !important; }
+.dark-panel .text-red-600 { color: #f87171 !important; }
+
+.dark-panel .text-violet-700,
+.dark-panel .text-violet-800 { color: #c4b5fd !important; }
+.dark-panel .text-purple-700,
+.dark-panel .text-purple-800 { color: #d8b4fe !important; }
+
+.dark-panel .text-pink-700,
+.dark-panel .text-pink-800 { color: #f9a8d4 !important; }
+
+.dark-panel .text-indigo-700,
+.dark-panel .text-indigo-800 { color: #a5b4fc !important; }
+
+.dark-panel .text-cyan-700,
+.dark-panel .text-cyan-800 { color: #67e8f9 !important; }
+
+/* ── Backgrounds ── */
+/* Light neutral → dark glass (exclude form elements which have their own !important rule) */
+.dark-panel .bg-white:not(input):not(textarea):not(select) { background-color: rgba(255,255,255,0.04) !important; }
+.dark-panel .bg-slate-50:not(input):not(textarea):not(select),
+.dark-panel .bg-gray-50:not(input):not(textarea):not(select)  { background-color: rgba(255,255,255,0.025) !important; }
+.dark-panel .bg-slate-100:not(input):not(textarea):not(select),
+.dark-panel .bg-gray-100:not(input):not(textarea):not(select) { background-color: rgba(255,255,255,0.05) !important; }
+.dark-panel .bg-slate-200:not(input):not(textarea):not(select) { background-color: rgba(255,255,255,0.08) !important; }
+
+/* Semantic light backgrounds → dark glass tints */
+.dark-panel .bg-blue-50:not(input):not(textarea):not(select)    { background-color: rgba(59,130,246,0.12) !important; }
+.dark-panel .bg-blue-100:not(input):not(textarea):not(select)   { background-color: rgba(59,130,246,0.18) !important; }
+.dark-panel .bg-green-50:not(input):not(textarea):not(select)   { background-color: rgba(34,197,94,0.10) !important; }
+.dark-panel .bg-green-100:not(input):not(textarea):not(select)  { background-color: rgba(34,197,94,0.15) !important; }
+.dark-panel .bg-emerald-50:not(input):not(textarea):not(select) { background-color: rgba(16,185,129,0.10) !important; }
+.dark-panel .bg-emerald-100:not(input):not(textarea):not(select){ background-color: rgba(16,185,129,0.15) !important; }
+.dark-panel .bg-teal-50:not(input):not(textarea):not(select)    { background-color: rgba(20,184,166,0.10) !important; }
+.dark-panel .bg-teal-100:not(input):not(textarea):not(select)   { background-color: rgba(20,184,166,0.15) !important; }
+.dark-panel .bg-amber-50:not(input):not(textarea):not(select)   { background-color: rgba(245,158,11,0.10) !important; }
+.dark-panel .bg-amber-100:not(input):not(textarea):not(select)  { background-color: rgba(245,158,11,0.15) !important; }
+.dark-panel .bg-orange-50:not(input):not(textarea):not(select)  { background-color: rgba(249,115,22,0.10) !important; }
+.dark-panel .bg-orange-100:not(input):not(textarea):not(select) { background-color: rgba(249,115,22,0.15) !important; }
+.dark-panel .bg-red-50:not(input):not(textarea):not(select)     { background-color: rgba(239,68,68,0.10) !important; }
+.dark-panel .bg-red-100:not(input):not(textarea):not(select)    { background-color: rgba(239,68,68,0.15) !important; }
+.dark-panel .bg-violet-50:not(input):not(textarea):not(select)  { background-color: rgba(139,92,246,0.10) !important; }
+.dark-panel .bg-violet-100:not(input):not(textarea):not(select) { background-color: rgba(139,92,246,0.15) !important; }
+.dark-panel .bg-purple-50:not(input):not(textarea):not(select)  { background-color: rgba(168,85,247,0.10) !important; }
+.dark-panel .bg-purple-100:not(input):not(textarea):not(select) { background-color: rgba(168,85,247,0.15) !important; }
+.dark-panel .bg-pink-50:not(input):not(textarea):not(select)    { background-color: rgba(236,72,153,0.10) !important; }
+.dark-panel .bg-indigo-50:not(input):not(textarea):not(select)  { background-color: rgba(99,102,241,0.10) !important; }
+.dark-panel .bg-indigo-100:not(input):not(textarea):not(select) { background-color: rgba(99,102,241,0.15) !important; }
+.dark-panel .bg-cyan-50:not(input):not(textarea):not(select)    { background-color: rgba(6,182,212,0.10) !important; }
+
+/* ── Borders ── */
+.dark-panel .border-slate-100,
+.dark-panel .border-gray-100  { border-color: rgba(255,255,255,0.06) !important; }
+.dark-panel .border-slate-200,
+.dark-panel .border-gray-200  { border-color: rgba(255,255,255,0.09) !important; }
+.dark-panel .border-slate-300 { border-color: rgba(255,255,255,0.12) !important; }
+
+.dark-panel .border-blue-100,
+.dark-panel .border-blue-200  { border-color: rgba(59,130,246,0.25) !important; }
+.dark-panel .border-green-100,
+.dark-panel .border-green-200 { border-color: rgba(34,197,94,0.25) !important; }
+.dark-panel .border-amber-100,
+.dark-panel .border-amber-200 { border-color: rgba(245,158,11,0.25) !important; }
+.dark-panel .border-red-100,
+.dark-panel .border-red-200   { border-color: rgba(239,68,68,0.25) !important; }
+.dark-panel .border-orange-100,
+.dark-panel .border-orange-200 { border-color: rgba(249,115,22,0.25) !important; }
+.dark-panel .border-indigo-100,
+.dark-panel .border-indigo-200 { border-color: rgba(99,102,241,0.25) !important; }
+
+/* ── Dividers ── */
+.dark-panel .divide-y > * + * { border-color: rgba(255,255,255,0.06) !important; }
+.dark-panel .divide-slate-50 > * + *,
+.dark-panel .divide-slate-100 > * + *,
+.dark-panel .divide-slate-200 > * + * { border-color: rgba(255,255,255,0.06) !important; }
+
+/* ── Hover states ── */
+.dark-panel .hover\:bg-slate-50:hover,
+.dark-panel .hover\:bg-gray-50:hover  { background-color: rgba(255,255,255,0.04) !important; }
+.dark-panel .hover\:bg-slate-100:hover,
+.dark-panel .hover\:bg-gray-100:hover { background-color: rgba(255,255,255,0.06) !important; }
+.dark-panel .hover\:bg-red-50:hover   { background-color: rgba(239,68,68,0.10) !important; }
+.dark-panel .hover\:bg-blue-50:hover  { background-color: rgba(59,130,246,0.10) !important; }
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
