@@ -103,6 +103,8 @@ export const bookings = mysqlTable("bookings", {
   reminderSentAt: timestamp("reminderSentAt"),
   reviewSentAt: timestamp("reviewSentAt"),
   abandonmentReminderSentAt: timestamp("abandonmentReminderSentAt"),
+  abandonmentReminder2SentAt: timestamp("abandonmentReminder2SentAt"),
+  abandonmentReminder3SentAt: timestamp("abandonmentReminder3SentAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });

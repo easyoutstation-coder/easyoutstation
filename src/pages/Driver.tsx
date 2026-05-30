@@ -164,103 +164,135 @@ export default function DriverPage() {
   useEffect(() => () => { Object.values(intervalRefs.current).forEach(clearInterval); }, []);
 
   if (isLoading || profileLoading) {
-    return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading…</div>;
+    return (
+      <div className="min-h-screen bg-[#050e1a] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center mx-auto mb-4 animate-pulse">
+            <Car className="w-5 h-5 text-white" />
+          </div>
+          <p className="text-slate-400 text-sm">Loading driver portal…</p>
+        </div>
+      </div>
+    );
   }
 
   if (!driverProfile && !isSuperAdmin) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-6">
-        <Car className="w-12 h-12 text-muted-foreground" />
-        <p className="text-lg font-semibold">Driver access only</p>
-        <p className="text-sm text-muted-foreground text-center">Your phone number is not registered as a driver. Contact EasyOutstation admin.</p>
-        <Button variant="outline" onClick={() => navigate("/dashboard")}>Go to Dashboard</Button>
+      <div className="min-h-screen bg-[#050e1a] flex flex-col items-center justify-center gap-4 p-6">
+        <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
+          <Car className="w-8 h-8 text-slate-500" />
+        </div>
+        <p className="text-xl font-bold text-white font-['DM_Serif_Display']">Driver Access Only</p>
+        <p className="text-sm text-slate-400 text-center max-w-xs">Your phone number is not registered as a driver. Contact EasyOutstation admin.</p>
+        <button onClick={() => navigate("/dashboard")} className="mt-2 px-6 py-2.5 rounded-xl border border-white/15 text-slate-300 hover:bg-white/5 text-sm transition-all">
+          Go to Dashboard
+        </button>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="dark-panel min-h-screen bg-[#050e1a] relative">
+      {/* Gradient orbs */}
+      <div className="fixed top-[-10%] right-[-5%] w-[500px] h-[500px] rounded-full bg-blue-600/8 blur-[120px] pointer-events-none" />
+      <div className="fixed bottom-[-10%] left-[-5%] w-[400px] h-[400px] rounded-full bg-violet-600/8 blur-[100px] pointer-events-none" />
+      {/* Dot grid */}
+      <div className="fixed inset-0 opacity-[0.025] pointer-events-none" style={{ backgroundImage: "radial-gradient(circle, #ffffff 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
+
       {/* Admin preview banner */}
       {isSuperAdmin && !driverProfile && (
-        <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 text-center text-xs text-amber-700 font-medium">
+        <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2 text-center text-xs text-amber-400 font-medium">
           Admin Preview Mode — this is how drivers see the portal
         </div>
       )}
+
       {/* Header */}
-      <div className="bg-white border-b px-4 py-3 flex items-center justify-between">
+      <div className="relative bg-[#050e1a]/80 backdrop-blur-xl border-b border-white/8 px-4 py-3 flex items-center justify-between sticky top-0 z-30">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-green-600 flex items-center justify-center shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-900/40 shrink-0">
             <Car className="w-5 h-5 text-white" />
           </div>
           <div>
-            <p className="font-semibold text-sm">{driverProfile?.name ?? (isSuperAdmin ? "Admin Preview" : "")}</p>
-            <p className="text-xs text-muted-foreground">Driver Portal</p>
+            <p className="font-semibold text-white text-sm">{driverProfile?.name ?? (isSuperAdmin ? "Admin Preview" : "")}</p>
+            <p className="text-xs text-slate-500">Driver Portal</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            variant={pushEnabled ? "outline" : "default"}
-            className="gap-1.5 text-xs hidden sm:flex"
+          <button
             onClick={handleEnablePush}
             disabled={pushEnabled || registerFcm.isPending}
+            className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-all ${pushEnabled ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400" : "bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10"}`}
           >
             {pushEnabled ? <BellOff className="w-3.5 h-3.5" /> : <Bell className="w-3.5 h-3.5" />}
             <span className="hidden sm:inline">{pushEnabled ? "Alerts on" : "Enable alerts"}</span>
-          </Button>
-          <Button size="sm" variant="ghost" className="sm:hidden" onClick={handleEnablePush} disabled={pushEnabled || registerFcm.isPending}>
-            {pushEnabled ? <BellOff className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => navigate("/dashboard")}>
+          </button>
+          <button onClick={() => navigate("/dashboard")} className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-all">
             <LogOut className="w-4 h-4" />
-          </Button>
+          </button>
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto p-4 space-y-4">
-        <h2 className="text-lg font-semibold">My Assigned Trips</h2>
+      <div className="relative max-w-2xl mx-auto p-4 space-y-4">
+        <div className="flex items-center justify-between py-2">
+          <h2 className="text-lg font-bold text-white font-['DM_Serif_Display']">My Assigned Trips</h2>
+          {myTrips && myTrips.length > 0 && (
+            <span className="text-xs text-slate-500">{myTrips.length} trip{myTrips.length !== 1 ? "s" : ""}</span>
+          )}
+        </div>
 
-        {tripsLoading && <p className="text-muted-foreground text-sm">Loading trips…</p>}
+        {tripsLoading && (
+          <div className="space-y-3">
+            {[1,2].map(i => <div key={i} className="dp-card p-4 h-28 animate-pulse" />)}
+          </div>
+        )}
         {!tripsLoading && (!myTrips || myTrips.length === 0) && (
-          <Card><CardContent className="py-10 text-center text-muted-foreground">No trips assigned yet.</CardContent></Card>
+          <div className="dp-card p-10 text-center">
+            <Calendar className="w-8 h-8 text-slate-600 mx-auto mb-3" />
+            <p className="text-slate-400 text-sm">No trips assigned yet.</p>
+          </div>
         )}
 
-        {myTrips?.map(trip => {
+        {myTrips?.map((trip, idx) => {
           const st = getTripState(trip.id);
           const mapPositions: [number, number][] = [
             ...(st.driverLat !== null && st.driverLng !== null ? [[st.driverLat, st.driverLng] as [number, number]] : []),
             ...(st.customerLat !== null && st.customerLng !== null ? [[st.customerLat, st.customerLng] as [number, number]] : []),
           ];
 
+          const statusStyle =
+            trip.status === "driver_assigned" ? "bg-teal-500/15 text-teal-300 border-teal-500/20" :
+            trip.status === "confirmed" ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/20" :
+            "bg-blue-500/15 text-blue-300 border-blue-500/20";
+
           return (
-            <Card key={trip.id} className="overflow-hidden">
-              <CardContent className="p-4 space-y-4">
+            <div key={trip.id} className="dp-card overflow-hidden" style={{ animationDelay: `${idx * 60}ms` }}>
+              <div className="p-4 space-y-4">
                 {/* Trip header */}
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="font-semibold">#{trip.id} — {trip.fromCity} → {trip.toCity}</p>
-                    <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{trip.pickupDate}</span>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-white">#{trip.id} — {trip.fromCity} → {trip.toCity}</p>
+                    <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                      <span className="flex items-center gap-1 text-xs text-slate-400">
+                        <Calendar className="w-3.5 h-3.5" />{trip.pickupDate}
+                      </span>
                       {trip.customerPhone && (
-                        <a href={`tel:+91${trip.customerPhone}`} className="flex items-center gap-1 text-primary hover:underline">
+                        <a href={`tel:+91${trip.customerPhone}`} className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 transition-colors">
                           <Phone className="w-3.5 h-3.5" />{trip.customerPhone}
                         </a>
                       )}
                     </div>
-                    <p className="text-sm mt-0.5">Customer: <strong>{trip.customerName}</strong></p>
-                    {trip.pickupAddress && <p className="text-xs text-muted-foreground mt-0.5">Pickup: {trip.pickupAddress}</p>}
+                    <p className="text-sm text-slate-300 mt-1">Customer: <span className="text-white font-medium">{trip.customerName}</span></p>
+                    {trip.pickupAddress && <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-1"><MapPin className="w-3 h-3 shrink-0" />{trip.pickupAddress}</p>}
                   </div>
-                  <Badge className={
-                    trip.status === "driver_assigned" ? "bg-teal-100 text-teal-700" :
-                    trip.status === "confirmed" ? "bg-green-100 text-green-700" :
-                    "bg-blue-100 text-blue-700"
-                  }>{trip.status.replace("_", " ")}</Badge>
+                  <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border shrink-0 ${statusStyle}`}>
+                    {trip.status.replace("_", " ")}
+                  </span>
                 </div>
 
                 {/* PIN verification */}
                 {!st.pinVerified && (trip.status === "confirmed" || trip.status === "driver_assigned") && (
-                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 space-y-2">
-                    <p className="text-sm font-medium text-amber-800">Enter the customer's 6-character trip PIN to activate location sharing</p>
+                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 space-y-2">
+                    <p className="text-sm font-medium text-amber-300">Enter the customer's 6-character trip PIN to activate location sharing</p>
                     <div className="flex gap-2">
                       <Input
                         placeholder="e.g. A3K9PX"
@@ -269,14 +301,13 @@ export default function DriverPage() {
                         maxLength={6}
                         className="font-mono tracking-widest text-center uppercase h-9 text-sm flex-1"
                       />
-                      <Button
-                        size="sm"
+                      <button
                         disabled={st.pinInput.length !== 6 || verifyPin.isPending}
                         onClick={() => handleVerifyPin(trip.id)}
-                        className="bg-amber-600 hover:bg-amber-700 text-white"
+                        className="px-4 py-2 rounded-lg bg-amber-500/20 border border-amber-500/30 text-amber-300 text-sm font-medium hover:bg-amber-500/30 transition-all disabled:opacity-50"
                       >
                         {verifyPin.isPending ? "…" : "Verify"}
-                      </Button>
+                      </button>
                     </div>
                   </div>
                 )}
@@ -284,25 +315,25 @@ export default function DriverPage() {
                 {/* Location sharing controls */}
                 {st.pinVerified && (
                   <div className="space-y-3">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       {st.eta && (
-                        <div className="flex-1 bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-sm text-green-800">
+                        <div className="flex-1 bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-3 py-2 text-sm text-emerald-300">
                           📍 Customer is ~<strong>{st.eta.mins} mins</strong> away ({st.eta.km} km)
                         </div>
                       )}
                       {!st.sharing ? (
-                        <Button size="sm" className="gap-1.5 bg-green-600 hover:bg-green-700 text-white ml-auto" onClick={() => startSharing(trip.id)}>
+                        <button onClick={() => startSharing(trip.id)} className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-sm font-medium hover:bg-emerald-500/30 transition-all ml-auto">
                           <Navigation className="w-3.5 h-3.5" />Start Sharing Location
-                        </Button>
+                        </button>
                       ) : (
-                        <Button size="sm" variant="outline" className="gap-1.5 ml-auto border-red-300 text-red-600 hover:bg-red-50" onClick={() => stopSharingTrip(trip.id)}>
+                        <button onClick={() => stopSharingTrip(trip.id)} className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-medium hover:bg-red-500/20 transition-all ml-auto">
                           <MapPin className="w-3.5 h-3.5" />Stop Sharing
-                        </Button>
+                        </button>
                       )}
                     </div>
 
                     {st.sharing && st.driverLat !== null && (
-                      <div className="rounded-xl overflow-hidden border" style={{ height: 260 }}>
+                      <div className="rounded-xl overflow-hidden border border-white/8" style={{ height: 260 }}>
                         <MapContainer center={[st.driverLat!, st.driverLng!]} zoom={14} style={{ height: "100%", width: "100%" }} zoomControl={false}>
                           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='© OpenStreetMap contributors' />
                           <MapFit positions={mapPositions} />
@@ -322,12 +353,12 @@ export default function DriverPage() {
 
                 {/* PIN verified badge */}
                 {st.pinVerified && (
-                  <div className="flex items-center gap-1.5 text-xs text-green-700">
-                    <CheckCircle className="w-3.5 h-3.5" />PIN verified
+                  <div className="flex items-center gap-1.5 text-xs text-emerald-400">
+                    <CheckCircle className="w-3.5 h-3.5" />PIN verified — location sharing active
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           );
         })}
       </div>

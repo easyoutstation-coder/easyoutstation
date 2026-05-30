@@ -597,7 +597,7 @@ Thank you for choosing EasyOutstation.`;
     }));
   }),
 
-  // Process refund — mark as refunded + send notifications
+  // Process refund — issue Razorpay refund, mark as refunded + send notifications
   processRefund: superAdminQuery
     .input(z.object({ bookingId: z.number() }))
     .mutation(async ({ input }) => {
@@ -605,6 +605,30 @@ Thank you for choosing EasyOutstation.`;
       const booking = await db.query.bookings.findFirst({ where: eq(bookings.id, input.bookingId) });
       if (!booking) throw new TRPCError({ code: "NOT_FOUND" });
       if (booking.paymentStatus !== "paid") throw new TRPCError({ code: "BAD_REQUEST", message: "Booking is not in paid status" });
+
+      // Advance = 10% of total, minimum ₹100
+      const totalPrice = parseFloat(booking.totalPrice);
+      const refundRupees = Math.max(100, Math.round(totalPrice * 0.1));
+      const refundPaise = refundRupees * 100;
+
+      // Issue refund via Razorpay API (only when a payment ID exists)
+      if (booking.razorpayPaymentId) {
+        const rpKeyId = process.env.RAZORPAY_KEY_ID || "";
+        const rpSecret = process.env.RAZORPAY_SECRET || process.env.RAZORPAY_KEY_SECRET || "";
+        if (!rpKeyId || !rpSecret) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Razorpay not configured" });
+
+        const auth = Buffer.from(`${rpKeyId}:${rpSecret}`).toString("base64");
+        const refundRes = await fetch(`https://api.razorpay.com/v1/payments/${booking.razorpayPaymentId}/refund`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Basic ${auth}` },
+          body: JSON.stringify({ amount: refundPaise }),
+        });
+        if (!refundRes.ok) {
+          const err = await refundRes.json() as any;
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: err.error?.description || "Razorpay refund API failed" });
+        }
+        logBookingEvent(booking.id, "razorpay_refund_issued", { refundRupees }).catch(() => {});
+      }
 
       await db.update(bookings).set({ paymentStatus: "refunded", status: "cancelled" }).where(eq(bookings.id, input.bookingId));
 
@@ -625,11 +649,11 @@ Thank you for choosing EasyOutstation.`;
           bookingId: booking.id,
           fromCity: booking.fromCity,
           toCity: booking.toCity,
-          amount: parseFloat(booking.totalPrice),
+          amount: refundRupees,
         });
       } catch (e) { console.error("[processRefund] Notification failed:", e); }
 
-      return { success: true, razorpayPaymentId: booking.razorpayPaymentId ?? null };
+      return { success: true, refundRupees, razorpayPaymentId: booking.razorpayPaymentId ?? null };
     }),
 
   // ── Financial Analytics (super_admin only) ────────────────────────────

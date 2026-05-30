@@ -1,7 +1,8 @@
 import { getDb } from "../queries/connection";
-import { notificationLogs, whatsappConversations } from "@db/schema";
+import { notificationLogs, whatsappConversations, users } from "@db/schema";
 import { getNotificationQueue } from "../workers/queues";
 import { dispatchWhatsApp, toWaPhone } from "./whatsapp";
+import { sendFcmNotification } from "./fcm";
 import { sql } from "drizzle-orm";
 
 function formatTime(t: string) {
@@ -127,6 +128,22 @@ async function sendEmailDirectly(to: string, subject: string, text: string, from
   }).catch(console.error);
 }
 
+async function dispatchPushByPhone(phone: string, title: string, body: string, data?: Record<string, string>): Promise<void> {
+  try {
+    const number = phone.replace(/\D/g, "").slice(-10);
+    if (number.length !== 10) return;
+    const db = getDb();
+    const [user] = await db.select({ fcmToken: users.fcmToken })
+      .from(users)
+      .where(sql`phone LIKE CONCAT('%', ${number})`)
+      .limit(1);
+    if (!user?.fcmToken) return;
+    await sendFcmNotification(user.fcmToken, title, body, data);
+  } catch (e) {
+    console.warn("[Notify] Push dispatch failed:", e);
+  }
+}
+
 // ── Public notification functions ─────────────────────────────────────────────
 
 export async function sendBookingSms(
@@ -176,6 +193,7 @@ export async function sendBookingSms(
       { bookingId, notificationType: "confirmation" },
       message // SMS fallback text
     );
+    dispatchPushByPhone(number, "Booking Confirmed!", `${fromCity} → ${toCity} on ${pickupDate}. Your advance is received.`, { url: "/dashboard", bookingId: String(bookingId) }).catch(() => {});
   }
 }
 
@@ -443,6 +461,8 @@ export async function sendDriverAssignmentSms(input: {
     smsFallback
   );
 
+  dispatchPushByPhone(input.customerPhone, "Driver Assigned", `${input.driverName} will pick you up for ${input.fromCity}→${input.toCity} on ${input.pickupDate}`, { url: "/dashboard", bookingId: String(input.bookingId) }).catch(() => {});
+
   // WhatsApp to vendor asking to confirm with driver name + number
   await dispatchWhatsApp(
     input.driverPhone,
@@ -539,7 +559,11 @@ Team EasyOutstation`,
     { bookingId: input.bookingId, notificationType: "driver-reminder" }
   );
 
-  // WhatsApp to customer
+  // Push + WhatsApp to customer
+  if (input.customerPhone) {
+    dispatchPushByPhone(input.customerPhone, "Trip Tomorrow!", `Your ${route} trip is tomorrow. Driver: ${input.driverName} (+91-${input.driverPhone})`, { url: "/dashboard", bookingId: String(input.bookingId) }).catch(() => {});
+  }
+
   if (input.customerPhone) {
     const smsFallback = `EasyOutstation: Reminder! Your trip ${route} is TOMORROW (${input.pickupDate}). Driver: ${input.driverName}, +91-${input.driverPhone}. Help: 8796564111`;
     await dispatchWhatsApp(
@@ -713,4 +737,30 @@ Thank you for choosing EasyOutstation.`;
   const meta: NotificationMeta = { bookingId: input.bookingId, notificationType: "refund" };
   if (input.customerEmail) await dispatchEmail(input.customerEmail, `Refund Processed — Booking #${input.bookingId} | EasyOutstation`, text, meta);
   if (input.customerPhone) await dispatchSms(input.customerPhone, `EasyOutstation: Refund of Rs.${input.amount} for Booking #${input.bookingId} (${input.fromCity} to ${input.toCity}) processed. Reflects in 5-7 days. Help: 9958556011`, meta);
+}
+
+export async function sendAbandonmentFollowupSms(
+  phone: string,
+  bookingId: number,
+  fromCity: string,
+  toCity: string,
+  pickupDate: string,
+  totalPrice: number,
+  touch: 2 | 3,
+  carId?: number,
+  totalKm?: number,
+): Promise<void> {
+  const number = phone.replace(/\D/g, "").slice(-10);
+  if (number.length !== 10) return;
+  const p = new URLSearchParams({ resume: String(bookingId), from: fromCity, to: toCity });
+  if (carId) p.set("carId", String(carId));
+  if (totalKm) p.set("distance", String(totalKm));
+  const resumeUrl = `https://easyoutstation.com/booking?${p.toString()}`;
+  const price = totalPrice.toLocaleString("en-IN");
+
+  const message = touch === 2
+    ? `EasyOutstation: Still thinking? ${fromCity}→${toCity} on ${pickupDate} is saved! Rs ${price}. Complete booking: ${resumeUrl} Help: 8796564111`
+    : `EasyOutstation: Last reminder! ${fromCity}→${toCity} on ${pickupDate}. Secure your seat now: ${resumeUrl} Queries? Call 8796564111`;
+
+  await dispatchSms(number, message, { bookingId, notificationType: `abandonment-${touch}` });
 }

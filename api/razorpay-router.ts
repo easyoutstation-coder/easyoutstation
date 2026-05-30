@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { createRouter, publicQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { bookings, users, cars } from "@db/schema";
-import { eq } from "drizzle-orm";
+import { bookings, users, cars, referralPoints } from "@db/schema";
+import { eq, and, sql } from "drizzle-orm";
 import { sendBookingEmails, sendBookingSms } from "./lib/notifications";
 import { logBookingEvent } from "./lib/bookingEvents";
 
@@ -15,14 +15,32 @@ export const razorpayRouter = createRouter({
       bookingId: z.number(),
       totalPrice: z.number(), // Total trip price in rupees
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
         throw new Error("Razorpay not configured");
       }
 
       // 10% of trip value, minimum ₹100
       const advanceRupees = Math.max(100, Math.round(input.totalPrice * 0.1));
-      const amountPaise = advanceRupees * 100;
+
+      // Apply referral credit for logged-in users (reduces advance, minimum ₹100 floor)
+      let creditApplied = 0;
+      if (ctx.user?.id) {
+        const db = getDb();
+        const now = new Date();
+        const activePoints = await db.select({ id: referralPoints.id, amount: referralPoints.amount })
+          .from(referralPoints)
+          .where(and(
+            eq(referralPoints.userId, ctx.user.id),
+            eq(referralPoints.status, "active"),
+            sql`${referralPoints.expiresAt} > ${now}`,
+          ));
+        const totalCredit = activePoints.reduce((sum, p) => sum + p.amount, 0);
+        creditApplied = Math.max(0, Math.min(totalCredit, advanceRupees - 100));
+      }
+
+      const finalAdvance = advanceRupees - creditApplied;
+      const amountPaise = finalAdvance * 100;
 
       const auth = Buffer.from(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`).toString("base64");
 
@@ -49,7 +67,8 @@ export const razorpayRouter = createRouter({
       return {
         orderId: order.id,
         amount: order.amount,
-        advanceRupees,
+        advanceRupees: finalAdvance,
+        creditApplied,
         currency: order.currency,
         keyId: RAZORPAY_KEY_ID,
       };
@@ -61,8 +80,9 @@ export const razorpayRouter = createRouter({
       razorpayPaymentId: z.string(),
       razorpaySignature: z.string(),
       bookingId: z.number(),
+      creditApplied: z.number().optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const crypto = await import("crypto");
       const expectedSignature = crypto
         .createHmac("sha256", RAZORPAY_KEY_SECRET)
@@ -81,6 +101,26 @@ export const razorpayRouter = createRouter({
         .set({ paymentStatus: "paid", status: "confirmed", razorpayPaymentId: input.razorpayPaymentId })
         .where(eq(bookings.id, input.bookingId));
       logBookingEvent(input.bookingId, "payment_received", { paymentId: input.razorpayPaymentId }).catch(() => {});
+
+      // Redeem referral points that were applied to this order (oldest-expiring first)
+      if (input.creditApplied && input.creditApplied > 0 && ctx.user?.id) {
+        const now = new Date();
+        const points = await db.select({ id: referralPoints.id, amount: referralPoints.amount })
+          .from(referralPoints)
+          .where(and(
+            eq(referralPoints.userId, ctx.user.id),
+            eq(referralPoints.status, "active"),
+            sql`${referralPoints.expiresAt} > ${now}`,
+          ))
+          .orderBy(referralPoints.expiresAt);
+        let remaining = input.creditApplied;
+        for (const p of points) {
+          if (remaining <= 0) break;
+          await db.update(referralPoints).set({ status: "redeemed" }).where(eq(referralPoints.id, p.id));
+          remaining -= p.amount;
+        }
+        logBookingEvent(input.bookingId, "referral_credit_redeemed", { amount: input.creditApplied }).catch(() => {});
+      }
 
       // Fetch booking + fall back to user account for missing phone/email
       const booking = await db.query.bookings.findFirst({ where: eq(bookings.id, input.bookingId) });

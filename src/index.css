@@ -136,6 +136,91 @@
   from { opacity: 0; transform: scale(0.97); }
   to { opacity: 1; transform: scale(1); }
 }
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ── Dark panel theme (Admin, Driver, Vendor, Corporate portals) ─────────── */
+/* Override shadcn CSS variables for dark contexts */
+.dark-panel {
+  --foreground: 210 40% 96%;
+  --card-foreground: 210 40% 96%;
+  --muted-foreground: 215 16% 60%;
+  --secondary-foreground: 215 20% 70%;
+  --accent-foreground: 210 40% 96%;
+  --border: 217 19% 20%;
+}
+
+.dark-panel [data-slot="tabs-list"] {
+  background-color: rgba(255,255,255,0.05) !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  padding: 5px !important;
+  border-radius: 12px !important;
+  height: auto !important;
+}
+.dark-panel [data-slot="tabs-trigger"] {
+  color: rgb(148,163,184) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  transition: color 0.15s, background 0.15s !important;
+}
+.dark-panel [data-slot="tabs-trigger"]:hover {
+  color: white !important;
+  background-color: rgba(255,255,255,0.07) !important;
+}
+.dark-panel [data-slot="tabs-trigger"][data-state="active"] {
+  background: linear-gradient(135deg, rgba(59,130,246,0.25), rgba(139,92,246,0.2)) !important;
+  color: white !important;
+  box-shadow: 0 0 0 1px rgba(59,130,246,0.3) !important;
+}
+.dark-panel .dp-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 16px;
+  animation: cardIn 0.35s ease-out both;
+}
+.dark-panel .dp-card:hover {
+  background: rgba(255,255,255,0.07);
+  border-color: rgba(255,255,255,0.12);
+  transition: background 0.2s, border-color 0.2s;
+}
+/* Cards inside dark panel become glassmorphism */
+.dark-panel [data-slot="card"] {
+  background: rgba(255,255,255,0.04) !important;
+  border-color: rgba(255,255,255,0.07) !important;
+  box-shadow: none !important;
+}
+.dark-panel [data-slot="card"]:hover {
+  background: rgba(255,255,255,0.06) !important;
+  border-color: rgba(255,255,255,0.11) !important;
+}
+/* Ensure text inside dark-panel cards stays readable */
+.dark-panel [data-slot="card"] .text-slate-900,
+.dark-panel [data-slot="card"] .text-foreground { color: rgb(241,245,249) !important; }
+.dark-panel [data-slot="card"] .text-slate-700 { color: rgb(203,213,225) !important; }
+.dark-panel [data-slot="card"] .text-slate-600 { color: rgb(148,163,184) !important; }
+.dark-panel [data-slot="card"] .text-slate-500 { color: rgb(100,116,139) !important; }
+.dark-panel [data-slot="card"] .border-slate-100,
+.dark-panel [data-slot="card"] .border-slate-200 { border-color: rgba(255,255,255,0.07) !important; }
+.dark-panel [data-slot="card"] .bg-slate-50,
+.dark-panel [data-slot="card"] .bg-slate-100 { background-color: rgba(255,255,255,0.05) !important; }
+.dark-panel [data-slot="card"] .divide-y > * + * { border-color: rgba(255,255,255,0.06) !important; }
+
+.dark-panel .dp-stat {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 16px;
+  transition: background 0.2s, transform 0.2s;
+}
+.dark-panel .dp-stat:hover {
+  background: rgba(255,255,255,0.08);
+  transform: translateY(-2px);
+}
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 5px; height: 5px; }

@@ -47,16 +47,16 @@ type BookingStatus = "pending" | "confirmed" | "driver_assigned" | "completed" |
 type PaymentStatus = "pending" | "paid" | "refunded";
 
 const statusColors: Record<BookingStatus, string> = {
-  pending: "bg-amber-100 text-amber-700",
-  confirmed: "bg-green-100 text-green-700",
-  driver_assigned: "bg-teal-100 text-teal-700",
-  completed: "bg-blue-100 text-blue-700",
-  cancelled: "bg-red-100 text-red-700",
+  pending: "bg-amber-500/15 text-amber-300 border border-amber-500/20",
+  confirmed: "bg-emerald-500/15 text-emerald-300 border border-emerald-500/20",
+  driver_assigned: "bg-teal-500/15 text-teal-300 border border-teal-500/20",
+  completed: "bg-blue-500/15 text-blue-300 border border-blue-500/20",
+  cancelled: "bg-red-500/15 text-red-300 border border-red-500/20",
 };
 const paymentColors: Record<PaymentStatus, string> = {
-  pending: "bg-slate-100 text-slate-600",
-  paid: "bg-emerald-100 text-emerald-700",
-  refunded: "bg-orange-100 text-orange-700",
+  pending: "bg-white/8 text-slate-400 border border-white/10",
+  paid: "bg-emerald-500/15 text-emerald-300 border border-emerald-500/20",
+  refunded: "bg-orange-500/15 text-orange-300 border border-orange-500/20",
 };
 
 const EXPENSE_CATEGORIES = [
@@ -66,20 +66,18 @@ const EXPENSE_CATEGORIES = [
 
 function StatCard({ icon: Icon, label, value, sub }: { icon: any; label: string; value: string | number; sub?: string }) {
   return (
-    <Card>
-      <CardContent className="p-5">
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-sm text-muted-foreground">{label}</p>
-            <p className="text-2xl font-bold mt-1">{value}</p>
-            {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-            <Icon className="w-5 h-5 text-primary" />
-          </div>
+    <div className="dp-stat p-5">
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-sm text-slate-400">{label}</p>
+          <p className="text-2xl font-bold text-white mt-1">{value}</p>
+          {sub && <p className="text-xs text-slate-500 mt-0.5">{sub}</p>}
         </div>
-      </CardContent>
-    </Card>
+        <div className="w-10 h-10 rounded-xl bg-blue-500/15 border border-blue-500/20 flex items-center justify-center">
+          <Icon className="w-5 h-5 text-blue-400" />
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -561,7 +559,13 @@ export default function AdminPage() {
   }
 
   if (authLoading) {
-    return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" /></div>;
+    return (
+      <div className="dark-panel min-h-screen bg-[#050e1a] flex items-center justify-center">
+        <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/8 flex items-center justify-center animate-pulse">
+          <Car className="w-5 h-5 text-blue-400" />
+        </div>
+      </div>
+    );
   }
   if (!isAuthenticated) {
     navigate("/login?redirect=/admin");
@@ -569,61 +573,66 @@ export default function AdminPage() {
   }
   if (user?.role !== "admin" && user?.role !== "super_admin") {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-        <p className="text-lg font-semibold text-muted-foreground">Admin access only.</p>
+      <div className="dark-panel min-h-screen bg-[#050e1a] flex flex-col items-center justify-center gap-4">
+        <p className="text-lg font-semibold text-slate-400">Admin access only.</p>
         <Button onClick={() => navigate("/")}>Go Home</Button>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="dark-panel min-h-screen bg-[#050e1a] relative">
+      {/* Background orbs */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-8%] right-[-4%] w-[500px] h-[500px] bg-blue-600/6 rounded-full blur-[100px]" />
+        <div className="absolute bottom-[5%] left-[-8%] w-[400px] h-[400px] bg-violet-600/5 rounded-full blur-[100px]" />
+      </div>
+
       {/* Header */}
-      <div className="bg-white border-b border-slate-200 sticky top-0 z-40">
+      <div className="bg-[#050e1a]/80 backdrop-blur-xl border-b border-white/8 sticky top-0 z-40">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
               <Car className="w-4 h-4 text-white" />
             </div>
-            <span className="font-bold text-slate-900">EasyOutstation Admin</span>
+            <span className="font-bold text-white">EasyOutstation Admin</span>
           </div>
           <div className="flex items-center gap-2">
             {isSuperAdmin && (
-              <Button
-                variant="ghost" size="sm"
+              <button
                 onClick={() => navigate("/executive-team")}
-                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 font-medium"
+                className="text-sm font-medium text-blue-400 hover:text-blue-300 px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors"
               >
                 🏢 Executive Team
-              </Button>
+              </button>
             )}
-            <Button variant="ghost" size="sm" onClick={() => navigate("/")}>← Site</Button>
+            <button onClick={() => navigate("/")} className="text-sm text-slate-400 hover:text-white px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors">← Site</button>
           </div>
         </div>
       </div>
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 relative z-[1]">
 
         {/* Action result banner */}
         {actionResult && (
-          <div className={`mb-4 rounded-xl p-4 flex items-start justify-between gap-3 shadow-sm border ${
+          <div className={`mb-4 rounded-xl p-4 flex items-start justify-between gap-3 border ${
             actionResult.action === "cancelled"
-              ? "bg-red-50 border-red-200"
-              : "bg-green-50 border-green-200"
+              ? "bg-red-500/10 border-red-500/20"
+              : "bg-emerald-500/10 border-emerald-500/20"
           }`}>
             <div className="flex items-start gap-3 flex-1">
-              <CheckCheck className={`w-5 h-5 mt-0.5 shrink-0 ${actionResult.action === "cancelled" ? "text-red-600" : "text-green-600"}`} />
+              <CheckCheck className={`w-5 h-5 mt-0.5 shrink-0 ${actionResult.action === "cancelled" ? "text-red-400" : "text-emerald-400"}`} />
               <div className="flex-1">
-                <p className={`font-semibold text-sm ${actionResult.action === "cancelled" ? "text-red-800" : "text-green-800"}`}>
+                <p className={`font-semibold text-sm ${actionResult.action === "cancelled" ? "text-red-300" : "text-emerald-300"}`}>
                   Booking #{actionResult.bookingId} {actionResult.action === "cancelled" ? "cancelled" : "confirmed"}!
                 </p>
                 <div className="flex flex-wrap gap-2 mt-2">
                   {actionResult.emailSent ? (
-                    <span className="flex items-center gap-1 text-xs bg-white/70 text-green-700 border border-green-200 px-2 py-1 rounded-full">
+                    <span className="flex items-center gap-1 text-xs bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 px-2 py-1 rounded-full">
                       <Mail className="w-3 h-3" /> Confirmation email sent ✓
                     </span>
                   ) : (
-                    <span className="flex items-center gap-1 text-xs bg-white/70 text-amber-700 border border-amber-200 px-2 py-1 rounded-full">
+                    <span className="flex items-center gap-1 text-xs bg-amber-500/10 text-amber-300 border border-amber-500/20 px-2 py-1 rounded-full">
                       <Mail className="w-3 h-3" /> No email on file
                     </span>
                   )}
@@ -637,19 +646,20 @@ export default function AdminPage() {
                       <MessageCircle className="w-3 h-3" /> Tap to send WhatsApp →
                     </a>
                   ) : (
-                    <span className="flex items-center gap-1 text-xs bg-white/70 text-amber-700 border border-amber-200 px-2 py-1 rounded-full">
+                    <span className="flex items-center gap-1 text-xs bg-amber-500/10 text-amber-300 border border-amber-500/20 px-2 py-1 rounded-full">
                       No phone on file — call customer manually
                     </span>
                   )}
                 </div>
               </div>
             </div>
-            <button onClick={() => setActionResult(null)} className="text-muted-foreground hover:text-foreground shrink-0 mt-0.5">
+            <button onClick={() => setActionResult(null)} className="text-slate-500 hover:text-white shrink-0 mt-0.5">
               <X className="w-4 h-4" />
             </button>
           </div>
         )}
 
+        <div className="dark-panel">
         <Tabs defaultValue="bookings">
           <TabsList className="mb-6 flex overflow-x-auto h-auto gap-1 pb-1 no-scrollbar w-full justify-start">
             <TabsTrigger value="overview" className="gap-1.5 shrink-0"><LayoutDashboard className="w-4 h-4" />Overview</TabsTrigger>
@@ -660,10 +670,10 @@ export default function AdminPage() {
             <TabsTrigger value="drivers" className="gap-1.5 shrink-0"><Car className="w-4 h-4" />Drivers</TabsTrigger>
             <TabsTrigger value="customers" className="gap-1.5 shrink-0"><Users className="w-4 h-4" />Customers</TabsTrigger>
             {canManageContent && <TabsTrigger value="content" className="gap-1.5 shrink-0"><FileText className="w-4 h-4" />Content</TabsTrigger>}
-            {isSuperAdmin && <TabsTrigger value="payments" className="gap-1.5 text-green-700 shrink-0"><IndianRupee className="w-4 h-4" />Payments</TabsTrigger>}
-            {isSuperAdmin && <TabsTrigger value="financials" className="gap-1.5 text-emerald-700 shrink-0"><TrendingUp className="w-4 h-4" />Financials</TabsTrigger>}
-            {isSuperAdmin && <TabsTrigger value="referral" className="gap-1.5 text-pink-700 shrink-0"><Gift className="w-4 h-4" />Referral</TabsTrigger>}
-            <TabsTrigger value="corporate" className="gap-1.5 text-blue-700 shrink-0">
+            {isSuperAdmin && <TabsTrigger value="payments" className="gap-1.5 shrink-0"><IndianRupee className="w-4 h-4" />Payments</TabsTrigger>}
+            {isSuperAdmin && <TabsTrigger value="financials" className="gap-1.5 shrink-0"><TrendingUp className="w-4 h-4" />Financials</TabsTrigger>}
+            {isSuperAdmin && <TabsTrigger value="referral" className="gap-1.5 shrink-0"><Gift className="w-4 h-4" />Referral</TabsTrigger>}
+            <TabsTrigger value="corporate" className="gap-1.5 shrink-0">
               <Building2 className="w-4 h-4" />Corp Leads
               {(corporateLeads?.filter(l => l.status === "new").length ?? 0) > 0 && (
                 <span className="ml-1 bg-blue-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
@@ -671,7 +681,7 @@ export default function AdminPage() {
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="corp-accounts" className="gap-1.5 text-indigo-700 shrink-0">
+            <TabsTrigger value="corp-accounts" className="gap-1.5 shrink-0">
               <Building2 className="w-4 h-4" />Corp Accounts
               {(corporateAccountsList?.filter(a => a.status === "pending").length ?? 0) > 0 && (
                 <span className="ml-1 bg-indigo-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
@@ -679,11 +689,11 @@ export default function AdminPage() {
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="vendors" className="gap-1.5 text-cyan-700 shrink-0"><Truck className="w-4 h-4" />Vendors</TabsTrigger>
-            <TabsTrigger value="analytics" className="gap-1.5 text-orange-700 shrink-0"><TrendingUp className="w-4 h-4" />Analytics</TabsTrigger>
-            <TabsTrigger value="agent" className="gap-1.5 text-violet-700 shrink-0"><Bot className="w-4 h-4" />Agent</TabsTrigger>
-            <TabsTrigger value="wa-logs" className="gap-1.5 text-green-700 shrink-0"><MessageCircle className="w-4 h-4" />WA Logs</TabsTrigger>
-            <TabsTrigger value="live" className="gap-1.5 text-red-600 font-semibold shrink-0">
+            <TabsTrigger value="vendors" className="gap-1.5 shrink-0"><Truck className="w-4 h-4" />Vendors</TabsTrigger>
+            <TabsTrigger value="analytics" className="gap-1.5 shrink-0"><TrendingUp className="w-4 h-4" />Analytics</TabsTrigger>
+            <TabsTrigger value="agent" className="gap-1.5 shrink-0"><Bot className="w-4 h-4" />Agent</TabsTrigger>
+            <TabsTrigger value="wa-logs" className="gap-1.5 shrink-0"><MessageCircle className="w-4 h-4" />WA Logs</TabsTrigger>
+            <TabsTrigger value="live" className="gap-1.5 shrink-0">
               <Map className="w-4 h-4" />Live
               {(liveTrips?.length ?? 0) > 0 && (
                 <span className="ml-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{liveTrips!.length}</span>
@@ -695,20 +705,20 @@ export default function AdminPage() {
           <TabsContent value="overview" className="space-y-5">
             {/* Site live/offline toggle — super_admin only */}
             {isSuperAdmin && (
-              <Card className={`border-2 ${siteStatus?.online === false ? "border-red-300 bg-red-50" : "border-green-200 bg-green-50"}`}>
+              <Card className={`border ${siteStatus?.online === false ? "!border-red-500/30 !bg-red-500/8" : "!border-emerald-500/25 !bg-emerald-500/6"}`}>
                 <CardContent className="p-5">
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${siteStatus?.online === false ? "bg-red-100" : "bg-green-100"}`}>
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${siteStatus?.online === false ? "bg-red-500/15" : "bg-emerald-500/15"}`}>
                         {siteStatus?.online === false
-                          ? <WifiOff className="w-5 h-5 text-red-600" />
-                          : <Globe className="w-5 h-5 text-green-600" />}
+                          ? <WifiOff className="w-5 h-5 text-red-400" />
+                          : <Globe className="w-5 h-5 text-emerald-400" />}
                       </div>
                       <div>
-                        <p className="font-semibold text-slate-900">
+                        <p className="font-semibold text-white">
                           Website is {siteStatus?.online === false ? "OFFLINE" : "LIVE"}
                         </p>
-                        <p className="text-xs text-slate-500 mt-0.5">
+                        <p className="text-xs text-slate-400 mt-0.5">
                           {siteStatus?.online === false
                             ? "Visitors see maintenance page. You can still browse as admin."
                             : "Site is live and accepting bookings from all visitors."}
@@ -719,7 +729,7 @@ export default function AdminPage() {
                       onClick={() => setSiteStatus.mutate({ online: siteStatus?.online === false })}
                       disabled={setSiteStatus.isPending}
                       className={`relative inline-flex h-7 w-13 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${
-                        siteStatus?.online === false ? "bg-red-400" : "bg-green-500"
+                        siteStatus?.online === false ? "bg-red-500" : "bg-emerald-500"
                       } ${setSiteStatus.isPending ? "opacity-50" : ""}`}
                       style={{ width: "52px" }}
                     >
@@ -734,23 +744,23 @@ export default function AdminPage() {
 
             {/* Promotions / Discount toggle */}
             {isSuperAdmin && (
-              <Card className={`border-2 ${discountForm.enabled ? "border-orange-300 bg-orange-50" : "border-slate-200 bg-white"}`}>
+              <Card className={`border ${discountForm.enabled ? "!border-orange-500/30 !bg-orange-500/6" : ""}`}>
                 <CardContent className="p-5">
                   <div className="flex items-center justify-between gap-4 mb-4">
                     <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${discountForm.enabled ? "bg-orange-100" : "bg-slate-100"}`}>
-                        <Tag className={`w-5 h-5 ${discountForm.enabled ? "text-orange-600" : "text-slate-500"}`} />
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${discountForm.enabled ? "bg-orange-500/15" : "bg-white/8"}`}>
+                        <Tag className={`w-5 h-5 ${discountForm.enabled ? "text-orange-400" : "text-slate-400"}`} />
                       </div>
                       <div>
-                        <p className="font-semibold text-slate-900">Promotion / Discount</p>
-                        <p className="text-xs text-slate-500 mt-0.5">
+                        <p className="font-semibold text-white">Promotion / Discount</p>
+                        <p className="text-xs text-slate-400 mt-0.5">
                           {discountForm.enabled ? "Active — shown to all users on car selection" : "Inactive — no discount applied"}
                         </p>
                       </div>
                     </div>
                     <button
                       onClick={() => setDiscountForm(f => ({ ...f, enabled: !f.enabled }))}
-                      className={`relative inline-flex h-7 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${discountForm.enabled ? "bg-orange-500" : "bg-slate-300"}`}
+                      className={`relative inline-flex h-7 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${discountForm.enabled ? "bg-orange-500" : "bg-white/15"}`}
                       style={{ width: "52px" }}
                     >
                       <span className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-lg transition duration-200 ease-in-out ${discountForm.enabled ? "translate-x-6" : "translate-x-0"}`} />
@@ -2817,6 +2827,7 @@ export default function AdminPage() {
             )}
           </TabsContent>
         </Tabs>
+        </div>{/* end dark-panel */}
       </div>
 
       {/* ── Confirm Booking Modal ──────────────────────────────────── */}

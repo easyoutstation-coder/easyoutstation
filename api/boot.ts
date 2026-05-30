@@ -123,6 +123,8 @@ async function runStartupMigrations() {
     try { await db.execute(sql.raw(`ALTER TABLE bookings ADD COLUMN reminderSentAt TIMESTAMP NULL`)); } catch { /* already exists */ }
     try { await db.execute(sql.raw(`ALTER TABLE bookings ADD COLUMN reviewSentAt TIMESTAMP NULL`)); } catch { /* already exists */ }
     try { await db.execute(sql.raw(`ALTER TABLE bookings ADD COLUMN abandonmentReminderSentAt TIMESTAMP NULL`)); } catch { /* already exists */ }
+    try { await db.execute(sql.raw(`ALTER TABLE bookings ADD COLUMN abandonmentReminder2SentAt TIMESTAMP NULL`)); } catch { /* already exists */ }
+    try { await db.execute(sql.raw(`ALTER TABLE bookings ADD COLUMN abandonmentReminder3SentAt TIMESTAMP NULL`)); } catch { /* already exists */ }
     try { await db.execute(sql.raw(`ALTER TABLE bookings ADD COLUMN razorpayPaymentId VARCHAR(100)`)); } catch { /* already exists */ }
     // Notification audit log table
     try {
