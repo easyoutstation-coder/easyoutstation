@@ -37,9 +37,9 @@ const AGENTS: Agent[] = [
   },
   {
     id: "ceo",
-    name: "Arjun Sharma",
+    name: "Annu",
     role: "CEO",
-    initials: "AS",
+    initials: "AN",
     color: "bg-blue-600",
     ring: "ring-blue-500",
     textColor: "text-blue-400",
