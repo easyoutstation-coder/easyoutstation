@@ -538,6 +538,7 @@ export default function BookingPage() {
               razorpayPaymentId: response.razorpay_payment_id,
               razorpaySignature: response.razorpay_signature,
               bookingId,
+              creditApplied: order.creditApplied,
             });
             if (waOptOut) setWaOptOutMutation.mutate({ optOut: true });
             setAdvancePaid(true);
