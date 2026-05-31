@@ -162,7 +162,8 @@ export async function runAbandonedReminders(): Promise<void> {
         sql`${bookings.paymentStatus} = 'pending'`,
         sql`${bookings.status} != 'cancelled'`,
         sql`${bookings.createdAt} < ${cutoff1.toISOString().slice(0, 19).replace("T", " ")}`,
-        sql`abandonmentReminderSentAt IS NULL`
+        sql`abandonmentReminderSentAt IS NULL`,
+        sql`DATE(${bookings.pickupDate}) >= CURDATE()`
       )
     );
 
@@ -213,7 +214,8 @@ export async function runAbandonedReminders(): Promise<void> {
         sql`${bookings.status} != 'cancelled'`,
         sql`abandonmentReminderSentAt IS NOT NULL`,
         sql`abandonmentReminder2SentAt IS NULL`,
-        sql`abandonmentReminderSentAt < ${cutoff2.toISOString().slice(0, 19).replace("T", " ")}`
+        sql`abandonmentReminderSentAt < ${cutoff2.toISOString().slice(0, 19).replace("T", " ")}`,
+        sql`DATE(${bookings.pickupDate}) >= CURDATE()`
       )
     );
 
@@ -247,7 +249,8 @@ export async function runAbandonedReminders(): Promise<void> {
         sql`${bookings.status} != 'cancelled'`,
         sql`abandonmentReminder2SentAt IS NOT NULL`,
         sql`abandonmentReminder3SentAt IS NULL`,
-        sql`abandonmentReminder2SentAt < ${cutoff3.toISOString().slice(0, 19).replace("T", " ")}`
+        sql`abandonmentReminder2SentAt < ${cutoff3.toISOString().slice(0, 19).replace("T", " ")}`,
+        sql`DATE(${bookings.pickupDate}) >= CURDATE()`
       )
     );
 
