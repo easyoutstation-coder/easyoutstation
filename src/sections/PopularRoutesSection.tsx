@@ -1,8 +1,12 @@
-import { useNavigate } from "react-router";
+import { useNavigate, Link } from "react-router";
 import { trpc } from "@/providers/trpc";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Clock, Route, TrendingUp, CheckCircle, MapPin } from "lucide-react";
 import { getLandmark } from "@/data/routeImages";
+
+function routeSlug(from: string, to: string) {
+  return `${from.toLowerCase()}-to-${to.toLowerCase()}`;
+}
 
 const fallbackRoutes = [
   { id: 1, fromCity: "Delhi", toCity: "Manali", distanceKm: 540, durationHours: 12, basePrice: "6,730", imageUrl: "", description: "Scenic Himalayan drive via Chandigarh & Kullu Valley", highlights: ["Mountain road experts", "Crysta recommended", "Scenic stops included"] },
@@ -42,8 +46,8 @@ export default function PopularRoutesSection() {
             const landmark = getLandmark(route.toCity);
             const imgSrc = landmark?.image || route.imageUrl || "/hero-bg.jpg";
             return (
-            <div key={route.id} onClick={() => navigate(`/cars?from=${route.fromCity}&to=${route.toCity}`)}
-              className="group bg-white rounded-2xl border border-slate-100 hover:border-blue-200 overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5">
+            <Link key={route.id} to={`/cab/${routeSlug(route.fromCity, route.toCity)}`}
+              className="group bg-white rounded-2xl border border-slate-100 hover:border-blue-200 overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 block no-underline">
               <div className="relative h-52 overflow-hidden">
                 <img src={imgSrc} alt={landmark?.landmark || `${route.fromCity} to ${route.toCity}`}
                   onError={(e) => { (e.target as HTMLImageElement).src = "/hero-bg.jpg"; }}
@@ -101,7 +105,7 @@ export default function PopularRoutesSection() {
                   </span>
                 </div>
               </div>
-            </div>
+            </Link>
           );
           })}
         </div>

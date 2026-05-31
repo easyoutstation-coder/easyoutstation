@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router";
+import { useParams, useNavigate, Link } from "react-router";
 import { useSeo } from "@/hooks/useSeo";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -345,6 +345,25 @@ export default function RouteLanding() {
                 <p className="text-slate-600 text-sm leading-relaxed">{faq.a}</p>
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* Other Popular Routes — internal links for SEO */}
+        <div className="max-w-4xl mx-auto px-4 pb-12">
+          <h2 className="text-xl font-bold font-['DM_Serif_Display'] mb-5 text-slate-900">Other Popular Routes from Delhi</h2>
+          <div className="flex flex-wrap gap-2">
+            {Object.entries(ROUTES)
+              .filter(([slug]) => slug !== route)
+              .map(([slug, r]) => (
+                <Link
+                  key={slug}
+                  to={`/cab/${slug}`}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-slate-200 text-sm text-slate-700 hover:border-blue-400 hover:text-blue-700 hover:bg-blue-50 transition-colors no-underline"
+                >
+                  {r.from} → {r.to}
+                  <span className="text-slate-400 text-xs">₹{r.fare.min.toLocaleString("en-IN")}</span>
+                </Link>
+              ))}
           </div>
         </div>
 
