@@ -177,7 +177,7 @@ export async function sendBookingSms(
     // Send via WhatsApp first; SMS fires automatically if WA fails permanently
     await dispatchWhatsApp(
       number,
-      "eo_booking_confirmed",
+      "eo_booking_confirmed_v2",
       "en",
       [{
         type: "body",
@@ -444,7 +444,7 @@ export async function sendDriverAssignmentSms(input: {
   const smsFallback = `EasyOutstation: Your driver for ${input.fromCity} to ${input.toCity} on ${input.pickupDate} is ${input.driverName}, +91-${input.driverPhone}. Help: 8796564111`;
   await dispatchWhatsApp(
     input.customerPhone,
-    "eo_driver_assigned",
+    "eo_driver_assigned_v2",
     "en",
     [{
       type: "body",
@@ -466,7 +466,7 @@ export async function sendDriverAssignmentSms(input: {
   // WhatsApp to vendor asking to confirm with driver name + number
   await dispatchWhatsApp(
     input.driverPhone,
-    "eo_vendor_trip_assigned",
+    "eo_vendor_trip_assigned_v2",
     "en",
     [{
       type: "body",
@@ -568,7 +568,7 @@ Team EasyOutstation`,
     const smsFallback = `EasyOutstation: Reminder! Your trip ${route} is TOMORROW (${input.pickupDate}). Driver: ${input.driverName}, +91-${input.driverPhone}. Help: 8796564111`;
     await dispatchWhatsApp(
       input.customerPhone,
-      "eo_trip_reminder",
+      "eo_trip_reminder_v2",
       "en",
       [{
         type: "body",
@@ -607,7 +607,7 @@ export async function sendReviewRequest(input: {
     // WhatsApp review request with conversational reply (customer replies 1-5)
     await dispatchWhatsApp(
       input.customerPhone,
-      "eo_review_request",
+      "eo_review_request_v2",
       "en",
       [{
         type: "body",
@@ -698,7 +698,7 @@ Team EasyOutstation`;
     await dispatchSms(input.phone, `EasyOutstation: Corporate account for ${input.companyName} APPROVED! Login at easyoutstation.com/corporate-portal with join code: ${input.joinCode}. Help: 8796564111`, meta);
     await dispatchWhatsApp(
       input.phone,
-      "eo_corp_account_active",
+      "eo_corp_account_active_v2",
       "en",
       [{
         type: "body",
