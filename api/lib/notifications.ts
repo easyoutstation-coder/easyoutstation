@@ -749,6 +749,8 @@ export async function sendAbandonmentFollowupSms(
   touch: 2 | 3,
   carId?: number,
   totalKm?: number,
+  customerEmail?: string,
+  customerName?: string,
 ): Promise<void> {
   const number = phone.replace(/\D/g, "").slice(-10);
   if (number.length !== 10) return;
@@ -757,10 +759,21 @@ export async function sendAbandonmentFollowupSms(
   if (totalKm) p.set("distance", String(totalKm));
   const resumeUrl = `https://easyoutstation.com/booking?${p.toString()}`;
   const price = totalPrice.toLocaleString("en-IN");
+  const meta: NotificationMeta = { bookingId, notificationType: `abandonment-${touch}` };
 
   const message = touch === 2
     ? `EasyOutstation: Still thinking? ${fromCity}→${toCity} on ${pickupDate} is saved! Rs ${price}. Complete booking: ${resumeUrl} Help: 8796564111`
     : `EasyOutstation: Last reminder! ${fromCity}→${toCity} on ${pickupDate}. Secure your seat now: ${resumeUrl} Queries? Call 8796564111`;
 
-  await dispatchSms(number, message, { bookingId, notificationType: `abandonment-${touch}` });
+  await dispatchSms(number, message, meta);
+
+  if (customerEmail) {
+    const subject = touch === 2
+      ? `Still thinking? Your ${fromCity} → ${toCity} booking is saved | EasyOutstation`
+      : `Last chance — complete your ${fromCity} → ${toCity} booking | EasyOutstation`;
+    const emailText = touch === 2
+      ? `Dear ${customerName || "Traveller"},\n\nYour booking for ${fromCity} → ${toCity} on ${pickupDate} is still saved.\n\nFare: ₹${price}\n\nComplete your booking now: ${resumeUrl}\n\nNeed help? Call +91-8796564111 or reply to this email.\n\nTeam EasyOutstation`
+      : `Dear ${customerName || "Traveller"},\n\nThis is your final reminder — your ${fromCity} → ${toCity} booking on ${pickupDate} is about to expire.\n\nFare: ₹${price}\n\nSecure your seat now: ${resumeUrl}\n\nQuestions? Call +91-8796564111.\n\nTeam EasyOutstation`;
+    await dispatchEmail(customerEmail, subject, emailText, meta);
+  }
 }

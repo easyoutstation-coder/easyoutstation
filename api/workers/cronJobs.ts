@@ -221,19 +221,20 @@ export async function runAbandonedReminders(): Promise<void> {
 
     if (touch2.length > 0) {
       const userIds2 = [...new Set(touch2.map(b => b.userId).filter(Boolean))];
-      const userMap2: Record<number, { phone: string | null }> = {};
+      const userMap2: Record<number, { phone: string | null; email: string | null }> = {};
       if (userIds2.length > 0) {
-        const rows = await db.select({ id: users.id, phone: users.phone })
+        const rows = await db.select({ id: users.id, phone: users.phone, email: users.email })
           .from(users).where(sql`id IN (${sql.join(userIds2.map(id => sql`${id}`), sql`, `)})`);
-        rows.forEach(u => { userMap2[u.id] = { phone: u.phone }; });
+        rows.forEach(u => { userMap2[u.id] = { phone: u.phone, email: u.email }; });
       }
 
       for (const b of touch2) {
         const phone = b.customerPhone || userMap2[b.userId]?.phone || null;
+        const email = b.customerEmail || userMap2[b.userId]?.email || null;
         if (phone) {
           const pickupDateStr = fmt(b.pickupDate) ?? String(b.pickupDate);
           try {
-            await sendAbandonmentFollowupSms(phone, b.id, b.fromCity, b.toCity, pickupDateStr, parseFloat(b.totalPrice), 2, b.carId ?? undefined, b.totalKm ?? undefined);
+            await sendAbandonmentFollowupSms(phone, b.id, b.fromCity, b.toCity, pickupDateStr, parseFloat(b.totalPrice), 2, b.carId ?? undefined, b.totalKm ?? undefined, email ?? undefined, b.customerName ?? undefined);
           } catch (e) { console.error(`[cron] Touch2 SMS failed for #${b.id}:`, e); }
         }
         await db.execute(sql.raw(`UPDATE bookings SET abandonmentReminder2SentAt = NOW() WHERE id = ${b.id}`));
@@ -256,19 +257,20 @@ export async function runAbandonedReminders(): Promise<void> {
 
     if (touch3.length > 0) {
       const userIds3 = [...new Set(touch3.map(b => b.userId).filter(Boolean))];
-      const userMap3: Record<number, { phone: string | null }> = {};
+      const userMap3: Record<number, { phone: string | null; email: string | null }> = {};
       if (userIds3.length > 0) {
-        const rows = await db.select({ id: users.id, phone: users.phone })
+        const rows = await db.select({ id: users.id, phone: users.phone, email: users.email })
           .from(users).where(sql`id IN (${sql.join(userIds3.map(id => sql`${id}`), sql`, `)})`);
-        rows.forEach(u => { userMap3[u.id] = { phone: u.phone }; });
+        rows.forEach(u => { userMap3[u.id] = { phone: u.phone, email: u.email }; });
       }
 
       for (const b of touch3) {
         const phone = b.customerPhone || userMap3[b.userId]?.phone || null;
+        const email = b.customerEmail || userMap3[b.userId]?.email || null;
         if (phone) {
           const pickupDateStr = fmt(b.pickupDate) ?? String(b.pickupDate);
           try {
-            await sendAbandonmentFollowupSms(phone, b.id, b.fromCity, b.toCity, pickupDateStr, parseFloat(b.totalPrice), 3, b.carId ?? undefined, b.totalKm ?? undefined);
+            await sendAbandonmentFollowupSms(phone, b.id, b.fromCity, b.toCity, pickupDateStr, parseFloat(b.totalPrice), 3, b.carId ?? undefined, b.totalKm ?? undefined, email ?? undefined, b.customerName ?? undefined);
           } catch (e) { console.error(`[cron] Touch3 SMS failed for #${b.id}:`, e); }
         }
         await db.execute(sql.raw(`UPDATE bookings SET abandonmentReminder3SentAt = NOW() WHERE id = ${b.id}`));
