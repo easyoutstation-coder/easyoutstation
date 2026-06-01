@@ -64,6 +64,7 @@ const AI_TOOLS: Anthropic.Tool[] = [
         to_city: { type: "string" },
         pickup_date: { type: "string", description: "YYYY-MM-DD" },
         trip_type: { type: "string", enum: ["one_way", "round_trip"] },
+        trip_days: { type: "number", description: "Number of days for multi-day trips. Triggers 250 km/day minimum billing." },
         car_id: { type: "number" },
         total_km: { type: "number" },
         total_price: { type: "number" },
@@ -90,12 +91,14 @@ async function executeTool(name: string, input: any, phone: string): Promise<str
   }
 
   if (name === "get_fare_estimate") {
-    const { from_city, to_city, price_per_km, trip_type } = input;
+    const { from_city, to_city, price_per_km, trip_type, trip_days } = input;
     const dist = routeDistance(from_city, to_city);
-    const km = trip_type === "round_trip" ? dist * 2 : dist;
-    const days = trip_type === "round_trip" ? 2 : 1;
+    const days = trip_days && trip_days > 1 ? trip_days : (trip_type === "round_trip" ? 2 : 1);
+    const rawKm = trip_type === "round_trip" ? dist * 2 : dist;
+    // Multi-day minimum: 250 km/day
+    const km = days > 1 ? Math.max(rawKm, days * 250) : rawKm;
     const fare = Math.round(km * price_per_km + 250 * days);
-    return JSON.stringify({ distance_km: dist, km_billed: km, fare_inr: fare });
+    return JSON.stringify({ distance_km: dist, km_billed: km, days, fare_inr: fare });
   }
 
   if (name === "check_my_booking") {
@@ -123,6 +126,7 @@ async function executeTool(name: string, input: any, phone: string): Promise<str
       paymentStatus: "pending", status: "pending",
     });
     const bookingId = Number((result as any).insertId);
+    if (!bookingId || isNaN(bookingId)) throw new Error("Booking insert failed — no insertId returned. Check car_id is valid (use list_cars first).");
     logBookingEvent(bookingId, "booking_created", { fromCity: from_city, toCity: to_city }).catch(() => {});
     return JSON.stringify({ success: true, bookingId, paymentUrl: `https://easyoutstation.com/booking?resume=${bookingId}` });
   }
@@ -130,7 +134,11 @@ async function executeTool(name: string, input: any, phone: string): Promise<str
   return JSON.stringify({ error: "Unknown tool" });
 }
 
-const SYSTEM_PROMPT = `You are Asha, EasyOutstation's WhatsApp booking assistant. Be warm, concise — no walls of text.
+function buildSystemPrompt(): string {
+  const today = new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Kolkata" });
+  return `You are Asha, EasyOutstation's WhatsApp booking assistant. Be warm, concise — no walls of text.
+Today's date is ${today}. Always use the correct year when converting dates customers give you (e.g. "next Monday", "June 5").
+
 
 ━━ PICKUP RESTRICTION ━━
 Pickups ONLY from Delhi NCR: Delhi, Gurgaon, Noida, Faridabad, Ghaziabad, Rohtak, Sonipat (within 40 km of Delhi). If customer wants pickup from elsewhere, explain and ask if they can be in NCR instead.
@@ -151,7 +159,7 @@ Use list_cars to get live IDs before calling create_booking.
 ━━ FARE RULES ━━
 - Driver charge: ₹250/day (one way = 1 day, round trip = 2 days)
 - Toll & parking: paid at actuals by customer on road — no markup
-- Multi-day trips: minimum 250 km/day billed
+- Multi-day trips (pickup date ≠ return date, >1 day): pass trip_days to get_fare_estimate — minimum 250 km/day billed
 - Vehicles >7 seats: minimum 100 km billed
 - Round trip = distance × 2 km
 - 10% advance online confirms booking; 90% cash/UPI to driver at pickup
@@ -182,6 +190,9 @@ After booking: "Booking #X confirmed! Pay ₹Y advance to lock your slot: [url]"
 - Corporate accounts: easyoutstation.com/corporate
 - Referral program: ₹100 credit each when friend completes first ride (valid 90 days)
 - Redirect non-cab queries politely`;
+}
+
+const SYSTEM_PROMPT = buildSystemPrompt();
 
 type MsgParam = { role: "user" | "assistant"; content: string };
 
