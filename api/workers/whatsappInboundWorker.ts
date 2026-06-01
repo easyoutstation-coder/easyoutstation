@@ -97,20 +97,19 @@ async function executeTool(name: string, input: any, phone: string): Promise<str
     const { from_city, to_city, price_per_km, trip_type, pickup_date, return_date } = input;
     const dist = routeDistance(from_city, to_city);
 
-    // Compute days from actual dates so Claude's day-counting can't cause errors
+    // Mirror website logic exactly (Cars.tsx calcFare)
+    // One-way is always 1 driver day. Round trip counts both departure + return day (ceil + 1).
     let days = 1;
-    if (pickup_date && return_date) {
+    if (trip_type === "round_trip" && pickup_date && return_date) {
       const start = new Date(pickup_date);
       const end = new Date(return_date);
-      const diffDays = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+      const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
       days = Math.max(1, diffDays);
-    } else if (trip_type === "round_trip") {
-      days = 2;
     }
 
     const rawKm = trip_type === "round_trip" ? dist * 2 : dist;
-    // Enforce 250 km/day minimum for multi-day trips
-    const km = days > 1 ? Math.max(rawKm, days * 250) : rawKm;
+    // 250 km/day minimum only for round_trip multi-day (matches website)
+    const km = (trip_type === "round_trip" && days > 1) ? Math.max(rawKm, days * 250) : rawKm;
     const driverCharge = 250 * days;
     const fare = Math.round(km * price_per_km + driverCharge);
     return JSON.stringify({ distance_km: dist, km_billed: km, days, driver_charge: driverCharge, fare_inr: fare });
@@ -193,10 +192,10 @@ Innova Crysta ₹20/km 6 seats (best for hills) | Innova Hycross ₹22/km 6 seat
 Use list_cars to get live IDs before calling create_booking.
 
 ━━ FARE RULES ━━
-- Driver charge: ₹250/day (one way = 1 day, round trip = 2 days)
+- Driver charge: ₹250/day. One-way = always 1 day. Round trip = ceil(days between dates) + 1 (e.g. Jun 2→Jun 9 = 8 days)
 - Toll & parking: paid at actuals by customer on road — no markup
-- Multi-day trips: pass BOTH pickup_date + return_date to get_fare_estimate — server enforces 250 km/day minimum
-- Round trip = distance × 2 km
+- Round trip multi-day: minimum 250 km/day billed. One-way: no minimum, just the route distance.
+- Round trip km = distance × 2
 - 10% advance online confirms booking; 90% cash/UPI to driver at pickup
 - Recommend Crysta or Hycross for hill routes (Manali, Shimla, Mussoorie, Nainital)
 
