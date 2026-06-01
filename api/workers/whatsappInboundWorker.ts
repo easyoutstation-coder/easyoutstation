@@ -157,21 +157,12 @@ const BOOKING_TEMPLATE = `*Name:*
 *Car:* Sedan / Ertiga / Innova / Crysta / Hycross
 *Pickup Address:*`;
 
-function buildSystemPrompt(isNewConversation: boolean): string {
+function buildSystemPrompt(): string {
   const today = new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Kolkata" });
-
-  const newConvSection = isNewConversation ? `
-━━ FIRST MESSAGE ━━
-This is the customer's very first message. Greet them warmly in one short line, then send the booking template below so they can fill everything at once. End with "Or just tell me where you're heading and I'll guide you! 😊"
-
-TEMPLATE (send exactly as shown, WhatsApp bold formatting included):
-${BOOKING_TEMPLATE}
-
-` : "";
 
   return `You are Asha, EasyOutstation's WhatsApp booking assistant. Be warm, concise — no walls of text.
 Today's date is ${today}. Always use the correct year when converting dates customers give you (e.g. "next Monday", "June 5").
-${newConvSection}
+
 ━━ TEMPLATE REPLIES ━━
 When a customer's message contains filled fields like "Name:", "From:", "To:", "Pickup Date:" (they replied to the booking template), extract ALL fields in one pass and immediately call get_fare_estimate — no follow-up questions unless a field is missing or pickup city is outside Delhi NCR.
 
@@ -237,15 +228,29 @@ async function handleAiConversation(phone: string, userText: string): Promise<vo
   const ctx = (conv?.contextJson ?? {}) as { messages?: MsgParam[]; aiState?: string };
   const history: MsgParam[] = ctx.messages ?? [];
 
-  // Detect new conversation before appending — used to trigger template greeting
-  const isNewConversation = history.length === 0;
+  // New conversation — bypass Claude entirely, send exact template, save state, done.
+  if (history.length === 0) {
+    const greeting = `Hi! I'm Asha from EasyOutstation 👋 Fill this in and I'll quote your fare instantly:\n\n${BOOKING_TEMPLATE}\n\nOr just tell me where you're heading and I'll guide you! 😊`;
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    await db.insert(whatsappConversations).values({
+      phone, state: "ai_conversation",
+      contextJson: { messages: [{ role: "user", content: userText }, { role: "assistant", content: greeting }] },
+      expiresAt,
+    }).catch(() =>
+      db.update(whatsappConversations)
+        .set({ contextJson: { messages: [{ role: "user", content: userText }, { role: "assistant", content: greeting }] }, state: "ai_conversation", expiresAt })
+        .where(eq(whatsappConversations.phone, phone))
+    );
+    await sendWhatsAppTextRaw(phone, greeting);
+    console.log(`[WA AI] New conversation template sent to ${phone}`);
+    return;
+  }
 
   // Append user message, keep rolling window of 20
   history.push({ role: "user", content: userText });
   if (history.length > 20) history.splice(0, history.length - 20);
 
-  // Build prompt dynamically — new conversations get the booking template section
-  const systemPrompt = buildSystemPrompt(isNewConversation);
+  const systemPrompt = buildSystemPrompt(false);
 
   // Agentic loop — let Claude use tools until it sends a final reply
   const messages: Anthropic.MessageParam[] = history.map(m => ({ role: m.role, content: m.content }));
