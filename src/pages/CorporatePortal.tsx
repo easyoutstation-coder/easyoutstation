@@ -264,7 +264,7 @@ function Dashboard({ account, myRole, members, onRefresh }: {
           <Clock className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-semibold text-amber-300">Account Under Review</p>
-            <p className="text-xs text-amber-400/80 mt-0.5">Our team reviews all corporate applications within 24 hours. You'll receive an SMS and email once approved. Need faster? Call +91-9958556011.</p>
+            <p className="text-xs text-amber-400/80 mt-0.5">Our team reviews all corporate applications within 24 hours. You'll receive an SMS and email once approved. Need faster? Call +91-8796564111.</p>
           </div>
         </div>
       )}

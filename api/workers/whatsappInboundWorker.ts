@@ -222,7 +222,7 @@ After booking: "Booking #X confirmed! Pay ₹Y advance to lock your slot: [url]"
 - Booking status → use check_my_booking
 - Driver details sent within 60 min of confirmation
 - Day-before reminder SMS auto-sent with driver name & number
-- Support: +91-9958556011 | easyoutstation@gmail.com
+- Support: +91-8796564111 | easyoutstation@gmail.com
 - Corporate accounts: easyoutstation.com/corporate
 - Referral program: ₹100 credit each when friend completes first ride (valid 90 days)
 - Redirect non-cab queries politely`;
@@ -346,7 +346,7 @@ async function handleIncomingMessage(message: any, waPhone: string): Promise<voi
 
   if (text === "HELP") {
     await sendWhatsAppTextRaw(waPhone,
-      "EasyOutstation Help\n\n📞 Call: +91-9958556011\n📧 Email: easyoutstation@gmail.com\n🌐 Web: easyoutstation.com\n\nReply STOP to unsubscribe."
+      "EasyOutstation Help\n\n📞 Call/WhatsApp: +91-8796564111\n📧 Email: easyoutstation@gmail.com\n🌐 Web: easyoutstation.com\n\nReply STOP to unsubscribe."
     );
     return;
   }

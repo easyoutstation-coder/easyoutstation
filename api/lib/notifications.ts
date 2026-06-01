@@ -280,7 +280,7 @@ WHY BOOK WITH US?
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ✅ Fixed fare — no surprise charges
 ✅ Verified, experienced drivers
-✅ 24/7 support: 9958556011
+✅ 24/7 support: 8796564111
 
 If you have questions or need help, email us at: easyoutstation@gmail.com
 
@@ -545,7 +545,7 @@ Mobile       : +91-${input.driverPhone}
 IMPORTANT REMINDERS
 • Keep your pickup address handy
 • Toll & parking are paid at actuals during the trip
-• For any issues, call us: +91-9958556011
+• For any issues, call us: +91-8796564111
 
 Have a safe and wonderful journey!
 Team EasyOutstation`,
@@ -655,7 +655,7 @@ Thank you for choosing EasyOutstation. We look forward to your next journey!
 
 Warm regards,
 Team EasyOutstation
-+91-9958556011 | easyoutstation@gmail.com`,
++91-8796564111 | easyoutstation@gmail.com`,
       meta
     );
   }
@@ -686,7 +686,7 @@ WHAT'S NEXT?
 3. Book trips — all company bookings will be tracked together with GST invoices
 
 For any help, contact your dedicated account manager:
-📞 +91-9958556011
+📞 +91-8796564111
 📧 easyoutstation@gmail.com
 
 Welcome aboard!
@@ -729,14 +729,14 @@ Refund Amount: ₹${input.amount.toLocaleString("en-IN")}
 The amount will reflect in your original payment method within 5-7 business days.
 
 If you have any questions, contact us:
-📞 +91-9958556011
+📞 +91-8796564111
 📧 easyoutstation@gmail.com
 
 Thank you for choosing EasyOutstation.`;
 
   const meta: NotificationMeta = { bookingId: input.bookingId, notificationType: "refund" };
   if (input.customerEmail) await dispatchEmail(input.customerEmail, `Refund Processed — Booking #${input.bookingId} | EasyOutstation`, text, meta);
-  if (input.customerPhone) await dispatchSms(input.customerPhone, `EasyOutstation: Refund of Rs.${input.amount} for Booking #${input.bookingId} (${input.fromCity} to ${input.toCity}) processed. Reflects in 5-7 days. Help: 9958556011`, meta);
+  if (input.customerPhone) await dispatchSms(input.customerPhone, `EasyOutstation: Refund of Rs.${input.amount} for Booking #${input.bookingId} (${input.fromCity} to ${input.toCity}) processed. Reflects in 5-7 days. Help: 8796564111`, meta);
 }
 
 export async function sendAbandonmentFollowupSms(
