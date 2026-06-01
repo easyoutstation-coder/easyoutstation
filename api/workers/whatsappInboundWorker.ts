@@ -218,8 +218,11 @@ FLOW: Collect details → call get_fare_estimate with BOTH pickup_date AND retur
 IMPORTANT: Always pass pickup_date + return_date to get_fare_estimate. Never calculate fare manually.
 After booking: "Booking #X confirmed! Pay ₹Y advance to lock your slot: [url]"
 
+━━ GROUPS > 6 PASSENGERS ━━
+Our cars seat max 6. For larger groups, tell the customer they need multiple cabs and handle one booking at a time. Suggest best car combos (e.g. 2 × Crysta for 9 people on hills).
+
 ━━ OTHER RULES ━━
-- Never invent fares — always use get_fare_estimate
+- NEVER calculate or estimate fares manually — ALWAYS use get_fare_estimate, even for rough quotes. If dates or car aren't confirmed yet, ask for them before calling the tool. Manual fare guesses will always be wrong.
 - Never ask for phone number — you already have it
 - Booking status → use check_my_booking
 - Driver details sent within 60 min of confirmation
@@ -278,26 +281,27 @@ async function handleAiConversation(phone: string, userText: string): Promise<vo
     });
 
     const textBlock = response.content.find((b): b is Anthropic.TextBlock => b.type === "text");
-    const toolBlock = response.content.find((b): b is Anthropic.ToolUseBlock => b.type === "tool_use");
+    const toolBlocks = response.content.filter((b): b is Anthropic.ToolUseBlock => b.type === "tool_use");
 
-    if (response.stop_reason === "end_turn" || !toolBlock) {
+    if (response.stop_reason === "end_turn" || toolBlocks.length === 0) {
       reply = textBlock?.text ?? "";
       break;
     }
 
-    // Execute tool — pass error back to Claude so it can recover gracefully
-    let toolResult: string;
-    try {
-      toolResult = await executeTool(toolBlock.name, toolBlock.input as any, phone);
-    } catch (e: any) {
-      console.error(`[WA AI] Tool ${toolBlock.name} failed:`, e?.message ?? e);
-      toolResult = JSON.stringify({ error: e?.message ?? "Tool execution failed" });
+    // Execute ALL tool calls in this response (Claude may call multiple in one turn)
+    const toolResults: Anthropic.ToolResultBlockParam[] = [];
+    for (const tb of toolBlocks) {
+      let toolResult: string;
+      try {
+        toolResult = await executeTool(tb.name, tb.input as any, phone);
+      } catch (e: any) {
+        console.error(`[WA AI] Tool ${tb.name} failed:`, e?.message ?? e);
+        toolResult = JSON.stringify({ error: e?.message ?? "Tool execution failed" });
+      }
+      toolResults.push({ type: "tool_result", tool_use_id: tb.id, content: toolResult });
     }
     messages.push({ role: "assistant", content: response.content as any });
-    messages.push({
-      role: "user",
-      content: [{ type: "tool_result", tool_use_id: toolBlock.id, content: toolResult }],
-    } as any);
+    messages.push({ role: "user", content: toolResults } as any);
   }
 
   // Fallback — loop exhausted or empty reply
