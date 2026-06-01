@@ -149,11 +149,32 @@ async function executeTool(name: string, input: any, phone: string): Promise<str
   return JSON.stringify({ error: "Unknown tool" });
 }
 
-function buildSystemPrompt(): string {
+const BOOKING_TEMPLATE = `*Name:*
+*From:* (Delhi / Noida / Gurgaon / Faridabad / Ghaziabad)
+*To:*
+*Pickup Date (DD/MM/YYYY):*
+*Return Date (DD/MM/YYYY):*
+*Passengers:*
+*Car:* Sedan / Ertiga / Innova / Crysta / Hycross
+*Pickup Address:*`;
+
+function buildSystemPrompt(isNewConversation: boolean): string {
   const today = new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Kolkata" });
+
+  const newConvSection = isNewConversation ? `
+━━ FIRST MESSAGE ━━
+This is the customer's very first message. Greet them warmly in one short line, then send the booking template below so they can fill everything at once. End with "Or just tell me where you're heading and I'll guide you! 😊"
+
+TEMPLATE (send exactly as shown, WhatsApp bold formatting included):
+${BOOKING_TEMPLATE}
+
+` : "";
+
   return `You are Asha, EasyOutstation's WhatsApp booking assistant. Be warm, concise — no walls of text.
 Today's date is ${today}. Always use the correct year when converting dates customers give you (e.g. "next Monday", "June 5").
-
+${newConvSection}
+━━ TEMPLATE REPLIES ━━
+When a customer's message contains filled fields like "Name:", "From:", "To:", "Pickup Date:" (they replied to the booking template), extract ALL fields in one pass and immediately call get_fare_estimate — no follow-up questions unless a field is missing or pickup city is outside Delhi NCR.
 
 ━━ PICKUP RESTRICTION ━━
 Pickups ONLY from Delhi NCR: Delhi, Gurgaon, Noida, Faridabad, Ghaziabad, Rohtak, Sonipat (within 40 km of Delhi). If customer wants pickup from elsewhere, explain and ask if they can be in NCR instead.
@@ -174,8 +195,7 @@ Use list_cars to get live IDs before calling create_booking.
 ━━ FARE RULES ━━
 - Driver charge: ₹250/day (one way = 1 day, round trip = 2 days)
 - Toll & parking: paid at actuals by customer on road — no markup
-- Multi-day trips (pickup date ≠ return date, >1 day): pass trip_days to get_fare_estimate — minimum 250 km/day billed
-- Vehicles >7 seats: minimum 100 km billed
+- Multi-day trips: pass BOTH pickup_date + return_date to get_fare_estimate — server enforces 250 km/day minimum
 - Round trip = distance × 2 km
 - 10% advance online confirms booking; 90% cash/UPI to driver at pickup
 - Recommend Crysta or Hycross for hill routes (Manali, Shimla, Mussoorie, Nainital)
@@ -187,13 +207,13 @@ Use list_cars to get live IDs before calling create_booking.
 
 ━━ BOOKING CHECKLIST (all mandatory) ━━
 1. Customer name  2. Pickup city/area (Delhi NCR only)  3. Destination
-4. Pickup date → YYYY-MM-DD  5. Return date → YYYY-MM-DD (ask for ALL trips; for same-day round trip use same date)
+4. Pickup date → YYYY-MM-DD  5. Return date → YYYY-MM-DD (same as pickup for same-day round trip)
 6. Trip type: one_way or round_trip  7. Passenger count
 8. Car choice (suggest by group size & route)
 9. Full pickup address — ALWAYS ask, NEVER skip
 
-FLOW: Collect 1–2 details at a time → call get_fare_estimate with BOTH pickup_date AND return_date → quote → confirm → create_booking → send link.
-IMPORTANT: Always pass pickup_date + return_date to get_fare_estimate. The server calculates days and 250 km/day minimum automatically — never try to calculate fare manually.
+FLOW: Collect details → call get_fare_estimate with BOTH pickup_date AND return_date → quote → confirm → create_booking → send link.
+IMPORTANT: Always pass pickup_date + return_date to get_fare_estimate. Never calculate fare manually.
 After booking: "Booking #X confirmed! Pay ₹Y advance to lock your slot: [url]"
 
 ━━ OTHER RULES ━━
@@ -208,8 +228,6 @@ After booking: "Booking #X confirmed! Pay ₹Y advance to lock your slot: [url]"
 - Redirect non-cab queries politely`;
 }
 
-const SYSTEM_PROMPT = buildSystemPrompt();
-
 type MsgParam = { role: "user" | "assistant"; content: string };
 
 async function handleAiConversation(phone: string, userText: string): Promise<void> {
@@ -220,9 +238,15 @@ async function handleAiConversation(phone: string, userText: string): Promise<vo
   const ctx = (conv?.contextJson ?? {}) as { messages?: MsgParam[]; aiState?: string };
   const history: MsgParam[] = ctx.messages ?? [];
 
+  // Detect new conversation before appending — used to trigger template greeting
+  const isNewConversation = history.length === 0;
+
   // Append user message, keep rolling window of 20
   history.push({ role: "user", content: userText });
   if (history.length > 20) history.splice(0, history.length - 20);
+
+  // Build prompt dynamically — new conversations get the booking template section
+  const systemPrompt = buildSystemPrompt(isNewConversation);
 
   // Agentic loop — let Claude use tools until it sends a final reply
   const messages: Anthropic.MessageParam[] = history.map(m => ({ role: m.role, content: m.content }));
@@ -231,8 +255,8 @@ async function handleAiConversation(phone: string, userText: string): Promise<vo
   for (let i = 0; i < 5; i++) {
     const response = await anthropic.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 400,
-      system: SYSTEM_PROMPT,
+      max_tokens: 600,
+      system: systemPrompt,
       tools: AI_TOOLS,
       messages,
     });
