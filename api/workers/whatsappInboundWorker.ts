@@ -36,7 +36,7 @@ const AI_TOOLS: Anthropic.Tool[] = [
   },
   {
     name: "get_fare_estimate",
-    description: "Calculate fare for a route and car",
+    description: "Calculate fare for a route and car. Always pass pickup_date. Pass return_date whenever the customer has given a return/drop-off date — the server calculates days from the actual dates so the 250 km/day minimum is applied correctly.",
     input_schema: {
       type: "object" as const,
       properties: {
@@ -44,8 +44,10 @@ const AI_TOOLS: Anthropic.Tool[] = [
         to_city: { type: "string" },
         price_per_km: { type: "number" },
         trip_type: { type: "string", enum: ["one_way", "round_trip"] },
+        pickup_date: { type: "string", description: "YYYY-MM-DD pickup date" },
+        return_date: { type: "string", description: "YYYY-MM-DD return date. Required for multi-day trips. The server uses this to compute days and enforce 250 km/day minimum billing." },
       },
-      required: ["from_city", "to_city", "price_per_km", "trip_type"],
+      required: ["from_city", "to_city", "price_per_km", "trip_type", "pickup_date"],
     },
   },
   {
@@ -63,8 +65,9 @@ const AI_TOOLS: Anthropic.Tool[] = [
         from_city: { type: "string" },
         to_city: { type: "string" },
         pickup_date: { type: "string", description: "YYYY-MM-DD" },
+        return_date: { type: "string", description: "YYYY-MM-DD return date for multi-day trips" },
         trip_type: { type: "string", enum: ["one_way", "round_trip"] },
-        trip_days: { type: "number", description: "Number of days for multi-day trips. Triggers 250 km/day minimum billing." },
+        trip_days: { type: "number", description: "Number of days — must match the 'days' value returned by get_fare_estimate" },
         car_id: { type: "number" },
         total_km: { type: "number" },
         total_price: { type: "number" },
@@ -91,14 +94,26 @@ async function executeTool(name: string, input: any, phone: string): Promise<str
   }
 
   if (name === "get_fare_estimate") {
-    const { from_city, to_city, price_per_km, trip_type, trip_days } = input;
+    const { from_city, to_city, price_per_km, trip_type, pickup_date, return_date } = input;
     const dist = routeDistance(from_city, to_city);
-    const days = trip_days && trip_days > 1 ? trip_days : (trip_type === "round_trip" ? 2 : 1);
+
+    // Compute days from actual dates so Claude's day-counting can't cause errors
+    let days = 1;
+    if (pickup_date && return_date) {
+      const start = new Date(pickup_date);
+      const end = new Date(return_date);
+      const diffDays = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+      days = Math.max(1, diffDays);
+    } else if (trip_type === "round_trip") {
+      days = 2;
+    }
+
     const rawKm = trip_type === "round_trip" ? dist * 2 : dist;
-    // Multi-day minimum: 250 km/day
+    // Enforce 250 km/day minimum for multi-day trips
     const km = days > 1 ? Math.max(rawKm, days * 250) : rawKm;
-    const fare = Math.round(km * price_per_km + 250 * days);
-    return JSON.stringify({ distance_km: dist, km_billed: km, days, fare_inr: fare });
+    const driverCharge = 250 * days;
+    const fare = Math.round(km * price_per_km + driverCharge);
+    return JSON.stringify({ distance_km: dist, km_billed: km, days, driver_charge: driverCharge, fare_inr: fare });
   }
 
   if (name === "check_my_booking") {
@@ -172,12 +187,13 @@ Use list_cars to get live IDs before calling create_booking.
 
 ━━ BOOKING CHECKLIST (all mandatory) ━━
 1. Customer name  2. Pickup city/area (Delhi NCR only)  3. Destination
-4. Pickup date → convert to YYYY-MM-DD for the tool
-5. Trip type: one_way or round_trip  6. Passenger count
-7. Car choice (suggest by group size & route)
-8. Full pickup address — ALWAYS ask, NEVER skip
+4. Pickup date → YYYY-MM-DD  5. Return date → YYYY-MM-DD (ask for ALL trips; for same-day round trip use same date)
+6. Trip type: one_way or round_trip  7. Passenger count
+8. Car choice (suggest by group size & route)
+9. Full pickup address — ALWAYS ask, NEVER skip
 
-FLOW: Collect 1–2 details at a time → get_fare_estimate to quote → confirm total → create_booking → send link.
+FLOW: Collect 1–2 details at a time → call get_fare_estimate with BOTH pickup_date AND return_date → quote → confirm → create_booking → send link.
+IMPORTANT: Always pass pickup_date + return_date to get_fare_estimate. The server calculates days and 250 km/day minimum automatically — never try to calculate fare manually.
 After booking: "Booking #X confirmed! Pay ₹Y advance to lock your slot: [url]"
 
 ━━ OTHER RULES ━━
