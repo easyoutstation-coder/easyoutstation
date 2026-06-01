@@ -351,6 +351,15 @@ async function handleIncomingMessage(message: any, waPhone: string): Promise<voi
     return;
   }
 
+  if (text === "RESET") {
+    await db.delete(whatsappConversations).where(eq(whatsappConversations.phone, waPhone));
+    // Treat as a fresh first message — Asha will greet with the booking template
+    if (process.env.ANTHROPIC_API_KEY) {
+      await handleAiConversation(waPhone, "Hi");
+    }
+    return;
+  }
+
   // Check for active conversation state
   const [conv] = await db.select().from(whatsappConversations)
     .where(eq(whatsappConversations.phone, waPhone));
