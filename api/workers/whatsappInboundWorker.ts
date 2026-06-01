@@ -131,6 +131,18 @@ async function executeTool(name: string, input: any, phone: string): Promise<str
     const { customer_name, from_city, to_city, pickup_date, trip_type, car_id, total_km, total_price, passenger_count, pickup_address } = input;
     const parsedDate = new Date(pickup_date);
     if (isNaN(parsedDate.getTime())) throw new Error(`Invalid pickup_date: "${pickup_date}". Use YYYY-MM-DD format.`);
+
+    // Validate car_id before insert — catch wrong IDs before hitting DB constraint
+    const [carRow] = await db.select({ id: cars.id, name: cars.name })
+      .from(cars).where(eq(cars.id, car_id)).limit(1);
+    if (!carRow) {
+      const available = await db.select({ id: cars.id, name: cars.name, seats: cars.seats, pricePerKm: cars.pricePerKm })
+        .from(cars).where(eq(cars.isAvailable, true));
+      const list = available.filter(c => !["tempo", "bus"].includes((c as any).category ?? ""))
+        .map(c => ({ id: c.id, name: c.name }));
+      throw new Error(`car_id ${car_id} is invalid. You must call list_cars first to get real IDs. Available cars right now: ${JSON.stringify(list)}`);
+    }
+
     const result = await db.insert(bookings).values({
       userId: 0, carId: car_id, fromCity: from_city, toCity: to_city,
       pickupDate: parsedDate, tripType: trip_type,
@@ -140,7 +152,7 @@ async function executeTool(name: string, input: any, phone: string): Promise<str
       paymentStatus: "pending", status: "pending",
     });
     const bookingId = Number((result as any).insertId);
-    if (!bookingId || isNaN(bookingId)) throw new Error("Booking insert failed — no insertId returned. Check car_id is valid (use list_cars first).");
+    if (!bookingId || isNaN(bookingId)) throw new Error("Booking insert failed — no insertId returned.");
     logBookingEvent(bookingId, "booking_created", { fromCity: from_city, toCity: to_city }).catch(() => {});
     return JSON.stringify({ success: true, bookingId, paymentUrl: `https://easyoutstation.com/booking?resume=${bookingId}` });
   }
@@ -180,7 +192,7 @@ Swift Dzire ₹12/km 4 seats | Toyota Etios ₹13/km 4 seats
 Maruti Ertiga ₹15/km 6 seats | Mahindra Xylo ₹16/km 7 seats
 Kia Carens ₹17/km 6 seats | Toyota Innova ₹19/km 6 seats
 Innova Crysta ₹20/km 6 seats (best for hills) | Innova Hycross ₹22/km 6 seats (luxury)
-Use list_cars to get live IDs before calling create_booking.
+ALWAYS call list_cars before create_booking — NEVER guess or assume car IDs. Car IDs in the database may differ from any numbers you expect. If create_booking returns an invalid car_id error, it will include the correct ID list — use it to retry immediately.
 
 ━━ FARE RULES ━━
 - Driver charge: ₹250/day. One-way = always 1 day. Round trip = ceil(days between dates) + 1 (e.g. Jun 2→Jun 9 = 8 days)
@@ -256,7 +268,7 @@ async function handleAiConversation(phone: string, userText: string): Promise<vo
   const messages: Anthropic.MessageParam[] = history.map(m => ({ role: m.role, content: m.content }));
   let reply = "";
 
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 8; i++) {
     const response = await anthropic.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 600,
