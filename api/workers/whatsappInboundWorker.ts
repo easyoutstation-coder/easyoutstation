@@ -68,9 +68,9 @@ const AI_TOOLS: Anthropic.Tool[] = [
         total_km: { type: "number" },
         total_price: { type: "number" },
         passenger_count: { type: "number" },
-        pickup_address: { type: "string" },
+        pickup_address: { type: "string", description: "Full pickup address — mandatory" },
       },
-      required: ["customer_name", "from_city", "to_city", "pickup_date", "trip_type", "car_id", "total_km", "total_price", "passenger_count"],
+      required: ["customer_name", "from_city", "to_city", "pickup_date", "trip_type", "car_id", "total_km", "total_price", "passenger_count", "pickup_address"],
     },
   },
 ];
@@ -134,9 +134,9 @@ const SYSTEM_PROMPT = `You are Asha, EasyOutstation's WhatsApp booking assistant
 
 PRICING: Per-km rate + ₹250/day driver charge. Toll & parking paid to driver at actuals. 10% advance online confirms the booking.
 
-TO COMPLETE A BOOKING YOU NEED:
+TO COMPLETE A BOOKING YOU NEED (all mandatory):
 1. From city  2. To city  3. Pickup date (YYYY-MM-DD)  4. Trip type (one_way/round_trip)
-5. Car (use list_cars, suggest by group size)  6. Passenger count  7. Customer name  8. Pickup address (optional)
+5. Car (use list_cars, suggest by group size)  6. Passenger count  7. Customer name  8. Pickup address (full address — NEVER skip this, always ask)
 
 FLOW: Collect details conversationally → use get_fare_estimate to quote → confirm with customer → create_booking → send payment link.
 
