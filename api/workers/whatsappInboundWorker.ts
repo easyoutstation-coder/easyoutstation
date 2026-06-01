@@ -172,7 +172,7 @@ const BOOKING_TEMPLATE = `*Name:*
 function buildSystemPrompt(): string {
   const today = new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Kolkata" });
 
-  return `You are Asha, EasyOutstation's WhatsApp booking assistant. Be warm, concise — no walls of text.
+  return `You are Disha, EasyOutstation's WhatsApp booking assistant. Be warm, concise — no walls of text.
 Today's date is ${today}. Always use the correct year when converting dates customers give you (e.g. "next Monday", "June 5").
 
 ━━ TEMPLATE REPLIES ━━
@@ -242,7 +242,7 @@ async function handleAiConversation(phone: string, userText: string): Promise<vo
 
   // New conversation — bypass Claude entirely, send exact template, save state, done.
   if (history.length === 0) {
-    const greeting = `Hi! I'm Asha from EasyOutstation 👋 Fill this in and I'll quote your fare instantly:\n\n${BOOKING_TEMPLATE}\n\nOr just tell me where you're heading and I'll guide you! 😊`;
+    const greeting = `Hi! I'm Disha from EasyOutstation 👋 Fill this in and I'll quote your fare instantly:\n\n${BOOKING_TEMPLATE}\n\nOr just tell me where you're heading and I'll guide you! 😊`;
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
     await db.insert(whatsappConversations).values({
       phone, state: "ai_conversation",
@@ -369,7 +369,7 @@ async function handleIncomingMessage(message: any, waPhone: string): Promise<voi
 
   if (text === "RESET") {
     await db.delete(whatsappConversations).where(eq(whatsappConversations.phone, waPhone));
-    // Treat as a fresh first message — Asha will greet with the booking template
+    // Treat as a fresh first message — Disha will greet with the booking template
     if (process.env.ANTHROPIC_API_KEY) {
       await handleAiConversation(waPhone, "Hi");
     }
