@@ -444,7 +444,7 @@ export async function sendDriverAssignmentSms(input: {
   const smsFallback = `EasyOutstation: Your driver for ${input.fromCity} to ${input.toCity} on ${input.pickupDate} is ${input.driverName}, +91-${input.driverPhone}. Help: 8796564111`;
   await dispatchWhatsApp(
     input.customerPhone,
-    "eo_driver_assigned_v2",
+    "eo_driver_assigned_v2_",
     "en",
     [{
       type: "body",
@@ -607,7 +607,7 @@ export async function sendReviewRequest(input: {
     // WhatsApp review request with conversational reply (customer replies 1-5)
     await dispatchWhatsApp(
       input.customerPhone,
-      "eo_review_request_v2",
+      "eo_review_request_v2_",
       "en",
       [{
         type: "body",
@@ -698,7 +698,7 @@ Team EasyOutstation`;
     await dispatchSms(input.phone, `EasyOutstation: Corporate account for ${input.companyName} APPROVED! Login at easyoutstation.com/corporate-portal with join code: ${input.joinCode}. Help: 8796564111`, meta);
     await dispatchWhatsApp(
       input.phone,
-      "eo_corp_account_active_v2",
+      "eo_corp_account_active_v2_",
       "en",
       [{
         type: "body",
