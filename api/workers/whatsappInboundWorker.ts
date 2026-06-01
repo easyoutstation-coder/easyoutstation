@@ -112,9 +112,11 @@ async function executeTool(name: string, input: any, phone: string): Promise<str
 
   if (name === "create_booking") {
     const { customer_name, from_city, to_city, pickup_date, trip_type, car_id, total_km, total_price, passenger_count, pickup_address } = input;
+    const parsedDate = new Date(pickup_date);
+    if (isNaN(parsedDate.getTime())) throw new Error(`Invalid pickup_date: "${pickup_date}". Use YYYY-MM-DD format.`);
     const result = await db.insert(bookings).values({
       userId: 0, carId: car_id, fromCity: from_city, toCity: to_city,
-      pickupDate: new Date(pickup_date), tripType: trip_type,
+      pickupDate: parsedDate, tripType: trip_type,
       passengerCount: passenger_count, totalKm: total_km,
       totalPrice: total_price.toString(), customerName: customer_name,
       customerPhone: localPhone, pickupAddress: pickup_address ?? null,
@@ -182,8 +184,14 @@ async function handleAiConversation(phone: string, userText: string): Promise<vo
       break;
     }
 
-    // Execute tool and continue
-    const toolResult = await executeTool(toolBlock.name, toolBlock.input as any, phone);
+    // Execute tool — pass error back to Claude so it can recover gracefully
+    let toolResult: string;
+    try {
+      toolResult = await executeTool(toolBlock.name, toolBlock.input as any, phone);
+    } catch (e: any) {
+      console.error(`[WA AI] Tool ${toolBlock.name} failed:`, e?.message ?? e);
+      toolResult = JSON.stringify({ error: e?.message ?? "Tool execution failed" });
+    }
     messages.push({ role: "assistant", content: response.content as any });
     messages.push({
       role: "user",
@@ -191,7 +199,11 @@ async function handleAiConversation(phone: string, userText: string): Promise<vo
     } as any);
   }
 
-  if (!reply) return;
+  // Fallback — loop exhausted or empty reply
+  if (!reply) {
+    reply = "Sorry, I ran into an issue. Please call us at 8796564111 or visit easyoutstation.com to complete your booking.";
+    console.error(`[WA AI] Empty reply for ${phone} — loop exhausted or Claude returned no text`);
+  }
 
   // Save updated history
   history.push({ role: "assistant", content: reply });
