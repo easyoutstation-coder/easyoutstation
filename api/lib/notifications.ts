@@ -356,7 +356,22 @@ Team EasyOutstation`;
 
   const meta: NotificationMeta = { notificationType: "referral-join" };
   if (input.referrerEmail) await dispatchEmail(input.referrerEmail, subject, text, meta);
-  if (input.referrerPhone) await dispatchSms(input.referrerPhone, `EasyOutstation: ${input.referredName} joined using your referral! Earn ₹100 after their first completed ride. Track: easyoutstation.com/dashboard`, meta);
+  if (input.referrerPhone) {
+    await dispatchWhatsApp(
+      input.referrerPhone,
+      "eo_referral_joined_v2",
+      "en",
+      [{
+        type: "body",
+        parameters: [
+          { type: "text", text: input.referrerName },
+          { type: "text", text: input.referredName },
+        ],
+      }],
+      meta,
+      `EasyOutstation: ${input.referredName} joined using your referral! Earn ₹100 after their first completed ride. Track: easyoutstation.com/dashboard`
+    );
+  }
 }
 
 export async function sendReferralPointsNotification(input: {
@@ -422,8 +437,40 @@ Team EasyOutstation`;
   const creditSubject = `₹${input.amount} referral credit added to your account!`;
   if (input.referrerEmail) await dispatchEmail(input.referrerEmail, creditSubject, referrerText, meta);
   if (input.referredEmail) await dispatchEmail(input.referredEmail, creditSubject, referredText, meta);
-  if (input.referrerPhone) await dispatchSms(input.referrerPhone, `EasyOutstation: ₹${input.amount} referral credit added! Valid till ${expiryStr}. Use on your next booking at easyoutstation.com`, meta);
-  if (input.referredPhone) await dispatchSms(input.referredPhone, `EasyOutstation: ₹${input.amount} welcome credit added! Valid till ${expiryStr}. Book at easyoutstation.com`, meta);
+  if (input.referrerPhone) {
+    await dispatchWhatsApp(
+      input.referrerPhone,
+      "eo_referral_credit_v2",
+      "en",
+      [{
+        type: "body",
+        parameters: [
+          { type: "text", text: input.referrerName },
+          { type: "text", text: String(input.amount) },
+          { type: "text", text: expiryStr },
+        ],
+      }],
+      meta,
+      `EasyOutstation: ₹${input.amount} referral credit added! Valid till ${expiryStr}. Use on your next booking at easyoutstation.com`
+    );
+  }
+  if (input.referredPhone) {
+    await dispatchWhatsApp(
+      input.referredPhone,
+      "eo_referral_credit_v2",
+      "en",
+      [{
+        type: "body",
+        parameters: [
+          { type: "text", text: input.referredName },
+          { type: "text", text: String(input.amount) },
+          { type: "text", text: expiryStr },
+        ],
+      }],
+      meta,
+      `EasyOutstation: ₹${input.amount} welcome credit added! Valid till ${expiryStr}. Book at easyoutstation.com`
+    );
+  }
 }
 
 export async function sendDriverAssignmentSms(input: {
@@ -736,7 +783,25 @@ Thank you for choosing EasyOutstation.`;
 
   const meta: NotificationMeta = { bookingId: input.bookingId, notificationType: "refund" };
   if (input.customerEmail) await dispatchEmail(input.customerEmail, `Refund Processed — Booking #${input.bookingId} | EasyOutstation`, text, meta);
-  if (input.customerPhone) await dispatchSms(input.customerPhone, `EasyOutstation: Refund of Rs.${input.amount} for Booking #${input.bookingId} (${input.fromCity} to ${input.toCity}) processed. Reflects in 5-7 days. Help: 8796564111`, meta);
+  if (input.customerPhone) {
+    await dispatchWhatsApp(
+      input.customerPhone,
+      "eo_refund_processed_v2_",
+      "en",
+      [{
+        type: "body",
+        parameters: [
+          { type: "text", text: input.customerName },
+          { type: "text", text: String(input.bookingId) },
+          { type: "text", text: input.fromCity },
+          { type: "text", text: input.toCity },
+          { type: "text", text: input.amount.toLocaleString("en-IN") },
+        ],
+      }],
+      meta,
+      `EasyOutstation: Refund of Rs.${input.amount} for Booking #${input.bookingId} (${input.fromCity} to ${input.toCity}) processed. Reflects in 5-7 days. Help: 8796564111`
+    );
+  }
 }
 
 export async function sendAbandonmentFollowupSms(
@@ -765,7 +830,25 @@ export async function sendAbandonmentFollowupSms(
     ? `EasyOutstation: Still thinking? ${fromCity}→${toCity} on ${pickupDate} is saved! Rs ${price}. Complete booking: ${resumeUrl} Help: 8796564111`
     : `EasyOutstation: Last reminder! ${fromCity}→${toCity} on ${pickupDate}. Secure your seat now: ${resumeUrl} Queries? Call 8796564111`;
 
-  await dispatchSms(number, message, meta);
+  await dispatchWhatsApp(
+    number,
+    "eo_abandonment_reminder_v2",
+    "en",
+    [{
+      type: "body",
+      parameters: [
+        { type: "text", text: customerName ?? "Traveller" },
+        { type: "text", text: fromCity },
+        { type: "text", text: toCity },
+        { type: "text", text: pickupDate },
+        { type: "text", text: String(bookingId) },
+        { type: "text", text: price },
+        { type: "text", text: resumeUrl },
+      ],
+    }],
+    meta,
+    message
+  );
 
   if (customerEmail) {
     const subject = touch === 2
