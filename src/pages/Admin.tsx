@@ -396,7 +396,9 @@ export default function AdminPage() {
 
   const { data: adminRoutes } = trpc.admin.getAdminRoutes.useQuery(undefined, { enabled: isAdmin });
   const [waLogsPage, setWaLogsPage] = useState(1);
-  const { data: waLogsData } = trpc.admin.getWhatsappLogs.useQuery({ page: waLogsPage }, { enabled: isAdmin });
+  const [waLogsPhone, setWaLogsPhone] = useState("");
+  const [expandedLogId, setExpandedLogId] = useState<number | null>(null);
+  const { data: waLogsData } = trpc.admin.getWhatsappLogs.useQuery({ page: waLogsPage, phone: waLogsPhone || undefined }, { enabled: isAdmin });
   const { data: liveTrips, refetch: refetchLive } = trpc.admin.getLiveTrips.useQuery(undefined, { enabled: isAdmin, refetchInterval: 30_000 });
   const [analyticsDays, setAnalyticsDays] = useState(30);
   const { data: analytics } = trpc.admin.getAnalytics.useQuery({ days: analyticsDays }, { enabled: isAdmin });
@@ -2674,9 +2676,18 @@ export default function AdminPage() {
 
           {/* ── WA Logs ─────────────────────────────────────────────── */}
           <TabsContent value="wa-logs" className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">WhatsApp Message Log</h2>
-              {waLogsData && <p className="text-sm text-muted-foreground">{waLogsData.total} total messages</p>}
+            <div className="flex items-center justify-between gap-4">
+              <h2 className="text-lg font-semibold">WhatsApp Communication Log</h2>
+              {waLogsData && <p className="text-sm text-muted-foreground">{waLogsData.total} messages</p>}
+            </div>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Filter by phone number…"
+                value={waLogsPhone}
+                onChange={e => { setWaLogsPhone(e.target.value); setWaLogsPage(1); }}
+                className="max-w-xs text-sm"
+              />
+              {waLogsPhone && <Button variant="outline" size="sm" onClick={() => { setWaLogsPhone(""); setWaLogsPage(1); }}>Clear</Button>}
             </div>
             <Card>
               <CardContent className="p-0 overflow-x-auto">
@@ -2685,32 +2696,39 @@ export default function AdminPage() {
                     <tr className="border-b bg-slate-50 text-left text-xs text-muted-foreground uppercase tracking-wide">
                       <th className="px-4 py-3">Date/Time</th>
                       <th className="px-4 py-3">Phone</th>
-                      <th className="px-4 py-3">Direction</th>
-                      <th className="px-4 py-3">Template</th>
+                      <th className="px-4 py-3">Dir</th>
+                      <th className="px-4 py-3">Message</th>
                       <th className="px-4 py-3">Status</th>
                       <th className="px-4 py-3">Booking</th>
-                      <th className="px-4 py-3">Fallback SMS</th>
                     </tr>
                   </thead>
                   <tbody>
                     {!waLogsData && (
-                      <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Loading…</td></tr>
+                      <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Loading…</td></tr>
                     )}
                     {waLogsData?.logs.length === 0 && (
-                      <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">No WhatsApp messages yet.</td></tr>
+                      <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">No messages found.</td></tr>
                     )}
                     {waLogsData?.logs.map(log => (
-                      <tr key={log.id} className="border-b last:border-0 hover:bg-slate-50/50">
+                      <>
+                      <tr key={log.id} className="border-b hover:bg-slate-50/50 cursor-pointer" onClick={() => setExpandedLogId(expandedLogId === log.id ? null : log.id)}>
                         <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
                           {new Date(log.createdAt).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
                         </td>
                         <td className="px-4 py-3 font-mono text-xs">{log.phone}</td>
                         <td className="px-4 py-3">
                           <Badge className={log.direction === "outbound" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"}>
-                            {log.direction}
+                            {log.direction === "outbound" ? "↑ Out" : "↓ In"}
                           </Badge>
                         </td>
-                        <td className="px-4 py-3 text-xs">{log.templateName ?? <span className="text-muted-foreground">—</span>}</td>
+                        <td className="px-4 py-3 text-xs max-w-xs">
+                          {log.messageBody
+                            ? <span className="text-slate-700">{log.messageBody.slice(0, 80)}{log.messageBody.length > 80 ? "…" : ""}</span>
+                            : log.templateName
+                              ? <span className="text-muted-foreground italic">Template: {log.templateName}</span>
+                              : <span className="text-muted-foreground">—</span>
+                          }
+                        </td>
                         <td className="px-4 py-3">
                           <Badge className={
                             log.waStatus === "read" ? "bg-green-100 text-green-700" :
@@ -2724,10 +2742,17 @@ export default function AdminPage() {
                         <td className="px-4 py-3 text-xs">
                           {log.bookingId ? <span className="font-medium">#{log.bookingId}</span> : <span className="text-muted-foreground">—</span>}
                         </td>
-                        <td className="px-4 py-3 text-xs">
-                          {log.fallbackSent ? <Badge className="bg-amber-100 text-amber-700">Sent</Badge> : <span className="text-muted-foreground">—</span>}
-                        </td>
                       </tr>
+                      {expandedLogId === log.id && log.messageBody && (
+                        <tr key={`${log.id}-expanded`} className="border-b bg-slate-50">
+                          <td colSpan={6} className="px-6 py-3">
+                            <div className="text-xs text-slate-700 whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto font-mono bg-white border rounded-lg p-3">
+                              {log.messageBody}
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                      </>
                     ))}
                   </tbody>
                 </table>

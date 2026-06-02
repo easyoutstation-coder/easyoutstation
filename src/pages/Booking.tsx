@@ -173,8 +173,17 @@ export default function BookingPage() {
       const d = new Date(resumeBooking.pickupDate);
       if (!isNaN(d.getTime())) setPickupDate(d);
     }
-    // Fall back to booking's stored km if distance is not in the URL params
-    if (!defaultDistance && resumeBooking.totalKm) setManualDistance(resumeBooking.totalKm);
+    if (resumeBooking.returnDate) {
+      const rd = new Date(resumeBooking.returnDate);
+      if (!isNaN(rd.getTime())) setReturnDate(rd);
+    }
+    if (resumeBooking.tripType) setTripType(resumeBooking.tripType);
+    if (resumeBooking.toCity) setDropAddress(resumeBooking.toCity + ", India");
+    // totalKm stored is billed km; convert to one-way route distance so re-calc doesn't double it
+    if (!defaultDistance && resumeBooking.totalKm) {
+      const isRT = resumeBooking.tripType === "round_trip";
+      setManualDistance(isRT ? Math.ceil(resumeBooking.totalKm / 2) : resumeBooking.totalKm);
+    }
     setCurrentStep(3);
   }, [resumeBooking]);
 
@@ -226,6 +235,10 @@ export default function BookingPage() {
     onError: (e) => setQuickError(e.message),
   });
 
+  const effectiveCar = car ?? resumeBooking?.car ?? undefined;
+  const effectiveFromCity = resumeBookingId > 0 ? (resumeBooking?.fromCity ?? fromCity) : fromCity;
+  const effectiveToCity   = resumeBookingId > 0 ? (resumeBooking?.toCity   ?? toCity)   : toCity;
+
   // Auth gate - AFTER all hooks
   // Only show spinner on FIRST load (no cached data), max 2 seconds
   if (authLoading && !user && !authTimedOut) {
@@ -246,12 +259,12 @@ export default function BookingPage() {
         <main className="pt-20">
           <div className="mx-auto max-w-lg px-4 py-12">
             {/* Car summary at top */}
-            {car && (
+            {effectiveCar && (
               <div className="flex items-center gap-3 bg-white rounded-2xl border border-slate-100 shadow-sm p-4 mb-6">
-                {car.imageUrl && <img src={car.imageUrl} alt={car.name} className="w-16 h-12 object-cover rounded-lg" />}
+                {effectiveCar.imageUrl && <img src={effectiveCar.imageUrl} alt={effectiveCar.name} className="w-16 h-12 object-cover rounded-lg" />}
                 <div className="flex-1">
-                  <div className="font-semibold text-slate-900">{car.name}</div>
-                  <div className="text-sm text-slate-500">{fromCity} → {toCity} · ₹{((parseFloat(car?.pricePerKm || "20") * defaultDistance) + 250).toLocaleString("en-IN")}</div>
+                  <div className="font-semibold text-slate-900">{effectiveCar.name}</div>
+                  <div className="text-sm text-slate-500">{effectiveFromCity} → {effectiveToCity} · ₹{((parseFloat(effectiveCar?.pricePerKm || "20") * defaultDistance) + 250).toLocaleString("en-IN")}</div>
                 </div>
                 <button onClick={() => navigate(-1)} className="text-xs text-blue-600 hover:underline">Change</button>
               </div>
@@ -349,8 +362,8 @@ export default function BookingPage() {
 
   // Derived values - after auth gate, no hooks below this line
   const finalDistance = distanceKm || manualDistance;
-  const pricePerKm = parseFloat(car?.pricePerKm || "20");
-  const driverChargePerDay = parseFloat(car?.driverCharges || "250");
+  const pricePerKm = parseFloat(effectiveCar?.pricePerKm || "20");
+  const driverChargePerDay = parseFloat(effectiveCar?.driverCharges || "250");
 
   const tripDays = tripType === "round_trip" && returnDate && pickupDate
     ? Math.max(1, Math.ceil((returnDate.getTime() - pickupDate.getTime()) / (1000 * 60 * 60 * 24)) + 1)
@@ -363,7 +376,7 @@ export default function BookingPage() {
   // • Heavy vehicles (>7 seats): min 100 km even for same-day / local trips
   const MIN_KM_PER_DAY = 250;
   const MIN_KM_HEAVY = 100;
-  const isHeavyVehicle = (car?.seats ?? 0) > 7;
+  const isHeavyVehicle = (effectiveCar?.seats ?? 0) > 7;
 
   const billedKm = (() => {
     if (tripDays > 1) return Math.max(totalKmForTrip, tripDays * MIN_KM_PER_DAY);
@@ -376,7 +389,7 @@ export default function BookingPage() {
   const totalDriverCharges = driverChargePerDay * tripDays;
 
   const tollCharges = (() => {
-    const route = `${fromCity}-${toCity}`.toLowerCase();
+    const route = `${effectiveFromCity}-${effectiveToCity}`.toLowerCase();
     const tolls: Record<string, number> = {
       "delhi-manali": 850, "delhi-shimla": 650, "delhi-chandigarh": 380,
       "delhi-dehradun": 420, "delhi-rishikesh": 450, "delhi-haridwar": 430,
@@ -389,7 +402,9 @@ export default function BookingPage() {
     return tripType === "round_trip" ? oneway * 2 : oneway;
   })();
 
-  const totalPrice = basePrice + totalDriverCharges + tollCharges;
+  const totalPrice = resumeBookingId > 0 && resumeBooking
+    ? parseFloat(resumeBooking.totalPrice)
+    : basePrice + totalDriverCharges + tollCharges;
 
   const sendOtp = () => {
     if (!customerPhone || customerPhone.length !== 10) {
@@ -468,7 +483,7 @@ export default function BookingPage() {
           returnDate: returnDate ? format(returnDate, "yyyy-MM-dd") : undefined,
           returnTime: tripType === "round_trip" ? returnTime : undefined,
           tripType: tripType as "one_way" | "round_trip",
-          passengerCount: car ? car.seats - 1 : 4,
+          passengerCount: effectiveCar ? effectiveCar.seats - 1 : 4,
           totalKm: billedKm,
           totalPrice,
           customerName,
@@ -585,7 +600,7 @@ export default function BookingPage() {
     })();
 
     const whatsappShareText = encodeURIComponent(
-      `🚌 My EasyOutstation trip is confirmed!\n\n📍 ${fromCity} → ${toCity}\n📅 Pickup: ${pickupDate ? format(pickupDate, "dd MMM yyyy") : ""} at ${pickupTime}${tripType === "round_trip" ? `\n🔄 Return: ${returnDate ? format(returnDate, "dd MMM yyyy") : "Same day"}${returnTime ? ` at ${fmtTime(returnTime)}` : ""}` : ""}\n💰 ₹${totalPrice.toLocaleString("en-IN")}\n\nBooking ID: #${bookingId}\n\nBook your ride at easyoutstation.com`
+      `🚌 My EasyOutstation trip is confirmed!\n\n📍 ${effectiveFromCity} → ${effectiveToCity}\n📅 Pickup: ${pickupDate ? format(pickupDate, "dd MMM yyyy") : ""} at ${pickupTime}${tripType === "round_trip" ? `\n🔄 Return: ${returnDate ? format(returnDate, "dd MMM yyyy") : "Same day"}${returnTime ? ` at ${fmtTime(returnTime)}` : ""}` : ""}\n💰 ₹${totalPrice.toLocaleString("en-IN")}\n\nBooking ID: #${bookingId}\n\nBook your ride at easyoutstation.com`
     );
 
     clearBookingDraft();
@@ -627,7 +642,7 @@ export default function BookingPage() {
               )}
 
               <div className="bg-slate-50 rounded-xl p-4 text-sm text-left space-y-2 mb-6">
-                <div className="flex justify-between"><span className="text-muted-foreground">Route</span><span className="font-medium">{fromCity} → {toCity}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Route</span><span className="font-medium">{effectiveFromCity} → {effectiveToCity}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Pickup</span><span className="font-medium">{pickupDate ? format(pickupDate, "dd MMM yyyy") : ""} at {pickupTime}</span></div>
                 {tripType === "round_trip" && (<div className="flex justify-between"><span className="text-muted-foreground">Return</span><span className="font-medium">{returnDate ? format(returnDate, "dd MMM yyyy") : "Same day"}{returnTime ? ` at ${fmtTime(returnTime)}` : ""}</span></div>)}
                 <div className="flex justify-between"><span className="text-muted-foreground">Distance</span><span className="font-medium">{finalDistance} km {durationText && `(${durationText})`}</span></div>
@@ -663,9 +678,9 @@ export default function BookingPage() {
         {/* Sticky mobile price bar */}
         <div className="sticky top-16 z-30 lg:hidden bg-white border-b border-slate-200 px-4 py-2 flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-2 text-sm">
-            <span className="text-slate-500">{car?.name || "Selected Vehicle"}</span>
+            <span className="text-slate-500">{effectiveCar?.name || "Selected Vehicle"}</span>
             <span className="text-slate-300">·</span>
-            <span className="text-slate-500">{fromCity} → {toCity}</span>
+            <span className="text-slate-500">{effectiveFromCity} → {effectiveToCity}</span>
           </div>
           <div className="text-base font-bold text-blue-700">₹{totalPrice.toLocaleString("en-IN")}</div>
         </div>
@@ -960,14 +975,14 @@ export default function BookingPage() {
                       )}
 
                       <div className="bg-muted rounded-xl p-4 space-y-3">
-                        <div className="flex justify-between text-sm"><span className="text-muted-foreground">Vehicle</span><span className="font-medium">{car?.name}</span></div>
-                        <div className="flex justify-between text-sm"><span className="text-muted-foreground">Route</span><span className="font-medium">{fromCity} → {toCity}</span></div>
+                        <div className="flex justify-between text-sm"><span className="text-muted-foreground">Vehicle</span><span className="font-medium">{effectiveCar?.name}</span></div>
+                        <div className="flex justify-between text-sm"><span className="text-muted-foreground">Route</span><span className="font-medium">{effectiveFromCity} → {effectiveToCity}</span></div>
                         <div className="flex justify-between text-sm"><span className="text-muted-foreground">Trip Type</span><span className="font-medium capitalize">{tripType.replace("_", " ")}</span></div>
                         <div className="flex justify-between text-sm"><span className="text-muted-foreground">Pickup Address</span><span className="font-medium text-right max-w-[200px]">{pickupAddress}</span></div>
                         <div className="flex justify-between text-sm"><span className="text-muted-foreground">Drop Address</span><span className="font-medium text-right max-w-[200px]">{dropAddress}</span></div>
                         <div className="flex justify-between text-sm"><span className="text-muted-foreground">Pickup Date & Time</span><span className="font-medium">{pickupDate ? format(pickupDate, "dd MMM yyyy") : ""} at {pickupTime}</span></div>
                         {tripType === "round_trip" && (<div className="flex justify-between text-sm"><span className="text-muted-foreground">Return Date & Time</span><span className="font-medium">{returnDate ? format(returnDate, "dd MMM yyyy") : "Same day"}{returnTime ? ` at ${fmtTime(returnTime)}` : ""}</span></div>)}
-                        <div className="flex justify-between text-sm"><span className="text-muted-foreground">Passengers allowed</span><span className="font-medium">{car ? car.seats - 1 : "—"}</span></div>
+                        <div className="flex justify-between text-sm"><span className="text-muted-foreground">Passengers allowed</span><span className="font-medium">{effectiveCar ? effectiveCar.seats - 1 : "—"}</span></div>
                         <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">Distance</span>
                           <span className="font-medium">
@@ -1084,18 +1099,18 @@ export default function BookingPage() {
             <div className="space-y-4">
               <Card className="shadow-sm border-0 sticky top-24">
                 <CardContent className="p-5 space-y-4">
-                  {car && (
+                  {effectiveCar && (
                     <div className="flex gap-3 items-center">
-                      {car.imageUrl && <img src={car.imageUrl} alt={car.name} className="w-16 h-12 object-cover rounded-lg" />}
+                      {effectiveCar.imageUrl && <img src={effectiveCar.imageUrl} alt={effectiveCar.name} className="w-16 h-12 object-cover rounded-lg" />}
                       <div>
-                        <div className="font-semibold text-sm">{car.name}</div>
-                        <div className="text-xs text-muted-foreground">{car.brand} · {car.seats - 1} passengers</div>
+                        <div className="font-semibold text-sm">{effectiveCar.name}</div>
+                        <div className="text-xs text-muted-foreground">{effectiveCar.brand} · {effectiveCar.seats - 1} passengers</div>
                       </div>
                     </div>
                   )}
                   <Separator />
                   <div className="space-y-1.5 text-sm">
-                    <div className="flex justify-between"><span className="text-muted-foreground">Route</span><span className="font-medium">{fromCity} → {toCity || "Custom"}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Route</span><span className="font-medium">{effectiveFromCity} → {effectiveToCity || "Custom"}</span></div>
                     {finalDistance > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Distance</span><span className="font-medium">{finalDistance} km</span></div>}
                     {durationText && <div className="flex justify-between"><span className="text-muted-foreground">Duration</span><span className="font-medium">{durationText}</span></div>}
                     <div className="flex justify-between"><span className="text-muted-foreground">Rate</span><span className="font-medium">₹{pricePerKm}/km</span></div>
@@ -1106,7 +1121,7 @@ export default function BookingPage() {
                       {tripType === "round_trip" ? "Round Trip Total" :
                        "One Way Total"}
                     </div>
-                    <div className="text-2xl font-bold text-primary">₹{(basePrice + totalDriverCharges).toLocaleString("en-IN")}</div>
+                    <div className="text-2xl font-bold text-primary">₹{(resumeBookingId > 0 && resumeBooking ? totalPrice : basePrice + totalDriverCharges).toLocaleString("en-IN")}</div>
                     <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
                       <div>₹{pricePerKm}/km × {billedKm} km = ₹{basePrice.toLocaleString("en-IN")}</div>
                       <div>Driver: ₹{totalDriverCharges} · Toll + Parking: at actuals</div>

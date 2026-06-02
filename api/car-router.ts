@@ -2,7 +2,7 @@ import { z } from "zod";
 import { createRouter, publicQuery, authedQuery } from "./middleware";
 import { getDb } from "./queries/connection";
 import { cars, carReviews } from "@db/schema";
-import { eq, and, gte, lte, sql, desc } from "drizzle-orm";
+import { eq, and, gte, lte, sql, desc, asc } from "drizzle-orm";
 
 export const carRouter = createRouter({
   list: publicQuery
@@ -54,7 +54,7 @@ export const carRouter = createRouter({
 
       const results = await db.query.cars.findMany({
         where: whereClause,
-        orderBy: [desc(cars.isPopular), desc(cars.rating)],
+        orderBy: [desc(cars.isPopular), desc(cars.rating), asc(cars.id)],
       });
 
       return results;

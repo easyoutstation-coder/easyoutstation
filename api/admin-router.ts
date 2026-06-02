@@ -4,7 +4,7 @@ import { createRouter, publicQuery, adminQuery, superAdminQuery } from "./middle
 import { getDb } from "./queries/connection";
 import { users, bookings, drivers, vendors, expenses, siteSettings, faqs, routes, cars, userSearches, carReviews, referralEvents, referralPoints, corporateEnquiries, corporateAccounts, whatsappLogs, bookingEvents } from "@db/schema";
 import { getRedis } from "./lib/redis";
-import { eq, desc, sql, and, gte, lt, count } from "drizzle-orm";
+import { eq, desc, sql, and, gte, lt, count, like } from "drizzle-orm";
 import { defaultProgramConfig } from "./referral-router";
 import { sendReferralPointsNotification, sendDriverAssignmentSms, sendCorporateApprovalEmail, sendRefundNotification, sendBookingSms } from "./lib/notifications";
 import { logBookingEvent } from "./lib/bookingEvents";
@@ -1290,15 +1290,17 @@ Thank you for choosing EasyOutstation.`;
     }),
 
   getWhatsappLogs: adminQuery
-    .input(z.object({ page: z.number().min(1).default(1) }).optional())
+    .input(z.object({ page: z.number().min(1).default(1), phone: z.string().optional() }).optional())
     .query(async ({ input }) => {
       const db = getDb();
       const page = input?.page ?? 1;
       const pageSize = 50;
       const offset = (page - 1) * pageSize;
+      const phoneFilter = input?.phone ? like(whatsappLogs.phone, `%${input.phone.replace(/\D/g, "").slice(-10)}%`) : undefined;
+      const where = phoneFilter ? phoneFilter : undefined;
       const [logs, [{ total }]] = await Promise.all([
-        db.select().from(whatsappLogs).orderBy(desc(whatsappLogs.createdAt)).limit(pageSize).offset(offset),
-        db.select({ total: sql<number>`COUNT(*)` }).from(whatsappLogs),
+        db.select().from(whatsappLogs).where(where).orderBy(desc(whatsappLogs.createdAt)).limit(pageSize).offset(offset),
+        db.select({ total: sql<number>`COUNT(*)` }).from(whatsappLogs).where(where),
       ]);
       return { logs, total: Number(total), page, pageSize };
     }),

@@ -36,7 +36,7 @@ const AI_TOOLS: Anthropic.Tool[] = [
   },
   {
     name: "get_fare_estimate",
-    description: "Calculate fare for a route and car. Always pass pickup_date. Pass return_date whenever the customer has given a return/drop-off date — the server calculates days from the actual dates so the 250 km/day minimum is applied correctly.",
+    description: "Calculate fare for a route and car. Always pass pickup_date. Pass return_date whenever the customer has given a return/drop-off date — the server calculates days from the actual dates so the 250 km/day minimum is applied correctly. For tempo travellers and buses, pass driver_charge_per_day=500.",
     input_schema: {
       type: "object" as const,
       properties: {
@@ -46,6 +46,7 @@ const AI_TOOLS: Anthropic.Tool[] = [
         trip_type: { type: "string", enum: ["one_way", "round_trip"] },
         pickup_date: { type: "string", description: "YYYY-MM-DD pickup date" },
         return_date: { type: "string", description: "YYYY-MM-DD return date. Required for multi-day trips. The server uses this to compute days and enforce 250 km/day minimum billing." },
+        driver_charge_per_day: { type: "number", description: "Driver charge per day. Default 250 for cars; use 500 for tempo travellers and buses." },
       },
       required: ["from_city", "to_city", "price_per_km", "trip_type", "pickup_date"],
     },
@@ -84,16 +85,20 @@ async function executeTool(name: string, input: any, phone: string): Promise<str
 
   if (name === "list_cars") {
     const list = await db.select({
-      id: cars.id, name: cars.name, seats: cars.seats, pricePerKm: cars.pricePerKm, category: cars.category,
+      id: cars.id, name: cars.name, seats: cars.seats, pricePerKm: cars.pricePerKm,
+      driverCharges: cars.driverCharges, category: cars.category,
     }).from(cars).where(eq(cars.isAvailable, true));
     return JSON.stringify(
-      list.filter(c => !["tempo", "bus"].includes(c.category))
-        .map(c => ({ id: c.id, name: c.name, seats: c.seats, pricePerKm: parseFloat(c.pricePerKm) }))
+      list.map(c => ({
+        id: c.id, name: c.name, seats: c.seats,
+        pricePerKm: parseFloat(c.pricePerKm),
+        driverChargePerDay: parseFloat(c.driverCharges),
+      }))
     );
   }
 
   if (name === "get_fare_estimate") {
-    const { from_city, to_city, price_per_km, trip_type, pickup_date, return_date } = input;
+    const { from_city, to_city, price_per_km, trip_type, pickup_date, return_date, driver_charge_per_day } = input;
     const dist = routeDistance(from_city, to_city);
 
     // Mirror website logic exactly (Cars.tsx calcFare)
@@ -109,7 +114,7 @@ async function executeTool(name: string, input: any, phone: string): Promise<str
     const rawKm = trip_type === "round_trip" ? dist * 2 : dist;
     // 250 km/day minimum only for round_trip multi-day (matches website)
     const km = (trip_type === "round_trip" && days > 1) ? Math.max(rawKm, days * 250) : rawKm;
-    const driverCharge = 250 * days;
+    const driverCharge = (driver_charge_per_day ?? 250) * days;
     const fare = Math.round(km * price_per_km + driverCharge);
     return JSON.stringify({ distance_km: dist, km_billed: km, days, driver_charge: driverCharge, fare_inr: fare });
   }
@@ -136,10 +141,10 @@ async function executeTool(name: string, input: any, phone: string): Promise<str
     // Fuzzy car name lookup — no numeric IDs needed from Claude
     const allCars = await db.select({ id: cars.id, name: cars.name, category: cars.category })
       .from(cars).where(eq(cars.isAvailable, true));
-    const bookableCars = allCars.filter(c => !["tempo", "bus"].includes(c.category ?? ""));
-    const needle = (car_name ?? "").toLowerCase().replace(/\s+/g, "");
-    const matched = bookableCars.find(c => {
-      const hay = c.name.toLowerCase().replace(/\s+/g, "");
+    const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const needle = normalize(car_name ?? "");
+    const matched = allCars.find(c => {
+      const hay = normalize(c.name);
       return hay === needle || hay.includes(needle) || needle.includes(hay);
     });
     if (!matched) {
@@ -203,20 +208,29 @@ Rishikesh 250km | Dehradun 300km | Haridwar 220km | Mussoorie 310km
 Nainital 310km | Mathura 175km | Amritsar 460km
 Custom routes also available — use get_fare_estimate with a reasonable distance estimate.
 
-━━ CARS & RATES (per km, driver ₹250/day included) ━━
+━━ CARS & RATES ━━
+CARS (driver ₹250/day):
 Swift Dzire ₹12/km 4 seats | Toyota Etios ₹13/km 4 seats
-Maruti Ertiga ₹15/km 6 seats | Mahindra Xylo ₹16/km 7 seats
-Kia Carens ₹17/km 6 seats | Toyota Innova ₹19/km 6 seats
-Innova Crysta ₹20/km 6 seats (best for hills) | Innova Hycross ₹22/km 6 seats (luxury)
-When calling create_booking, pass car_name exactly as written above (e.g. "Innova Crysta", "Swift Dzire"). No numeric car IDs needed.
+Maruti Ertiga ₹15/km 6 seats | Kia Carens ₹17/km 6 seats
+Toyota Innova ₹19/km 6 seats | Innova Crysta ₹20/km 6 seats (best for hills)
+Innova Hycross ₹22/km 6 seats (luxury)
+
+TEMPO TRAVELLERS & BUSES (driver ₹500/day — pass driver_charge_per_day=500 to get_fare_estimate):
+Tempo Traveller Maharaja ₹28/km 12 seats | Tempo Traveller 16-19 ₹30/km 19 seats
+Force Urbania ₹35/km 17 seats (premium)
+Mini Luxury Bus ₹45/km 27 seats | Luxury Bus 35 ₹50/km 41 seats
+Luxury Bus 45 ₹55/km 45 seats | Luxury Bus 49 ₹60/km 49 seats
+
+When calling create_booking, pass car_name exactly as written above. No numeric car IDs needed.
 
 ━━ FARE RULES ━━
-- Driver charge: ₹250/day. One-way = always 1 day. Round trip = ceil(days between dates) + 1 (e.g. Jun 2→Jun 9 = 8 days)
-- Toll & parking: paid at actuals by customer on road — no markup
+- Driver charge: ₹250/day for cars; ₹500/day for tempo travellers & buses. One-way = 1 day. Round trip = ceil(days between dates) + 1 (e.g. Jun 2→Jun 9 = 8 days)
+- Toll & parking & state taxes: paid at actuals by customer on road — no markup
 - Round trip multi-day: minimum 250 km/day billed. One-way: no minimum, just the route distance.
 - Round trip km = distance × 2
 - 10% advance online confirms booking; 90% cash/UPI to driver at pickup
 - Recommend Crysta or Hycross for hill routes (Manali, Shimla, Mussoorie, Nainital)
+- For groups 7–12: Tempo Traveller Maharaja. Groups 13–17: Force Urbania. Groups 18–19: Tempo Traveller 16-19. Groups 20–27: Mini Luxury Bus. Groups 28+: suggest appropriate bus size.
 
 ━━ CANCELLATION POLICY ━━
 >24 hrs before pickup → 100% refund
@@ -242,7 +256,17 @@ Example reply: "Booking #1234 confirmed! 🎉 Pay ₹2,260 advance to lock your 
 If you do not include the payment URL, the customer cannot pay and the booking is lost.
 
 ━━ GROUPS > 6 PASSENGERS ━━
-Our cars seat max 6. For larger groups, tell the customer they need multiple cabs and handle one booking at a time. Suggest best car combos (e.g. 2 × Crysta for 9 people on hills).
+For 7+ passengers, recommend tempo travellers or buses — they're fully bookable the same way as cars.
+Suggest based on group size:
+- 7–12 pax → Tempo Traveller Maharaja (12 seats, ₹28/km) — luxury recliner seats
+- 13–17 pax → Force Urbania (17 seats, ₹35/km) — premium van
+- 18–19 pax → Tempo Traveller 16-19 (19 seats, ₹30/km)
+- 20–27 pax → Mini Luxury Bus (27 seats, ₹45/km)
+- 28–41 pax → Luxury Bus 35 (41 seats, ₹50/km)
+- 42–45 pax → Luxury Bus 45 (45 seats, ₹55/km)
+- 46–49 pax → Luxury Bus 49 (49 seats, ₹60/km)
+- 50+ pax → suggest multiple vehicles
+For hill routes with a group, Tempo Traveller or Force Urbania preferred over bus.
 
 ━━ OTHER RULES ━━
 - NEVER calculate or estimate fares manually — ALWAYS use get_fare_estimate, even for rough quotes. If dates or car aren't confirmed yet, ask for them before calling the tool. Manual fare guesses will always be wrong.
@@ -266,6 +290,11 @@ async function handleAiConversation(phone: string, userText: string): Promise<vo
   const ctx = (conv?.contextJson ?? {}) as { messages?: MsgParam[]; aiState?: string };
   const history: MsgParam[] = ctx.messages ?? [];
 
+  // Log inbound message
+  await db.insert(whatsappLogs).values({
+    direction: "inbound", phone: localPhone, messageBody: userText, waStatus: "delivered", fallbackSent: false,
+  }).catch(() => {});
+
   // New conversation — bypass Claude entirely, send exact template, save state, done.
   if (history.length === 0) {
     const greeting = `Hi! I'm Disha from EasyOutstation 👋 Fill this in and I'll quote your fare instantly:\n\n${BOOKING_TEMPLATE}\n\nOr just tell me where you're heading and I'll guide you! 😊`;
@@ -279,6 +308,9 @@ async function handleAiConversation(phone: string, userText: string): Promise<vo
         .set({ contextJson: { messages: [{ role: "user", content: userText }, { role: "assistant", content: greeting }] }, state: "ai_conversation", expiresAt })
         .where(eq(whatsappConversations.phone, phone))
     );
+    await db.insert(whatsappLogs).values({
+      direction: "outbound", phone: localPhone, messageBody: greeting, waStatus: "sent", fallbackSent: false,
+    }).catch(() => {});
     await sendWhatsAppTextRaw(phone, greeting);
     console.log(`[WA AI] New conversation template sent to ${phone}`);
     return;
@@ -293,6 +325,7 @@ async function handleAiConversation(phone: string, userText: string): Promise<vo
   // Agentic loop — let Claude use tools until it sends a final reply
   const messages: Anthropic.MessageParam[] = history.map(m => ({ role: m.role, content: m.content }));
   let reply = "";
+  let createdBookingId: number | undefined;
 
   for (let i = 0; i < 8; i++) {
     const response = await anthropic.messages.create({
@@ -317,6 +350,9 @@ async function handleAiConversation(phone: string, userText: string): Promise<vo
       let toolResult: string;
       try {
         toolResult = await executeTool(tb.name, tb.input as any, phone);
+        if (tb.name === "create_booking") {
+          try { const r = JSON.parse(toolResult); if (r.bookingId) createdBookingId = r.bookingId; } catch {}
+        }
       } catch (e: any) {
         console.error(`[WA AI] Tool ${tb.name} failed:`, e?.message ?? e);
         toolResult = JSON.stringify({ error: e?.message ?? "Tool execution failed" });
@@ -344,6 +380,12 @@ async function handleAiConversation(phone: string, userText: string): Promise<vo
     await db.insert(whatsappConversations)
       .values({ phone, state: "ai_conversation", contextJson: { messages: history }, expiresAt });
   }
+
+  await db.insert(whatsappLogs).values({
+    direction: "outbound", phone: localPhone, messageBody: reply,
+    bookingId: createdBookingId ?? undefined,
+    waStatus: "sent", fallbackSent: false,
+  }).catch(() => {});
 
   await sendWhatsAppTextRaw(phone, reply);
   console.log(`[WA AI] Replied to ${phone}: ${reply.slice(0, 80)}...`);
