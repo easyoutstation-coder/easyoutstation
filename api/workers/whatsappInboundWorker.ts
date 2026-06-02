@@ -2,7 +2,7 @@ import { Worker, type Job } from "bullmq";
 import { eq, sql, desc } from "drizzle-orm";
 import { getRedis } from "../lib/redis";
 import { getDb } from "../queries/connection";
-import { whatsappLogs, whatsappConversations, bookings, drivers, cars } from "@db/schema";
+import { whatsappLogs, whatsappConversations, bookings, drivers, cars, users } from "@db/schema";
 import { logBookingEvent } from "../lib/bookingEvents";
 import { QUEUE_WHATSAPP_INBOUND, type WhatsAppInboundJobData } from "./queues";
 import { sendWhatsAppTextRaw, toWaPhone } from "../lib/whatsapp";
@@ -67,14 +67,13 @@ const AI_TOOLS: Anthropic.Tool[] = [
         pickup_date: { type: "string", description: "YYYY-MM-DD" },
         return_date: { type: "string", description: "YYYY-MM-DD return date for multi-day trips" },
         trip_type: { type: "string", enum: ["one_way", "round_trip"] },
-        trip_days: { type: "number", description: "Number of days — must match the 'days' value returned by get_fare_estimate" },
-        car_id: { type: "number" },
+        car_name: { type: "string", description: "Car name exactly as shown in the CARS & RATES section, e.g. 'Innova Crysta', 'Swift Dzire', 'Maruti Ertiga'" },
         total_km: { type: "number" },
         total_price: { type: "number" },
         passenger_count: { type: "number" },
         pickup_address: { type: "string", description: "Full pickup address — mandatory" },
       },
-      required: ["customer_name", "from_city", "to_city", "pickup_date", "trip_type", "car_id", "total_km", "total_price", "passenger_count", "pickup_address"],
+      required: ["customer_name", "from_city", "to_city", "pickup_date", "trip_type", "car_name", "total_km", "total_price", "passenger_count", "pickup_address"],
     },
   },
 ];
@@ -128,31 +127,48 @@ async function executeTool(name: string, input: any, phone: string): Promise<str
   }
 
   if (name === "create_booking") {
-    const { customer_name, from_city, to_city, pickup_date, trip_type, car_id, total_km, total_price, passenger_count, pickup_address } = input;
-    const parsedDate = new Date(pickup_date);
-    if (isNaN(parsedDate.getTime())) throw new Error(`Invalid pickup_date: "${pickup_date}". Use YYYY-MM-DD format.`);
+    const { customer_name, from_city, to_city, pickup_date, return_date, trip_type, car_name, total_km, total_price, passenger_count, pickup_address } = input;
 
-    // Validate car_id before insert — catch wrong IDs before hitting DB constraint
-    const [carRow] = await db.select({ id: cars.id, name: cars.name })
-      .from(cars).where(eq(cars.id, car_id)).limit(1);
-    if (!carRow) {
-      const available = await db.select({ id: cars.id, name: cars.name, seats: cars.seats, pricePerKm: cars.pricePerKm })
-        .from(cars).where(eq(cars.isAvailable, true));
-      const list = available.filter(c => !["tempo", "bus"].includes((c as any).category ?? ""))
-        .map(c => ({ id: c.id, name: c.name }));
-      throw new Error(`car_id ${car_id} is invalid. You must call list_cars first to get real IDs. Available cars right now: ${JSON.stringify(list)}`);
+    const parsedPickupDate = new Date(pickup_date);
+    if (isNaN(parsedPickupDate.getTime())) throw new Error(`Invalid pickup_date: "${pickup_date}". Use YYYY-MM-DD format.`);
+    const parsedReturnDate = return_date ? new Date(return_date) : null;
+
+    // Fuzzy car name lookup — no numeric IDs needed from Claude
+    const allCars = await db.select({ id: cars.id, name: cars.name, category: cars.category })
+      .from(cars).where(eq(cars.isAvailable, true));
+    const bookableCars = allCars.filter(c => !["tempo", "bus"].includes(c.category ?? ""));
+    const needle = (car_name ?? "").toLowerCase().replace(/\s+/g, "");
+    const matched = bookableCars.find(c => {
+      const hay = c.name.toLowerCase().replace(/\s+/g, "");
+      return hay === needle || hay.includes(needle) || needle.includes(hay);
+    });
+    if (!matched) {
+      const names = bookableCars.map(c => c.name).join(", ");
+      throw new Error(`No car matching "${car_name}" found. Available: ${names}`);
     }
 
-    const result = await db.insert(bookings).values({
-      userId: 0, carId: car_id, fromCity: from_city, toCity: to_city,
-      pickupDate: parsedDate, tripType: trip_type,
-      passengerCount: passenger_count, totalKm: total_km,
-      totalPrice: total_price.toString(), customerName: customer_name,
-      customerPhone: localPhone, pickupAddress: pickup_address ?? null,
+    // Link to existing web account if this phone has one
+    const [existingUser] = await db.select({ id: users.id })
+      .from(users).where(eq(users.phone, localPhone)).limit(1);
+    const userId = existingUser?.id ?? 0;
+
+    const [{ insertId }] = await db.insert(bookings).values({
+      userId, carId: matched.id,
+      fromCity: from_city, toCity: to_city,
+      pickupDate: parsedPickupDate,
+      returnDate: parsedReturnDate,
+      tripType: trip_type,
+      passengerCount: Number(passenger_count),
+      totalKm: Math.round(Number(total_km)),
+      totalPrice: Number(total_price).toFixed(2),
+      customerName: customer_name,
+      customerPhone: localPhone,
+      pickupAddress: pickup_address ?? null,
       paymentStatus: "pending", status: "pending",
-    });
-    const bookingId = Number((result as any).insertId);
-    if (!bookingId || isNaN(bookingId)) throw new Error("Booking insert failed — no insertId returned.");
+    }) as any;
+
+    const bookingId = Number(insertId);
+    if (!bookingId) throw new Error("DB insert succeeded but returned no booking ID — please try again.");
     logBookingEvent(bookingId, "booking_created", { fromCity: from_city, toCity: to_city }).catch(() => {});
     return JSON.stringify({ success: true, bookingId, paymentUrl: `https://easyoutstation.com/booking?resume=${bookingId}` });
   }
@@ -192,7 +208,7 @@ Swift Dzire ₹12/km 4 seats | Toyota Etios ₹13/km 4 seats
 Maruti Ertiga ₹15/km 6 seats | Mahindra Xylo ₹16/km 7 seats
 Kia Carens ₹17/km 6 seats | Toyota Innova ₹19/km 6 seats
 Innova Crysta ₹20/km 6 seats (best for hills) | Innova Hycross ₹22/km 6 seats (luxury)
-ALWAYS call list_cars before create_booking — NEVER guess or assume car IDs. Car IDs in the database may differ from any numbers you expect. If create_booking returns an invalid car_id error, it will include the correct ID list — use it to retry immediately.
+When calling create_booking, pass car_name exactly as written above (e.g. "Innova Crysta", "Swift Dzire"). No numeric car IDs needed.
 
 ━━ FARE RULES ━━
 - Driver charge: ₹250/day. One-way = always 1 day. Round trip = ceil(days between dates) + 1 (e.g. Jun 2→Jun 9 = 8 days)
@@ -214,7 +230,7 @@ ALWAYS call list_cars before create_booking — NEVER guess or assume car IDs. C
 8. Car choice (suggest by group size & route)
 9. Full pickup address — ALWAYS ask, NEVER skip
 
-FLOW: Collect details → call get_fare_estimate with BOTH pickup_date AND return_date → quote → confirm → create_booking → send link.
+FLOW: Collect details → call get_fare_estimate with BOTH pickup_date AND return_date → quote → confirm → create_booking (pass car_name string, not a number) → send link.
 IMPORTANT: Always pass pickup_date + return_date to get_fare_estimate. Never calculate fare manually.
 After booking: "Booking #X confirmed! Pay ₹Y advance to lock your slot: [url]"
 
@@ -265,7 +281,7 @@ async function handleAiConversation(phone: string, userText: string): Promise<vo
   history.push({ role: "user", content: userText });
   if (history.length > 20) history.splice(0, history.length - 20);
 
-  const systemPrompt = buildSystemPrompt(false);
+  const systemPrompt = buildSystemPrompt();
 
   // Agentic loop — let Claude use tools until it sends a final reply
   const messages: Anthropic.MessageParam[] = history.map(m => ({ role: m.role, content: m.content }));
