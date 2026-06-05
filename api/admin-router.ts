@@ -6,9 +6,10 @@ import { users, bookings, drivers, vendors, expenses, siteSettings, faqs, routes
 import { getRedis } from "./lib/redis";
 import { eq, desc, sql, and, gte, lt, count, like } from "drizzle-orm";
 import { defaultProgramConfig } from "./referral-router";
-import { sendReferralPointsNotification, sendDriverAssignmentSms, sendCorporateApprovalEmail, sendRefundNotification, sendBookingSms } from "./lib/notifications";
+import { sendReferralPointsNotification, sendVendorTripAssignment, sendCorporateApprovalEmail, sendRefundNotification, sendBookingSms } from "./lib/notifications";
 import { logBookingEvent } from "./lib/bookingEvents";
 import { sendFcmNotification } from "./lib/fcm";
+import { sendWhatsAppTextRaw, toWaPhone } from "./lib/whatsapp";
 
 // In-memory OTP store for data-clear verification (process-scoped, 10-min TTL)
 const clearDataOtpStore = new Map<string, { otp: string; category: string; expiresAt: number }>();
@@ -128,8 +129,7 @@ export const adminRouter = createRouter({
   confirmBooking: adminQuery
     .input(z.object({
       id: z.number(),
-      driverName: z.string().min(1),
-      driverPhone: z.string().min(10),
+      vendorPhone: z.string().min(10),
     }))
     .mutation(async ({ input }) => {
       const db = getDb();
@@ -144,8 +144,6 @@ export const adminRouter = createRouter({
       const tripPin = Array.from({ length: 6 }, () => PIN_CHARS[Math.floor(Math.random() * PIN_CHARS.length)]).join("");
       await db.update(bookings).set({
         status: "confirmed",
-        driverName: input.driverName,
-        driverPhone: input.driverPhone,
         tripPin,
       } as any).where(eq(bookings.id, input.id));
 
@@ -157,7 +155,7 @@ export const adminRouter = createRouter({
 
       const emailBody = `Dear ${name},
 
-Your EasyOutstation booking is CONFIRMED! 🎉
+Your EasyOutstation booking is CONFIRMED!
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 BOOKING CONFIRMED — #${input.id}
@@ -166,13 +164,8 @@ Route        : ${route}
 Pickup Date  : ${date}
 Car          : ${car}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-YOUR DRIVER
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Name         : ${input.driverName}
-Mobile       : +91-${input.driverPhone}
-(Driver will call you 1 hour before pickup)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-${booking?.pickupAddress ? `Pickup Address: ${booking.pickupAddress}\n` : ""}
+${booking?.pickupAddress ? `Pickup Address: ${booking.pickupAddress}\n\n` : ""}We are assigning your driver and will send you their details shortly.
+
 Need help? Call: +91-8796564111
 Email: easyoutstation@gmail.com
 
@@ -190,62 +183,23 @@ Team EasyOutstation`;
       if (booking?.fcmToken) {
         sendFcmNotification(
           booking.fcmToken,
-          "Booking Confirmed! 🎉",
-          `Your cab from ${booking.fromCity} to ${booking.toCity} is confirmed. Driver: ${input.driverName} (+91-${input.driverPhone})`,
+          "Booking Confirmed!",
+          `Your ${route} trip on ${date} is confirmed. Driver details coming soon.`,
           { url: "/dashboard" }
         ).catch(() => {});
       }
 
-      const waMsg = `Hello ${name}! 👋
+      logBookingEvent(input.id, "booking_confirmed", { vendorPhone: input.vendorPhone, tripPin }).catch(() => {});
 
-Your EasyOutstation booking is *CONFIRMED* ✅
-
-📍 Route: *${route}*
-📅 Date: *${date}*
-🚗 Car: ${car}
-👨‍✈️ Driver: *${input.driverName}*
-📱 Driver Mobile: *+91-${input.driverPhone}*
-
-Your driver will call you 1 hour before pickup.
-
-Questions? Call us: +91-8796564111
-
-Have a wonderful journey! 🌟`;
-
-      // SMS to customer with driver details
-      if (booking?.resolvedPhone) {
-        sendSms(booking.resolvedPhone,
-          `EasyOutstation: Booking #${input.id} CONFIRMED! ${route}. Date: ${date}. Driver: ${input.driverName}, +91-${input.driverPhone}. Driver will call 1hr before pickup. Help: 8796564111`
-        ).catch(console.error);
-      }
-
-      logBookingEvent(input.id, "driver_assigned", { driverName: input.driverName, driverPhone: input.driverPhone, tripPin }).catch(() => {});
-
-      // FCM push to driver if they have a web push token
-      const driverPhone10 = input.driverPhone.replace(/\D/g, "").slice(-10);
-      const driverUser = await db.select({ fcmToken: users.fcmToken })
-        .from(users).where(eq(users.phone, driverPhone10)).limit(1);
-      if (driverUser[0]?.fcmToken) {
-        sendFcmNotification(
-          driverUser[0].fcmToken,
-          "Trip Assigned 🚗",
-          `Booking #${input.id} — ${booking?.fromCity} → ${booking?.toCity} on ${date}. Customer: ${name}`,
-          { url: "/driver" }
-        ).catch(() => {});
-      }
-
-      // SMS to driver so they have trip + customer details immediately
+      // Notify vendor via WhatsApp to confirm driver — vendor's reply auto-updates DB and notifies customer
       if (booking) {
-        sendDriverAssignmentSms({
-          driverPhone: input.driverPhone,
-          driverName: input.driverName,
+        sendVendorTripAssignment({
+          vendorPhone: input.vendorPhone,
+          bookingId: input.id,
           customerName: name,
-          customerPhone: booking.resolvedPhone ?? "",
           fromCity: booking.fromCity ?? "",
           toCity: booking.toCity ?? "",
           pickupDate: date,
-          pickupAddress: booking.pickupAddress ?? null,
-          bookingId: input.id,
         }).catch(console.error);
       }
 
@@ -271,13 +225,13 @@ Have a wonderful journey! 🌟`;
 
       return {
         success: true,
-        whatsappLink: booking?.resolvedPhone ? waLink(booking.resolvedPhone, waMsg) : null,
-        customerPhone: booking?.resolvedPhone ?? null,
+        vendorNotified: true,
+        whatsappAutoSent: true,
         emailSent,
       };
     }),
 
-  // Cancel booking → sends email → returns WhatsApp link
+  // Cancel booking → sends email + SMS + WhatsApp via API
   cancelBooking: adminQuery
     .input(z.object({
       id: z.number(),
@@ -338,10 +292,19 @@ We apologize for the inconvenience. Please contact us:
 
 Thank you for choosing EasyOutstation.`;
 
+      if (booking?.resolvedPhone) {
+        // WhatsApp free-form (24hr window); SMS as unconditional fallback for cancellations
+        sendWhatsAppTextRaw(toWaPhone(booking.resolvedPhone), waMsg).catch(() => {});
+        sendSms(booking.resolvedPhone,
+          `EasyOutstation: Booking #${input.id} (${route} on ${date}) cancelled.${input.reason ? ` Reason: ${input.reason}.` : ""} Help: 8796564111`
+        ).catch(console.error);
+      }
+
       logBookingEvent(input.id, "cancelled", { by: "admin", reason: input.reason }).catch(() => {});
       return {
         success: true,
-        whatsappLink: booking?.resolvedPhone ? waLink(booking.resolvedPhone, waMsg) : null,
+        whatsappLink: null,
+        whatsappAutoSent: !!booking?.resolvedPhone,
         customerPhone: booking?.resolvedPhone ?? null,
         emailSent,
       };

@@ -6,6 +6,7 @@ import { whatsappLogs, whatsappConversations, bookings, drivers, cars, users } f
 import { logBookingEvent } from "../lib/bookingEvents";
 import { QUEUE_WHATSAPP_INBOUND, type WhatsAppInboundJobData } from "./queues";
 import { sendWhatsAppTextRaw, toWaPhone } from "../lib/whatsapp";
+import { notifyCustomerDriverAssigned } from "../lib/notifications";
 import Anthropic from "@anthropic-ai/sdk";
 
 const ADMIN_PHONE = process.env.ADMIN_PHONE || "8796564111";
@@ -116,7 +117,7 @@ async function executeTool(name: string, input: any, phone: string): Promise<str
     const km = (trip_type === "round_trip" && days > 1) ? Math.max(rawKm, days * 250) : rawKm;
     const driverCharge = (driver_charge_per_day ?? 250) * days;
     const fare = Math.round(km * price_per_km + driverCharge);
-    return JSON.stringify({ distance_km: dist, km_billed: km, days, driver_charge: driverCharge, fare_inr: fare });
+    return JSON.stringify({ distance_km: dist, km_billed: km, days, driver_charge: driverCharge, fare_inr: fare, toll_note: "Toll, parking & state taxes: additional at actuals (paid on road, no markup)" });
   }
 
   if (name === "check_my_booking") {
@@ -175,7 +176,7 @@ async function executeTool(name: string, input: any, phone: string): Promise<str
     const bookingId = Number(insertId);
     if (!bookingId) throw new Error("DB insert succeeded but returned no booking ID — please try again.");
     logBookingEvent(bookingId, "booking_created", { fromCity: from_city, toCity: to_city }).catch(() => {});
-    return JSON.stringify({ success: true, bookingId, paymentUrl: `https://easyoutstation.com/booking?resume=${bookingId}` });
+    return JSON.stringify({ success: true, bookingId, carId: matched.id, paymentUrl: `https://easyoutstation.com/booking?resume=${bookingId}&carId=${matched.id}` });
   }
 
   return JSON.stringify({ error: "Unknown tool" });
@@ -270,6 +271,7 @@ For hill routes with a group, Tempo Traveller or Force Urbania preferred over bu
 
 ━━ OTHER RULES ━━
 - NEVER calculate or estimate fares manually — ALWAYS use get_fare_estimate, even for rough quotes. If dates or car aren't confirmed yet, ask for them before calling the tool. Manual fare guesses will always be wrong.
+- MANDATORY: Every fare quote MUST end with: "⚠️ Toll, parking & state taxes: additional at actuals (paid on road, no markup)"
 - Never ask for phone number — you already have it
 - Booking status → use check_my_booking
 - Driver details sent within 60 min of confirmation
@@ -284,6 +286,7 @@ type MsgParam = { role: "user" | "assistant"; content: string };
 
 async function handleAiConversation(phone: string, userText: string): Promise<void> {
   const db = getDb();
+  const localPhone = phone.slice(-10);
 
   // Load history
   const [conv] = await db.select().from(whatsappConversations).where(eq(whatsappConversations.phone, phone));
@@ -506,6 +509,15 @@ async function handleIncomingMessage(message: any, waPhone: string): Promise<voi
       }
 
       if (bookingId) {
+        const [booking] = await db.select({
+          customerName: bookings.customerName,
+          customerPhone: bookings.customerPhone,
+          customerEmail: bookings.customerEmail,
+          fromCity: bookings.fromCity,
+          toCity: bookings.toCity,
+          pickupDate: bookings.pickupDate,
+        }).from(bookings).where(eq(bookings.id, bookingId)).limit(1);
+
         await db.update(bookings)
           .set({ driverName, driverPhone: mobile, status: "driver_assigned" })
           .where(eq(bookings.id, bookingId));
@@ -521,6 +533,20 @@ async function handleIncomingMessage(message: any, waPhone: string): Promise<voi
           `✅ Vendor confirmed driver for Booking #${bookingId}: ${driverName}, +91-${mobile}`
         );
         logBookingEvent(bookingId, "vendor_confirmed", { driverName, driverPhone: mobile }).catch(() => {});
+
+        if (booking?.customerPhone) {
+          notifyCustomerDriverAssigned({
+            bookingId,
+            customerName: booking.customerName,
+            customerPhone: booking.customerPhone,
+            customerEmail: booking.customerEmail,
+            fromCity: booking.fromCity ?? "",
+            toCity: booking.toCity ?? "",
+            pickupDate: booking.pickupDate ?? "",
+            driverName,
+            driverPhone: mobile,
+          }).catch((e) => console.error("[WA Inbound] Failed to notify customer of driver:", e));
+        }
       }
       await sendWhatsAppTextRaw(waPhone,
         `✅ Confirmed! ${driverName} (+91-${mobile}) has been registered as driver${bookingId ? ` for Trip #${bookingId}` : ""}. Safe driving! 🚗`

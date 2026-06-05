@@ -48,8 +48,8 @@ type PaymentStatus = "pending" | "paid" | "refunded";
 
 const statusColors: Record<BookingStatus, string> = {
   pending: "bg-amber-500/15 text-amber-300 border border-amber-500/20",
-  confirmed: "bg-emerald-500/15 text-emerald-300 border border-emerald-500/20",
-  driver_assigned: "bg-teal-500/15 text-teal-300 border border-teal-500/20",
+  confirmed: "bg-amber-500/15 text-amber-300 border border-amber-500/20",
+  driver_assigned: "bg-emerald-500/15 text-emerald-300 border border-emerald-500/20",
   completed: "bg-blue-500/15 text-blue-300 border border-blue-500/20",
   cancelled: "bg-red-500/15 text-red-300 border border-red-500/20",
 };
@@ -103,7 +103,7 @@ interface CancelModal {
   date: string;
 }
 interface NoteModal { open: boolean; bookingId: number; currentNote: string }
-interface ActionResult { whatsappLink: string | null; emailSent: boolean; customerPhone: string | null; bookingId?: number; action?: "confirmed" | "cancelled" }
+interface ActionResult { whatsappLink: string | null; whatsappAutoSent?: boolean; emailSent: boolean; customerPhone: string | null; bookingId?: number; action?: "confirmed" | "cancelled" }
 interface DriverForm { name: string; phone: string; vehicleInfo: string }
 
 function compressImage(file: File): Promise<string> {
@@ -154,10 +154,9 @@ export default function AdminPage() {
   const [noteModal, setNoteModal] = useState<NoteModal>({ open: false, bookingId: 0, currentNote: "" });
   const [noteText, setNoteText] = useState("");
 
-  // Driver selection in confirm modal
-  const [selectedDriverId, setSelectedDriverId] = useState(""); // "" = custom
-  const [driverName, setDriverName] = useState("");
-  const [driverPhone, setDriverPhone] = useState("");
+  // Vendor selection in confirm modal
+  const [selectedVendorId, setSelectedVendorId] = useState(""); // "" = manual
+  const [vendorPhoneInput, setVendorPhoneInput] = useState("");
 
   // Result shown after confirm/cancel
   const [actionResult, setActionResult] = useState<ActionResult | null>(null);
@@ -323,7 +322,7 @@ export default function AdminPage() {
     onSuccess: (res) => {
       setConfirmModal(m => ({ ...m, open: false }));
       setActionResult({ ...res, bookingId: confirmModal.bookingId, action: "confirmed" });
-      setSelectedDriverId(""); setDriverName(""); setDriverPhone("");
+      setSelectedVendorId(""); setVendorPhoneInput("");
       invalidateBookings();
     },
   });
@@ -533,10 +532,8 @@ export default function AdminPage() {
   }
 
   function openConfirmModal(b: any) {
-    const booking = b as typeof b & { driverName?: string; driverPhone?: string };
-    setDriverName(booking.driverName ?? "");
-    setDriverPhone(booking.driverPhone ?? "");
-    setSelectedDriverId("");
+    setSelectedVendorId("");
+    setVendorPhoneInput("");
     setConfirmModal({
       open: true,
       bookingId: Number(b.id),
@@ -550,13 +547,13 @@ export default function AdminPage() {
     });
   }
 
-  function selectDriver(driverId: string) {
-    setSelectedDriverId(driverId);
-    if (driverId && driverId !== "custom") {
-      const d = driversList?.find(d => String(d.id) === driverId);
-      if (d) { setDriverName(d.name); setDriverPhone(d.phone); }
-    } else if (driverId === "custom") {
-      setDriverName(""); setDriverPhone("");
+  function selectVendor(vendorId: string) {
+    setSelectedVendorId(vendorId);
+    if (vendorId && vendorId !== "manual") {
+      const v = vendorsList?.find(v => String(v.id) === vendorId);
+      if (v) setVendorPhoneInput(v.phone ?? "");
+    } else {
+      setVendorPhoneInput("");
     }
   }
 
@@ -638,15 +635,10 @@ export default function AdminPage() {
                       <Mail className="w-3 h-3" /> No email on file
                     </span>
                   )}
-                  {actionResult.whatsappLink ? (
-                    <a
-                      href={actionResult.whatsappLink}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex items-center gap-1.5 text-xs font-semibold bg-[#25D366] text-white px-3 py-1 rounded-full hover:bg-[#1ebe5d] transition-colors"
-                    >
-                      <MessageCircle className="w-3 h-3" /> Tap to send WhatsApp →
-                    </a>
+                  {actionResult.whatsappAutoSent ? (
+                    <span className="flex items-center gap-1.5 text-xs font-semibold bg-[#25D366]/20 text-[#25D366] border border-[#25D366]/30 px-3 py-1 rounded-full">
+                      <MessageCircle className="w-3 h-3" /> WhatsApp sent via API ✓
+                    </span>
                   ) : (
                     <span className="flex items-center gap-1 text-xs bg-amber-500/10 text-amber-300 border border-amber-500/20 px-2 py-1 rounded-full">
                       No phone on file — call customer manually
@@ -1249,7 +1241,7 @@ export default function AdminPage() {
                             <div className="flex flex-col items-end gap-1 shrink-0">
                               <span className="font-bold text-primary">₹{parseFloat(b.totalPrice.toString()).toLocaleString("en-IN")}</span>
                               <Badge className={`${statusColors[b.status as BookingStatus]} text-xs border-0`}>
-                                {b.status.charAt(0).toUpperCase() + b.status.slice(1)}
+                                {b.status === "confirmed" ? "Awaiting Driver" : b.status === "driver_assigned" ? "Driver Assigned" : b.status.charAt(0).toUpperCase() + b.status.slice(1)}
                               </Badge>
                               <Badge className={`${paymentColors[b.paymentStatus as PaymentStatus]} text-xs border-0`}>
                                 {b.paymentStatus === "paid" ? "Paid ✓" : b.paymentStatus === "refunded" ? "Refunded" : "Unpaid"}
@@ -2875,57 +2867,51 @@ export default function AdminPage() {
           </div>
 
           <div className="space-y-3">
-            {/* Driver dropdown */}
-            {(driversList?.length ?? 0) > 0 && (
-              <div>
-                <label className="text-sm font-medium mb-1 block">Select from Roster</label>
-                <Select value={selectedDriverId} onValueChange={selectDriver}>
-                  <SelectTrigger className="text-sm">
-                    <SelectValue placeholder="Choose a driver…" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="custom">— Enter manually —</SelectItem>
-                    {driversList!.map(d => (
-                      <SelectItem key={d.id} value={String(d.id)}>
-                        {d.name} · {d.phone}{d.vehicleInfo ? ` (${d.vehicleInfo})` : ""}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="text-sm font-medium mb-1 block">Driver Name *</label>
-                <Input placeholder="e.g. Ramesh Kumar" value={driverName} onChange={e => setDriverName(e.target.value)} />
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-1 block">Driver Phone *</label>
-                <Input placeholder="10-digit" value={driverPhone} onChange={e => setDriverPhone(e.target.value)} />
-              </div>
+            {/* Vendor dropdown */}
+            <div>
+              <label className="text-sm font-medium mb-1 block">Assign Vendor *</label>
+              <Select value={selectedVendorId} onValueChange={selectVendor}>
+                <SelectTrigger className="text-sm">
+                  <SelectValue placeholder="Choose a vendor…" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="manual">— Enter phone manually —</SelectItem>
+                  {(vendorsList ?? []).map(v => (
+                    <SelectItem key={v.id} value={String(v.id)}>
+                      {v.name}{v.company ? ` (${v.company})` : ""} · {v.phone}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            {(confirmModal.customerEmail || confirmModal.customerPhone) && (
-              <div className="bg-blue-50 rounded-lg p-2 text-xs text-blue-700 flex gap-2">
-                <Mail className="w-3 h-3 shrink-0 mt-0.5" />
-                <span>
-                  Confirmation will be sent
-                  {confirmModal.customerEmail && <> via email to <strong>{confirmModal.customerEmail}</strong></>}
-                  {confirmModal.customerEmail && confirmModal.customerPhone && " and "}
-                  {confirmModal.customerPhone && <>WhatsApp link for <strong>+91-{confirmModal.customerPhone}</strong> will be shown</>}
-                  .
-                </span>
+            {/* Manual phone fallback — shown when no vendor selected or manual chosen */}
+            {(!selectedVendorId || selectedVendorId === "manual") && (
+              <div>
+                <label className="text-sm font-medium mb-1 block">Vendor WhatsApp Phone *</label>
+                <Input
+                  placeholder="10-digit mobile"
+                  value={vendorPhoneInput}
+                  onChange={e => setVendorPhoneInput(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                />
               </div>
             )}
+
+            <div className="bg-blue-50 rounded-lg p-2 text-xs text-blue-700 flex gap-2">
+              <Mail className="w-3 h-3 shrink-0 mt-0.5" />
+              <span>
+                Vendor will receive a WhatsApp message to confirm their driver. Customer will be notified automatically once vendor replies.
+                {confirmModal.customerEmail && <> Email also sent to <strong>{confirmModal.customerEmail}</strong>.</>}
+              </span>
+            </div>
 
             <Button
               className="w-full bg-green-600 hover:bg-green-700 text-white"
-              disabled={!driverName.trim() || !driverPhone.trim() || confirmBooking.isPending}
-              onClick={() => confirmBooking.mutate({ id: confirmModal.bookingId, driverName: driverName.trim(), driverPhone: driverPhone.trim() })}
+              disabled={vendorPhoneInput.trim().length < 10 || confirmBooking.isPending}
+              onClick={() => confirmBooking.mutate({ id: confirmModal.bookingId, vendorPhone: vendorPhoneInput.trim() })}
             >
               <CheckCheck className="w-4 h-4 mr-2" />
-              {confirmBooking.isPending ? "Confirming…" : "Confirm Booking & Notify Customer"}
+              {confirmBooking.isPending ? "Assigning…" : "Assign to Vendor & Request Driver"}
             </Button>
           </div>
         </DialogContent>

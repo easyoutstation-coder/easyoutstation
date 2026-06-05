@@ -170,8 +170,28 @@ export async function sendBookingSms(
     if (carId) p.set("carId", String(carId));
     if (totalKm) p.set("distance", String(totalKm));
     const resumeUrl = `https://easyoutstation.com/booking?${p.toString()}`;
-    message = `EasyOutstation: You left your booking incomplete! ${fromCity} to ${toCity} on ${pickupDate}. Fare: Rs ${totalPrice.toLocaleString("en-IN")}. Complete booking: ${resumeUrl} Help: 8796564111`;
-    await dispatchSms(number, message, { bookingId, notificationType: type });
+    const price = totalPrice.toLocaleString("en-IN");
+    message = `EasyOutstation: You left your booking incomplete! ${fromCity} to ${toCity} on ${pickupDate}. Fare: Rs ${price}. Complete booking: ${resumeUrl} Help: 8796564111`;
+    // WhatsApp primary (same template as touch 2 & 3), SMS as fallback
+    await dispatchWhatsApp(
+      number,
+      "eo_abandonment_reminder_v2",
+      "en",
+      [{
+        type: "body",
+        parameters: [
+          { type: "text", text: customerName ?? "Traveller" },
+          { type: "text", text: fromCity },
+          { type: "text", text: toCity },
+          { type: "text", text: pickupDate },
+          { type: "text", text: String(bookingId) },
+          { type: "text", text: price },
+          { type: "text", text: resumeUrl },
+        ],
+      }],
+      { bookingId, notificationType: type },
+      message
+    );
   } else {
     message = `EasyOutstation: Booking #${bookingId} CONFIRMED! ${fromCity} to ${toCity}. Pickup: ${pickupDate}${returnDate ? `. Return: ${returnDate}${returnTime ? ` at ${formatTime(returnTime)}` : ""}` : ""}. Fare: Rs ${totalPrice.toLocaleString("en-IN")}. Driver details within 60 mins. Help: 8796564111`;
     // Send via WhatsApp first; SMS fires automatically if WA fails permanently
@@ -560,13 +580,6 @@ export async function sendTripReminder(input: {
   const route = `${input.fromCity} to ${input.toCity}`;
   const meta: NotificationMeta = { bookingId: input.bookingId, notificationType: "trip-reminder" };
 
-  if (input.customerPhone) {
-    await dispatchSms(input.customerPhone,
-      `EasyOutstation: Reminder! Your trip ${route} is TOMORROW (${input.pickupDate}). Driver: ${input.driverName}, call +91-${input.driverPhone}.${input.pickupAddress ? ` Pickup: ${input.pickupAddress}.` : ""} Help: 8796564111`,
-      meta
-    );
-  }
-
   if (input.customerEmail) {
     await dispatchEmail(input.customerEmail,
       `Trip Reminder — Tomorrow: ${route} | EasyOutstation`,
@@ -646,12 +659,7 @@ export async function sendReviewRequest(input: {
   const meta: NotificationMeta = { bookingId: input.bookingId, notificationType: "review-request" };
 
   if (input.customerPhone) {
-    await dispatchSms(input.customerPhone,
-      `EasyOutstation: Hope your trip ${route} was great! Rate your experience at easyoutstation.com/dashboard — takes 30 seconds & helps future travelers. Thank you!`,
-      meta
-    );
-
-    // WhatsApp review request with conversational reply (customer replies 1-5)
+    // WhatsApp review request with conversational reply (customer replies 1-5), SMS fallback via worker
     await dispatchWhatsApp(
       input.customerPhone,
       "eo_review_request_v2_",
@@ -664,7 +672,8 @@ export async function sendReviewRequest(input: {
           { type: "text", text: input.toCity },
         ],
       }],
-      { bookingId: input.bookingId, notificationType: "review-request" }
+      { bookingId: input.bookingId, notificationType: "review-request" },
+      `EasyOutstation: Hope your trip ${route} was great! Rate 1-5 at easyoutstation.com/dashboard. Thank you!`
     );
 
     // Set conversation state so inbound worker handles their 1-5 reply
@@ -742,7 +751,6 @@ Team EasyOutstation`;
   const meta: NotificationMeta = { notificationType: "corporate-approval" };
   if (input.email) await dispatchEmail(input.email, `Corporate Account Approved — ${input.companyName} | EasyOutstation`, text, meta);
   if (input.phone) {
-    await dispatchSms(input.phone, `EasyOutstation: Corporate account for ${input.companyName} APPROVED! Login at easyoutstation.com/corporate-portal with join code: ${input.joinCode}. Help: 8796564111`, meta);
     await dispatchWhatsApp(
       input.phone,
       "eo_corp_account_active_v2_",
@@ -753,7 +761,8 @@ Team EasyOutstation`;
           { type: "text", text: input.companyName },
         ],
       }],
-      { notificationType: "corporate-approval" }
+      { notificationType: "corporate-approval" },
+      `EasyOutstation: Corporate account for ${input.companyName} approved! Join code: ${input.joinCode}. Portal: easyoutstation.com/corporate-portal. Help: 8796564111`
     );
   }
 }
@@ -858,5 +867,110 @@ export async function sendAbandonmentFollowupSms(
       ? `Dear ${customerName || "Traveller"},\n\nYour booking for ${fromCity} → ${toCity} on ${pickupDate} is still saved.\n\nFare: ₹${price}\n\nComplete your booking now: ${resumeUrl}\n\nNeed help? Call +91-8796564111 or reply to this email.\n\nTeam EasyOutstation`
       : `Dear ${customerName || "Traveller"},\n\nThis is your final reminder — your ${fromCity} → ${toCity} booking on ${pickupDate} is about to expire.\n\nFare: ₹${price}\n\nSecure your seat now: ${resumeUrl}\n\nQuestions? Call +91-8796564111.\n\nTeam EasyOutstation`;
     await dispatchEmail(customerEmail, subject, emailText, meta);
+  }
+}
+
+export async function sendVendorTripAssignment(input: {
+  vendorPhone: string;
+  bookingId: number;
+  fromCity: string;
+  toCity: string;
+  pickupDate: string;
+  customerName: string;
+}) {
+  await dispatchWhatsApp(
+    input.vendorPhone,
+    "eo_vendor_trip_assigned_v2",
+    "en",
+    [{
+      type: "body",
+      parameters: [
+        { type: "text", text: String(input.bookingId) },
+        { type: "text", text: input.fromCity },
+        { type: "text", text: input.toCity },
+        { type: "text", text: input.pickupDate },
+        { type: "text", text: input.customerName },
+      ],
+    }],
+    { bookingId: input.bookingId, notificationType: "vendor-assignment" },
+    `EasyOutstation: Trip #${input.bookingId} assigned to you — ${input.fromCity} to ${input.toCity} on ${input.pickupDate}. Customer: ${input.customerName}. Reply on WhatsApp 8796564111 with driver name and mobile. Example: Suresh Kumar, 9876543210. Reply ISSUE if problem.`,
+    true // vendor — skip opt-out check
+  );
+
+  try {
+    const db = getDb();
+    const waVendorPhone = toWaPhone(input.vendorPhone);
+    const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
+    await db.execute(sql`
+      INSERT INTO whatsappConversations (phone, state, contextJson, expiresAt)
+      VALUES (${waVendorPhone}, 'awaiting_driver_confirm', ${JSON.stringify({ bookingId: input.bookingId })}, ${expiresAt})
+      ON DUPLICATE KEY UPDATE state = 'awaiting_driver_confirm', contextJson = ${JSON.stringify({ bookingId: input.bookingId })}, expiresAt = ${expiresAt}
+    `);
+  } catch (e) {
+    console.error("[Notify] Failed to set vendor WA conversation state:", e);
+  }
+}
+
+export async function notifyCustomerDriverAssigned(input: {
+  bookingId: number;
+  customerName: string;
+  customerPhone: string;
+  customerEmail?: string | null;
+  fromCity: string;
+  toCity: string;
+  pickupDate: string;
+  driverName: string;
+  driverPhone: string;
+}) {
+  const meta: NotificationMeta = { bookingId: input.bookingId, notificationType: "driver-assigned" };
+  const smsFallback = `EasyOutstation: Your driver for ${input.fromCity} to ${input.toCity} on ${input.pickupDate} is ${input.driverName}, +91-${input.driverPhone}. Help: 8796564111`;
+
+  await dispatchWhatsApp(
+    input.customerPhone,
+    "eo_driver_assigned_v2_",
+    "en",
+    [{
+      type: "body",
+      parameters: [
+        { type: "text", text: input.customerName },
+        { type: "text", text: input.fromCity },
+        { type: "text", text: input.toCity },
+        { type: "text", text: input.pickupDate },
+        { type: "text", text: input.driverName },
+        { type: "text", text: input.driverPhone },
+      ],
+    }],
+    meta,
+    smsFallback
+  );
+
+  dispatchPushByPhone(input.customerPhone, "Driver Assigned", `${input.driverName} will pick you up for ${input.fromCity}→${input.toCity} on ${input.pickupDate}`, { url: "/dashboard", bookingId: String(input.bookingId) }).catch(() => {});
+
+  if (input.customerEmail) {
+    await dispatchEmail(
+      input.customerEmail,
+      `Driver Assigned — Booking #${input.bookingId} | EasyOutstation`,
+      `Dear ${input.customerName},
+
+Great news! Your driver has been assigned for your upcoming trip.
+
+DRIVER DETAILS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Driver Name  : ${input.driverName}
+Driver Phone : +91-${input.driverPhone}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Trip         : ${input.fromCity} → ${input.toCity}
+Date         : ${input.pickupDate}
+Booking ID   : #${input.bookingId}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Your driver will contact you before the pickup. If you have any questions, please reach out:
+📞 +91-8796564111
+📧 easyoutstation@gmail.com
+
+Have a safe journey!
+Team EasyOutstation`,
+      meta
+    );
   }
 }
