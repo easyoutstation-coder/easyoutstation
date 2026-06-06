@@ -1,4 +1,4 @@
-const CACHE = "easyoutstation-v1";
+const CACHE = "easyoutstation-v3";
 
 const PRECACHE = [
   "/",
