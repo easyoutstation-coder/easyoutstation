@@ -1,4 +1,6 @@
 {
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist/public",
   "rewrites": [
     { "source": "/sitemap.xml", "destination": "https://easyoutstation-production.up.railway.app/sitemap.xml" },
     { "source": "/(.*)", "destination": "/index.html" }
