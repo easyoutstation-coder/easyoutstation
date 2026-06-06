@@ -4,7 +4,6 @@ import { useParams, useNavigate, useSearchParams } from "react-router";
 import { trpc } from "@/providers/trpc";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import AIChatbot from "@/components/AIChatbot";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -206,7 +205,7 @@ export default function CarDetailPage() {
                 <p className="text-muted-foreground">{displayCar.brand}</p>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="bg-white rounded-xl p-4 border border-border text-center">
                   <Users className="w-5 h-5 text-primary mx-auto mb-1" />
                   <div className="text-lg font-bold">{displayCar.seats - 1}</div>
@@ -333,7 +332,6 @@ export default function CarDetailPage() {
       </div>
 
       <Footer />
-      <AIChatbot />
     </div>
   );
 }

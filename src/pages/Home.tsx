@@ -1,6 +1,5 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import AIChatbot from "@/components/AIChatbot";
 import WhatsAppFloat from "@/components/WhatsAppFloat";
 import HeroSection from "@/sections/HeroSection";
 import PopularCarsSection from "@/sections/PopularCarsSection";
@@ -147,7 +146,6 @@ export default function Home() {
         <CTASection />
       </main>
       <Footer />
-      <AIChatbot />
       <WhatsAppFloat />
     </div>
   );

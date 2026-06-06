@@ -4,7 +4,6 @@ import { useSearchParams, useNavigate } from "react-router";
 import { trpc } from "@/providers/trpc";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import AIChatbot from "@/components/AIChatbot";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -338,14 +337,15 @@ export default function CarsPage() {
                   {displayCars.length} vehicles available{distanceKm > 0 ? ` · Prices for ${tripDays > 1 ? `${tripDays} days, min ${Math.max(effectiveKm, tripDays * 250)} km` : `${effectiveKm} km`}` : " for your journey"}
                 </p>
               </div>
-              <div className="flex gap-2">
-                <div className="relative flex-1 md:w-80">
+              <div className="flex flex-col gap-2 w-full md:w-auto">
+                {/* Search — full width on mobile */}
+                <div className="relative w-full md:w-80">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search cars..."
-                    className="pl-10 pr-10"
+                    className="pl-10 pr-10 w-full"
                   />
                   <button
                     onClick={handleVoiceSearch}
@@ -355,30 +355,33 @@ export default function CarsPage() {
                   </button>
                 </div>
 
-                {/* Mobile filter button */}
-                <Button
-                  variant="outline"
-                  onClick={() => setShowMobileFilters(true)}
-                  className="lg:hidden relative"
-                >
-                  <SlidersHorizontal className="w-4 h-4 mr-2" />
-                  Filters
-                  {hasActiveFilters && (
-                    <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-blue-600" />
-                  )}
-                </Button>
+                {/* Filter + Sort — side by side row on mobile */}
+                <div className="flex gap-2">
+                  {/* Mobile filter button */}
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowMobileFilters(true)}
+                    className="lg:hidden relative flex-1 md:flex-none"
+                  >
+                    <SlidersHorizontal className="w-4 h-4 mr-2" />
+                    Filters
+                    {hasActiveFilters && (
+                      <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-blue-600" />
+                    )}
+                  </Button>
 
-                {/* Sort */}
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as any)}
-                  className="h-10 px-3 rounded-lg border border-input bg-white text-sm text-slate-700 cursor-pointer hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                >
-                  <option value="price_asc">💰 Price: Low to High</option>
-                  <option value="price_desc">💰 Price: High to Low</option>
-                  <option value="rating">⭐ Top Rated</option>
-                  <option value="popular">🔥 Most Popular</option>
-                </select>
+                  {/* Sort */}
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as any)}
+                    className="flex-1 md:flex-none h-10 px-3 rounded-lg border border-input bg-white text-sm text-slate-700 cursor-pointer hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  >
+                    <option value="price_asc">Price ↑</option>
+                    <option value="price_desc">Price ↓</option>
+                    <option value="rating">Top Rated</option>
+                    <option value="popular">Popular</option>
+                  </select>
+                </div>
               </div>
             </div>
 
@@ -619,7 +622,6 @@ export default function CarsPage() {
       </Sheet>
 
       <Footer />
-      <AIChatbot />
     </div>
   );
 }
