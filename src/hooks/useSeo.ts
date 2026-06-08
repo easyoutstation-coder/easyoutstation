@@ -4,12 +4,14 @@ export function useSeo({
   title,
   description,
   canonical,
+  ogImage,
   noindex = false,
   schema,
 }: {
   title: string;
   description: string;
   canonical?: string;
+  ogImage?: string;
   noindex?: boolean;
   schema?: object | object[];
 }) {
@@ -33,6 +35,13 @@ export function useSeo({
     setMeta('meta[property="og:description"]', description);
     if (canonical) {
       setMeta('meta[property="og:url"]', canonical);
+    }
+    if (ogImage) {
+      setMeta('meta[property="og:image"]', ogImage);
+      setMeta('meta[property="og:image:width"]', "1600");
+      setMeta('meta[property="og:image:height"]', "900");
+      setMeta('meta[name="twitter:card"]', "summary_large_image");
+      setMeta('meta[name="twitter:image"]', ogImage);
     }
     setMeta('meta[name="twitter:title"]', title);
     setMeta('meta[name="twitter:description"]', description);

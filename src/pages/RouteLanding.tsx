@@ -280,6 +280,7 @@ export default function RouteLanding() {
     title: pageTitle,
     description: data?.description ?? "Book outstation cabs from Delhi at fixed fares.",
     canonical: canonicalUrl,
+    ogImage: lm?.image,
     schema,
   });
 
