@@ -77,14 +77,14 @@ export const routeLandmarks: Record<string, { image: string; landmark: string; o
     objectPosition: "center 35%",
   },
   ludhiana: {
-    image: "https://images.pexels.com/photos/5822369/pexels-photo-5822369.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop",
-    landmark: "Gurudwara Dukh Nivaran, Ludhiana",
-    objectPosition: "center 45%",
+    image: "https://images.pexels.com/photos/33134859/pexels-photo-33134859.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop",
+    landmark: "Gurudwara, Punjab",
+    objectPosition: "center 40%",
   },
   ayodhya: {
-    image: "https://images.unsplash.com/photo-1710523213193-36b3582a1037?w=1600&h=900&q=90&fit=crop&auto=format",
+    image: "https://images.unsplash.com/photo-1672398760212-08ce34b88c62?w=1600&h=900&q=90&fit=crop&auto=format",
     landmark: "Ram Mandir, Ayodhya",
-    objectPosition: "center 50%",
+    objectPosition: "center 45%",
   },
   banaras: {
     image: "https://images.pexels.com/photos/10461752/pexels-photo-10461752.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop",
