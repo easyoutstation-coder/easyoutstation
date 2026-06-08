@@ -2,8 +2,8 @@ import { z } from "zod";
 import { createRouter, publicQuery } from "./middleware";
 
 const EMAIL = "easyoutstation@gmail.com";
-const WHATSAPP = "+91-99585 56011";
-const PHONE = "+91-99585 56011";
+const WHATSAPP = "+91-87965 64111";
+const PHONE = "+91-87965 64111";
 
 function getRuleBasedResponse(msg: string): string {
   // Greetings
@@ -51,14 +51,44 @@ function getRuleBasedResponse(msg: string): string {
     return `Delhi to Dehradun/Mussoorie 🌄\n\n📍 Distance: ~250-290 km\n⏱️ Duration: 5-6 hours\n\nBest cars:\n🥇 Ertiga (₹15/km) — Hill comfort\n🥈 Innova Crysta (₹20/km) — Premium hills\n🥉 Swift Dzire (₹12/km) — Budget option\n\nMussoorie is 30 km further from Dehradun via mountain roads.`;
   }
 
+  // Dharamshala / McLeod Ganj
+  if (msg.match(/dharamshala|dharamsala|mcleod|mcleodganj|dalai lama|kangra/)) {
+    return `Delhi to Dharamshala 🏔️\n\n📍 Distance: ~475 km\n⏱️ Duration: 10-11 hours\n🗺️ Route: Delhi → NH44 → Jalandhar → NH154 → Dharamshala\n\nBest cars for this route:\n🥇 Innova Crysta (₹20/km) — Most comfortable for hills\n🥈 Innova Hycross (₹22/km) — Premium luxury\n🥉 Ertiga (₹15/km) — Great value for families\n\nDrops at McLeod Ganj or lower Dharamshala — Dalai Lama's abode, Triund Trek, Kangra Valley!`;
+  }
+
+  // Kashmir / Dal Lake / Srinagar
+  if (msg.match(/kashmir|srinagar|dal lake|gulmarg|pahalgam|jammu kashmir|j&k|houseboats|shikara/)) {
+    return `Delhi to Kashmir 🏔️\n\n📍 Distance: ~820 km\n⏱️ Duration: 14-16 hours\n🗺️ Route: Delhi → NH44 → Jammu → Jammu-Srinagar Highway → Srinagar\n\nBest cars for this route:\n🥇 Innova Crysta (₹20/km) — Ideal for long highway journey\n🥈 Innova Hycross (₹22/km) — Premium comfort\n🥉 Kia Carens (₹17/km) — Modern 6-seater\n\nExperience Dal Lake shikaras, Mughal Gardens, Gulmarg & Pahalgam — the paradise of India!`;
+  }
+
+  // Vaishno Devi / Katra
+  if (msg.match(/vaishno|vaishnodevi|katra|mata rani|trikuta|jammu|shrine/)) {
+    return `Delhi to Vaishno Devi 🙏\n\n📍 Distance: ~650 km (to Katra base camp)\n⏱️ Duration: 12-13 hours\n🗺️ Route: Delhi → NH44 → Jammu → Katra\n\nBest cars for this route:\n🥇 Innova Crysta (₹20/km) — Spacious for pilgrimage groups\n🥈 Ertiga (₹15/km) — Great for families\n🥉 Swift Dzire (₹12/km) — Budget for small groups\n\nWe drop at Katra — the 14 km trek to the holy shrine starts from there. Helicopter darshan also available from Katra!`;
+  }
+
+  // Ludhiana
+  if (msg.match(/ludhiana/)) {
+    return `Delhi to Ludhiana 🏙️\n\n📍 Distance: ~310 km\n⏱️ Duration: 5-6 hours\n🗺️ Route: Delhi → NH44 → Ambala → Ludhiana\n\nBest cars:\n🥇 Swift Dzire (₹12/km) — Quick & economical\n🥈 Ertiga (₹15/km) — Comfortable family ride\n🥉 Innova Crysta (₹20/km) — Premium option\n\nLudhiana is the industrial capital of Punjab — gateway to Amritsar (120 km further)!`;
+  }
+
+  // Ayodhya / Ram Mandir
+  if (msg.match(/ayodhya|ram mandir|saryu|ramlala|hanuman garhi/)) {
+    return `Delhi to Ayodhya 🛕\n\n📍 Distance: ~640 km\n⏱️ Duration: 10-12 hours\n🗺️ Route: Delhi → Agra-Lucknow Expressway (NH19) → Ayodhya\n\nBest cars:\n🥇 Innova Crysta (₹20/km) — Long highway comfort\n🥈 Ertiga (₹15/km) — Family pilgrimage trip\n🥉 Swift Dzire (₹12/km) — Budget option\n\nVisit Ram Mandir, Saryu Ghats, Kanak Bhawan & Hanuman Garhi. Overnight stay recommended for a comfortable darshan experience!`;
+  }
+
+  // Banaras / Varanasi / Kashi
+  if (msg.match(/banaras|varanasi|kashi|ganga ghat|dashashwamedh|sarnath|kashi vishwanath/)) {
+    return `Delhi to Banaras 🪔\n\n📍 Distance: ~820 km\n⏱️ Duration: 12-14 hours\n🗺️ Route: Delhi → Agra-Lucknow Expressway (NH19) → NH27 → Varanasi\n\nBest cars:\n🥇 Innova Crysta (₹20/km) — Most comfortable for long journey\n🥈 Innova Hycross (₹22/km) — Premium luxury\n🥉 Ertiga (₹15/km) — Family trip\n\nExperience Ganga Aarti at Dashashwamedh Ghat, Kashi Vishwanath Temple, Sarnath Buddhist site & sunrise boat ride on the Ganga!`;
+  }
+
   // Routes / Destinations
   if (msg.match(/route|destination|where|city|places|travel|trip|tour/)) {
-    return `Popular routes from Delhi 🗺️\n\n🏔️ Delhi → Manali — 540 km\n🏰 Delhi → Jaipur — 280 km\n🕌 Delhi → Agra — 230 km\n🧘 Delhi → Rishikesh — 240 km\n🏙️ Delhi → Chandigarh — 250 km\n🌄 Delhi → Dehradun — 250 km\n\nWe also cover custom routes across North India. Just share your destination and we'll plan your trip!`;
+    return `All routes from Delhi 🗺️\n\n🏔️ Manali — 540 km · Shimla — 350 km · Dharamshala — 475 km\n🧘 Rishikesh — 240 km · Haridwar — 220 km · Dehradun — 300 km · Mussoorie — 310 km · Nainital — 310 km\n🏙️ Chandigarh — 260 km · Ludhiana — 310 km · Amritsar — 460 km\n🏰 Jaipur — 280 km · Agra — 230 km · Mathura — 175 km\n🛕 Ayodhya — 640 km · Banaras — 820 km\n🏔️ Vaishno Devi — 650 km · Kashmir — 820 km\n\nJust tell me your destination and I'll share the fare, route and best car for you!`;
   }
 
   // Car recommendations
-  if (msg.match(/best car|recommend|which car|suggest|suitable|good car|perfect car/)) {
-    return `Car recommendations by need:\n\n💰 Budget travel: Swift Dzire (₹12/km)\n👨‍👩‍👧 Family trip: Maruti Ertiga (₹15/km)\n🏔️ Hill station: Innova Crysta (₹20/km)\n🌟 Luxury: Innova Hycross (₹22/km)\n👥 Large group: Mahindra Xylo (₹16/km)\n\nTell me your destination & group size for a personalised recommendation!`;
+  if (msg.match(/best car|recommend|which car|suggest|suitable|good car|perfect car|fleet|cars available|available cars/)) {
+    return `Our full fleet — pick what suits you:\n\n💰 Swift Dzire (₹12/km) — Best for budget & solo/couple trips\n🚗 Toyota Etios (₹13/km) — Comfortable sedan, great value\n👨‍👩‍👧 Maruti Ertiga (₹15/km) — 6-seater, ideal for families\n👥 Mahindra Xylo (₹16/km) — Spacious MUV for large groups\n🚐 Kia Carens (₹17/km) — Premium 6-seater with modern features\n🏔️ Toyota Innova (₹19/km) — Reliable for long highway & hill trips\n⭐ Innova Crysta (₹20/km) — Most popular for hill stations\n🌟 Innova Hycross (₹22/km) — Top luxury, hybrid comfort\n\nTell me your destination & group size for a personalised pick!`;
   }
 
   // Driver
