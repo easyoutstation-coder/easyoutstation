@@ -140,6 +140,78 @@ const ROUTES: Record<string, {
       { q: "Is an overnight stay required for Delhi to Amritsar?", a: "For a comfortable trip with sightseeing, an overnight stay is recommended. However, a same-day return is possible if you leave Delhi by 4-5 AM." },
     ]
   },
+  "delhi-to-dharamshala": {
+    from: "Delhi", to: "Dharamshala", distance: 475, duration: "10-11 hours",
+    fare: { min: 5950, max: 10700 }, toll: 700,
+    description: "Book Delhi to Dharamshala cab at fixed fares. Explore McLeod Ganj, the Dalai Lama's abode, Kangra Valley and the Dhauladhar ranges. AC cars, verified drivers.",
+    highlights: ["Home of the Dalai Lama", "McLeod Ganj access", "Kangra Valley views", "Mountain specialist drivers"],
+    faqs: [
+      { q: "How far is Delhi to Dharamshala by cab?", a: "Delhi to Dharamshala is approximately 475 km via NH44 and NH154 and takes 10-11 hours by cab." },
+      { q: "What is the cab fare from Delhi to Dharamshala?", a: "Fares start from ₹5,950 for a Swift Dzire to ₹10,700 for an Innova Hycross one way. Price includes driver charges. Toll is charged at actuals." },
+      { q: "Is Dharamshala and McLeod Ganj the same?", a: "McLeod Ganj is a suburb of Dharamshala, about 10 km uphill. Our cab drops you directly at McLeod Ganj or lower Dharamshala as preferred." },
+      { q: "What is the best time to visit Dharamshala?", a: "March to June and September to November are ideal. Summers are pleasant while winters bring snowfall to McLeod Ganj — a unique experience." },
+    ]
+  },
+  "delhi-to-kashmir": {
+    from: "Delhi", to: "Kashmir", distance: 820, duration: "14-16 hours",
+    fare: { min: 10090, max: 18290 }, toll: 1200,
+    description: "Book Delhi to Kashmir cab at fixed fares. Experience Dal Lake, Mughal Gardens, Gulmarg and the paradise of India. Experienced drivers, AC cars, no hidden charges.",
+    highlights: ["Dal Lake shikara rides", "Mughal Gardens visit", "Gulmarg day trip", "Pahalgam meadows"],
+    faqs: [
+      { q: "How far is Delhi to Kashmir (Srinagar) by cab?", a: "Delhi to Srinagar is approximately 820 km via Jammu and the Jammu-Srinagar National Highway. The journey takes 14-16 hours." },
+      { q: "What is the fare for Delhi to Kashmir cab?", a: "Fares start from ₹10,090 for a sedan to ₹18,290 for an Innova Hycross. Price includes driver charges. Toll is charged at actuals." },
+      { q: "Is it safe to drive Delhi to Kashmir by road?", a: "Yes. Our drivers are experienced on this route. We recommend daytime travel on the Jammu-Srinagar highway. The route is a well-maintained national highway." },
+      { q: "Which is better — cab or flight to Kashmir from Delhi?", a: "A cab lets you stop at Jammu, Patnitop and enjoy the scenic Banihal Pass. A flight is faster but a cab gives the full Himalayan road experience." },
+    ]
+  },
+  "delhi-to-vaishno-devi": {
+    from: "Delhi", to: "Vaishno Devi", distance: 650, duration: "12-13 hours",
+    fare: { min: 8050, max: 14550 }, toll: 900,
+    description: "Book Delhi to Vaishno Devi cab at fixed fares. We drop you at Katra, the base camp for the holy shrine. Comfortable AC cabs, verified drivers, pilgrimage specialists.",
+    highlights: ["Drop at Katra base camp", "Trikuta Mountain access", "Pilgrimage specialists", "Ample luggage space"],
+    faqs: [
+      { q: "How far is Delhi to Vaishno Devi by cab?", a: "Delhi to Katra (Vaishno Devi base camp) is approximately 650 km via NH44 and takes 12-13 hours by cab." },
+      { q: "Does the cab go to the Vaishno Devi shrine?", a: "Cabs drop you at Katra, the base town. The 14 km trek to the shrine starts from Katra. Helicopter services are also available from Katra for darshan." },
+      { q: "What is the fare for Delhi to Vaishno Devi cab?", a: "Fares start from ₹8,050 for a sedan to ₹14,550 for an Innova Hycross. Price includes driver charges. Toll is charged at actuals." },
+      { q: "What is the best time to travel Delhi to Vaishno Devi?", a: "The shrine is open all year. Navratri season (March-April and October) sees peak pilgrims. November to February has fewer crowds and cool mountain weather." },
+    ]
+  },
+  "delhi-to-ludhiana": {
+    from: "Delhi", to: "Ludhiana", distance: 310, duration: "5-6 hours",
+    fare: { min: 3970, max: 7070 }, toll: 450,
+    description: "Book Delhi to Ludhiana cab at fixed fares. Fast NH44 highway drive to the industrial capital of Punjab. AC cars, verified drivers, door-to-door service.",
+    highlights: ["NH44 express highway", "5-6 hours journey", "Fixed price, no surge", "Verified drivers"],
+    faqs: [
+      { q: "How far is Delhi to Ludhiana by cab?", a: "Delhi to Ludhiana is approximately 310 km via NH44 and takes 5-6 hours depending on traffic." },
+      { q: "What is the fare for Delhi to Ludhiana cab?", a: "Fares start from ₹3,970 for a Swift Dzire to ₹7,070 for an Innova Hycross. Price includes driver charges. Toll is charged at actuals." },
+      { q: "Is there a direct cab from Delhi to Ludhiana?", a: "Yes. EasyOutstation offers direct door-to-door cab service from anywhere in Delhi to Ludhiana." },
+      { q: "Can I continue to Amritsar from Ludhiana?", a: "Yes. Ludhiana to Amritsar is around 120 km (2 hours). Many travellers book Delhi to Amritsar via Ludhiana as a single trip." },
+    ]
+  },
+  "delhi-to-ayodhya": {
+    from: "Delhi", to: "Ayodhya", distance: 640, duration: "10-12 hours",
+    fare: { min: 7930, max: 14330 }, toll: 850,
+    description: "Book Delhi to Ayodhya cab at fixed fares. Visit Ram Mandir, Saryu Ghats and the sacred city of Lord Ram. Comfortable AC cabs, pilgrimage specialists.",
+    highlights: ["Ram Mandir darshan", "Saryu river ghats", "Kanak Bhawan temple", "Hanuman Garhi"],
+    faqs: [
+      { q: "How far is Delhi to Ayodhya by cab?", a: "Delhi to Ayodhya is approximately 640 km via the Agra-Lucknow Expressway and takes 10-12 hours by cab." },
+      { q: "What is the fare for Delhi to Ayodhya cab?", a: "Fares start from ₹7,930 for a sedan to ₹14,330 for an Innova Hycross. Price includes driver charges. Toll is charged at actuals." },
+      { q: "What is the best route from Delhi to Ayodhya?", a: "The fastest route is via Agra-Lucknow Expressway (NH19). Our drivers take the best highway route to ensure on-time arrival." },
+      { q: "Can I visit Ram Mandir from Delhi in a day?", a: "Ayodhya is 640 km from Delhi. A same-day return is very demanding. We recommend an overnight stay to visit Ram Mandir, Saryu Ghats, and Kanak Bhawan comfortably." },
+    ]
+  },
+  "delhi-to-banaras": {
+    from: "Delhi", to: "Banaras", distance: 820, duration: "12-14 hours",
+    fare: { min: 10090, max: 18290 }, toll: 1100,
+    description: "Book Delhi to Banaras cab at fixed fares. Experience the Ganga Aarti, Kashi Vishwanath Temple and the ancient ghats of Varanasi. Experienced drivers, AC cars.",
+    highlights: ["Ganga Aarti at Dashashwamedh Ghat", "Kashi Vishwanath Temple", "Sarnath Buddhist site", "Sunrise boat ride on Ganga"],
+    faqs: [
+      { q: "How far is Delhi to Banaras (Varanasi) by cab?", a: "Delhi to Banaras is approximately 820 km via the Agra-Lucknow Expressway and NH27, taking 12-14 hours by cab." },
+      { q: "What is the fare for Delhi to Banaras cab?", a: "Fares start from ₹10,090 for a sedan to ₹18,290 for an Innova Hycross. Price includes driver charges. Toll is charged at actuals." },
+      { q: "Which is the best route from Delhi to Varanasi by cab?", a: "The fastest route is via Agra-Lucknow Expressway (NH19), then NH27 to Varanasi. Our drivers take the safest and fastest highway route." },
+      { q: "What is the best time to visit Banaras?", a: "October to March is ideal. The Ganga Aarti at Dashashwamedh Ghat at sunrise or sunset is a must-attend. Dev Deepawali in November is especially magical." },
+    ]
+  },
 };
 
 export default function RouteLanding() {
@@ -230,10 +302,11 @@ export default function RouteLanding() {
               src={lm.image}
               alt={lm.landmark}
               className="w-full object-cover"
-              style={{ height: "clamp(220px, 55vw, 420px)", objectPosition: lm.objectPosition }}
+              style={{ height: "clamp(260px, 55vw, 480px)", objectPosition: lm.objectPosition }}
+              onError={(e) => { (e.target as HTMLImageElement).src = "/hero-bg.jpg"; }}
             />
           )}
-          {!lm && <div style={{ height: "clamp(220px, 55vw, 420px)" }} />}
+          {!lm && <div style={{ height: "clamp(260px, 55vw, 480px)" }} />}
           {/* Dark overlay */}
           <div className="absolute inset-0 bg-gradient-to-b from-slate-900/55 via-slate-900/50 to-slate-900/80" />
           {/* Text centered over image */}

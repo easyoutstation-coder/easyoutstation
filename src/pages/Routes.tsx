@@ -18,6 +18,12 @@ const routes = [
   { from: "Delhi", to: "Nainital", km: 320, hrs: 7, sedan: "4,090", innova: "6,650", highlights: ["Naini Lake", "Snow View Point", "Naina Devi Temple", "Mall Road", "Eco Cave Gardens"] },
   { from: "Delhi", to: "Mathura", km: 165, hrs: 3, sedan: "2,230", innova: "3,550", highlights: ["Krishna Janmabhoomi", "Vrindavan Temples", "Banke Bihari Mandir", "Govardhan Hill"] },
   { from: "Delhi", to: "Amritsar", km: 460, hrs: 8, sedan: "5,770", innova: "9,450", highlights: ["Golden Temple", "Wagah Border Ceremony", "Jallianwala Bagh", "Durgiana Temple", "Heritage Street"] },
+  { from: "Delhi", to: "Dharamshala", km: 475, hrs: 11, sedan: "5,950", innova: "9,275", highlights: ["McLeod Ganj", "Dalai Lama's Abode", "Kangra Valley", "Dhauladhar Range", "Triund Trek"] },
+  { from: "Delhi", to: "Kashmir", km: 820, hrs: 15, sedan: "10,090", innova: "15,830", highlights: ["Dal Lake", "Mughal Gardens", "Gulmarg", "Pahalgam", "Srinagar Houseboats"] },
+  { from: "Delhi", to: "Vaishno Devi", km: 650, hrs: 13, sedan: "8,050", innova: "12,600", highlights: ["Katra Base Camp", "Trikuta Mountains", "Bhavan Shrine", "Ardh Kuwari", "Helicopter Darshan"] },
+  { from: "Delhi", to: "Ludhiana", km: 310, hrs: 6, sedan: "3,970", innova: "6,140", highlights: ["Punjab Heritage", "Maharaja Ranjit Singh Museum", "Gurudwara Dukh Nivaran", "Phillaur Fort", "Gateway to Amritsar"] },
+  { from: "Delhi", to: "Ayodhya", km: 640, hrs: 11, sedan: "7,930", innova: "12,410", highlights: ["Ram Mandir", "Saryu Ghats", "Kanak Bhawan", "Ram Ki Paidi", "Hanuman Garhi"] },
+  { from: "Delhi", to: "Banaras", km: 820, hrs: 13, sedan: "10,090", innova: "15,830", highlights: ["Ganga Aarti", "Kashi Vishwanath", "Sarnath", "Dashashwamedh Ghat", "Sunrise Boat Ride"] },
 ];
 
 export default function RoutesPage() {
