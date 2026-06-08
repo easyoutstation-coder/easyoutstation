@@ -60,35 +60,35 @@ export const routeLandmarks: Record<string, { image: string; landmark: string; o
     landmark: "Golden Temple, Amritsar",
     objectPosition: "center 40%",
   },
-  // New routes — HD 1600×900
+  // New routes — HD 1600×900, destination-specific images
   dharamshala: {
-    image: "https://images.unsplash.com/photo-1600522012987-98dbb0d1c4a7?w=1600&h=900&q=90&fit=crop&auto=format",
-    landmark: "McLeod Ganj, Dharamshala",
+    image: "https://images.unsplash.com/photo-1581321863389-ef7d7bfe4b75?w=1600&h=900&q=90&fit=crop&auto=format",
+    landmark: "Namgyal Monastery, McLeod Ganj",
     objectPosition: "center 40%",
   },
   kashmir: {
-    image: "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=1600&h=900&q=90&fit=crop&auto=format",
-    landmark: "Dal Lake, Srinagar",
-    objectPosition: "center 45%",
-  },
-  "vaishno devi": {
-    image: "https://images.pexels.com/photos/3889866/pexels-photo-3889866.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop",
-    landmark: "Trikuta Mountains, Vaishno Devi",
-    objectPosition: "center 30%",
-  },
-  ludhiana: {
-    image: "https://images.pexels.com/photos/4254555/pexels-photo-4254555.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop",
-    landmark: "Punjab Heartland, Ludhiana",
+    image: "https://images.pexels.com/photos/12750077/pexels-photo-12750077.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop",
+    landmark: "Dal Lake Shikaras, Srinagar",
     objectPosition: "center 50%",
   },
-  ayodhya: {
-    image: "https://images.pexels.com/photos/16186330/pexels-photo-16186330.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop",
-    landmark: "Ram Mandir, Ayodhya",
+  "vaishno devi": {
+    image: "https://images.unsplash.com/photo-1717502713522-543a97e13dab?w=1600&h=900&q=90&fit=crop&auto=format",
+    landmark: "Vaishno Devi Shrine, Katra",
+    objectPosition: "center 35%",
+  },
+  ludhiana: {
+    image: "https://images.pexels.com/photos/5822369/pexels-photo-5822369.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop",
+    landmark: "Gurudwara Dukh Nivaran, Ludhiana",
     objectPosition: "center 45%",
   },
+  ayodhya: {
+    image: "https://images.unsplash.com/photo-1710523213193-36b3582a1037?w=1600&h=900&q=90&fit=crop&auto=format",
+    landmark: "Ram Mandir, Ayodhya",
+    objectPosition: "center 50%",
+  },
   banaras: {
-    image: "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?w=1600&h=900&q=90&fit=crop&auto=format",
-    landmark: "Dashashwamedh Ghat, Banaras",
+    image: "https://images.pexels.com/photos/10461752/pexels-photo-10461752.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop",
+    landmark: "Darbhanga Ghat, Banaras",
     objectPosition: "center 40%",
   },
 };
