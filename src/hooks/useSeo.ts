@@ -43,6 +43,7 @@ export function useSeo({
       setMeta('meta[name="twitter:card"]', "summary_large_image");
       setMeta('meta[name="twitter:image"]', ogImage);
     }
+    setMeta('meta[name="twitter:site"]', "@EasyOutstation");
     setMeta('meta[name="twitter:title"]', title);
     setMeta('meta[name="twitter:description"]', description);
 
