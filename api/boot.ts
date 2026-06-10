@@ -468,7 +468,8 @@ if (env.isProduction) {
     // Run cron jobs immediately on boot, then BullMQ handles hourly repeats
     await runDailyReminders();
     await runPostTripReviews();
-    await runAbandonedReminders();
+    // runAbandonedReminders is NOT called here — BullMQ handles it hourly.
+    // Calling it directly on every boot caused duplicate messages on Railway restarts.
     console.log("[boot] Workers started, post-booking automation active.");
   });
 }

@@ -226,6 +226,8 @@ export default function RouteLanding() {
         .sort((a, b) => parseFloat(a.pricePerKm) - parseFloat(b.pricePerKm))
     : null;
 
+  const lm = getLandmark(data?.to ?? "");
+
   const canonicalUrl = `https://www.easyoutstation.com/cab/${route ?? ""}`;
   const pageTitle = data
     ? `${data.from} to ${data.to} Cab | ₹${data.fare.min.toLocaleString("en-IN")} Fixed Fare | EasyOutstation`
@@ -288,8 +290,6 @@ export default function RouteLanding() {
     navigate("/routes");
     return null;
   }
-
-  const lm = getLandmark(data.to);
 
   return (
     <div className="min-h-screen bg-white">

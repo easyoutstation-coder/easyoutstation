@@ -14,6 +14,8 @@ import Terms from './pages/Terms'
 import Privacy from './pages/Privacy'
 import RoutesPage from './pages/Routes'
 import RouteLanding from './pages/RouteLanding'
+import Blog from './pages/Blog'
+import BlogPost from './pages/BlogPost'
 import NotFound from './pages/NotFound'
 import Admin from './pages/Admin'
 import ExecutiveTeam from './pages/ExecutiveTeam'
@@ -134,6 +136,8 @@ export default function App() {
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/routes" element={<RoutesPage />} />
         <Route path="/cab/:route" element={<RouteLanding />} />
+        <Route path="/blog" element={<Blog />} />
+        <Route path="/blog/:slug" element={<BlogPost />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/executive-team" element={<ExecutiveTeam />} />
         <Route path="/referral" element={<ReferralProgram />} />

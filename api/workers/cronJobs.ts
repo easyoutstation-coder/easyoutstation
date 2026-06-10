@@ -177,6 +177,12 @@ export async function runAbandonedReminders(): Promise<void> {
       }
 
       for (const b of touch1) {
+        // Atomically claim this row — prevents double-send if multiple instances run concurrently
+        const [claim] = await db.execute(
+          sql`UPDATE bookings SET abandonmentReminderSentAt = NOW() WHERE id = ${b.id} AND abandonmentReminderSentAt IS NULL`
+        ) as any;
+        if ((claim?.affectedRows ?? 0) === 0) { console.log(`[cron] Touch1 already claimed for #${b.id} — skipping`); continue; }
+
         const phone = b.customerPhone || userMap[b.userId]?.phone || null;
         const email = b.customerEmail || userMap[b.userId]?.email || null;
         const pickupDateStr = fmt(b.pickupDate) ?? String(b.pickupDate);
@@ -201,7 +207,6 @@ export async function runAbandonedReminders(): Promise<void> {
           } catch (e) { console.error(`[cron] Touch1 SMS failed for #${b.id}:`, e); }
         }
 
-        await db.execute(sql.raw(`UPDATE bookings SET abandonmentReminderSentAt = NOW() WHERE id = ${b.id}`));
         console.log(`[cron] Abandonment touch-1 sent for booking #${b.id}`);
       }
     }
@@ -229,6 +234,11 @@ export async function runAbandonedReminders(): Promise<void> {
       }
 
       for (const b of touch2) {
+        const [claim2] = await db.execute(
+          sql`UPDATE bookings SET abandonmentReminder2SentAt = NOW() WHERE id = ${b.id} AND abandonmentReminder2SentAt IS NULL`
+        ) as any;
+        if ((claim2?.affectedRows ?? 0) === 0) { console.log(`[cron] Touch2 already claimed for #${b.id} — skipping`); continue; }
+
         const phone = b.customerPhone || userMap2[b.userId]?.phone || null;
         const email = b.customerEmail || userMap2[b.userId]?.email || null;
         if (phone) {
@@ -237,7 +247,6 @@ export async function runAbandonedReminders(): Promise<void> {
             await sendAbandonmentFollowupSms(phone, b.id, b.fromCity, b.toCity, pickupDateStr, parseFloat(b.totalPrice), 2, b.carId ?? undefined, b.totalKm ?? undefined, email ?? undefined, b.customerName ?? undefined);
           } catch (e) { console.error(`[cron] Touch2 SMS failed for #${b.id}:`, e); }
         }
-        await db.execute(sql.raw(`UPDATE bookings SET abandonmentReminder2SentAt = NOW() WHERE id = ${b.id}`));
         console.log(`[cron] Abandonment touch-2 sent for booking #${b.id}`);
       }
     }
@@ -265,6 +274,11 @@ export async function runAbandonedReminders(): Promise<void> {
       }
 
       for (const b of touch3) {
+        const [claim3] = await db.execute(
+          sql`UPDATE bookings SET abandonmentReminder3SentAt = NOW() WHERE id = ${b.id} AND abandonmentReminder3SentAt IS NULL`
+        ) as any;
+        if ((claim3?.affectedRows ?? 0) === 0) { console.log(`[cron] Touch3 already claimed for #${b.id} — skipping`); continue; }
+
         const phone = b.customerPhone || userMap3[b.userId]?.phone || null;
         const email = b.customerEmail || userMap3[b.userId]?.email || null;
         if (phone) {
@@ -273,7 +287,6 @@ export async function runAbandonedReminders(): Promise<void> {
             await sendAbandonmentFollowupSms(phone, b.id, b.fromCity, b.toCity, pickupDateStr, parseFloat(b.totalPrice), 3, b.carId ?? undefined, b.totalKm ?? undefined, email ?? undefined, b.customerName ?? undefined);
           } catch (e) { console.error(`[cron] Touch3 SMS failed for #${b.id}:`, e); }
         }
-        await db.execute(sql.raw(`UPDATE bookings SET abandonmentReminder3SentAt = NOW() WHERE id = ${b.id}`));
         console.log(`[cron] Abandonment touch-3 sent for booking #${b.id}`);
       }
     }
