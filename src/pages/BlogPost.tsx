@@ -74,6 +74,7 @@ export default function BlogPost() {
               alt={lm.landmark}
               className="w-full object-cover"
               style={{ height: "clamp(280px, 50vw, 500px)", objectPosition: lm.objectPosition }}
+              fetchPriority="high"
               onError={(e) => { (e.target as HTMLImageElement).src = "/hero-bg.jpg"; }}
             />
           )}
@@ -313,6 +314,7 @@ export default function BlogPost() {
                             alt={rlm.landmark}
                             className="w-full h-full object-cover"
                             style={{ objectPosition: rlm.objectPosition }}
+                            loading="lazy"
                             onError={(e) => { (e.target as HTMLImageElement).src = "/hero-bg.jpg"; }}
                           />
                         )}

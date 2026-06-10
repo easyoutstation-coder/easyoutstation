@@ -58,6 +58,7 @@ export default function Blog() {
                         alt={lm.landmark}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                         style={{ objectPosition: lm.objectPosition }}
+                        loading="lazy"
                         onError={(e) => { (e.target as HTMLImageElement).src = "/hero-bg.jpg"; }}
                       />
                     )}
