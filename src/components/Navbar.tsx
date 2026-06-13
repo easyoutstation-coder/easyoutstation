@@ -44,7 +44,7 @@ export default function Navbar() {
             style={{ mixBlendMode: "screen" }}
             loading="eager"
           />
-          <span className="font-bold text-[15px] leading-none font-['DM_Serif_Display'] text-white whitespace-nowrap">
+          <span className="font-bold text-[15px] leading-none font-['Montserrat'] text-white whitespace-nowrap" style={{ marginTop: '4px' }}>
             EasyOutstation
           </span>
         </Link>
@@ -123,7 +123,7 @@ export default function Navbar() {
                   style={{ mixBlendMode: "screen" }}
                   loading="eager"
                 />
-                <SheetTitle className="text-white font-['DM_Serif_Display'] text-lg m-0">EasyOutstation</SheetTitle>
+                <SheetTitle className="text-white font-['Montserrat'] font-bold text-lg m-0" style={{ marginTop: '4px' }}>EasyOutstation</SheetTitle>
               </div>
               <nav className="px-4 py-4 flex flex-col gap-1">
                 {navLinks.map((link) => {
