@@ -29,7 +29,7 @@ const homeSchema = [
     "@id": "https://www.easyoutstation.com/#business",
     "name": "EasyOutstation",
     "url": "https://www.easyoutstation.com/",
-    "logo": "https://www.easyoutstation.com/logo.svg",
+    "logo": "https://www.easyoutstation.com/logo.png",
     "image": "https://www.easyoutstation.com/hero-bg.jpg",
     "telephone": "+91-8796564111",
     "email": "easyoutstation@gmail.com",

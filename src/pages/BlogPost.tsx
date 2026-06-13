@@ -29,7 +29,7 @@ export default function BlogPost() {
           "@type": "Organization",
           "name": "EasyOutstation",
           "url": "https://www.easyoutstation.com",
-          "logo": { "@type": "ImageObject", "url": "https://www.easyoutstation.com/logo192.png" },
+          "logo": { "@type": "ImageObject", "url": "https://www.easyoutstation.com/logo.png" },
         },
         "datePublished": post.publishDate,
         "image": lm?.image,
