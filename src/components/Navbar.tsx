@@ -40,8 +40,9 @@ export default function Navbar() {
           <img
             src="/logo.png"
             alt="EasyOutstation"
-            className="h-10 w-auto"
+            className="h-11 md:h-14 w-auto object-contain"
             style={{ mixBlendMode: "screen" }}
+            loading="eager"
           />
         </Link>
 
@@ -111,13 +112,14 @@ export default function Navbar() {
               </button>
             </SheetTrigger>
             <SheetContent side="right" className="bg-[#1e3a5f] border-blue-900/60 w-72 p-0">
-              <div className="px-6 py-4 border-b border-blue-800/50 flex items-center">
+              <div className="px-5 py-4 border-b border-blue-800/50 flex items-center">
                 <SheetTitle className="sr-only">EasyOutstation Navigation</SheetTitle>
                 <img
                   src="/logo.png"
                   alt="EasyOutstation"
-                  className="h-12 w-auto"
+                  className="h-16 w-auto object-contain"
                   style={{ mixBlendMode: "screen" }}
+                  loading="eager"
                 />
               </div>
               <nav className="px-4 py-4 flex flex-col gap-1">
