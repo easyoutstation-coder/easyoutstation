@@ -36,16 +36,13 @@ export default function Navbar() {
       }`}>
 
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2.5 shrink-0 pl-1 group">
+        <Link to="/" className="flex items-center shrink-0 pl-1 group">
           <img
             src="/favicon.svg"
-            alt=""
-            className="w-8 h-8 rounded-full"
+            alt="EasyOutstation"
+            className="w-9 h-9 rounded-full"
             loading="eager"
           />
-          <span className="font-bold text-[15px] leading-none font-['DM_Serif_Display'] text-white whitespace-nowrap">
-            EasyOutstation
-          </span>
         </Link>
 
         {/* Spacer */}
@@ -114,9 +111,9 @@ export default function Navbar() {
               </button>
             </SheetTrigger>
             <SheetContent side="right" className="bg-[#1e3a5f] border-blue-900/60 w-72 p-0">
-              <div className="px-6 py-5 border-b border-blue-800/50 flex items-center gap-3">
-                <img src="/favicon.svg" alt="" className="w-8 h-8 rounded-full" loading="eager" />
-                <SheetTitle className="text-white font-['DM_Serif_Display'] text-lg m-0">EasyOutstation</SheetTitle>
+              <div className="px-6 py-5 border-b border-blue-800/50 flex items-center">
+                <SheetTitle className="sr-only">EasyOutstation Navigation</SheetTitle>
+                <img src="/favicon.svg" alt="EasyOutstation" className="w-9 h-9 rounded-full" loading="eager" />
               </div>
               <nav className="px-4 py-4 flex flex-col gap-1">
                 {navLinks.map((link) => {
