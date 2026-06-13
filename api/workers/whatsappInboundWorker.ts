@@ -15,6 +15,147 @@ const ADMIN_PHONE = process.env.ADMIN_PHONE || "8796564111";
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+// ── Destination recognition ───────────────────────────────────────────────────
+
+interface DestinationInfo {
+  name: string;
+  km: number;
+  hours: string;
+  highlights: string;
+  bestCar: string;
+  emoji: string;
+}
+
+const DESTINATIONS: Array<{ pattern: RegExp; info: DestinationInfo }> = [
+  {
+    pattern: /manali|rohtang|solang|kullu/i,
+    info: { name: "Manali", km: 540, hours: "12-14", emoji: "🏔️",
+      highlights: "Rohtang Pass, Solang Valley, Beas River & Old Manali's cafés",
+      bestCar: "Innova Crysta (best for mountain roads)" },
+  },
+  {
+    pattern: /shimla|simla|kufri|chail/i,
+    info: { name: "Shimla", km: 350, hours: "8-9", emoji: "🏔️",
+      highlights: "Mall Road, Jakhu Temple, Kufri & colonial architecture",
+      bestCar: "Innova Crysta or Ertiga" },
+  },
+  {
+    pattern: /chandigarh/i,
+    info: { name: "Chandigarh", km: 260, hours: "4-5", emoji: "🏙️",
+      highlights: "Rock Garden, Sukhna Lake, Sector 17 & gateway to Himachal",
+      bestCar: "Swift Dzire or Ertiga" },
+  },
+  {
+    pattern: /jaipur|pink city/i,
+    info: { name: "Jaipur", km: 280, hours: "5-6", emoji: "🏰",
+      highlights: "Amber Fort, Hawa Mahal, City Palace & vibrant bazaars",
+      bestCar: "Swift Dzire or Ertiga" },
+  },
+  {
+    pattern: /agra|taj mahal|fatehpur/i,
+    info: { name: "Agra", km: 230, hours: "3-4", emoji: "🕌",
+      highlights: "Taj Mahal, Agra Fort, Fatehpur Sikri & Mehtab Bagh",
+      bestCar: "Swift Dzire or Etios" },
+  },
+  {
+    pattern: /rishikesh|rafting|yoga.*retreat/i,
+    info: { name: "Rishikesh", km: 250, hours: "5-6", emoji: "🧘",
+      highlights: "Laxman Jhula, white-water rafting, yoga ashrams & Ram Jhula",
+      bestCar: "Ertiga or Innova" },
+  },
+  {
+    pattern: /haridwar|har ki pauri/i,
+    info: { name: "Haridwar", km: 220, hours: "4-5", emoji: "🙏",
+      highlights: "Har Ki Pauri Ganga Aarti, Mansa Devi Temple & Chandi Devi",
+      bestCar: "Swift Dzire or Ertiga" },
+  },
+  {
+    pattern: /mussoorie|lal tibba|kempty/i,
+    info: { name: "Mussoorie", km: 310, hours: "6-7", emoji: "🌄",
+      highlights: "Mall Road, Kempty Falls, Lal Tibba viewpoint & Camel's Back Road",
+      bestCar: "Innova Crysta or Ertiga" },
+  },
+  {
+    pattern: /nainital|naini lake|bhimtal/i,
+    info: { name: "Nainital", km: 310, hours: "6-7", emoji: "🏔️",
+      highlights: "Naini Lake, Snow View Point, Mall Road & Bhimtal",
+      bestCar: "Innova Crysta (hills) or Ertiga" },
+  },
+  {
+    pattern: /amritsar|golden temple|wagah/i,
+    info: { name: "Amritsar", km: 460, hours: "8-9", emoji: "🪯",
+      highlights: "Golden Temple, Wagah Border ceremony, Jallianwala Bagh & Punjabi food",
+      bestCar: "Innova Crysta or Ertiga" },
+  },
+  {
+    pattern: /dharamshala|dharamsala|mcleod|mcleodganj|triund/i,
+    info: { name: "Dharamshala", km: 490, hours: "10-11", emoji: "🏔️",
+      highlights: "McLeod Ganj, Triund Trek, Dalai Lama's monastery & Kangra Valley",
+      bestCar: "Innova Crysta (best for hills)" },
+  },
+  {
+    pattern: /kashmir|srinagar|gulmarg|pahalgam|dal lake/i,
+    info: { name: "Kashmir", km: 820, hours: "14-16", emoji: "❄️",
+      highlights: "Dal Lake shikaras, Gulmarg skiing, Pahalgam meadows & Mughal Gardens",
+      bestCar: "Innova Crysta or Innova Hycross" },
+  },
+  {
+    pattern: /vaishno|vaishnodevi|katra/i,
+    info: { name: "Vaishno Devi", km: 650, hours: "12-13", emoji: "🙏",
+      highlights: "Mata Vaishno Devi shrine trek (14 km from Katra), Bhairav temple & Ardhkuwari",
+      bestCar: "Innova Crysta or Ertiga" },
+  },
+  {
+    pattern: /mathura|vrindavan|vrindaban/i,
+    info: { name: "Mathura & Vrindavan", km: 175, hours: "3-4", emoji: "🪔",
+      highlights: "Krishna Janmabhoomi, Banke Bihari Temple, ISKCON & Govardhan Hill",
+      bestCar: "Swift Dzire or Etios" },
+  },
+  {
+    pattern: /ayodhya|ram mandir/i,
+    info: { name: "Ayodhya", km: 640, hours: "10-12", emoji: "🛕",
+      highlights: "Ram Mandir, Saryu Ghats, Kanak Bhawan & Hanuman Garhi",
+      bestCar: "Innova Crysta or Ertiga" },
+  },
+  {
+    pattern: /varanasi|banaras|kashi|dashashwamedh/i,
+    info: { name: "Varanasi", km: 820, hours: "12-14", emoji: "🪔",
+      highlights: "Ganga Aarti at Dashashwamedh Ghat, Kashi Vishwanath Temple & sunrise boat ride",
+      bestCar: "Innova Crysta or Innova Hycross" },
+  },
+  {
+    pattern: /ludhiana/i,
+    info: { name: "Ludhiana", km: 310, hours: "5-6", emoji: "🏙️",
+      highlights: "Industrial capital of Punjab, gateway to Amritsar & Chandigarh",
+      bestCar: "Swift Dzire or Ertiga" },
+  },
+  {
+    pattern: /udaipur|city of lakes|pichola/i,
+    info: { name: "Udaipur", km: 670, hours: "11-12", emoji: "🏰",
+      highlights: "Lake Pichola, City Palace, Jag Mandir & romantic lakeside sunsets",
+      bestCar: "Innova Crysta or Ertiga" },
+  },
+  {
+    pattern: /dalhousie|khajjiar|chamba/i,
+    info: { name: "Dalhousie", km: 570, hours: "11-12", emoji: "🏔️",
+      highlights: "Khajjiar (mini Switzerland), Kalatop Wildlife Sanctuary & colonial charm",
+      bestCar: "Innova Crysta (mountain roads)" },
+  },
+  {
+    pattern: /kasauli|subathu|dagshai/i,
+    info: { name: "Kasauli", km: 310, hours: "5-6", emoji: "🌲",
+      highlights: "Christ Church, Monkey Point, pine forests & peaceful colonial hill station",
+      bestCar: "Ertiga or Swift Dzire" },
+  },
+];
+
+function detectDestination(text: string): DestinationInfo | null {
+  for (const d of DESTINATIONS) {
+    if (d.pattern.test(text)) return d.info;
+  }
+  return null;
+}
+
 const KNOWN_DISTANCES: Record<string, number> = {
   "delhi-manali": 540, "delhi-shimla": 350, "delhi-chandigarh": 260,
   "delhi-jaipur": 280, "delhi-agra": 230, "delhi-rishikesh": 250,
@@ -269,6 +410,18 @@ Suggest based on group size:
 - 50+ pax → suggest multiple vehicles
 For hill routes with a group, Tempo Traveller or Force Urbania preferred over bus.
 
+━━ DESTINATION INTRO (when customer mentions a place first) ━━
+If the customer's message mentions a destination without booking details, respond warmly with:
+1. 2-3 highlight attractions of that destination (what makes it special/worth visiting)
+2. Distance from Delhi + approximate drive time
+3. Best car recommendation for that route
+4. Then ask exactly these 3 questions in one message (numbered list):
+   1. When are you planning to travel? (date)
+   2. One-way or round trip? (and return date if round trip)
+   3. How many passengers?
+
+Keep the intro short and exciting — 4-5 lines max. No walls of text.
+
 ━━ OTHER RULES ━━
 - NEVER calculate or estimate fares manually — ALWAYS use get_fare_estimate, even for rough quotes. If dates or car aren't confirmed yet, ask for them before calling the tool. Manual fare guesses will always be wrong.
 - MANDATORY: Every fare quote MUST end with: "⚠️ Toll, parking & state taxes: additional at actuals (paid on road, no markup)"
@@ -298,30 +451,41 @@ async function handleAiConversation(phone: string, userText: string): Promise<vo
     direction: "inbound", phone: localPhone, messageBody: userText, waStatus: "delivered", fallbackSent: false,
   }).catch(() => {});
 
-  // New conversation — bypass Claude entirely, send exact template, save state, done.
+  // New conversation — detect destination first; if found let Claude handle it, else send template.
   if (history.length === 0) {
-    const greeting = `Hi! I'm Disha from EasyOutstation 👋 Fill this in and I'll quote your fare instantly:\n\n${BOOKING_TEMPLATE}\n\nOr just tell me where you're heading and I'll guide you! 😊`;
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    await db.insert(whatsappConversations).values({
-      phone, state: "ai_conversation",
-      contextJson: { messages: [{ role: "user", content: userText }, { role: "assistant", content: greeting }] },
-      expiresAt,
-    }).catch(() =>
-      db.update(whatsappConversations)
-        .set({ contextJson: { messages: [{ role: "user", content: userText }, { role: "assistant", content: greeting }] }, state: "ai_conversation", expiresAt })
-        .where(eq(whatsappConversations.phone, phone))
-    );
-    await db.insert(whatsappLogs).values({
-      direction: "outbound", phone: localPhone, messageBody: greeting, waStatus: "sent", fallbackSent: false,
-    }).catch(() => {});
-    await sendWhatsAppTextRaw(phone, greeting);
-    console.log(`[WA AI] New conversation template sent to ${phone}`);
-    return;
-  }
+    const destInfo = detectDestination(userText);
 
-  // Append user message, keep rolling window of 20
-  history.push({ role: "user", content: userText });
-  if (history.length > 20) history.splice(0, history.length - 20);
+    if (!destInfo) {
+      // No destination mentioned — send booking template as default
+      const greeting = `Hi! I'm Disha from EasyOutstation 👋 Fill this in and I'll quote your fare instantly:\n\n${BOOKING_TEMPLATE}\n\nOr just tell me where you're heading and I'll guide you! 😊`;
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      await db.insert(whatsappConversations).values({
+        phone, state: "ai_conversation",
+        contextJson: { messages: [{ role: "user", content: userText }, { role: "assistant", content: greeting }] },
+        expiresAt,
+      }).catch(() =>
+        db.update(whatsappConversations)
+          .set({ contextJson: { messages: [{ role: "user", content: userText }, { role: "assistant", content: greeting }] }, state: "ai_conversation", expiresAt })
+          .where(eq(whatsappConversations.phone, phone))
+      );
+      await db.insert(whatsappLogs).values({
+        direction: "outbound", phone: localPhone, messageBody: greeting, waStatus: "sent", fallbackSent: false,
+      }).catch(() => {});
+      await sendWhatsAppTextRaw(phone, greeting);
+      console.log(`[WA AI] New conversation template sent to ${phone}`);
+      return;
+    }
+
+    // Destination detected — inject context hint so Claude gives a rich intro + questions
+    console.log(`[WA AI] Destination detected in first message: ${destInfo.name} for ${phone}`);
+    const contextHint = `[CONTEXT: Customer mentioned ${destInfo.name} in their first message. Key info: ${destInfo.km} km from Delhi, ~${destInfo.hours} hrs drive, highlights: ${destInfo.highlights}, recommended car: ${destInfo.bestCar}. Give a warm destination intro then ask the 3 clarifying questions per the DESTINATION INTRO rules.]`;
+    history.push({ role: "user", content: `${userText}\n\n${contextHint}` });
+    // Fall through to Claude AI — do NOT push again below
+  } else {
+    // Ongoing conversation — append user message, keep rolling window of 20
+    history.push({ role: "user", content: userText });
+    if (history.length > 20) history.splice(0, history.length - 20);
+  }
 
   const systemPrompt = buildSystemPrompt();
 
