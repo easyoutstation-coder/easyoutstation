@@ -40,7 +40,7 @@ export default function Navbar() {
           <img
             src="/logo.png"
             alt="EasyOutstation"
-            className="h-[53px] md:h-[66px] w-auto object-contain"
+            className="h-[58px] md:h-[73px] w-auto object-contain"
             style={{ mixBlendMode: "screen" }}
             loading="eager"
           />
@@ -117,7 +117,7 @@ export default function Navbar() {
                 <img
                   src="/logo.png"
                   alt="EasyOutstation"
-                  className="h-[76px] w-auto object-contain"
+                  className="h-[84px] w-auto object-contain"
                   style={{ mixBlendMode: "screen" }}
                   loading="eager"
                 />

@@ -56,7 +56,7 @@ export default function Footer() {
               <img
                 src="/logo.png"
                 alt="EasyOutstation"
-                className="h-[95px] sm:h-[113px] w-auto object-contain"
+                className="h-[105px] sm:h-[124px] w-auto object-contain"
                 style={{ mixBlendMode: "screen" }}
                 loading="lazy"
               />
