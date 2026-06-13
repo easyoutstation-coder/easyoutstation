@@ -1,5 +1,5 @@
 import { useSeo } from "@/hooks/useSeo";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router";
 import { trpc } from "@/providers/trpc";
 import Navbar from "@/components/Navbar";
@@ -291,6 +291,25 @@ export default function CarsPage() {
     });
 
   const filterProps = { category, setCategory, seats, setSeats, priceRange, setPriceRange, hasActiveFilters, clearFilters, maxPrice: MAX_PRICE_KM };
+
+  const quoteViewedRef = useRef(false);
+  useEffect(() => {
+    if (quoteViewedRef.current || !distanceKm || !toCity || displayCars.length === 0) return;
+    const cheapestCar = displayCars[0];
+    const fare = calcFare(cheapestCar.pricePerKm, cheapestCar.seats, cheapestCar.driverCharges ?? "250");
+    if (!fare) return;
+    quoteViewedRef.current = true;
+    const cabTypeMap: Record<string, string> = { sedan: 'Sedan', muv: 'MUV', suv: 'SUV', premium: 'Premium', luxury: 'Luxury', tempo: 'Tempo', bus: 'Bus', electric: 'Electric' };
+    (window as any).dataLayer = (window as any).dataLayer || [];
+    (window as any).dataLayer.push({
+      event: 'quote_viewed',
+      origin: fromCity || 'Delhi',
+      destination: toCity,
+      travel_date: dateParam,
+      quoted_fare: applyDiscount(fare),
+      cab_type_shown: cabTypeMap[cheapestCar.category] ?? 'Sedan',
+    });
+  }, [cars, distanceKm]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="min-h-screen bg-slate-50">

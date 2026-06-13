@@ -142,6 +142,8 @@ export default function BookingPage() {
 
   // Tracks the booking ID while Razorpay is open — used for mobile abandonment detection
   const pendingPaymentRef = useRef<number | null>(null);
+  const bookingStartedFiredRef = useRef(false);
+  const bookingSubmittedFiredRef = useRef(false);
 
   // ALL useEffects
   useEffect(() => {
@@ -424,6 +426,19 @@ export default function BookingPage() {
     verifyOtpMutation.mutate({ phone: customerPhone, otp: otpInput });
   };
 
+  const cabTypeMap: Record<string, string> = { sedan: 'Sedan', muv: 'MUV', suv: 'SUV', premium: 'Premium', luxury: 'Luxury', tempo: 'Tempo', bus: 'Bus', electric: 'Electric' };
+
+  const fireBookingStarted = () => {
+    if (bookingStartedFiredRef.current) return;
+    bookingStartedFiredRef.current = true;
+    (window as any).dataLayer = (window as any).dataLayer || [];
+    (window as any).dataLayer.push({
+      event: 'booking_started',
+      route: `${effectiveFromCity}-${effectiveToCity}`,
+      cab_type: cabTypeMap[effectiveCar?.category ?? ''] ?? 'Sedan',
+    });
+  };
+
   const handleNext = () => {
     setFormError("");
     if (currentStep === 1) {
@@ -506,6 +521,22 @@ export default function BookingPage() {
       if (isTestUser) {
         await confirmTestBookingMutation.mutateAsync({ bookingId });
         if (waOptOut) setWaOptOutMutation.mutate({ optOut: true });
+        if (!bookingSubmittedFiredRef.current) {
+          bookingSubmittedFiredRef.current = true;
+          (window as any).dataLayer = (window as any).dataLayer || [];
+          (window as any).dataLayer.push({
+            event: 'booking_submitted',
+            booking_id: String(bookingId),
+            value: Math.round(totalPrice),
+            currency: 'INR',
+            route: `${effectiveFromCity}-${effectiveToCity}`,
+            cab_type: cabTypeMap[effectiveCar?.category ?? ''] ?? 'Sedan',
+            travel_date: pickupDate ? format(pickupDate, 'yyyy-MM-dd') : '',
+            advance_paid: 0,
+            customer_email: customerEmail,
+            customer_phone: `+91${customerPhone}`,
+          });
+        }
         setAdvancePaid(true);
         setBookingId(bookingId);
         setBookingComplete(true);
@@ -556,6 +587,22 @@ export default function BookingPage() {
               creditApplied: order.creditApplied,
             });
             if (waOptOut) setWaOptOutMutation.mutate({ optOut: true });
+            if (!bookingSubmittedFiredRef.current) {
+              bookingSubmittedFiredRef.current = true;
+              (window as any).dataLayer = (window as any).dataLayer || [];
+              (window as any).dataLayer.push({
+                event: 'booking_submitted',
+                booking_id: String(bookingId),
+                value: Math.round(totalPrice),
+                currency: 'INR',
+                route: `${effectiveFromCity}-${effectiveToCity}`,
+                cab_type: cabTypeMap[effectiveCar?.category ?? ''] ?? 'Sedan',
+                travel_date: pickupDate ? format(pickupDate, 'yyyy-MM-dd') : '',
+                advance_paid: Math.max(100, Math.round(totalPrice * 0.1)),
+                customer_email: customerEmail,
+                customer_phone: `+91${customerPhone}`,
+              });
+            }
             setAdvancePaid(true);
             setBookingId(bookingId);
             setBookingComplete(true);
@@ -765,6 +812,7 @@ export default function BookingPage() {
                             type="time"
                             value={pickupTime}
                             onChange={(e) => setPickupTime(e.target.value)}
+                            onFocus={fireBookingStarted}
                             className="w-full px-3 py-2.5 rounded-xl border border-input bg-white text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
                           />
                         </div>
@@ -914,7 +962,7 @@ export default function BookingPage() {
                         <Label>Full Name *</Label>
                         <div className="relative">
                           <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Enter your full name" className="pl-10" autoComplete="name" />
+                          <Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Enter your full name" className="pl-10" autoComplete="name" onFocus={fireBookingStarted} />
                         </div>
                       </div>
 
@@ -990,13 +1038,13 @@ export default function BookingPage() {
                           </span>
                         </div>
                         <Separator />
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Distance Fare ({billedKm} km × ₹{pricePerKm})</span>
-                          <span>₹{basePrice.toLocaleString("en-IN")}</span>
+                        <div className="flex justify-between text-xs sm:text-sm gap-2">
+                          <span className="text-muted-foreground">Distance ({billedKm} km × ₹{pricePerKm})</span>
+                          <span className="shrink-0">₹{basePrice.toLocaleString("en-IN")}</span>
                         </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Driver Charges (₹{driverChargePerDay}/day × {tripDays} day{tripDays > 1 ? "s" : ""})</span>
-                          <span>₹{totalDriverCharges.toLocaleString("en-IN")}</span>
+                        <div className="flex justify-between text-xs sm:text-sm gap-2">
+                          <span className="text-muted-foreground">Driver (₹{driverChargePerDay}/day × {tripDays}d)</span>
+                          <span className="shrink-0">₹{totalDriverCharges.toLocaleString("en-IN")}</span>
                         </div>
                         <Separator />
                         <div className="flex justify-between font-bold text-base"><span>Fixed Fare</span><span className="text-primary">₹{(basePrice + totalDriverCharges).toLocaleString("en-IN")}</span></div>
@@ -1085,8 +1133,11 @@ export default function BookingPage() {
                         Continue <ArrowRight className="w-4 h-4" />
                       </Button>
                     ) : (
-                      <Button onClick={handleSubmit} disabled={isSubmitting} className="bg-primary gap-2">
-                        {isSubmitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</> : <>Pay ₹{Math.max(100, Math.round(totalPrice * 0.1)).toLocaleString("en-IN")} & Confirm Booking <Check className="w-4 h-4" /></>}
+                      <Button onClick={handleSubmit} disabled={isSubmitting} className="bg-primary gap-1.5">
+                        {isSubmitting
+                          ? <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</>
+                          : <><span className="hidden sm:inline">Pay ₹{Math.max(100, Math.round(totalPrice * 0.1)).toLocaleString("en-IN")} & Confirm</span><span className="sm:hidden">Pay ₹{Math.max(100, Math.round(totalPrice * 0.1)).toLocaleString("en-IN")}</span><Check className="w-4 h-4" /></>
+                        }
                       </Button>
                     )}
                     </div>
@@ -1123,8 +1174,8 @@ export default function BookingPage() {
                     </div>
                     <div className="text-2xl font-bold text-primary">₹{(resumeBookingId > 0 && resumeBooking ? totalPrice : basePrice + totalDriverCharges).toLocaleString("en-IN")}</div>
                     <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
-                      <div>₹{pricePerKm}/km × {billedKm} km = ₹{basePrice.toLocaleString("en-IN")}</div>
-                      <div>Driver: ₹{totalDriverCharges} · Toll + Parking: at actuals</div>
+                      <div>₹{pricePerKm}/km × {billedKm} km</div>
+                      <div>Driver: ₹{totalDriverCharges} · Tolls: at actuals</div>
                     </div>
                   </div>
                   <div className="space-y-2 text-xs text-muted-foreground">
