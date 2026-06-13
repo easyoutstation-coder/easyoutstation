@@ -38,9 +38,10 @@ export default function Navbar() {
         {/* Logo */}
         <Link to="/" className="flex items-center shrink-0 pl-1 group">
           <img
-            src="/favicon.svg"
+            src="/logo-icon.png"
             alt="EasyOutstation"
-            className="w-9 h-9 rounded-full"
+            className="h-10 w-auto object-contain"
+            style={{ mixBlendMode: "screen" }}
             loading="eager"
           />
         </Link>
@@ -113,7 +114,13 @@ export default function Navbar() {
             <SheetContent side="right" className="bg-[#1e3a5f] border-blue-900/60 w-72 p-0">
               <div className="px-6 py-5 border-b border-blue-800/50 flex items-center">
                 <SheetTitle className="sr-only">EasyOutstation Navigation</SheetTitle>
-                <img src="/favicon.svg" alt="EasyOutstation" className="w-9 h-9 rounded-full" loading="eager" />
+                <img
+                  src="/logo-icon.png"
+                  alt="EasyOutstation"
+                  className="h-12 w-auto object-contain"
+                  style={{ mixBlendMode: "screen" }}
+                  loading="eager"
+                />
               </div>
               <nav className="px-4 py-4 flex flex-col gap-1">
                 {navLinks.map((link) => {
