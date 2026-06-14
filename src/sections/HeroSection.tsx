@@ -227,8 +227,13 @@ export default function HeroSection() {
     ? Math.max(1, Math.ceil((returnDate.getTime() - pickupDate.getTime()) / (1000 * 60 * 60 * 24)))
     : 1;
   const kmMultiplier = isRoundTrip ? 2 : 1;
-  const displayFareMin = distanceKm ? Math.round(distanceKm * kmMultiplier * MIN_RATE + DRIVER_CHARGE * tripDays) : null;
-  const displayFareMax = distanceKm ? Math.round(distanceKm * kmMultiplier * MAX_RATE + DRIVER_CHARGE * tripDays) : null;
+  const rawBilledKm = (distanceKm ?? 0) * kmMultiplier;
+  // Apply same minimum billing rules as Cars.tsx
+  const billedKm = tripDays > 1
+    ? Math.max(rawBilledKm, tripDays * 250)
+    : Math.max(rawBilledKm, 80);
+  const displayFareMin = distanceKm ? Math.round(billedKm * MIN_RATE + DRIVER_CHARGE * tripDays) : null;
+  const displayFareMax = distanceKm ? Math.round(billedKm * MAX_RATE + DRIVER_CHARGE * tripDays) : null;
 
   const handleSearch = () => {
     setFormError("");
