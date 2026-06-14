@@ -401,7 +401,7 @@ The tool returns { bookingId, paymentUrl }. You MUST send ALL of these in your r
 1. Booking number (e.g. "Booking #1234")
 2. The advance amount = total_price × 10% (e.g. "Pay ₹2,260 advance")
 3. The FULL paymentUrl exactly as returned by the tool — never shorten or omit it
-Example reply: "Booking #1234 confirmed! 🎉 Pay ₹2,260 advance to lock your slot:\nhttps://easyoutstation.com/booking?resume=1234\nDriver details shared within 60 mins."
+Example reply: "Booking #1234 reserved! 🎉 Pay ₹2,260 advance to confirm your slot:\nhttps://easyoutstation.com/booking?resume=1234\nOnce paid: driver details shared within 60 mins."
 If you do not include the payment URL, the customer cannot pay and the booking is lost.
 
 ━━ GROUPS > 6 PASSENGERS ━━
