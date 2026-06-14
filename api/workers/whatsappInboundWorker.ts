@@ -178,7 +178,7 @@ const AI_TOOLS: Anthropic.Tool[] = [
   },
   {
     name: "get_fare_estimate",
-    description: "Calculate fare for a route and car. Always pass pickup_date. Pass return_date whenever the customer has given a return/drop-off date — the server calculates days from the actual dates so the 250 km/day minimum is applied correctly. For tempo travellers and buses, pass driver_charge_per_day=500.",
+    description: "Calculate fare for a route and car. Always pass pickup_date. Pass return_date whenever the customer has given a return/drop-off date — the server calculates days from the actual dates so the 250 km/day minimum is applied correctly. For tempo travellers and buses, pass driver_charge_per_day=500. Minimum billing: round trip multi-day = 250 km/day; one-way tempo/bus = 250 km; one-way car (≤7 seats) = 80 km / 8 hrs.",
     input_schema: {
       type: "object" as const,
       properties: {
@@ -187,7 +187,7 @@ const AI_TOOLS: Anthropic.Tool[] = [
         price_per_km: { type: "number" },
         trip_type: { type: "string", enum: ["one_way", "round_trip"] },
         pickup_date: { type: "string", description: "YYYY-MM-DD pickup date" },
-        return_date: { type: "string", description: "YYYY-MM-DD return date. Required for multi-day trips. The server uses this to compute days and enforce 250 km/day minimum billing." },
+        return_date: { type: "string", description: "YYYY-MM-DD return date. Required for multi-day round trips. Server uses this to compute days and enforce 250 km/day minimum billing. For one-way trips, omit — minimum is 80 km/8 hrs for cars, 250 km for tempo/bus." },
         driver_charge_per_day: { type: "number", description: "Driver charge per day. Default 250 for cars; use 500 for tempo travellers and buses." },
       },
       required: ["from_city", "to_city", "price_per_km", "trip_type", "pickup_date"],
@@ -254,8 +254,13 @@ async function executeTool(name: string, input: any, phone: string): Promise<str
     }
 
     const rawKm = trip_type === "round_trip" ? dist * 2 : dist;
-    // 250 km/day minimum only for round_trip multi-day (matches website)
-    const km = (trip_type === "round_trip" && days > 1) ? Math.max(rawKm, days * 250) : rawKm;
+    // Minimum billing rules (matches website Cars.tsx):
+    // Round trip multi-day: 250 km/day. One-way heavy (driver ≥500): 250 km. One-way standard: 80 km / 8 hrs.
+    const isHeavy = (driver_charge_per_day ?? 250) >= 500;
+    let km: number;
+    if (trip_type === "round_trip" && days > 1) km = Math.max(rawKm, days * 250);
+    else if (isHeavy) km = Math.max(rawKm, 250);
+    else km = Math.max(rawKm, 80);
     const driverCharge = (driver_charge_per_day ?? 250) * days;
     const fare = Math.round(km * price_per_km + driverCharge);
     return JSON.stringify({ distance_km: dist, km_billed: km, days, driver_charge: driverCharge, fare_inr: fare, toll_note: "Toll, parking & state taxes: additional at actuals (paid on road, no markup)" });
@@ -368,7 +373,9 @@ When calling create_booking, pass car_name exactly as written above. No numeric 
 ━━ FARE RULES ━━
 - Driver charge: ₹250/day for cars; ₹500/day for tempo travellers & buses. One-way = 1 day. Round trip = ceil(days between dates) + 1 (e.g. Jun 2→Jun 9 = 8 days)
 - Toll & parking & state taxes: paid at actuals by customer on road — no markup
-- Round trip multi-day: minimum 250 km/day billed. One-way: no minimum, just the route distance.
+- Round trip multi-day: minimum 250 km/day billed.
+- One-way cars (≤7 seats): minimum 80 km / 8 hrs billed (e.g. a 50 km trip is still billed as 80 km).
+- One-way tempo travellers & buses (>7 seats): minimum 250 km billed.
 - Round trip km = distance × 2
 - 10% advance online confirms booking; 90% cash/UPI to driver at pickup
 - Recommend Crysta or Hycross for hill routes (Manali, Shimla, Mussoorie, Nainital)

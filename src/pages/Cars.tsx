@@ -218,7 +218,8 @@ export default function CarsPage() {
     const isHeavy = carSeats > 7;
     let billedKm = effectiveKm;
     if (tripDays > 1) billedKm = Math.max(effectiveKm, tripDays * 250);
-    else if (isHeavy) billedKm = Math.max(effectiveKm, 100);
+    else if (isHeavy) billedKm = Math.max(effectiveKm, 250);
+    else billedKm = Math.max(effectiveKm, 80);
     return Math.round(parseFloat(pricePerKm) * billedKm + parseFloat(driverCharges || "250") * tripDays);
   };
 
@@ -226,8 +227,8 @@ export default function CarsPage() {
     if (!distanceKm) return effectiveKm;
     const isHeavy = carSeats > 7;
     if (tripDays > 1) return Math.max(effectiveKm, tripDays * 250);
-    if (isHeavy) return Math.max(effectiveKm, 100);
-    return effectiveKm;
+    if (isHeavy) return Math.max(effectiveKm, 250);
+    return Math.max(effectiveKm, 80);
   };
 
   const handleVoiceSearch = () => {
@@ -329,7 +330,7 @@ export default function CarsPage() {
                 </div>
                 <div className="text-sm text-blue-700 font-medium">
                   {(() => {
-                    const minBilledKm = tripDays > 1 ? Math.max(effectiveKm, tripDays * 250) : effectiveKm;
+                    const minBilledKm = tripDays > 1 ? Math.max(effectiveKm, tripDays * 250) : Math.max(effectiveKm, 80);
                     const minApplies = minBilledKm > effectiveKm;
                     return (
                       <>
@@ -339,7 +340,7 @@ export default function CarsPage() {
                         <span className="font-bold">₹{(minBilledKm * 22 + DRIVER_CHARGE * tripDays).toLocaleString("en-IN")}</span>
                         {tripDays > 1
                           ? <span className="text-blue-500 text-xs ml-1">({tripDays} days · {minBilledKm} km min{minApplies ? " applies" : ""})</span>
-                          : " depending on car"}
+                          : <span className="text-blue-500 text-xs ml-1">(min 80 km / 8 hrs for cars · min 250 km for tempo/bus)</span>}
                       </>
                     );
                   })()}
@@ -353,7 +354,7 @@ export default function CarsPage() {
                   {fromCity && toCity ? `Vehicles for ${fromCity} → ${toCity}` : "Vehicles"}
                 </h1>
                 <p className="text-slate-500 mt-1">
-                  {displayCars.length} vehicles available{distanceKm > 0 ? ` · Prices for ${tripDays > 1 ? `${tripDays} days, min ${Math.max(effectiveKm, tripDays * 250)} km` : `${effectiveKm} km`}` : " for your journey"}
+                  {displayCars.length} vehicles available{distanceKm > 0 ? ` · Prices for ${tripDays > 1 ? `${tripDays} days, min ${Math.max(effectiveKm, tripDays * 250)} km` : `${Math.max(effectiveKm, 80)} km · min 80 km / 8 hrs`}` : " for your journey"}
                 </p>
               </div>
               <div className="flex flex-col gap-2 w-full md:w-auto">
@@ -583,7 +584,7 @@ export default function CarsPage() {
                             return (
                               <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-[11px] mb-3 bg-slate-50 rounded-lg px-2.5 py-1.5">
                                 <span className="text-slate-400">
-                                  ₹{car.pricePerKm}/km × {bkm} km{minApplies ? " (min)" : ""} + ₹{(perCarDriver * tripDays).toLocaleString("en-IN")} driver
+                                  ₹{car.pricePerKm}/km × {bkm} km{minApplies ? (tripDays > 1 ? ` (min ${tripDays * 250} km)` : car.seats > 7 ? " (min 250 km)" : " (min 80 km/8 hrs)") : ""} + ₹{(perCarDriver * tripDays).toLocaleString("en-IN")} driver
                                 </span>
                                 <span className="text-green-700 font-semibold">₹{Math.max(100, Math.round(applyDiscount(calcFare(car.pricePerKm, car.seats, car.driverCharges ?? "250")!) * 0.1)).toLocaleString("en-IN")} advance</span>
                               </div>

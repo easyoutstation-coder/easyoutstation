@@ -99,7 +99,9 @@ export default function CarDetailPage() {
 
   const driverCharge = parseFloat(displayCar.driverCharges || "250");
   const estimatedPrice = parseFloat(displayCar.pricePerKm) * distance + driverCharge + tollCharges;
-  const minPrice = parseFloat(displayCar.pricePerKm) * (displayCar.minKmPerDay || 250) + driverCharge;
+  const isHeavyVehicle = displayCar.seats > 7;
+  const oneWayMinKm = isHeavyVehicle ? 250 : 80;
+  const minPrice = parseFloat(displayCar.pricePerKm) * oneWayMinKm + driverCharge;
 
   const handleBookNow = () => {
     const params = new URLSearchParams();
@@ -259,8 +261,8 @@ export default function CarDetailPage() {
                     <span>₹{displayCar.driverCharges}/day</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-400">Minimum km/day</span>
-                    <span>{displayCar.minKmPerDay} km</span>
+                    <span className="text-slate-400">Min km (one-way)</span>
+                    <span>{isHeavyVehicle ? "250 km" : "80 km / 8 hrs"}</span>
                   </div>
                   <Separator className="bg-slate-700" />
                   <div className="flex justify-between text-sm">
@@ -277,7 +279,7 @@ export default function CarDetailPage() {
                     <span className="font-bold text-blue-400">₹{(parseFloat(displayCar.pricePerKm) * distance + driverCharge).toLocaleString("en-IN")}</span>
                   </div>
                   <div className="flex justify-between text-xs text-slate-500">
-                    <span>Minimum charge (250 km)</span>
+                    <span>Minimum charge ({isHeavyVehicle ? "250 km" : "80 km / 8 hrs"})</span>
                     <span>₹{minPrice.toLocaleString("en-IN")}</span>
                   </div>
                   <Separator className="bg-slate-700" />
