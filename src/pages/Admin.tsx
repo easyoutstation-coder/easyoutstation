@@ -342,9 +342,12 @@ export default function AdminPage() {
     onSuccess: () => { setAddDriverOpen(false); setNewDriver({ name: "", phone: "", vehicleInfo: "" }); utils.admin.getDrivers.invalidate(); },
   });
   const updateDriver = trpc.admin.updateDriver.useMutation({
-    onSuccess: () => { setEditingDriver(null); utils.admin.getDrivers.invalidate(); },
+    onSuccess: () => { setEditingDriver(null); utils.admin.getDrivers.invalidate(); toast.success("Driver updated"); },
+    onError: (e) => toast.error(e.message),
   });
-  const removeDriver = trpc.admin.removeDriver.useMutation({ onSuccess: () => utils.admin.getDrivers.invalidate() });
+  const removeDriver = trpc.admin.removeDriver.useMutation({
+    onSuccess: () => { utils.admin.getDrivers.invalidate(); toast.success("Driver removed"); },
+  });
   const setUserRole = trpc.admin.setUserRole.useMutation({ onSuccess: () => utils.admin.getCustomers.invalidate() });
   const addExpense = trpc.admin.addExpense.useMutation({
     onSuccess: () => {
@@ -1370,15 +1373,35 @@ export default function AdminPage() {
                   <Card key={d.id}>
                     <CardContent className="p-4">
                       {editingDriver?.id === Number(d.id) ? (
-                        <div className="flex flex-wrap gap-2 items-end">
-                          <Input placeholder="Name" value={editingDriver.name} onChange={e => setEditingDriver(ed => ed ? { ...ed, name: e.target.value } : ed)} className="h-8 text-sm w-40" />
-                          <Input placeholder="Phone" value={editingDriver.phone} onChange={e => setEditingDriver(ed => ed ? { ...ed, phone: e.target.value } : ed)} className="h-8 text-sm w-36" />
-                          <Input placeholder="Vehicle (optional)" value={editingDriver.vehicleInfo} onChange={e => setEditingDriver(ed => ed ? { ...ed, vehicleInfo: e.target.value } : ed)} className="h-8 text-sm w-48" />
-                          <Button size="sm" className="h-8 text-xs" disabled={updateDriver.isPending}
-                            onClick={() => editingDriver && updateDriver.mutate({ id: editingDriver.id, name: editingDriver.name, phone: editingDriver.phone, vehicleInfo: editingDriver.vehicleInfo || undefined })}>
-                            Save
-                          </Button>
-                          <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => setEditingDriver(null)}>Cancel</Button>
+                        <div className="space-y-3">
+                          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Edit Driver</p>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <div>
+                              <label className="text-xs text-slate-500 mb-1 block">Full Name *</label>
+                              <Input placeholder="Name" value={editingDriver.name}
+                                onChange={e => setEditingDriver(ed => ed ? { ...ed, name: e.target.value } : ed)}
+                                className="h-9 text-sm" />
+                            </div>
+                            <div>
+                              <label className="text-xs text-slate-500 mb-1 block">Phone *</label>
+                              <Input placeholder="10-digit phone" value={editingDriver.phone}
+                                onChange={e => setEditingDriver(ed => ed ? { ...ed, phone: e.target.value } : ed)}
+                                className="h-9 text-sm" />
+                            </div>
+                            <div>
+                              <label className="text-xs text-slate-500 mb-1 block">Vehicle / Notes</label>
+                              <Input placeholder="e.g. Swift Dzire UP32" value={editingDriver.vehicleInfo}
+                                onChange={e => setEditingDriver(ed => ed ? { ...ed, vehicleInfo: e.target.value } : ed)}
+                                className="h-9 text-sm" />
+                            </div>
+                          </div>
+                          <div className="flex gap-2 pt-1">
+                            <Button size="sm" className="gap-1.5" disabled={updateDriver.isPending || !editingDriver.name || !editingDriver.phone}
+                              onClick={() => editingDriver && updateDriver.mutate({ id: editingDriver.id, name: editingDriver.name, phone: editingDriver.phone, vehicleInfo: editingDriver.vehicleInfo || undefined })}>
+                              {updateDriver.isPending ? "Saving…" : "Save Changes"}
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => setEditingDriver(null)}>Cancel</Button>
+                          </div>
                         </div>
                       ) : (
                         <div className="flex items-center justify-between gap-2">
@@ -1391,10 +1414,10 @@ export default function AdminPage() {
                               {d.vehicleInfo && <span className="text-xs text-muted-foreground">· {d.vehicleInfo}</span>}
                             </div>
                           </div>
-                          <div className="flex gap-1">
-                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0"
+                          <div className="flex gap-1.5">
+                            <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs"
                               onClick={() => setEditingDriver({ id: Number(d.id), name: d.name, phone: d.phone, vehicleInfo: d.vehicleInfo ?? "" })}>
-                              <Pencil className="w-3.5 h-3.5" />
+                              <Pencil className="w-3 h-3" /> Edit
                             </Button>
                             <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-500 hover:bg-red-50"
                               onClick={() => removeDriver.mutate({ id: Number(d.id) })}>
