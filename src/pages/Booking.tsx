@@ -167,8 +167,12 @@ export default function BookingPage() {
   // Pre-fill form when resuming an abandoned booking
   useEffect(() => {
     if (!resumeBooking) return;
-    if (resumeBooking.customerName) setCustomerName(resumeBooking.customerName);
-    if (resumeBooking.customerPhone) setCustomerPhone(resumeBooking.customerPhone);
+    if (resumeBooking.customerName) { setCustomerName(resumeBooking.customerName); setQuickName(resumeBooking.customerName); }
+    if (resumeBooking.customerPhone) {
+      setCustomerPhone(resumeBooking.customerPhone);
+      // strip country code — keep last 10 digits for the OTP sign-up form
+      setQuickPhone(resumeBooking.customerPhone.replace(/\D/g, "").slice(-10));
+    }
     if (resumeBooking.customerEmail) setCustomerEmail(resumeBooking.customerEmail);
     if (resumeBooking.pickupAddress) setPickupAddress(resumeBooking.pickupAddress);
     if (resumeBooking.pickupDate) {
