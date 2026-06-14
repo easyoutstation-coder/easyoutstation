@@ -200,6 +200,11 @@ Team EasyOutstation`;
           fromCity: booking.fromCity ?? "",
           toCity: booking.toCity ?? "",
           pickupDate: date,
+          carName: booking.car?.name,
+          totalKm: booking.totalKm,
+          passengerCount: booking.passengerCount ?? undefined,
+          pickupAddress: booking.pickupAddress ?? undefined,
+          tripType: booking.tripType,
         }).catch(console.error);
       }
 

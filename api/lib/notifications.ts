@@ -877,7 +877,28 @@ export async function sendVendorTripAssignment(input: {
   toCity: string;
   pickupDate: string;
   customerName: string;
+  carName?: string;
+  totalKm?: number;
+  passengerCount?: number;
+  pickupAddress?: string;
+  tripType?: string;
 }) {
+  // Extract pickup time embedded in pickupAddress ("..., Time: HH:MM, ...")
+  const timeMatch = input.pickupAddress ? /Time:\s*(\d{1,2}:\d{2})/i.exec(input.pickupAddress) : null;
+  const pickupTime = timeMatch ? timeMatch[1] : null;
+
+  // Strip metadata suffixes from address so vendor sees a clean address
+  const cleanAddress = input.pickupAddress
+    ? input.pickupAddress
+        .replace(/,?\s*Pincode:\s*\d+/gi, "")
+        .replace(/,?\s*Time:\s*\d{1,2}:\d{2}/gi, "")
+        .replace(/,?\s*GPS:\s*[-\d.,]+/gi, "")
+        .trim()
+    : null;
+
+  const waVendorPhone = toWaPhone(input.vendorPhone);
+
+  // Step 1: send the registered template (required for first outbound message to vendor)
   await dispatchWhatsApp(
     input.vendorPhone,
     "eo_vendor_trip_assigned_v2",
@@ -893,13 +914,34 @@ export async function sendVendorTripAssignment(input: {
       ],
     }],
     { bookingId: input.bookingId, notificationType: "vendor-assignment" },
-    `EasyOutstation: Trip #${input.bookingId} assigned to you — ${input.fromCity} to ${input.toCity} on ${input.pickupDate}. Customer: ${input.customerName}. Reply on WhatsApp 8796564111 with driver name and mobile. Example: Suresh Kumar, 9876543210. Reply ISSUE if problem.`,
+    `EasyOutstation: Trip #${input.bookingId} assigned — ${input.fromCity} to ${input.toCity} on ${input.pickupDate}. Customer: ${input.customerName}. Reply with driver name & mobile. Example: Suresh Kumar, 9876543210. Reply ISSUE if problem.`,
     true // vendor — skip opt-out check
+  );
+
+  // Step 2: immediately follow up with a rich plain-text detail message
+  const tripTypeLabel = input.tripType === "round_trip" ? "Round Trip" : "One Way";
+  const detailLines = [
+    `📋 *Full Trip Details — Booking #${input.bookingId}*`,
+    ``,
+    `📍 *Pickup Location:* ${cleanAddress || input.fromCity}`,
+    `📍 *Drop Location:* ${input.toCity}`,
+    `📅 *Date:* ${input.pickupDate}`,
+    pickupTime ? `⏰ *Pickup Time:* ${pickupTime}` : `⏰ *Pickup Time:* To be confirmed with customer`,
+    `🚗 *Vehicle Required:* ${input.carName || "As booked"}`,
+    `📏 *Distance:* ~${input.totalKm ?? "—"} km`,
+    `↔️ *Trip Type:* ${tripTypeLabel}`,
+    `👤 *Customer:* ${input.customerName}`,
+    input.passengerCount ? `👥 *Passengers:* ${input.passengerCount}` : null,
+    ``,
+    `Reply with driver name & mobile to confirm.\nExample: Suresh Kumar, 9876543210\nReply ISSUE if you have a problem.`,
+  ].filter(l => l !== null).join("\n");
+
+  sendWhatsAppTextRaw(waVendorPhone, detailLines).catch(e =>
+    console.error("[Notify] Vendor detail follow-up failed:", e)
   );
 
   try {
     const db = getDb();
-    const waVendorPhone = toWaPhone(input.vendorPhone);
     const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
     await db.execute(sql`
       INSERT INTO whatsappConversations (phone, state, contextJson, expiresAt)
