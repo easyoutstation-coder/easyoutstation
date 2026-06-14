@@ -2,7 +2,7 @@ import { Shield, Clock, MapPin, Headphones, Wallet, Award, Wind } from "lucide-r
 
 const features = [
   { icon: Shield, title: "Police-Verified Drivers", description: "Every driver is background-verified, trained, and rated by real customers. You know who's picking you up before they arrive.", tag: "Safety First" },
-  { icon: Wallet, title: "Zero Hidden Charges", description: "Toll, parking, driver allowance — all disclosed before you book. The price you confirm is the price you pay. Period.", tag: "Transparent" },
+  { icon: Wallet, title: "Zero Hidden Charges", description: "Fare includes distance & driver charges. Toll, parking & state taxes are additional — paid at actuals on the road, no markup, no surprises.", tag: "Transparent" },
   { icon: Wind, title: "100% Air-Conditioned Fleet", description: "Every vehicle in our fleet — from sedans to tempo travellers — is fully air-conditioned. Travel comfortably regardless of weather or season.", tag: "Always Comfortable" },
   { icon: Clock, title: "On-Time or Compensated", description: "If your driver is late beyond 30 minutes without prior notice, you get compensation. We back our promise with action.", tag: "Guaranteed" },
   { icon: MapPin, title: "Door-to-Door Pickup", description: "We come to your home, hotel, or office. No walking to a pickup point. Your comfort starts the moment you book.", tag: "Convenient" },

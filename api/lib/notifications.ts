@@ -258,8 +258,8 @@ Passengers   : ${input.passengerCount}
 FARE BREAKDOWN
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Total Fare   : ₹${input.totalPrice.toLocaleString("en-IN")}
-(Includes distance charges, driver charges & estimated toll)
-Note: Parking charges paid at actuals
+(Includes distance charges & driver charges)
+Note: Toll, parking & state taxes are paid at actuals on the road — no markup
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 PICKUP DETAILS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
