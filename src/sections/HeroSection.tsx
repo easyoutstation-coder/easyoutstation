@@ -335,6 +335,24 @@ export default function HeroSection() {
                       ))}
                     </div>
                   )}
+
+                  {/* Use case chips */}
+                  <div className="flex flex-wrap gap-1.5 px-0.5">
+                    {isRoundTrip ? (
+                      <>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-100 text-[11px] text-blue-600 font-medium">🏖️ Weekend Getaway</span>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-100 text-[11px] text-blue-600 font-medium">🛕 Pilgrimage</span>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-100 text-[11px] text-blue-600 font-medium">💒 Wedding & Events</span>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-violet-50 border border-violet-100 text-[11px] text-violet-600 font-medium">📅 Multi-Day Trips</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-100 text-[11px] text-blue-600 font-medium">✈️ Airport Transfer</span>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-100 text-[11px] text-blue-600 font-medium">💼 Corporate Drop</span>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-100 text-[11px] text-blue-600 font-medium">🏔️ Hill Getaway</span>
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 {/* From location — Delhi NCR only */}
