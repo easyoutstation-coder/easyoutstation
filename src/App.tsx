@@ -89,6 +89,13 @@ function SiteGate({ children }: { children: React.ReactNode }) {
   // Scroll to top on page navigation, but skip if navigating to a hash anchor
   useEffect(() => { if (!hash) window.scrollTo(0, 0); }, [pathname, hash])
 
+  // Fire Meta Pixel PageView on every route change
+  useEffect(() => {
+    if (typeof (window as any).fbq === 'function') {
+      (window as any).fbq('track', 'PageView');
+    }
+  }, [pathname])
+
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin'
   const isOffline = data?.online === false
   // Always let /login and /admin through so admins can log in and toggle the switch
