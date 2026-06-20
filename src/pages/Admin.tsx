@@ -199,7 +199,7 @@ export default function AdminPage() {
 
   const { data: stats } = trpc.admin.getStats.useQuery(undefined, { enabled: isAdmin });
   const { data: bookingsList, isLoading: bookingsLoading } = trpc.admin.getBookings.useQuery(
-    { status: statusFilter }, { enabled: isAdmin }
+    { status: bookingSearch.trim() ? "all" : statusFilter }, { enabled: isAdmin }
   );
   const { data: driversList } = trpc.admin.getDrivers.useQuery(undefined, { enabled: isAdmin });
   const { data: customers } = trpc.admin.getCustomers.useQuery(undefined, { enabled: isAdmin });
