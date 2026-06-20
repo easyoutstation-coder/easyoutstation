@@ -1153,7 +1153,7 @@ export default function AdminPage() {
                       placeholder="Email or phone number"
                       value={grantContact}
                       onChange={e => setGrantContact(e.target.value)}
-                      className="h-9 text-sm flex-1"
+                      className="h-9 text-sm flex-1 text-slate-900 bg-white"
                     />
                     <select
                       value={grantRole}
