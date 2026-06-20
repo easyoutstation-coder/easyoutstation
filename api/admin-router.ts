@@ -90,9 +90,10 @@ export const adminRouter = createRouter({
   // ── Stats ─────────────────────────────────────────────────────────────
   getStats: adminQuery.query(async () => {
     const db = getDb();
-    const [pending, confirmed, completed, cancelled, totalRevenue, paidRevenue, customerCount] = await Promise.all([
+    const [pending, confirmed, driverAssigned, completed, cancelled, totalRevenue, paidRevenue, customerCount] = await Promise.all([
       db.select({ n: sql<number>`COUNT(*)` }).from(bookings).where(eq(bookings.status, "pending")),
       db.select({ n: sql<number>`COUNT(*)` }).from(bookings).where(eq(bookings.status, "confirmed")),
+      db.select({ n: sql<number>`COUNT(*)` }).from(bookings).where(eq(bookings.status, "driver_assigned")),
       db.select({ n: sql<number>`COUNT(*)` }).from(bookings).where(eq(bookings.status, "completed")),
       db.select({ n: sql<number>`COUNT(*)` }).from(bookings).where(eq(bookings.status, "cancelled")),
       db.select({ v: sql<string>`COALESCE(SUM(totalPrice),0)` }).from(bookings),
@@ -102,6 +103,7 @@ export const adminRouter = createRouter({
     return {
       pending: Number(pending[0]?.n ?? 0),
       confirmed: Number(confirmed[0]?.n ?? 0),
+      driverAssigned: Number(driverAssigned[0]?.n ?? 0),
       completed: Number(completed[0]?.n ?? 0),
       cancelled: Number(cancelled[0]?.n ?? 0),
       totalRevenue: parseFloat(totalRevenue[0]?.v ?? "0"),
@@ -112,17 +114,39 @@ export const adminRouter = createRouter({
 
   // ── Bookings ──────────────────────────────────────────────────────────
   getBookings: adminQuery
-    .input(z.object({ status: z.string().optional() }).optional())
+    .input(z.object({
+      status: z.string().optional(),
+      dateFilter: z.enum(["today", "tomorrow", "week"]).optional(),
+    }).optional())
     .query(async ({ input }) => {
       const db = getDb();
-      const where = input?.status && input.status !== "all"
-        ? eq(bookings.status, input.status as "pending" | "confirmed" | "driver_assigned" | "completed" | "cancelled")
-        : undefined;
+      const conditions: any[] = [];
+      if (input?.status && input.status !== "all") {
+        conditions.push(eq(bookings.status, input.status as "pending" | "confirmed" | "driver_assigned" | "completed" | "cancelled"));
+      }
+      if (input?.dateFilter) {
+        const now = new Date();
+        const pad = (d: Date) => d.toISOString().slice(0, 10);
+        const tomorrow = new Date(now); tomorrow.setDate(now.getDate() + 1);
+        const weekEnd = new Date(now); weekEnd.setDate(now.getDate() + 7);
+        if (input.dateFilter === "today") conditions.push(sql`DATE(${bookings.pickupDate}) = ${pad(now)}`);
+        else if (input.dateFilter === "tomorrow") conditions.push(sql`DATE(${bookings.pickupDate}) = ${pad(tomorrow)}`);
+        else if (input.dateFilter === "week") conditions.push(sql`DATE(${bookings.pickupDate}) BETWEEN ${pad(now)} AND ${pad(weekEnd)}`);
+      }
+      const orderBy = input?.dateFilter ? [bookings.pickupDate] : [desc(bookings.createdAt)];
       return await db.query.bookings.findMany({
-        where,
-        orderBy: [desc(bookings.createdAt)],
+        where: conditions.length > 0 ? and(...conditions) : undefined,
+        orderBy,
         with: { car: true },
       });
+    }),
+
+  markComplete: adminQuery
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      await db.update(bookings).set({ status: "completed" }).where(eq(bookings.id, input.id));
+      return { ok: true };
     }),
 
   // Confirm booking with driver → sends email → returns WhatsApp link

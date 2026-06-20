@@ -173,6 +173,9 @@ export default function AdminPage() {
   // Booking search
   const [bookingSearch, setBookingSearch] = useState("");
 
+  // Date filter for In Progress tab
+  const [dateFilter, setDateFilter] = useState<"today" | "tomorrow" | "week" | "">("");
+
   // FAQ management
   const [faqForm, setFaqForm] = useState({ question: "", answer: "", position: "0" });
   const [editingFaq, setEditingFaq] = useState<{ id: number; question: string; answer: string; position: string } | null>(null);
@@ -199,7 +202,11 @@ export default function AdminPage() {
 
   const { data: stats } = trpc.admin.getStats.useQuery(undefined, { enabled: isAdmin });
   const { data: bookingsList, isLoading: bookingsLoading } = trpc.admin.getBookings.useQuery(
-    { status: bookingSearch.trim() ? "all" : statusFilter }, { enabled: isAdmin }
+    {
+      status: bookingSearch.trim() ? "all" : statusFilter,
+      dateFilter: (statusFilter === "driver_assigned" && dateFilter) ? dateFilter : undefined,
+    },
+    { enabled: isAdmin }
   );
   const { data: driversList } = trpc.admin.getDrivers.useQuery(undefined, { enabled: isAdmin });
   const { data: customers } = trpc.admin.getCustomers.useQuery(undefined, { enabled: isAdmin });
@@ -335,6 +342,7 @@ export default function AdminPage() {
     },
   });
   const updatePayment = trpc.admin.updatePayment.useMutation({ onSuccess: invalidateBookings });
+  const markComplete = trpc.admin.markComplete.useMutation({ onSuccess: invalidateBookings });
   const addNote = trpc.admin.addNote.useMutation({
     onSuccess: () => { setNoteModal(m => ({ ...m, open: false })); setNoteText(""); invalidateBookings(); },
   });
@@ -1125,15 +1133,47 @@ export default function AdminPage() {
             </Dialog>
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCard icon={Clock} label="Pending" value={stats?.pending ?? "—"} />
-              <StatCard icon={CheckCircle} label="Confirmed" value={stats?.confirmed ?? "—"} />
-              <StatCard icon={Car} label="Completed" value={stats?.completed ?? "—"} />
+              <StatCard icon={Clock} label="Pending" value={stats?.pending ?? "—"} sub="Awaiting confirmation" />
+              <StatCard icon={CheckCircle} label="Confirmed" value={stats?.confirmed ?? "—"} sub="Driver not yet assigned" />
+              <StatCard icon={Car} label="In Progress" value={stats?.driverAssigned ?? "—"} sub="Driver assigned" />
+              <StatCard icon={CheckCircle} label="Completed" value={stats?.completed ?? "—"} />
               <StatCard icon={XCircle} label="Cancelled" value={stats?.cancelled ?? "—"} />
               <StatCard icon={IndianRupee} label="Total Revenue" value={stats ? `₹${stats.totalRevenue.toLocaleString("en-IN")}` : "—"} />
               <StatCard icon={IndianRupee} label="Collected" value={stats ? `₹${stats.paidRevenue.toLocaleString("en-IN")}` : "—"} sub="Marked as paid" />
               <StatCard icon={IndianRupee} label="Outstanding" value={stats ? `₹${(stats.totalRevenue - stats.paidRevenue).toLocaleString("en-IN")}` : "—"} sub="Not yet collected" />
               <StatCard icon={Users} label="Customers" value={stats?.customers ?? "—"} />
             </div>
+
+            {/* Today's Rides */}
+            {(liveTrips?.length ?? 0) > 0 && (
+              <div className="mt-5">
+                <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                  <Car className="w-4 h-4 text-blue-400" /> Today's Rides
+                  <span className="bg-blue-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{liveTrips!.length}</span>
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {liveTrips!.map(t => (
+                    <div key={t.id} className="dp-stat p-4 flex flex-col gap-1.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-mono text-slate-400">#{t.id}</span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${t.status === "driver_assigned" ? "bg-emerald-500/20 text-emerald-300" : "bg-amber-500/20 text-amber-300"}`}>
+                          {t.status === "driver_assigned" ? "Driver Assigned" : "Confirmed"}
+                        </span>
+                      </div>
+                      <p className="text-sm font-semibold text-white">{t.customerName}</p>
+                      <p className="text-xs text-slate-400">{t.fromCity} → {t.toCity}</p>
+                      <p className="text-xs text-slate-500">
+                        {new Date(t.pickupDate).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
+                        {t.pickupAddress ? ` · ${t.pickupAddress}` : ""}
+                      </p>
+                      {t.driverName && (
+                        <p className="text-xs text-emerald-400">👨‍✈️ {t.driverName}{t.driverPhone ? ` · ${t.driverPhone}` : ""}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Grant / Revoke Access */}
             {isSuperAdmin && (
@@ -1181,13 +1221,38 @@ export default function AdminPage() {
           {/* ── Bookings ─────────────────────────────────────────────── */}
           <TabsContent value="bookings">
             <div className="flex flex-wrap gap-2 mb-3">
-              {(["pending", "confirmed", "all", "completed", "cancelled"] as const).map(s => (
-                <Button key={s} variant={statusFilter === s ? "default" : "outline"} size="sm"
-                  onClick={() => setStatusFilter(s)} className="capitalize">
-                  {s}{s === "pending" && (stats?.pending ?? 0) > 0 ? ` (${stats!.pending})` : ""}
+              {([
+                { value: "pending", label: "Pending", count: stats?.pending },
+                { value: "confirmed", label: "Confirmed", count: stats?.confirmed },
+                { value: "driver_assigned", label: "In Progress", count: stats?.driverAssigned },
+                { value: "all", label: "All" },
+                { value: "completed", label: "Completed" },
+                { value: "cancelled", label: "Cancelled" },
+              ] as const).map(s => (
+                <Button key={s.value} variant={statusFilter === s.value ? "default" : "outline"} size="sm"
+                  onClick={() => { setStatusFilter(s.value); setDateFilter(""); }}>
+                  {s.label}{(s.count ?? 0) > 0 ? ` (${s.count})` : ""}
                 </Button>
               ))}
             </div>
+
+            {/* Date filter — only for In Progress tab */}
+            {statusFilter === "driver_assigned" && (
+              <div className="flex flex-wrap gap-2 mb-3">
+                <span className="text-xs text-slate-400 self-center">Filter by date:</span>
+                {([
+                  { value: "", label: "All dates" },
+                  { value: "today", label: "Today" },
+                  { value: "tomorrow", label: "Tomorrow" },
+                  { value: "week", label: "This week" },
+                ] as const).map(d => (
+                  <Button key={d.value} size="sm" variant={dateFilter === d.value ? "default" : "outline"}
+                    onClick={() => setDateFilter(d.value)} className="h-7 text-xs">
+                    {d.label}
+                  </Button>
+                ))}
+              </div>
+            )}
 
             <div className="relative mb-4">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -1267,6 +1332,18 @@ export default function AdminPage() {
 
                           {/* Action buttons */}
                           <div className="flex flex-wrap gap-2 pt-1 border-t border-slate-100">
+                            {/* Mark Complete — only for driver_assigned */}
+                            {b.status === "driver_assigned" && (
+                              <Button
+                                size="sm"
+                                className="h-8 text-xs gap-1 bg-blue-600 hover:bg-blue-700 text-white"
+                                disabled={markComplete.isPending}
+                                onClick={() => markComplete.mutate({ id: Number(b.id) })}
+                              >
+                                <CheckCircle className="w-3 h-3" /> Mark Complete
+                              </Button>
+                            )}
+
                             {/* Confirm — only for pending/confirmed */}
                             {!isCancelled && !isCompleted && (
                               <Button
@@ -1275,7 +1352,7 @@ export default function AdminPage() {
                                 onClick={() => openConfirmModal(b)}
                               >
                                 <CheckCheck className="w-3 h-3" />
-                                {b.status === "confirmed" ? "Re-assign Driver" : "Confirm"}
+                                {b.status === "driver_assigned" ? "Re-assign Driver" : b.status === "confirmed" ? "Re-assign Driver" : "Confirm"}
                               </Button>
                             )}
 
