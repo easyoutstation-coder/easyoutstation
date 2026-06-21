@@ -1,283 +1,448 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+  <!-- ── Core pages ──────────────────────────────────────────────────── -->
   <url>
     <loc>https://www.easyoutstation.com/</loc>
-    <lastmod>2026-05-31</lastmod>
+    <lastmod>2026-06-21</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://www.easyoutstation.com/cars</loc>
-    <lastmod>2026-05-31</lastmod>
+    <lastmod>2026-06-21</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://www.easyoutstation.com/routes</loc>
-    <lastmod>2026-05-31</lastmod>
+    <lastmod>2026-06-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://www.easyoutstation.com/faq</loc>
-    <lastmod>2026-05-31</lastmod>
+    <lastmod>2026-06-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.easyoutstation.com/referral</loc>
-    <lastmod>2026-05-31</lastmod>
+    <loc>https://www.easyoutstation.com/about</loc>
+    <lastmod>2026-06-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.easyoutstation.com/about</loc>
-    <lastmod>2026-05-31</lastmod>
+    <loc>https://www.easyoutstation.com/referral</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.easyoutstation.com/corporate</loc>
+    <lastmod>2026-06-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.easyoutstation.com/cancellation</loc>
-    <lastmod>2026-05-31</lastmod>
+    <lastmod>2026-06-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://www.easyoutstation.com/terms</loc>
-    <lastmod>2026-05-31</lastmod>
+    <lastmod>2026-06-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>
   </url>
   <url>
     <loc>https://www.easyoutstation.com/privacy</loc>
-    <lastmod>2026-05-31</lastmod>
+    <lastmod>2026-06-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>
   </url>
 
-  <!-- Route Landing Pages — highest priority for organic search -->
+  <!-- ── Route landing pages — Hills & Mountains ─────────────────────── -->
   <url>
     <loc>https://www.easyoutstation.com/cab/delhi-to-manali</loc>
-    <lastmod>2026-05-31</lastmod>
+    <lastmod>2026-06-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.95</priority>
   </url>
   <url>
     <loc>https://www.easyoutstation.com/cab/delhi-to-shimla</loc>
-    <lastmod>2026-05-31</lastmod>
+    <lastmod>2026-06-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.95</priority>
   </url>
   <url>
-    <loc>https://www.easyoutstation.com/cab/delhi-to-chandigarh</loc>
-    <lastmod>2026-05-31</lastmod>
+    <loc>https://www.easyoutstation.com/cab/delhi-to-dharamshala</loc>
+    <lastmod>2026-06-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://www.easyoutstation.com/cab/delhi-to-jaipur</loc>
-    <lastmod>2026-05-31</lastmod>
+    <loc>https://www.easyoutstation.com/cab/delhi-to-dalhousie</loc>
+    <lastmod>2026-06-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://www.easyoutstation.com/cab/delhi-to-agra</loc>
-    <lastmod>2026-05-31</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://www.easyoutstation.com/cab/delhi-to-rishikesh</loc>
-    <lastmod>2026-05-31</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://www.easyoutstation.com/cab/delhi-to-dehradun</loc>
-    <lastmod>2026-05-31</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://www.easyoutstation.com/cab/delhi-to-haridwar</loc>
-    <lastmod>2026-05-31</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://www.easyoutstation.com/cab/delhi-to-mussoorie</loc>
-    <lastmod>2026-05-31</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://www.easyoutstation.com/cab/delhi-to-nainital</loc>
-    <lastmod>2026-05-31</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://www.easyoutstation.com/cab/delhi-to-mathura</loc>
-    <lastmod>2026-05-31</lastmod>
+    <loc>https://www.easyoutstation.com/cab/delhi-to-kasauli</loc>
+    <lastmod>2026-06-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://www.easyoutstation.com/cab/delhi-to-amritsar</loc>
-    <lastmod>2026-05-31</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://www.easyoutstation.com/cab/delhi-to-dharamshala</loc>
-    <lastmod>2026-06-08</lastmod>
+    <loc>https://www.easyoutstation.com/cab/delhi-to-spiti</loc>
+    <lastmod>2026-06-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://www.easyoutstation.com/cab/delhi-to-kashmir</loc>
-    <lastmod>2026-06-08</lastmod>
+    <lastmod>2026-06-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.95</priority>
   </url>
   <url>
-    <loc>https://www.easyoutstation.com/cab/delhi-to-vaishno-devi</loc>
-    <lastmod>2026-06-08</lastmod>
+    <loc>https://www.easyoutstation.com/cab/delhi-to-chandigarh</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- ── Route landing pages — Uttarakhand ───────────────────────────── -->
+  <url>
+    <loc>https://www.easyoutstation.com/cab/delhi-to-dehradun</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.easyoutstation.com/cab/delhi-to-mussoorie</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.easyoutstation.com/cab/delhi-to-rishikesh</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.easyoutstation.com/cab/delhi-to-haridwar</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.easyoutstation.com/cab/delhi-to-nainital</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.easyoutstation.com/cab/delhi-to-corbett</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.easyoutstation.com/cab/delhi-to-lansdowne</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- ── Route landing pages — Rajasthan ─────────────────────────────── -->
+  <url>
+    <loc>https://www.easyoutstation.com/cab/delhi-to-jaipur</loc>
+    <lastmod>2026-06-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.95</priority>
   </url>
   <url>
-    <loc>https://www.easyoutstation.com/cab/delhi-to-ludhiana</loc>
-    <lastmod>2026-06-08</lastmod>
+    <loc>https://www.easyoutstation.com/cab/delhi-to-agra</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.95</priority>
+  </url>
+  <url>
+    <loc>https://www.easyoutstation.com/cab/delhi-to-jodhpur</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.easyoutstation.com/cab/delhi-to-udaipur</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.easyoutstation.com/cab/delhi-to-pushkar</loc>
+    <lastmod>2026-06-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
+    <loc>https://www.easyoutstation.com/cab/delhi-to-mount-abu</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <!-- ── Route landing pages — UP & East ─────────────────────────────── -->
+  <url>
+    <loc>https://www.easyoutstation.com/cab/delhi-to-mathura</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://www.easyoutstation.com/cab/delhi-to-vrindavan</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://www.easyoutstation.com/cab/delhi-to-lucknow</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.easyoutstation.com/cab/delhi-to-prayagraj</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
     <loc>https://www.easyoutstation.com/cab/delhi-to-ayodhya</loc>
-    <lastmod>2026-06-08</lastmod>
+    <lastmod>2026-06-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.95</priority>
   </url>
   <url>
     <loc>https://www.easyoutstation.com/cab/delhi-to-banaras</loc>
-    <lastmod>2026-06-08</lastmod>
+    <lastmod>2026-06-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.95</priority>
   </url>
-  <!-- Blog listing -->
+
+  <!-- ── Route landing pages — Punjab & North ────────────────────────── -->
+  <url>
+    <loc>https://www.easyoutstation.com/cab/delhi-to-amritsar</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.easyoutstation.com/cab/delhi-to-ludhiana</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://www.easyoutstation.com/cab/delhi-to-vaishno-devi</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.95</priority>
+  </url>
+
+  <!-- ── Blog listing ─────────────────────────────────────────────────── -->
   <url>
     <loc>https://www.easyoutstation.com/blog</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-06-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
-  <!-- Blog posts -->
+
+  <!-- ── Blog posts — Original 18 ────────────────────────────────────── -->
   <url>
     <loc>https://www.easyoutstation.com/blog/delhi-to-manali-road-trip-guide</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-06-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://www.easyoutstation.com/blog/delhi-to-shimla-road-trip-guide</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-06-21</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.85</priority>
   </url>
   <url>
     <loc>https://www.easyoutstation.com/blog/delhi-to-dharamshala-mcleod-ganj-guide</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-06-21</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.85</priority>
   </url>
   <url>
     <loc>https://www.easyoutstation.com/blog/delhi-to-kashmir-road-trip-guide</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-06-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://www.easyoutstation.com/blog/delhi-to-vaishno-devi-guide</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-06-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://www.easyoutstation.com/blog/delhi-to-chandigarh-travel-guide</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-06-21</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.75</priority>
   </url>
   <url>
     <loc>https://www.easyoutstation.com/blog/delhi-to-amritsar-golden-temple-guide</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-06-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://www.easyoutstation.com/blog/delhi-to-ludhiana-travel-guide</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-06-21</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.75</priority>
   </url>
   <url>
     <loc>https://www.easyoutstation.com/blog/delhi-to-jaipur-road-trip-guide</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-06-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://www.easyoutstation.com/blog/delhi-to-agra-taj-mahal-guide</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-06-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://www.easyoutstation.com/blog/delhi-to-mathura-vrindavan-guide</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-06-21</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.85</priority>
   </url>
   <url>
     <loc>https://www.easyoutstation.com/blog/delhi-to-rishikesh-travel-guide</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-06-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://www.easyoutstation.com/blog/delhi-to-haridwar-ganga-aarti-guide</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-06-21</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.85</priority>
   </url>
   <url>
     <loc>https://www.easyoutstation.com/blog/delhi-to-dehradun-travel-guide</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-06-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.easyoutstation.com/blog/delhi-to-mussoorie-travel-guide</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-06-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.easyoutstation.com/blog/delhi-to-nainital-travel-guide</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-06-21</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.85</priority>
   </url>
   <url>
     <loc>https://www.easyoutstation.com/blog/delhi-to-ayodhya-ram-mandir-guide</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-06-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://www.easyoutstation.com/blog/delhi-to-varanasi-ganga-aarti-guide</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-06-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
+
+  <!-- ── Blog posts — New 12 (2026-06-21) ────────────────────────────── -->
+  <url>
+    <loc>https://www.easyoutstation.com/blog/delhi-to-udaipur-road-trip-guide</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.easyoutstation.com/blog/delhi-to-jodhpur-road-trip-guide</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.easyoutstation.com/blog/delhi-to-jim-corbett-safari-guide</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.easyoutstation.com/blog/delhi-to-lucknow-travel-guide</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://www.easyoutstation.com/blog/delhi-to-prayagraj-sangam-guide</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://www.easyoutstation.com/blog/delhi-to-pushkar-travel-guide</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://www.easyoutstation.com/blog/delhi-to-dalhousie-travel-guide</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://www.easyoutstation.com/blog/delhi-to-kasauli-travel-guide</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://www.easyoutstation.com/blog/delhi-to-spiti-valley-guide</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.easyoutstation.com/blog/delhi-to-mount-abu-travel-guide</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://www.easyoutstation.com/blog/delhi-to-lansdowne-travel-guide</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.easyoutstation.com/blog/delhi-to-vrindavan-day-trip-guide</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
 </urlset>
