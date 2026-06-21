@@ -608,7 +608,7 @@ export default function HeroSection() {
             </button>
 
             <div className="hidden sm:flex gap-8 pt-4 border-t border-white/10">
-              {[{ num: "500+", label: "Trips Completed" }, { num: "4.9★", label: "Average Rating" }, { num: "18", label: "Cities Served" }].map((s, i) => (
+              {[{ num: "500+", label: "Trips Completed" }, { num: "4.9★", label: "Average Rating" }, { num: "30+", label: "Cities Served" }].map((s, i) => (
                 <div key={i}>
                   <div className="text-xl font-bold text-white font-['DM_Serif_Display']">{s.num}</div>
                   <div className="text-xs text-slate-400 mt-0.5">{s.label}</div>

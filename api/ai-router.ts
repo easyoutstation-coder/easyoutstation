@@ -81,9 +81,69 @@ function getRuleBasedResponse(msg: string): string {
     return `Delhi to Banaras 🪔\n\n📍 Distance: ~820 km\n⏱️ Duration: 12-14 hours\n🗺️ Route: Delhi → Agra-Lucknow Expressway (NH19) → NH27 → Varanasi\n\nBest cars:\n🥇 Innova Crysta (₹20/km) — Most comfortable for long journey\n🥈 Innova Hycross (₹22/km) — Premium luxury\n🥉 Ertiga (₹15/km) — Family trip\n\nExperience Ganga Aarti at Dashashwamedh Ghat, Kashi Vishwanath Temple, Sarnath Buddhist site & sunrise boat ride on the Ganga!`;
   }
 
+  // Jodhpur / Blue City
+  if (msg.match(/jodhpur|blue city|mehrangarh|jaswant thada/)) {
+    return `Delhi to Jodhpur 🏯\n\n📍 Distance: ~600 km\n⏱️ Duration: 9-10 hours\n🗺️ Route: Delhi → NH48 (Delhi-Jaipur Expressway) → Ajmer → Jodhpur\n\nBest cars:\n🥇 Innova Crysta (₹20/km) — Highway comfort for long distance\n🥈 Ertiga (₹15/km) — Family trip\n🥉 Swift Dzire (₹12/km) — Budget couple trip\n\nExplore Mehrangarh Fort, the Blue City rooftops, Jaswant Thada cenotaph & Sardar Market bazaar!`;
+  }
+
+  // Udaipur / Lake City
+  if (msg.match(/udaipur|lake pichola|city palace|fateh sagar|lake city|city of lakes/)) {
+    return `Delhi to Udaipur 🏰\n\n📍 Distance: ~665 km\n⏱️ Duration: 10-11 hours\n🗺️ Route: Delhi → NH48 → Jaipur → Ajmer → Udaipur\n\nBest cars:\n🥇 Innova Crysta (₹20/km) — Comfortable for long overnight journey\n🥈 Innova Hycross (₹22/km) — Premium experience\n🥉 Ertiga (₹15/km) — Family value\n\nBoat ride on Lake Pichola, City Palace complex, Jagdish Temple & Saheliyon ki Bari!`;
+  }
+
+  // Pushkar
+  if (msg.match(/pushkar|brahma temple|pushkar lake|camel fair/)) {
+    return `Delhi to Pushkar 🐪\n\n📍 Distance: ~395 km\n⏱️ Duration: 6-7 hours\n🗺️ Route: Delhi → NH48 → Jaipur → Ajmer → Pushkar\n\nBest cars:\n🥇 Ertiga (₹15/km) — Comfortable family ride\n🥈 Swift Dzire (₹12/km) — Budget friendly\n🥉 Innova Crysta (₹20/km) — Premium group ride\n\nVisit the only Brahma Temple in the world, Pushkar Lake ghats & the famous Camel Fair (November)!`;
+  }
+
+  // Mount Abu
+  if (msg.match(/mount abu|dilwara|nakki lake|guru shikhar/)) {
+    return `Delhi to Mount Abu ⛰️\n\n📍 Distance: ~780 km\n⏱️ Duration: 12-13 hours\n🗺️ Route: Delhi → NH48 → Jaipur → Udaipur → Mount Abu\n\nBest cars:\n🥇 Innova Crysta (₹20/km) — Best for this long distance\n🥈 Innova Hycross (₹22/km) — Premium luxury\n🥉 Ertiga (₹15/km) — Good value for families\n\nRajasthan's only hill station — Dilwara Jain Temples, Nakki Lake boating & Guru Shikhar summit!`;
+  }
+
+  // Jim Corbett
+  if (msg.match(/corbett|jim corbett|ramnagar|tiger safari|dhikala/)) {
+    return `Delhi to Jim Corbett 🐯\n\n📍 Distance: ~250 km\n⏱️ Duration: 5-6 hours\n🗺️ Route: Delhi → NH9 → Moradabad → Ramnagar\n\nBest cars:\n🥇 Ertiga (₹15/km) — Comfortable for jungle trips\n🥈 Innova Crysta (₹20/km) — Most popular with safari groups\n🥉 Swift Dzire (₹12/km) — Budget couple trip\n\nIndia's oldest national park — tiger safaris, Ramganga River views & birdwatching paradise!`;
+  }
+
+  // Kasauli
+  if (msg.match(/kasauli|gilbert trail|monkey point|cantonment hill/)) {
+    return `Delhi to Kasauli 🌲\n\n📍 Distance: ~315 km\n⏱️ Duration: 5-6 hours\n🗺️ Route: Delhi → NH44 → Chandigarh → Kasauli\n\nBest cars:\n🥇 Ertiga (₹15/km) — Comfortable for hill roads\n🥈 Innova Crysta (₹20/km) — Premium hill drive\n🥉 Swift Dzire (₹12/km) — Couple weekend getaway\n\nHP state entry tax applicable at actuals. Quiet cantonment hill station — Gilbert Trail pine forests, Monkey Point views & colonial Christ Church!`;
+  }
+
+  // Dalhousie
+  if (msg.match(/dalhousie|khajjiar|dainkund|kalatop/)) {
+    return `Delhi to Dalhousie 🏔️\n\n📍 Distance: ~555 km\n⏱️ Duration: 10-11 hours\n🗺️ Route: Delhi → NH44 → Pathankot → NH154 → Dalhousie\n\nBest cars:\n🥇 Innova Crysta (₹20/km) — Best for long Himachal journey\n🥈 Innova Hycross (₹22/km) — Premium luxury\n🥉 Ertiga (₹15/km) — Family value\n\nHP state entry tax applicable at actuals. Victorian hill station with pine-clad ridges, Khajjiar 'Mini Switzerland' & Dainkund Peak!`;
+  }
+
+  // Lucknow
+  if (msg.match(/lucknow|nawab|bara imambara|rumi darwaza|hazratganj|tunday/)) {
+    return `Delhi to Lucknow 🏛️\n\n📍 Distance: ~555 km\n⏱️ Duration: 7-8 hours\n🗺️ Route: Delhi → Yamuna Expressway → Agra-Lucknow Expressway (NH19) → Lucknow\n\nBest cars:\n🥇 Innova Crysta (₹20/km) — Highway comfort\n🥈 Ertiga (₹15/km) — Family trip\n🥉 Swift Dzire (₹12/km) — Solo/couple travel\n\nCity of Nawabs — Bara Imambara, Rumi Darwaza, Hazratganj & iconic Tunday Kababi!`;
+  }
+
+  // Prayagraj / Allahabad / Kumbh
+  if (msg.match(/prayagraj|allahabad|sangam|triveni ghat|kumbh|ardh kumbh|anand bhawan/)) {
+    return `Delhi to Prayagraj 🕉️\n\n📍 Distance: ~645 km\n⏱️ Duration: 9-10 hours\n🗺️ Route: Delhi → Yamuna Expressway → NH19 → Prayagraj\n\nBest cars:\n🥇 Innova Crysta (₹20/km) — Comfortable for long journey\n🥈 Ertiga (₹15/km) — Pilgrimage family trip\n🥉 Swift Dzire (₹12/km) — Budget option\n\nHoly Sangam — confluence of Ganga, Yamuna & mythical Saraswati. Triveni Ghat sunrise & Anand Bhavan!`;
+  }
+
+  // Vrindavan / Mathura
+  if (msg.match(/vrindavan|prem mandir|iskcon|banke bihari|mathura|krishna janma|govardhan/)) {
+    return `Delhi to Vrindavan/Mathura 🦚\n\n📍 Distance: ~155 km (Vrindavan) · 165 km (Mathura)\n⏱️ Duration: 2.5-3 hours\n🗺️ Route: Delhi → Yamuna Expressway → Mathura/Vrindavan\n\nBest cars:\n🥇 Swift Dzire (₹12/km) — Perfect for day trip\n🥈 Ertiga (₹15/km) — Family pilgrimage\n🥉 Innova Crysta (₹20/km) — Premium group ride\n\nPrem Mandir light show (7:30 PM), Banke Bihari darshan, ISKCON Vrindavan & Krishna Janmabhoomi!`;
+  }
+
+  // Spiti Valley
+  if (msg.match(/spiti|kaza|key monastery|chandratal|pin valley|kunzum/)) {
+    return `Delhi to Spiti Valley 🏔️\n\n📍 Distance: ~785 km (to Kaza)\n⏱️ Duration: 2 days recommended\n🗺️ Route: Delhi → Shimla → Kinnaur → Kaza (Shimla-Kaza route, open May-Nov)\n\n⚠️ SUV mandatory — sedans not suitable for Spiti roads.\n\nBest cars:\n🥇 Innova Crysta (₹20/km) — Minimum recommended\n🥈 Innova Hycross (₹22/km) — Most comfortable\n\nHP state entry tax applicable at actuals. Key Monastery at 4,166 m, Chandratal Lake & Pin Valley stargazing!`;
+  }
+
+  // Lansdowne
+  if (msg.match(/lansdowne|tip.?n.?top|bhim pakora|garhwal rifles/)) {
+    return `Delhi to Lansdowne 🌿\n\n📍 Distance: ~265 km\n⏱️ Duration: 5-6 hours\n🗺️ Route: Delhi → NH119 → Lansdowne\n\nBest cars:\n🥇 Ertiga (₹15/km) — Comfortable hill drive\n🥈 Swift Dzire (₹12/km) — Weekend getaway\n🥉 Innova Crysta (₹20/km) — Premium option\n\nUttarakhand's most peaceful hill station — oak forests, Tip'n'Top viewpoint, Bhim Pakora & Garhwal Rifles War Memorial!`;
+  }
+
   // Routes / Destinations
   if (msg.match(/route|destination|where|city|places|travel|trip|tour/)) {
-    return `All routes from Delhi 🗺️\n\n🏔️ Manali — 540 km · Shimla — 350 km · Dharamshala — 475 km\n🧘 Rishikesh — 240 km · Haridwar — 220 km · Dehradun — 300 km · Mussoorie — 310 km · Nainital — 310 km\n🏙️ Chandigarh — 260 km · Ludhiana — 310 km · Amritsar — 460 km\n🏰 Jaipur — 280 km · Agra — 230 km · Mathura — 175 km\n🛕 Ayodhya — 640 km · Banaras — 820 km\n🏔️ Vaishno Devi — 650 km · Kashmir — 820 km\n\nJust tell me your destination and I'll share the fare, route and best car for you!`;
+    return `All routes from Delhi 🗺️\n\n🏔️ Hills & Mountains\nManali — 540 km · Shimla — 350 km · Dharamshala — 475 km · Dalhousie — 555 km · Kasauli — 315 km · Lansdowne — 265 km · Spiti — 785 km · Corbett — 250 km\n\n🧘 Uttarakhand\nRishikesh — 240 km · Haridwar — 220 km · Dehradun — 250 km · Mussoorie — 295 km · Nainital — 320 km\n\n🏰 Rajasthan\nJaipur — 280 km · Agra — 230 km · Jodhpur — 600 km · Udaipur — 665 km · Pushkar — 395 km · Mount Abu — 780 km\n\n🛕 UP & East\nMathura — 165 km · Vrindavan — 155 km · Lucknow — 555 km · Prayagraj — 645 km · Ayodhya — 640 km · Banaras — 820 km\n\n🏙️ Punjab & North\nChandigarh — 250 km · Ludhiana — 310 km · Amritsar — 460 km · Vaishno Devi — 650 km · Kashmir — 820 km\n\nJust tell me your destination and I'll share the fare, route and best car!`;
   }
 
   // Car recommendations
@@ -178,7 +238,7 @@ export const aiRouter = createRouter({
         );
       } else {
         const passengers = input.passengers || 4;
-        const isHill = ["manali", "shimla", "nainital", "mussoorie", "rishikesh", "dehradun"].some(
+        const isHill = ["manali", "shimla", "nainital", "mussoorie", "rishikesh", "dehradun", "dharamshala", "dalhousie", "kasauli", "spiti", "lansdowne", "corbett", "kashmir", "vaishno"].some(
           d => input.toCity?.toLowerCase().includes(d)
         );
         if (passengers <= 4) {
