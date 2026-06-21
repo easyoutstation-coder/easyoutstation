@@ -1,5 +1,6 @@
 // All images: 1600×900 (16:9) HD — Unsplash w=1600&h=900&q=90, Pexels w=1600&h=900
 export const routeLandmarks: Record<string, { image: string; landmark: string; objectPosition: string }> = {
+  // ── Existing destinations ────────────────────────────────────────────
   manali: {
     image: "https://images.unsplash.com/photo-1677821374212-8c3e88292b1b?w=1600&h=900&q=90&fit=crop&auto=format",
     landmark: "Rohtang Pass, Manali",
@@ -60,7 +61,6 @@ export const routeLandmarks: Record<string, { image: string; landmark: string; o
     landmark: "Golden Temple, Amritsar",
     objectPosition: "center 40%",
   },
-  // New routes — HD 1600×900, destination-specific images
   dharamshala: {
     image: "https://images.unsplash.com/photo-1581321863389-ef7d7bfe4b75?w=1600&h=900&q=90&fit=crop&auto=format",
     landmark: "Namgyal Monastery, McLeod Ganj",
@@ -89,6 +89,78 @@ export const routeLandmarks: Record<string, { image: string; landmark: string; o
   banaras: {
     image: "https://images.pexels.com/photos/10461752/pexels-photo-10461752.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop",
     landmark: "Darbhanga Ghat, Banaras",
+    objectPosition: "center 40%",
+  },
+
+  // ── New destinations ─────────────────────────────────────────────────
+  jodhpur: {
+    image: "https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=1600&h=900&q=90&fit=crop&auto=format",
+    landmark: "Mehrangarh Fort, Jodhpur",
+    objectPosition: "center 40%",
+  },
+  udaipur: {
+    image: "https://images.pexels.com/photos/3881104/pexels-photo-3881104.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop",
+    landmark: "Lake Pichola, Udaipur",
+    objectPosition: "center 50%",
+  },
+  pushkar: {
+    image: "https://images.pexels.com/photos/2410942/pexels-photo-2410942.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop",
+    landmark: "Brahma Temple, Pushkar",
+    objectPosition: "center 40%",
+  },
+  "mount abu": {
+    image: "https://images.pexels.com/photos/17166024/pexels-photo-17166024.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop",
+    landmark: "Nakki Lake, Mount Abu",
+    objectPosition: "center 50%",
+  },
+  corbett: {
+    image: "https://images.unsplash.com/photo-1526329869878-f7c4e3bb5180?w=1600&h=900&q=90&fit=crop&auto=format",
+    landmark: "Jim Corbett National Park",
+    objectPosition: "center 50%",
+  },
+  kasauli: {
+    image: "https://images.pexels.com/photos/15816614/pexels-photo-15816614.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop",
+    landmark: "Pine Trails, Kasauli",
+    objectPosition: "center 40%",
+  },
+  dalhousie: {
+    image: "https://images.pexels.com/photos/4254554/pexels-photo-4254554.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop",
+    landmark: "Dalhousie Hill Station",
+    objectPosition: "center 35%",
+  },
+  lucknow: {
+    image: "https://images.unsplash.com/photo-1603900010998-74db9aeb7ea3?w=1600&h=900&q=90&fit=crop&auto=format",
+    landmark: "Bara Imambara, Lucknow",
+    objectPosition: "center 40%",
+  },
+  prayagraj: {
+    image: "https://images.pexels.com/photos/11452177/pexels-photo-11452177.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop",
+    landmark: "Sangam, Prayagraj",
+    objectPosition: "center 45%",
+  },
+  vrindavan: {
+    image: "https://images.pexels.com/photos/14142/pexels-photo.jpg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop",
+    landmark: "Prem Mandir, Vrindavan",
+    objectPosition: "center 40%",
+  },
+  spiti: {
+    image: "https://images.unsplash.com/photo-1580746738099-8f9c8e07e6db?w=1600&h=900&q=90&fit=crop&auto=format",
+    landmark: "Key Monastery, Spiti Valley",
+    objectPosition: "center 35%",
+  },
+  leh: {
+    image: "https://images.unsplash.com/photo-1591154669695-5f2a8d20c089?w=1600&h=900&q=90&fit=crop&auto=format",
+    landmark: "Pangong Lake, Ladakh",
+    objectPosition: "center 45%",
+  },
+  kasol: {
+    image: "https://images.pexels.com/photos/2087391/pexels-photo-2087391.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop",
+    landmark: "Parvati Valley, Kasol",
+    objectPosition: "center 40%",
+  },
+  lansdowne: {
+    image: "https://images.pexels.com/photos/10607034/pexels-photo-10607034.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop",
+    landmark: "Tip'n'Top, Lansdowne",
     objectPosition: "center 40%",
   },
 };

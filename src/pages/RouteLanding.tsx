@@ -84,17 +84,6 @@ const ROUTES: Record<string, {
       { q: "What is the fare for Delhi to Dehradun cab?", a: "Fares start from ₹3,850 for a sedan to ₹6,850 for a premium SUV. Price includes driver charges. Toll is charged at actuals." },
     ]
   },
-  "delhi-to-haridwar": {
-    from: "Delhi", to: "Haridwar", distance: 220, duration: "4-5 hours",
-    fare: { min: 2890, max: 5090 }, toll: 380,
-    description: "Book Delhi to Haridwar cab at fixed fares. Visit the holy Ganga Ghats with comfort. One way and round trip available.",
-    highlights: ["NH58 expressway route", "4-5 hours", "Fixed fares", "Pilgrimage specialists"],
-    faqs: [
-      { q: "How far is Delhi to Haridwar by cab?", a: "Delhi to Haridwar is approximately 220 km via NH58 and takes 4-5 hours depending on traffic." },
-      { q: "Is a same-day return trip from Delhi to Haridwar possible?", a: "Yes, same-day round trips are very popular. Leave Delhi by 5 AM and you can visit Har Ki Pauri and return the same evening." },
-      { q: "What is the cheapest Delhi to Haridwar cab fare?", a: "A Swift Dzire starts from ₹2,890 one way. Price includes driver charges. Toll is charged at actuals." },
-    ]
-  },
   "delhi-to-mussoorie": {
     from: "Delhi", to: "Mussoorie", distance: 310, duration: "6-7 hours",
     fare: { min: 3970, max: 7070 }, toll: 430,
@@ -210,6 +199,300 @@ const ROUTES: Record<string, {
       { q: "What is the fare for Delhi to Banaras cab?", a: "Fares start from ₹10,090 for a sedan to ₹18,290 for an Innova Hycross. Price includes driver charges. Toll is charged at actuals." },
       { q: "Which is the best route from Delhi to Varanasi by cab?", a: "The fastest route is via Agra-Lucknow Expressway (NH19), then NH27 to Varanasi. Our drivers take the safest and fastest highway route." },
       { q: "What is the best time to visit Banaras?", a: "October to March is ideal. The Ganga Aarti at Dashashwamedh Ghat at sunrise or sunset is a must-attend. Dev Deepawali in November is especially magical." },
+    ]
+  },
+
+  // ── Additional Delhi routes ──────────────────────────────────────────
+  "delhi-to-haridwar": {
+    from: "Delhi", to: "Haridwar", distance: 220, duration: "4-5 hours",
+    fare: { min: 2890, max: 5090 }, toll: 320,
+    description: "Book Delhi to Haridwar cab at fixed fares. Attend the iconic Ganga Aarti at Har Ki Pauri. AC cabs, verified drivers, door-to-door pickup.",
+    highlights: ["Har Ki Pauri Ganga Aarti", "Chandi Devi & Mansa Devi temples", "Gateway to Rishikesh", "Pilgrimage specialists"],
+    faqs: [
+      { q: "How far is Delhi to Haridwar by cab?", a: "Delhi to Haridwar is approximately 220 km via NH58 and takes 4-5 hours by cab depending on traffic." },
+      { q: "What is the fare for Delhi to Haridwar cab?", a: "Fares start from ₹2,890 for a Swift Dzire to ₹5,090 for an Innova Hycross. Price includes driver charges. Toll & parking charged at actuals." },
+      { q: "What is the best time to attend Ganga Aarti in Haridwar?", a: "The evening Ganga Aarti at Har Ki Pauri happens at sunset (6–7 PM in winter, 7–8 PM in summer). Arrive 30 minutes early for a good spot by the ghat." },
+      { q: "Can I visit Haridwar and Rishikesh on the same day from Delhi?", a: "Yes. Leave Delhi by 5 AM, reach Haridwar by 9–10 AM. Rishikesh is just 25 km away. A combined day trip is very popular and comfortable." },
+    ]
+  },
+  "delhi-to-jodhpur": {
+    from: "Delhi", to: "Jodhpur", distance: 600, duration: "9-10 hours",
+    fare: { min: 7450, max: 13450 }, toll: 850,
+    description: "Book Delhi to Jodhpur cab at fixed fares. Explore the Blue City — Mehrangarh Fort, Jaswant Thada and vibrant bazaars. AC cabs, verified drivers, no hidden charges.",
+    highlights: ["Mehrangarh Fort", "Blue City rooftops", "Jaswant Thada cenotaph", "Sardar Market bazaar"],
+    faqs: [
+      { q: "How far is Delhi to Jodhpur by cab?", a: "Delhi to Jodhpur is approximately 600 km via NH48 (Delhi–Jaipur Expressway) and takes 9-10 hours by road." },
+      { q: "What is the cab fare from Delhi to Jodhpur?", a: "Fares start from ₹7,450 for a sedan to ₹13,450 for an Innova Hycross. Price includes driver charges. Toll & state tax charged at actuals." },
+      { q: "Is a stopover in Jaipur recommended on Delhi to Jodhpur?", a: "Many travellers stop in Jaipur (280 km from Delhi) for lunch or sightseeing and continue to Jodhpur the same day. Our drivers plan the route accordingly." },
+      { q: "What is the best time to visit Jodhpur?", a: "October to March is ideal. Winters (November–February) are cool and pleasant. The Mehrangarh Fort is impressive at all times of year, especially at sunset." },
+    ]
+  },
+  "delhi-to-udaipur": {
+    from: "Delhi", to: "Udaipur", distance: 665, duration: "10-11 hours",
+    fare: { min: 8230, max: 14880 }, toll: 950,
+    description: "Book Delhi to Udaipur cab at fixed fares. Explore the City of Lakes — Lake Pichola, City Palace and Fateh Sagar. AC cabs, experienced drivers, fixed fares.",
+    highlights: ["Lake Pichola boat ride", "City Palace complex", "Jagdish Temple", "Saheliyon ki Bari"],
+    faqs: [
+      { q: "How far is Delhi to Udaipur by cab?", a: "Delhi to Udaipur is approximately 665 km via NH48 through Jaipur and Ajmer, taking 10-11 hours by cab." },
+      { q: "What is the fare for Delhi to Udaipur cab?", a: "Fares start from ₹8,230 for a sedan to ₹14,880 for an Innova Hycross. Price includes driver charges. Toll & state tax charged at actuals." },
+      { q: "Is Delhi to Udaipur driveable in one stretch?", a: "Yes. Leave Delhi by 4 AM and you reach Udaipur by 3–4 PM with a stop for lunch in Jaipur or Ajmer. Our drivers are experienced on this route." },
+      { q: "What is the best time to visit Udaipur?", a: "September to March is the best time. The lakes are full after monsoon (September–October) and winters are cool and festive, especially around Diwali." },
+    ]
+  },
+  "delhi-to-pushkar": {
+    from: "Delhi", to: "Pushkar", distance: 395, duration: "6-7 hours",
+    fare: { min: 4990, max: 8940 }, toll: 550,
+    description: "Book Delhi to Pushkar cab at fixed fares. Visit the only Brahma Temple in the world and the sacred Pushkar Lake. AC cabs, fixed fares, no hidden charges.",
+    highlights: ["Brahma Temple darshan", "Pushkar Lake ghats", "Camel Fair (November)", "Desert bazaar experience"],
+    faqs: [
+      { q: "How far is Delhi to Pushkar by cab?", a: "Delhi to Pushkar is approximately 395 km via NH48 through Jaipur and Ajmer, taking 6-7 hours by cab." },
+      { q: "What is the fare for Delhi to Pushkar cab?", a: "Fares start from ₹4,990 for a sedan to ₹8,940 for an Innova Hycross. Price includes driver charges. Toll charged at actuals." },
+      { q: "Can I visit Ajmer and Pushkar on the same day?", a: "Yes. Ajmer Dargah and Pushkar are just 14 km apart. Many travellers visit both on the same day trip or combine them with a Jaipur stopover." },
+      { q: "When is the Pushkar Camel Fair?", a: "The Pushkar Camel Fair happens in November (Kartik Purnima). It's one of the world's largest camel fairs — book well in advance during this period." },
+    ]
+  },
+  "delhi-to-corbett": {
+    from: "Delhi", to: "Corbett", distance: 250, duration: "5-6 hours",
+    fare: { min: 3250, max: 5750 }, toll: 380,
+    description: "Book Delhi to Jim Corbett cab at fixed fares. India's oldest national park — tiger safaris, elephant rides and the Ramganga River. AC cabs, verified drivers.",
+    highlights: ["Tiger safari zones", "Ramganga River views", "Elephant rides at Dhikala", "Birdwatching paradise"],
+    faqs: [
+      { q: "How far is Delhi to Jim Corbett National Park by cab?", a: "Delhi to Corbett (Ramnagar gate) is approximately 250 km via NH9 through Moradabad and takes 5-6 hours by cab." },
+      { q: "What is the fare for Delhi to Jim Corbett cab?", a: "Fares start from ₹3,250 for a sedan to ₹5,750 for an Innova Hycross. Price includes driver charges. Toll charged at actuals." },
+      { q: "Which zone is best for tiger sightings in Corbett?", a: "Dhikala zone is the most renowned for tiger and wildlife sightings. Bijrani and Jhirna zones are also excellent alternatives and easier to book." },
+      { q: "Do I need permits for Corbett National Park?", a: "Yes. Safari permits must be booked online at the Uttarakhand forest department portal. Our driver will drop you at the park gate — permits are your responsibility." },
+    ]
+  },
+  "delhi-to-kasauli": {
+    from: "Delhi", to: "Kasauli", distance: 315, duration: "5-6 hours",
+    fare: { min: 4030, max: 7180 }, toll: 480,
+    description: "Book Delhi to Kasauli cab at fixed fares. This quiet Himachal hill station is known for its colonial charm, pine forests and stunning valley views. AC cabs, verified drivers.",
+    highlights: ["Gilbert Trail pine forests", "Monkey Point summit views", "Christ Church colonial heritage", "Himachal's quietest hill station"],
+    faqs: [
+      { q: "How far is Delhi to Kasauli by cab?", a: "Delhi to Kasauli is approximately 315 km via NH44 through Chandigarh, taking 5-6 hours by cab." },
+      { q: "What is the fare for Delhi to Kasauli cab?", a: "Fares start from ₹4,030 for a sedan to ₹7,180 for an Innova Hycross. Price includes driver charges. Toll & Himachal state tax charged at actuals." },
+      { q: "What is Kasauli known for?", a: "Kasauli is a British-era cantonment hill station in Himachal Pradesh with well-preserved colonial architecture, pine-lined walks (Gilbert Trail), and spectacular views of the Shivalik Hills." },
+      { q: "Is Kasauli better than Shimla for a weekend trip?", a: "Kasauli is much quieter and less commercialised than Shimla — ideal for a peaceful weekend. Shimla has more attractions and activities. The right choice depends on whether you prefer crowds or calm." },
+    ]
+  },
+  "delhi-to-dalhousie": {
+    from: "Delhi", to: "Dalhousie", distance: 555, duration: "10-11 hours",
+    fare: { min: 6910, max: 12460 }, toll: 800,
+    description: "Book Delhi to Dalhousie cab at fixed fares. This Victorian hill station in Himachal Pradesh offers pine-clad ridges, colonial churches and views of the Dhauladhar range. AC cabs, mountain-specialist drivers.",
+    highlights: ["Khajjiar — 'Mini Switzerland'", "Dainkund Peak hike", "St. Francis Church colonial walk", "Kalatop Wildlife Sanctuary"],
+    faqs: [
+      { q: "How far is Delhi to Dalhousie by cab?", a: "Delhi to Dalhousie is approximately 555 km via NH44 and NH154 through Pathankot, taking 10-11 hours by cab." },
+      { q: "What is the fare for Delhi to Dalhousie cab?", a: "Fares start from ₹6,910 for a sedan to ₹12,460 for an Innova Hycross. Price includes driver charges. Toll & Himachal state tax charged at actuals." },
+      { q: "What is Khajjiar and how far is it from Dalhousie?", a: "Khajjiar is a high-altitude meadow 24 km from Dalhousie, often called 'Mini Switzerland' for its green lawns and snow-capped backdrop. Our driver can include it as a day trip." },
+      { q: "What is the best time to visit Dalhousie?", a: "April to June for pleasant summer weather. December to February for snowfall. Monsoon (July–August) brings lush scenery but landslide risk on the roads." },
+    ]
+  },
+  "delhi-to-lucknow": {
+    from: "Delhi", to: "Lucknow", distance: 555, duration: "7-8 hours",
+    fare: { min: 6910, max: 12460 }, toll: 750,
+    description: "Book Delhi to Lucknow cab at fixed fares. Explore the City of Nawabs — Bara Imambara, Rumi Darwaza and iconic Tunday Kababi. AC cabs, verified drivers, door-to-door service.",
+    highlights: ["Bara Imambara & Bhool Bhulaiya", "Rumi Darwaza", "Hazratganj market stroll", "Tunday Kababi kebabs"],
+    faqs: [
+      { q: "How far is Delhi to Lucknow by cab?", a: "Delhi to Lucknow is approximately 555 km via the Yamuna Expressway and Agra-Lucknow Expressway (NH19), taking 7-8 hours." },
+      { q: "What is the fare for Delhi to Lucknow cab?", a: "Fares start from ₹6,910 for a sedan to ₹12,460 for an Innova Hycross. Price includes driver charges. Toll charged at actuals." },
+      { q: "Is the Agra-Lucknow Expressway safe for night travel?", a: "The Agra-Lucknow Expressway is a well-lit 6-lane highway and is generally safe. Our verified drivers are experienced on this route round the clock." },
+      { q: "Can I continue from Lucknow to Ayodhya?", a: "Yes. Lucknow to Ayodhya is 130 km (2.5 hours). Many travellers combine Lucknow and Ayodhya on a 2-night trip from Delhi — our drivers can handle the full multi-stop route." },
+    ]
+  },
+  "delhi-to-prayagraj": {
+    from: "Delhi", to: "Prayagraj", distance: 645, duration: "9-10 hours",
+    fare: { min: 7990, max: 14440 }, toll: 900,
+    description: "Book Delhi to Prayagraj cab at fixed fares. Visit the Sangam — confluence of Ganga, Yamuna and the mythical Saraswati. Kumbh Mela, Anand Bhavan and Triveni Ghat. AC cabs, verified drivers.",
+    highlights: ["Sangam — holy confluence", "Triveni Ghat sunrise", "Anand Bhavan (Nehru memorial)", "Hanuman Mandir — 20 ft reclining Hanuman"],
+    faqs: [
+      { q: "How far is Delhi to Prayagraj by cab?", a: "Delhi to Prayagraj is approximately 645 km via the Yamuna Expressway and NH19, taking 9-10 hours by cab." },
+      { q: "What is the fare for Delhi to Prayagraj cab?", a: "Fares start from ₹7,990 for a sedan to ₹14,440 for an Innova Hycross. Price includes driver charges. Toll charged at actuals." },
+      { q: "When is the Kumbh Mela held in Prayagraj?", a: "The Maha Kumbh is held every 12 years (next: 2025). Ardh Kumbh every 6 years and Magh Mela every year. During Maha Kumbh, roads around Prayagraj can be heavily congested — plan extra travel time." },
+      { q: "Can I combine Prayagraj and Banaras on one trip?", a: "Yes. Prayagraj to Banaras is 125 km (2.5 hours). A popular 3-day itinerary from Delhi covers Delhi → Prayagraj → Banaras and return." },
+    ]
+  },
+  "delhi-to-vrindavan": {
+    from: "Delhi", to: "Vrindavan", distance: 155, duration: "2.5-3 hours",
+    fare: { min: 2110, max: 3660 }, toll: 220,
+    description: "Book Delhi to Vrindavan cab at fixed fares. Visit the sacred land of Lord Krishna — Prem Mandir, ISKCON, Banke Bihari Mandir and Yamuna Ghats. Same-day return popular.",
+    highlights: ["Prem Mandir light show", "Banke Bihari Mandir", "ISKCON Vrindavan", "Yamuna Ghats aarti"],
+    faqs: [
+      { q: "How far is Delhi to Vrindavan by cab?", a: "Delhi to Vrindavan is approximately 155 km via Yamuna Expressway and takes 2.5-3 hours by cab." },
+      { q: "What is the fare for Delhi to Vrindavan cab?", a: "Fares start from ₹2,110 for a sedan to ₹3,660 for an Innova Hycross. Price includes driver charges. Toll charged at actuals." },
+      { q: "Can I visit Mathura and Vrindavan on the same trip?", a: "Yes. Mathura and Vrindavan are just 12 km apart. A combined same-day trip from Delhi covering Krishna Janmabhoomi in Mathura and Prem Mandir in Vrindavan is very popular." },
+      { q: "What is the Prem Mandir light show timing?", a: "The Prem Mandir illumination show runs from 7:30 PM to 8:30 PM daily. The marble temple is especially stunning at night — plan to reach Vrindavan by late afternoon for the temples and evening show." },
+    ]
+  },
+  "delhi-to-spiti": {
+    from: "Delhi", to: "Spiti", distance: 785, duration: "14-16 hours",
+    fare: { min: 9670, max: 17520 }, toll: 950,
+    description: "Book Delhi to Spiti Valley cab at fixed fares. The Cold Desert of Himachal Pradesh — Key Monastery, Pin Valley, Chandratal Lake and star-gazed nights at 4,000m. Mountain-specialist drivers essential.",
+    highlights: ["Key Monastery at 4,166 m", "Chandratal Lake moonscape", "Pin Valley ibex trekking", "Kaza town base camp"],
+    faqs: [
+      { q: "How far is Delhi to Spiti Valley by cab?", a: "Delhi to Kaza (Spiti Valley) is approximately 785 km via Shimla and Kinnaur (NH5 → NH305), taking 14-16 hours over 2 days. Most travellers overnight in Shimla or Reckong Peo." },
+      { q: "What is the fare for Delhi to Spiti cab?", a: "Fares start from ₹9,670 for a sedan to ₹17,520 for a premium SUV. Spiti roads require an SUV — we strongly recommend Innova Crysta or higher. Toll & HP state tax charged at actuals." },
+      { q: "Is the Spiti route open all year?", a: "No. The Shimla-Kaza route is open approximately May to November. The Manali-Kaza route (Rohtang side) is open June to October. Both close with heavy snowfall in winter." },
+      { q: "Why is an SUV recommended for Spiti?", a: "Spiti roads are high-altitude mountain tracks, often unpaved or poorly surfaced above Nako. Sedans have low ground clearance and are not suitable. We recommend Innova Crysta at minimum for this route." },
+    ]
+  },
+  "delhi-to-mount-abu": {
+    from: "Delhi", to: "Mount Abu", distance: 780, duration: "12-13 hours",
+    fare: { min: 9610, max: 17410 }, toll: 1100,
+    description: "Book Delhi to Mount Abu cab at fixed fares. Rajasthan's only hill station — Dilwara Jain Temples, Nakki Lake and Guru Shikhar Peak. AC cabs, experienced drivers, no hidden charges.",
+    highlights: ["Dilwara Jain Temples", "Nakki Lake boating", "Guru Shikhar — Aravalli summit", "Sunset Point views"],
+    faqs: [
+      { q: "How far is Delhi to Mount Abu by cab?", a: "Delhi to Mount Abu is approximately 780 km via NH48 through Jaipur and Udaipur, taking 12-13 hours by cab." },
+      { q: "What is the fare for Delhi to Mount Abu cab?", a: "Fares start from ₹9,610 for a sedan to ₹17,410 for an Innova Hycross. Price includes driver charges. Toll & state tax charged at actuals." },
+      { q: "What are the Dilwara Temples known for?", a: "The Dilwara Temples are 11th–13th century Jain temples renowned for intricate white marble carvings — considered among the finest examples of marble craftsmanship in the world. Photography is not permitted inside." },
+      { q: "Is Mount Abu worth visiting from Delhi?", a: "Yes — especially if you're combining it with Udaipur (4 hours away). Mount Abu is a pleasant contrast to the Rajasthani desert — green, cool and much quieter than the major tourist cities." },
+    ]
+  },
+  "delhi-to-lansdowne": {
+    from: "Delhi", to: "Lansdowne", distance: 265, duration: "5-6 hours",
+    fare: { min: 3430, max: 6080 }, toll: 380,
+    description: "Book Delhi to Lansdowne cab at fixed fares. Uttarakhand's most peaceful hill station — dense oak forests, colonial era Garhwal Rifles regimental centre and panoramic Himalayan views. AC cabs, verified drivers.",
+    highlights: ["Tip'n'Top panoramic viewpoint", "Bhim Pakora rock formation", "Tarkeshwar Mahadev temple", "War Memorial — Garhwal Rifles"],
+    faqs: [
+      { q: "How far is Delhi to Lansdowne by cab?", a: "Delhi to Lansdowne is approximately 265 km via NH119 and takes 5-6 hours by cab." },
+      { q: "What is the fare for Delhi to Lansdowne cab?", a: "Fares start from ₹3,430 for a sedan to ₹6,080 for an Innova Hycross. Price includes driver charges. Toll charged at actuals." },
+      { q: "Why is Lansdowne different from other Uttarakhand hill stations?", a: "Lansdowne is a cantonment town with minimal commercial development — no loud markets or tourist crowds. It's one of India's most genuinely peaceful hill escapes, perfect for a quiet weekend." },
+      { q: "Is Lansdowne accessible in winter?", a: "Yes. Lansdowne (1,706 m) is accessible year-round. It gets light snowfall in January–February. The oak and rhododendron forests are beautiful in monsoon and spring." },
+    ]
+  },
+
+  // ── Himachal Pradesh — Intra-State Routes ───────────────────────────
+  "chandigarh-to-manali": {
+    from: "Chandigarh", to: "Manali", distance: 315, duration: "7-8 hours",
+    fare: { min: 4030, max: 7180 }, toll: 400,
+    description: "Book Chandigarh to Manali cab at fixed fares. The classic Himalayan highway — Beas gorge, Kullu valley and the snow-capped Rohtang in the distance. AC cabs, mountain-specialist drivers.",
+    highlights: ["Pandoh Dam & Beas Gorge", "Kullu Valley apple orchards", "Solang Valley day trip", "Rohtang Pass access"],
+    faqs: [
+      { q: "How far is Chandigarh to Manali by cab?", a: "Chandigarh to Manali is approximately 315 km via NH21 and takes 7-8 hours depending on road conditions and traffic at Kullu." },
+      { q: "What is the fare for Chandigarh to Manali cab?", a: "Fares start from ₹4,030 for a sedan to ₹7,180 for an Innova Hycross. Price includes driver charges. Toll & HP state tax charged at actuals." },
+      { q: "Is the Chandigarh to Manali route safe?", a: "Yes. The route is a well-maintained national highway (NH21) through the Kullu-Manali valley. Mountain driving experience is essential — our drivers are trained on this specific route." },
+      { q: "What are the best stops on Chandigarh to Manali road?", a: "Bilaspur reservoir, Pandoh Dam, Aut Tunnel (dramatic entry into Kullu valley), Kullu shawl market and Patlikuhl apple orchards are the classic stops on this highway." },
+    ]
+  },
+  "chandigarh-to-shimla": {
+    from: "Chandigarh", to: "Shimla", distance: 115, duration: "3-4 hours",
+    fare: { min: 1630, max: 2780 }, toll: 200,
+    description: "Book Chandigarh to Shimla cab at fixed fares. A scenic 3-hour drive through the Shivalik foothills to the colonial capital of Himachal Pradesh. AC cabs, verified drivers.",
+    highlights: ["Himalayan Queen toy train view route", "Pinjore Gardens en route", "Mall Road & Ridge Maidan", "Kufri day trip from Shimla"],
+    faqs: [
+      { q: "How far is Chandigarh to Shimla by cab?", a: "Chandigarh to Shimla is approximately 115 km via NH5 (old Kalka-Shimla highway) or the new 4-lane highway through Parwanoo, taking 3-4 hours." },
+      { q: "What is the fare for Chandigarh to Shimla cab?", a: "Fares start from ₹1,630 for a sedan to ₹2,780 for an Innova Hycross. Price includes driver charges. Toll & HP state tax charged at actuals." },
+      { q: "Which route is better — Parwanoo highway or Kalka-Shimla old road?", a: "The new Parwanoo highway is faster and smoother (3 hours). The old Kalka-Shimla road via Kandaghat is more scenic but slower. Our drivers take the best route based on conditions." },
+      { q: "Can I take the toy train from Chandigarh to Shimla?", a: "The Kalka-Shimla toy train starts at Kalka (30 km from Chandigarh). It's a UNESCO-listed heritage railway but takes 5-6 hours. Many travellers take a cab up and the toy train back for the best of both." },
+    ]
+  },
+  "chandigarh-to-dharamshala": {
+    from: "Chandigarh", to: "Dharamshala", distance: 245, duration: "5-6 hours",
+    fare: { min: 3190, max: 5640 }, toll: 380,
+    description: "Book Chandigarh to Dharamshala cab at fixed fares. Drive through the Kangra Valley to McLeod Ganj, home of the Dalai Lama. AC cabs, verified mountain drivers.",
+    highlights: ["Kangra Valley views", "McLeod Ganj Tibetan quarter", "Namgyal Monastery", "Triund Trek base"],
+    faqs: [
+      { q: "How far is Chandigarh to Dharamshala by cab?", a: "Chandigarh to Dharamshala is approximately 245 km via NH44 and NH154 through Pathankot, taking 5-6 hours by cab." },
+      { q: "What is the fare for Chandigarh to Dharamshala cab?", a: "Fares start from ₹3,190 for a sedan to ₹5,640 for an Innova Hycross. Price includes driver charges. Toll & HP state tax charged at actuals." },
+      { q: "Is drop to McLeod Ganj (Upper Dharamshala) possible?", a: "Yes. We drop you directly at McLeod Ganj (10 km uphill from lower Dharamshala). Please specify at the time of booking — no extra charge for McLeod Ganj drop." },
+      { q: "What is the best time to visit Dharamshala?", a: "March to June and September to November are ideal. The Dalai Lama's teaching schedule (usually March and November) draws visitors from around the world." },
+    ]
+  },
+  "chandigarh-to-amritsar": {
+    from: "Chandigarh", to: "Amritsar", distance: 230, duration: "3-4 hours",
+    fare: { min: 3010, max: 5310 }, toll: 350,
+    description: "Book Chandigarh to Amritsar cab at fixed fares. A smooth NH44 drive to the Golden Temple city. Perfect for pilgrimage trips, Wagah Border visits and Punjab cultural experiences.",
+    highlights: ["Golden Temple darshan", "Wagah Border ceremony", "Jallianwala Bagh memorial", "Heritage Street food walk"],
+    faqs: [
+      { q: "How far is Chandigarh to Amritsar by cab?", a: "Chandigarh to Amritsar is approximately 230 km via NH44 and takes 3-4 hours by cab." },
+      { q: "What is the fare for Chandigarh to Amritsar cab?", a: "Fares start from ₹3,010 for a sedan to ₹5,310 for an Innova Hycross. Price includes driver charges. Toll charged at actuals." },
+      { q: "What time is the Wagah Border ceremony?", a: "The Beating Retreat ceremony at Wagah Border takes place at sunset — approximately 5:30 PM in winter and 6:30 PM in summer. Arrive 45 minutes early to secure a good seat in the gallery." },
+      { q: "Can I do Chandigarh to Amritsar as a day trip?", a: "Yes, easily. Leave Chandigarh by 8 AM, visit Golden Temple and Wagah Border ceremony by evening, and return the same night. It's a comfortable 1-day round trip." },
+    ]
+  },
+  "shimla-to-manali": {
+    from: "Shimla", to: "Manali", distance: 220, duration: "6-7 hours",
+    fare: { min: 2890, max: 5090 }, toll: 300,
+    description: "Book Shimla to Manali cab at fixed fares. One of Himachal's most scenic mountain drives — Rampur, Kullu valley and the towering Beas gorge. AC cabs, experienced hill drivers.",
+    highlights: ["Rampur Bushahr riverside", "Pandoh Dam viewpoint", "Kullu Valley orchards", "Solang Valley en route"],
+    faqs: [
+      { q: "How far is Shimla to Manali by cab?", a: "Shimla to Manali is approximately 220 km via NH5 and NH21 through Rampur and Kullu, taking 6-7 hours due to mountain road conditions." },
+      { q: "What is the fare for Shimla to Manali cab?", a: "Fares start from ₹2,890 for a sedan to ₹5,090 for an Innova Hycross. Price includes driver charges. HP state tax charged at actuals." },
+      { q: "Which is the best route from Shimla to Manali?", a: "The main route is via Rampur-Bhuntar-Kullu on NH21. There is no direct shortcut — the journey follows the river valleys. Our drivers know the seasonal road conditions well." },
+      { q: "What are the best stops between Shimla and Manali?", a: "Narkanda (excellent apple orchards, ski slope in winter), Rampur Bushahr (historic town on Satluj), Pandoh Dam, and the Aut Tunnel into Kullu valley are the highlights." },
+    ]
+  },
+  "shimla-to-dharamshala": {
+    from: "Shimla", to: "Dharamshala", distance: 275, duration: "6-7 hours",
+    fare: { min: 3550, max: 6300 }, toll: 350,
+    description: "Book Shimla to Dharamshala cab at fixed fares. A scenic cross-Himachal drive connecting two of the state's most beloved hill towns. AC cabs, verified mountain drivers.",
+    highlights: ["Cross-Himachal mountain drive", "Mandi town stopover", "Kangra Valley descent", "McLeod Ganj destination"],
+    faqs: [
+      { q: "How far is Shimla to Dharamshala by cab?", a: "Shimla to Dharamshala is approximately 275 km via Mandi and Palampur, taking 6-7 hours by cab through mountain roads." },
+      { q: "What is the fare for Shimla to Dharamshala cab?", a: "Fares start from ₹3,550 for a sedan to ₹6,300 for an Innova Hycross. Price includes driver charges. HP state tax charged at actuals." },
+      { q: "What is a good stopover between Shimla and Dharamshala?", a: "Mandi (130 km from Shimla) is a natural halfway point with numerous ancient temples. Palampur tea gardens (40 km before Dharamshala) are another highlight worth a brief stop." },
+      { q: "Is this route scenic?", a: "Yes — the road crosses several river valleys and mountain ridges. The Beas River gorge near Mandi and the Kangra Valley as you approach Dharamshala are particularly beautiful." },
+    ]
+  },
+  "manali-to-leh": {
+    from: "Manali", to: "Leh", distance: 480, duration: "12-14 hours",
+    fare: { min: 5810, max: 10810 }, toll: 450,
+    description: "Book Manali to Leh cab at fixed fares. The world's highest motorable road — crossing Rohtang Pass, Baralacha La, Nakee La and Tanglang La (5,328 m). An unforgettable Himalayan odyssey. Experienced high-altitude drivers only.",
+    highlights: ["Rohtang Pass & Baralacha La", "Sarchu plains camping", "Tanglang La — 5,328 m", "Moray Plains — straight road at 4,800 m"],
+    faqs: [
+      { q: "How far is Manali to Leh by road?", a: "Manali to Leh is approximately 480 km via the Leh-Manali Highway (NH3), crossing multiple high-altitude passes. The journey takes 12-14 hours and is typically done over 2 days with an overnight halt at Sarchu (4,253 m)." },
+      { q: "What is the fare for Manali to Leh cab?", a: "Fares start from ₹5,810 for an SUV (sedans are not suitable). We strongly recommend Innova Crysta or Hycross. Price includes driver charges. Toll & Army check-post fees charged at actuals." },
+      { q: "When is the Manali to Leh highway open?", a: "The Manali-Leh highway is open approximately late May to mid-October. BRO (Border Roads Organisation) clears the route after winter snow. Always confirm road status before travel." },
+      { q: "Is altitude sickness a concern on Manali to Leh?", a: "Yes. The road crosses passes above 5,000 m. Acclimatise for 1-2 days in Manali before attempting this route. Carry Diamox (consult your doctor), stay hydrated, and avoid rushing. Our drivers are trained to recognise altitude symptoms." },
+    ]
+  },
+  "manali-to-spiti": {
+    from: "Manali", to: "Spiti", distance: 220, duration: "7-8 hours",
+    fare: { min: 2890, max: 5090 }, toll: 250,
+    description: "Book Manali to Spiti Valley cab at fixed fares. Cross Rohtang Pass and descend into the barren, otherworldly Spiti Valley — Key Monastery, Chandratal Lake and starlit skies at 4,000 m.",
+    highlights: ["Rohtang Pass (3,978 m)", "Kunzum Pass (4,590 m)", "Chandratal Lake moonscape", "Key Monastery — 11th century"],
+    faqs: [
+      { q: "How far is Manali to Spiti (Kaza) by cab?", a: "Manali to Kaza is approximately 220 km via Rohtang Pass and Kunzum Pass, taking 7-8 hours. The road is open June to October only." },
+      { q: "What is the fare for Manali to Spiti cab?", a: "Fares start from ₹2,890 for a suitable SUV (sedans not recommended). Price includes driver charges. Rohtang permit fee (₹550) and HP state tax charged at actuals." },
+      { q: "Do I need a Rohtang Pass permit?", a: "Yes. All non-HP registered vehicles need a permit to cross Rohtang Pass. Book online at himachalservices.nic.in the evening before (permit window opens at 10 PM). We will remind you." },
+      { q: "Is Chandratal Lake accessible from Kaza?", a: "Yes. Chandratal Lake is approximately 100 km from Kaza (3-4 hours). It's a high-altitude glacial lake at 4,300 m and one of the most surreal landscapes in India. An extra night in Spiti is needed." },
+    ]
+  },
+  "manali-to-kasol": {
+    from: "Manali", to: "Kasol", distance: 80, duration: "2.5-3 hours",
+    fare: { min: 1210, max: 2010 }, toll: 100,
+    description: "Book Manali to Kasol cab at fixed fares. The short drive through the Kullu valley to the Parvati Valley backpacker haven — riverside cafes, pine forests and the gateway to Kheerganga trek.",
+    highlights: ["Parvati Valley riverside", "Kheerganga Trek base", "Malana village day trip", "Chalal village walk"],
+    faqs: [
+      { q: "How far is Manali to Kasol by cab?", a: "Manali to Kasol is approximately 80 km via NH21 through Kullu and Bhuntar, taking 2.5-3 hours by cab." },
+      { q: "What is the fare for Manali to Kasol cab?", a: "Fares start from ₹1,210 for a sedan to ₹2,010 for an Innova Hycross. Price includes driver charges. HP state tax charged at actuals." },
+      { q: "What is Kasol known for?", a: "Kasol sits on the Parvati River and is known for its Israeli cafe culture, backpacker community, and as the starting point for the Kheerganga hot spring trek (12 km one way) and the Malana village day trip." },
+      { q: "Can I trek to Kheerganga from Kasol?", a: "Yes. The Kheerganga trek is 12 km each way from Barshaini (14 km from Kasol). It ends at a natural hot spring at 2,950 m — a 1-night camping experience that many consider the best in Himachal." },
+    ]
+  },
+
+  // ── Punjab – Amritsar Routes ─────────────────────────────────────────
+  "amritsar-to-dharamshala": {
+    from: "Amritsar", to: "Dharamshala", distance: 200, duration: "4-5 hours",
+    fare: { min: 2650, max: 4650 }, toll: 300,
+    description: "Book Amritsar to Dharamshala cab at fixed fares. Drive from the Golden Temple city to McLeod Ganj through Pathankot and the Kangra Valley. AC cabs, verified drivers.",
+    highlights: ["Pathankot scenic transit", "Kangra Fort en route", "McLeod Ganj Tibetan quarter", "Dharamshala Cricket Stadium"],
+    faqs: [
+      { q: "How far is Amritsar to Dharamshala by cab?", a: "Amritsar to Dharamshala is approximately 200 km via Pathankot and NH154, taking 4-5 hours by cab." },
+      { q: "What is the fare for Amritsar to Dharamshala cab?", a: "Fares start from ₹2,650 for a sedan to ₹4,650 for an Innova Hycross. Price includes driver charges. Toll & HP state tax charged at actuals." },
+      { q: "Is there a scenic stop between Amritsar and Dharamshala?", a: "Kangra Fort (45 km before Dharamshala) is a 4th-century citadel with excellent views and is worth a 30-minute stop. The entire drive through the Kangra Valley is very scenic." },
+      { q: "Can I combine Golden Temple visit with a trip to Dharamshala?", a: "Yes. Leave Amritsar after morning Golden Temple darshan, visit Jallianwala Bagh, then head to Dharamshala. Arrive by evening for a McLeod Ganj sunset walk — very popular 2-day itinerary." },
+    ]
+  },
+  "ludhiana-to-amritsar": {
+    from: "Ludhiana", to: "Amritsar", distance: 130, duration: "2-2.5 hours",
+    fare: { min: 1810, max: 3110 }, toll: 200,
+    description: "Book Ludhiana to Amritsar cab at fixed fares. A straight NH44 drive to the Golden Temple. Fast, comfortable, door-to-door. Perfect for Golden Temple darshan and Wagah Border ceremony.",
+    highlights: ["Golden Temple darshan", "Wagah Border ceremony at sunset", "Jallianwala Bagh", "Heritage Street food walk"],
+    faqs: [
+      { q: "How far is Ludhiana to Amritsar by cab?", a: "Ludhiana to Amritsar is approximately 130 km via NH44 and takes 2-2.5 hours by cab." },
+      { q: "What is the fare for Ludhiana to Amritsar cab?", a: "Fares start from ₹1,810 for a sedan to ₹3,110 for an Innova Hycross. Price includes driver charges. Toll charged at actuals." },
+      { q: "What is the best time to visit the Golden Temple?", a: "Early morning (4–6 AM) for the morning palki procession is the most spiritually significant time. The temple is also stunning at night — it remains open 24 hours." },
+      { q: "How long does the Wagah Border ceremony take?", a: "The Beating Retreat ceremony lasts about 45 minutes. Add 30 minutes for security checks and finding a seat. We recommend arriving at least 1 hour before sunset." },
     ]
   },
 };
@@ -383,6 +666,25 @@ export default function RouteLanding() {
             </table>
           </div>
           <p className="text-xs text-slate-400 mt-3 text-center">* Fares include driver charges (₹250). Toll & parking charged at actuals — whatever is paid on the road, no markup.</p>
+
+          {/* Additional charges guide */}
+          {(() => {
+            const dest = data.to.toLowerCase();
+            const isHP = ["shimla","manali","dharamshala","kasauli","dalhousie","spiti","kasol"].includes(dest);
+            const isRaj = ["jaipur","jodhpur","udaipur","pushkar","mount abu"].includes(dest);
+            return (
+              <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                <p className="font-semibold mb-2">Estimated Additional Charges <span className="font-normal text-amber-700">(guide only — charged at actuals)</span></p>
+                <ul className="space-y-1 text-amber-800 text-xs">
+                  <li>• <span className="font-medium">Toll:</span> ~₹{data.toll.toLocaleString("en-IN")} estimated on major plaza(s) on this route</li>
+                  {isHP && <li>• <span className="font-medium">Himachal Pradesh state entry tax:</span> ~₹350–500 per vehicle (varies by vehicle type)</li>}
+                  {isRaj && <li>• <span className="font-medium">Rajasthan state permit:</span> ~₹250–450 per vehicle (varies by vehicle type)</li>}
+                  <li>• <span className="font-medium">Parking:</span> charged at actuals at all stops</li>
+                </ul>
+                <p className="mt-2 text-[11px] text-amber-700">All amounts are estimates based on standard routes. Actual charges depend on the exact toll plazas used and are passed on to you at cost with zero markup.</p>
+              </div>
+            );
+          })()}
         </div>
 
         {/* Why choose us */}
