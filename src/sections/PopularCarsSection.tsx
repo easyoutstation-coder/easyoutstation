@@ -88,6 +88,14 @@ export default function PopularCarsSection() {
           })}
         </div>
 
+        {/* Mobile CTA */}
+        <div className="flex justify-center mt-8 md:hidden">
+          <Button variant="outline" onClick={() => navigate("/cars")}
+            className="border-slate-200 text-slate-600 hover:text-blue-700 hover:border-blue-200 flex items-center gap-2 px-6">
+            View Full Fleet <ArrowRight className="w-4 h-4" />
+          </Button>
+        </div>
+
         <div className="mt-10 grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
             { icon: "🚗", text: "Well Maintained", sub: "All vehicles" },

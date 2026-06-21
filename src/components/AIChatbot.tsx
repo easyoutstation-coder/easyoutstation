@@ -84,7 +84,7 @@ export default function AIChatbot() {
       {/* Floating Button */}
       <button
         onClick={() => setOpen(!open)}
-        className={`fixed bottom-6 right-5 md:right-6 z-50 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-110 ${
+        className={`fixed bottom-36 right-5 md:bottom-6 md:right-6 z-50 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-110 ${
           open ? "bg-red-500 text-white rotate-90" : "bg-blue-600 text-white"
         }`}
       >
@@ -94,8 +94,10 @@ export default function AIChatbot() {
       {/* Chat Window */}
       {open && (
         <div
-          className="fixed bottom-24 right-6 z-50 w-[380px] max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-scale-in"
-          style={{ height: "600px", maxHeight: "calc(100vh - 110px)", display: "flex", flexDirection: "column" }}
+          className="fixed z-50 bg-white shadow-2xl border border-slate-200 overflow-hidden animate-scale-in
+            bottom-0 left-0 right-0 rounded-t-2xl
+            md:bottom-24 md:right-6 md:left-auto md:rounded-2xl md:w-[380px]"
+          style={{ height: "min(600px, calc(100vh - 80px))", maxHeight: "calc(100vh - 80px)", display: "flex", flexDirection: "column" }}
         >
           {/* Header */}
           <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-4 flex items-center gap-3 flex-shrink-0">
