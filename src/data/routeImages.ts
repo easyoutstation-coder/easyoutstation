@@ -7,9 +7,9 @@ export const routeLandmarks: Record<string, { image: string; landmark: string; o
     objectPosition: "center 30%",
   },
   shimla: {
-    image: "https://images.pexels.com/photos/19294061/pexels-photo-19294061.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop",
-    landmark: "Clock Tower, Shimla",
-    objectPosition: "center center",
+    image: "https://images.unsplash.com/photo-KkNmK2chPDI?w=1600&h=900&q=90&fit=crop&auto=format",
+    landmark: "Christ Church, The Ridge, Shimla",
+    objectPosition: "center 40%",
   },
   chandigarh: {
     image: "https://images.unsplash.com/photo-1731593597977-acde4913bd19?w=1600&h=900&q=90&fit=crop&auto=format",
@@ -27,9 +27,9 @@ export const routeLandmarks: Record<string, { image: string; landmark: string; o
     objectPosition: "center 30%",
   },
   rishikesh: {
-    image: "https://images.unsplash.com/photo-1642163168826-37f2233297ac?w=1600&h=900&q=90&fit=crop&auto=format",
-    landmark: "Ganges Valley, Rishikesh",
-    objectPosition: "center 40%",
+    image: "https://images.unsplash.com/photo-tFbU-qZcej8?w=1600&h=900&q=90&fit=crop&auto=format",
+    landmark: "Ram Jhula Suspension Bridge, Rishikesh",
+    objectPosition: "center 45%",
   },
   haridwar: {
     image: "https://images.unsplash.com/photo-1653392083932-d5e9e7d2ccd1?w=1600&h=900&q=90&fit=crop&auto=format",
@@ -52,8 +52,8 @@ export const routeLandmarks: Record<string, { image: string; landmark: string; o
     objectPosition: "center 45%",
   },
   mathura: {
-    image: "https://images.unsplash.com/photo-1756454487537-1fa7ad135349?w=1600&h=900&q=90&fit=crop&auto=format",
-    landmark: "Holi Festival, Vrindavan",
+    image: "https://images.pexels.com/photos/31626024/pexels-photo-31626024.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop",
+    landmark: "Krishna Janmasthan Temple, Mathura",
     objectPosition: "center 40%",
   },
   amritsar: {
@@ -114,19 +114,19 @@ export const routeLandmarks: Record<string, { image: string; landmark: string; o
     objectPosition: "center 50%",
   },
   corbett: {
-    image: "https://images.unsplash.com/photo-1526329869878-f7c4e3bb5180?w=1600&h=900&q=90&fit=crop&auto=format",
-    landmark: "Jim Corbett National Park",
-    objectPosition: "center 50%",
+    image: "https://images.unsplash.com/photo-284MBhcbZ4U?w=1600&h=900&q=90&fit=crop&auto=format",
+    landmark: "Royal Bengal Tiger, Dhikala Zone, Corbett",
+    objectPosition: "center 55%",
   },
   kasauli: {
-    image: "https://images.pexels.com/photos/15816614/pexels-photo-15816614.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop",
-    landmark: "Pine Trails, Kasauli",
-    objectPosition: "center 40%",
+    image: "https://images.unsplash.com/photo-VgjnoCFK1AY?w=1600&h=900&q=90&fit=crop&auto=format",
+    landmark: "Himalayan Panorama, Kasauli",
+    objectPosition: "center 35%",
   },
   dalhousie: {
-    image: "https://images.pexels.com/photos/4254554/pexels-photo-4254554.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop",
-    landmark: "Dalhousie Hill Station",
-    objectPosition: "center 35%",
+    image: "https://images.unsplash.com/photo-J8ptcluVUXY?w=1600&h=900&q=90&fit=crop&auto=format",
+    landmark: "Khajjiar Lake (Mini Switzerland of India), Dalhousie",
+    objectPosition: "center 50%",
   },
   lucknow: {
     image: "https://images.unsplash.com/photo-1603900010998-74db9aeb7ea3?w=1600&h=900&q=90&fit=crop&auto=format",
@@ -139,9 +139,9 @@ export const routeLandmarks: Record<string, { image: string; landmark: string; o
     objectPosition: "center 45%",
   },
   vrindavan: {
-    image: "https://images.pexels.com/photos/14142/pexels-photo.jpg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop",
+    image: "https://images.unsplash.com/photo-YUrOfqZ6xc0?w=1600&h=900&q=90&fit=crop&auto=format",
     landmark: "Prem Mandir, Vrindavan",
-    objectPosition: "center 40%",
+    objectPosition: "center 35%",
   },
   spiti: {
     image: "https://images.unsplash.com/photo-1580746738099-8f9c8e07e6db?w=1600&h=900&q=90&fit=crop&auto=format",
