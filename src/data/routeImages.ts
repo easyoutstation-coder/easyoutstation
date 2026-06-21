@@ -94,22 +94,22 @@ export const routeLandmarks: Record<string, { image: string; landmark: string; o
 
   // ── New destinations ─────────────────────────────────────────────────
   jodhpur: {
-    image: "https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=1600&h=900&q=90&fit=crop&auto=format",
+    image: "https://images.unsplash.com/photo-1566873535350-a3f5d4a804b7?w=1600&h=900&q=90&fit=crop&auto=format",
     landmark: "Mehrangarh Fort, Jodhpur",
     objectPosition: "center 40%",
   },
   udaipur: {
-    image: "https://images.pexels.com/photos/3881104/pexels-photo-3881104.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop",
-    landmark: "Lake Pichola, Udaipur",
-    objectPosition: "center 50%",
+    image: "https://images.unsplash.com/photo-1633702738734-443da2c18f3c?w=1600&h=900&q=90&fit=crop&auto=format",
+    landmark: "City Palace & Lake Pichola, Udaipur",
+    objectPosition: "center 45%",
   },
   pushkar: {
-    image: "https://images.pexels.com/photos/2410942/pexels-photo-2410942.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop",
-    landmark: "Brahma Temple, Pushkar",
-    objectPosition: "center 40%",
+    image: "https://images.unsplash.com/photo-1715168931029-2949161ee406?w=1600&h=900&q=90&fit=crop&auto=format",
+    landmark: "Pushkar Lake, Pushkar",
+    objectPosition: "center 50%",
   },
   "mount abu": {
-    image: "https://images.pexels.com/photos/17166024/pexels-photo-17166024.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop",
+    image: "https://images.unsplash.com/photo-1652421027969-6df47aab314a?w=1600&h=900&q=90&fit=crop&auto=format",
     landmark: "Nakki Lake, Mount Abu",
     objectPosition: "center 50%",
   },
@@ -134,9 +134,9 @@ export const routeLandmarks: Record<string, { image: string; landmark: string; o
     objectPosition: "center 40%",
   },
   prayagraj: {
-    image: "https://images.pexels.com/photos/11452177/pexels-photo-11452177.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop",
-    landmark: "Sangam, Prayagraj",
-    objectPosition: "center 45%",
+    image: "https://images.pexels.com/photos/31022593/pexels-photo-31022593.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop",
+    landmark: "Triveni Sangam, Prayagraj",
+    objectPosition: "center 40%",
   },
   vrindavan: {
     image: "https://images.unsplash.com/photo-1662376107358-21296a9234f1?w=1600&h=900&q=90&fit=crop&auto=format",
@@ -144,7 +144,7 @@ export const routeLandmarks: Record<string, { image: string; landmark: string; o
     objectPosition: "center 35%",
   },
   spiti: {
-    image: "https://images.unsplash.com/photo-1580746738099-8f9c8e07e6db?w=1600&h=900&q=90&fit=crop&auto=format",
+    image: "https://images.unsplash.com/photo-1653844573020-71f77a0ccb8c?w=1600&h=900&q=90&fit=crop&auto=format",
     landmark: "Key Monastery, Spiti Valley",
     objectPosition: "center 35%",
   },
