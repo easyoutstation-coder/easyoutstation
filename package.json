@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "node node_modules/vite/bin/vite.js build",
+    "build": "node node_modules/vite/bin/vite.js build && node scripts/prerender.mjs",
     "build:server": "node node_modules/vite/bin/vite.js build && ./node_modules/.bin/esbuild api/boot.ts --platform=node --bundle --format=esm --outdir=dist --banner:js=\"import { createRequire } from 'module';const require = createRequire(import.meta.url);\" --alias:@contracts=./contracts --alias:@db=./db --external:bullmq --external:ioredis",
     "build:all": "npm run build && npm run build:server",
     "lint": "eslint .",
