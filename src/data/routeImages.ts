@@ -129,7 +129,7 @@ export const routeLandmarks: Record<string, { image: string; landmark: string; o
     objectPosition: "center 50%",
   },
   lucknow: {
-    image: "https://images.unsplash.com/photo-1603900010998-74db9aeb7ea3?w=1600&h=900&q=90&fit=crop&auto=format",
+    image: "https://images.unsplash.com/photo-1583504490792-3ceadbc5147c?w=1600&h=900&q=90&fit=crop&auto=format",
     landmark: "Bara Imambara, Lucknow",
     objectPosition: "center 40%",
   },
