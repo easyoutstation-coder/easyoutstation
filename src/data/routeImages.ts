@@ -7,7 +7,7 @@ export const routeLandmarks: Record<string, { image: string; landmark: string; o
     objectPosition: "center 30%",
   },
   shimla: {
-    image: "https://images.unsplash.com/photo-KkNmK2chPDI?w=1600&h=900&q=90&fit=crop&auto=format",
+    image: "https://images.unsplash.com/photo-1648830802584-ec070946e591?w=1600&h=900&q=90&fit=crop&auto=format",
     landmark: "Christ Church, The Ridge, Shimla",
     objectPosition: "center 40%",
   },
@@ -27,9 +27,9 @@ export const routeLandmarks: Record<string, { image: string; landmark: string; o
     objectPosition: "center 30%",
   },
   rishikesh: {
-    image: "https://images.unsplash.com/photo-tFbU-qZcej8?w=1600&h=900&q=90&fit=crop&auto=format",
-    landmark: "Ram Jhula Suspension Bridge, Rishikesh",
-    objectPosition: "center 45%",
+    image: "https://images.unsplash.com/photo-1642163168826-37f2233297ac?w=1600&h=900&q=90&fit=crop&auto=format",
+    landmark: "Ram Jhula & Ganges, Rishikesh",
+    objectPosition: "center 40%",
   },
   haridwar: {
     image: "https://images.unsplash.com/photo-1653392083932-d5e9e7d2ccd1?w=1600&h=900&q=90&fit=crop&auto=format",
@@ -114,17 +114,17 @@ export const routeLandmarks: Record<string, { image: string; landmark: string; o
     objectPosition: "center 50%",
   },
   corbett: {
-    image: "https://images.unsplash.com/photo-284MBhcbZ4U?w=1600&h=900&q=90&fit=crop&auto=format",
+    image: "https://images.unsplash.com/photo-1771922365997-8e687eda46b0?w=1600&h=900&q=90&fit=crop&auto=format",
     landmark: "Royal Bengal Tiger, Dhikala Zone, Corbett",
     objectPosition: "center 55%",
   },
   kasauli: {
-    image: "https://images.unsplash.com/photo-VgjnoCFK1AY?w=1600&h=900&q=90&fit=crop&auto=format",
+    image: "https://images.unsplash.com/photo-1720678599878-631001ea7bcc?w=1600&h=900&q=90&fit=crop&auto=format",
     landmark: "Himalayan Panorama, Kasauli",
     objectPosition: "center 35%",
   },
   dalhousie: {
-    image: "https://images.unsplash.com/photo-J8ptcluVUXY?w=1600&h=900&q=90&fit=crop&auto=format",
+    image: "https://images.unsplash.com/photo-1589702413183-ca141958b7c5?w=1600&h=900&q=90&fit=crop&auto=format",
     landmark: "Khajjiar Lake (Mini Switzerland of India), Dalhousie",
     objectPosition: "center 50%",
   },
@@ -139,7 +139,7 @@ export const routeLandmarks: Record<string, { image: string; landmark: string; o
     objectPosition: "center 45%",
   },
   vrindavan: {
-    image: "https://images.unsplash.com/photo-YUrOfqZ6xc0?w=1600&h=900&q=90&fit=crop&auto=format",
+    image: "https://images.unsplash.com/photo-1662376107358-21296a9234f1?w=1600&h=900&q=90&fit=crop&auto=format",
     landmark: "Prem Mandir, Vrindavan",
     objectPosition: "center 35%",
   },
