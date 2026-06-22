@@ -12,6 +12,7 @@ import { corporateRouter } from "./corporate-router";
 import { reviewRouter } from "./review-router";
 import { driverRouter } from "./driver-router";
 import { vendorRouter } from "./vendor-router";
+import { invoiceRouter } from "./invoice-router";
 import { createRouter, publicQuery, superAdminQuery } from "./middleware";
 import { z } from "zod";
 
@@ -33,6 +34,7 @@ export const appRouter = createRouter({
   review: reviewRouter,
   driver: driverRouter,
   vendor: vendorRouter,
+  invoice: invoiceRouter,
   testSms: superAdminQuery
     .input(z.object({ phone: z.string() }))
     .mutation(async ({ input }) => {

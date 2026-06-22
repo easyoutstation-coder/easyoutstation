@@ -16,8 +16,10 @@ import {
   Phone, UserCog, StickyNote, CheckCheck, X, Plus, Pencil, Trash2,
   MessageCircle, Mail, AlertTriangle, TrendingUp, MapPin, Wallet, ShieldCheck,
   Globe, WifiOff, Search, FileText, Bot, Send, Loader2, ChevronRight, Tag,
-  Gift, Share2, RefreshCw, Building2, Activity, Map, Truck, CalendarPlus,
+  Gift, Share2, RefreshCw, Building2, Activity, Map, Truck, CalendarPlus, Receipt, Download, Eye,
 } from "lucide-react";
+import InvoicePreview from "@/components/InvoicePreview";
+import { toIndianWords, buildInvoiceNumber, type InvoiceLineItem, type InvoiceData } from "@/lib/invoice-utils";
 import { vehicleToBand, rentalFare, RENTAL_MIN_HOURS, RENTAL_MAX_HOURS } from "@/lib/rental";
 import AddressAutocomplete from "@/components/AddressAutocomplete";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
@@ -335,6 +337,118 @@ export default function AdminPage() {
     ? offlineVehicleRows.reduce((sum, r) => sum + (r.fare!.total * r.quantity), 0) : null;
   const offlineVehicleSummary = offlineVehicleRows
     .filter(r => r.car).map(r => `${r.car!.name}${r.quantity > 1 ? ` ×${r.quantity}` : ""}`).join(" + ");
+
+  // ── Invoice state ──────────────────────────────────────────────────────────
+  const defaultInvoiceForm = {
+    bookingId: "",
+    customerName: "", customerPhone: "", customerEmail: "",
+    serviceDate: new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }),
+    duration: "", location: "", bookingType: "", notes: "",
+  };
+  const [invoiceForm, setInvoiceForm] = useState(defaultInvoiceForm);
+  const [invoiceLineItems, setInvoiceLineItems] = useState<InvoiceLineItem[]>([{ vehicle: "", description: "", amount: 0 }]);
+  const [savedInvoiceId, setSavedInvoiceId] = useState<number | null>(null);
+  const [savedInvoiceNumber, setSavedInvoiceNumber] = useState<string>("");
+  const [invoicePreviewMode, setInvoicePreviewMode] = useState(false);
+
+  const invoiceTotal = invoiceLineItems.reduce((s, it) => s + (Number(it.amount) || 0), 0);
+  const invoiceData: InvoiceData = {
+    invoiceNumber: savedInvoiceNumber || buildInvoiceNumber(0),
+    date: new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }),
+    customerName: invoiceForm.customerName || "Customer Name",
+    serviceDate: invoiceForm.serviceDate,
+    duration: invoiceForm.duration || undefined,
+    location: invoiceForm.location || undefined,
+    bookingType: invoiceForm.bookingType || undefined,
+    lineItems: invoiceLineItems.filter(it => it.vehicle),
+    totalAmount: invoiceTotal,
+    notes: invoiceForm.notes || undefined,
+  };
+
+  const { data: invoiceList, refetch: refetchInvoices } = trpc.invoice.list.useQuery(undefined, { enabled: isAdmin });
+  const { data: recentBookingsForInvoice } = trpc.invoice.getRecentBookingsForInvoice.useQuery(undefined, { enabled: isAdmin });
+  const createInvoiceMut = trpc.invoice.create.useMutation({
+    onSuccess: (res) => {
+      setSavedInvoiceId(res.id);
+      setSavedInvoiceNumber(res.invoiceNumber);
+      refetchInvoices();
+      toast.success(`Invoice ${res.invoiceNumber} created`);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+  const updateInvoiceMut = trpc.invoice.update.useMutation({
+    onSuccess: () => { refetchInvoices(); toast.success("Invoice updated"); },
+    onError: (e) => toast.error(e.message),
+  });
+  const generatePdfMut = trpc.invoice.generatePdf.useMutation({
+    onSuccess: (res) => {
+      const bytes = Uint8Array.from(atob(res.pdfBase64), c => c.charCodeAt(0));
+      const blob = new Blob([bytes], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = `${res.invoiceNumber.replace(/\//g, "-")}.pdf`; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+      toast.success("PDF downloaded");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+  const sendEmailMut = trpc.invoice.sendEmail.useMutation({
+    onSuccess: () => { refetchInvoices(); toast.success("Invoice emailed to customer"); },
+    onError: (e) => toast.error(e.message),
+  });
+  const sendWaMut = trpc.invoice.sendWhatsApp.useMutation({
+    onSuccess: () => { refetchInvoices(); toast.success("Invoice sent via WhatsApp"); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  function resetInvoiceForm() {
+    setInvoiceForm(defaultInvoiceForm);
+    setInvoiceLineItems([{ vehicle: "", description: "", amount: 0 }]);
+    setSavedInvoiceId(null);
+    setSavedInvoiceNumber("");
+    setInvoicePreviewMode(false);
+  }
+
+  function autoFillFromBooking(bkId: string) {
+    const bk = recentBookingsForInvoice?.find(b => String(b.id) === bkId);
+    if (!bk) return;
+    setInvoiceForm(f => ({
+      ...f,
+      bookingId: bkId,
+      customerName: bk.customerName || "",
+      customerPhone: bk.customerPhone || "",
+      customerEmail: (bk as any).customerEmail || "",
+      serviceDate: bk.pickupDate ? new Date(bk.pickupDate).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) : f.serviceDate,
+      location: bk.pickupAddress || "",
+      bookingType: bk.tripType === "rental" ? "Local Package" : bk.tripType === "round_trip" ? "Round Trip" : "One Way",
+    }));
+    setInvoiceLineItems([{
+      vehicle: `${bk.fromCity} to ${bk.toCity}`,
+      description: "",
+      amount: Number(bk.totalPrice) || 0,
+    }]);
+  }
+
+  function saveOrUpdateInvoice() {
+    const payload = {
+      bookingId: invoiceForm.bookingId ? parseInt(invoiceForm.bookingId) : undefined,
+      customerName: invoiceForm.customerName,
+      customerPhone: invoiceForm.customerPhone || undefined,
+      customerEmail: invoiceForm.customerEmail || undefined,
+      serviceDate: invoiceForm.serviceDate,
+      duration: invoiceForm.duration || undefined,
+      location: invoiceForm.location || undefined,
+      bookingType: invoiceForm.bookingType || undefined,
+      lineItems: invoiceLineItems.filter(it => it.vehicle).map(it => ({ ...it, amount: Number(it.amount) || 0 })),
+      totalAmount: invoiceTotal,
+      notes: invoiceForm.notes || undefined,
+    };
+    if (savedInvoiceId) {
+      updateInvoiceMut.mutate({ id: savedInvoiceId, ...payload });
+    } else {
+      createInvoiceMut.mutate(payload);
+    }
+  }
 
   // Danger Zone — data-clear state
   type ClearCategory = "bookings" | "expenses" | "searches" | "reviews" | "all";
@@ -739,6 +853,7 @@ export default function AdminPage() {
               )}
             </TabsTrigger>
             <TabsTrigger value="offline" className="gap-1.5 shrink-0"><CalendarPlus className="w-4 h-4" />Offline Booking</TabsTrigger>
+            <TabsTrigger value="invoices" className="gap-1.5 shrink-0"><Receipt className="w-4 h-4" />Invoices</TabsTrigger>
           </TabsList>
 
           {/* ── Overview ────────────────────────────────────────────── */}
@@ -3275,6 +3390,248 @@ export default function AdminPage() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* ── Invoices ─────────────────────────────────────────────── */}
+          <TabsContent value="invoices" className="space-y-4">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div>
+                <h3 className="font-semibold text-base">Invoice Generator</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">Create invoices matching the EasyOutstation format, send via email or WhatsApp.</p>
+              </div>
+              <Button size="sm" variant="outline" className="gap-1.5" onClick={resetInvoiceForm}>
+                <Plus className="w-4 h-4" />New Invoice
+              </Button>
+            </div>
+
+            {/* Past invoices list */}
+            {invoiceList && invoiceList.length > 0 && (
+              <Card>
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left px-4 py-2.5 text-muted-foreground font-medium">Invoice #</th>
+                          <th className="text-left px-4 py-2.5 text-muted-foreground font-medium">Customer</th>
+                          <th className="text-left px-4 py-2.5 text-muted-foreground font-medium">Service Date</th>
+                          <th className="text-right px-4 py-2.5 text-muted-foreground font-medium">Amount</th>
+                          <th className="text-center px-4 py-2.5 text-muted-foreground font-medium">Email</th>
+                          <th className="text-center px-4 py-2.5 text-muted-foreground font-medium">WA</th>
+                          <th className="px-4 py-2.5"></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {invoiceList.map(inv => (
+                          <tr key={inv.id} className="border-b hover:bg-slate-50/30 transition-colors">
+                            <td className="px-4 py-2.5 font-mono font-semibold text-blue-700">{inv.invoiceNumber}</td>
+                            <td className="px-4 py-2.5">{inv.customerName}</td>
+                            <td className="px-4 py-2.5 text-muted-foreground">{inv.serviceDate}</td>
+                            <td className="px-4 py-2.5 text-right font-semibold">₹{Number(inv.totalAmount).toLocaleString("en-IN")}</td>
+                            <td className="px-4 py-2.5 text-center">
+                              {inv.emailSentAt ? <CheckCircle className="w-3.5 h-3.5 text-green-500 inline" /> : <span className="text-slate-300">—</span>}
+                            </td>
+                            <td className="px-4 py-2.5 text-center">
+                              {inv.waSentAt ? <CheckCircle className="w-3.5 h-3.5 text-green-500 inline" /> : <span className="text-slate-300">—</span>}
+                            </td>
+                            <td className="px-4 py-2.5 text-right">
+                              <div className="flex gap-1 justify-end">
+                                <button title="Download PDF"
+                                  className="text-slate-500 hover:text-blue-600 p-1"
+                                  onClick={() => generatePdfMut.mutate({ id: inv.id })}>
+                                  <Download className="w-3.5 h-3.5" />
+                                </button>
+                                <button title="Send Email" className="text-slate-500 hover:text-blue-600 p-1"
+                                  onClick={() => { if (inv.customerEmail) sendEmailMut.mutate({ id: inv.id }); else toast.error("No email on this invoice"); }}>
+                                  <Mail className="w-3.5 h-3.5" />
+                                </button>
+                                <button title="Send WhatsApp" className="text-slate-500 hover:text-green-600 p-1"
+                                  onClick={() => { if (inv.customerPhone) sendWaMut.mutate({ id: inv.id }); else toast.error("No phone on this invoice"); }}>
+                                  <MessageCircle className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Create / Edit form + Preview */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+              {/* ── Form ── */}
+              <Card>
+                <CardContent className="p-5 space-y-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {savedInvoiceId ? `Editing ${savedInvoiceNumber}` : "New Invoice"}
+                  </p>
+
+                  {/* Booking picker */}
+                  <div>
+                    <label className="text-xs font-medium mb-1 block">Auto-fill from Booking (optional)</label>
+                    <Select value={invoiceForm.bookingId} onValueChange={v => { setInvoiceForm(f => ({ ...f, bookingId: v })); autoFillFromBooking(v); }}>
+                      <SelectTrigger className="w-full text-xs"><SelectValue placeholder="Select a booking to auto-fill…" /></SelectTrigger>
+                      <SelectContent>
+                        {(recentBookingsForInvoice ?? []).map(b => (
+                          <SelectItem key={b.id} value={String(b.id)} className="text-xs">
+                            #{b.id} · {b.customerName} · {b.fromCity}→{b.toCity} · ₹{Number(b.totalPrice).toLocaleString("en-IN")}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Customer */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="sm:col-span-3">
+                      <label className="text-xs font-medium mb-1 block">Customer Name *</label>
+                      <Input placeholder="e.g. Mr. Kataria" value={invoiceForm.customerName}
+                        onChange={e => setInvoiceForm(f => ({ ...f, customerName: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium mb-1 block">Phone</label>
+                      <Input placeholder="10-digit" maxLength={10} value={invoiceForm.customerPhone}
+                        onChange={e => setInvoiceForm(f => ({ ...f, customerPhone: e.target.value.replace(/\D/g, "") }))} />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="text-xs font-medium mb-1 block">Email</label>
+                      <Input type="email" placeholder="customer@email.com" value={invoiceForm.customerEmail}
+                        onChange={e => setInvoiceForm(f => ({ ...f, customerEmail: e.target.value }))} />
+                    </div>
+                  </div>
+
+                  {/* Trip details */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-medium mb-1 block">Service Date *</label>
+                      <Input placeholder="e.g. 24 June 2026" value={invoiceForm.serviceDate}
+                        onChange={e => setInvoiceForm(f => ({ ...f, serviceDate: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium mb-1 block">Duration</label>
+                      <Input placeholder="e.g. 1:00 PM – 1:00 AM (12 hours)" value={invoiceForm.duration}
+                        onChange={e => setInvoiceForm(f => ({ ...f, duration: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium mb-1 block">Location / Pickup</label>
+                      <Input placeholder="e.g. Country Inn, Sahibabad" value={invoiceForm.location}
+                        onChange={e => setInvoiceForm(f => ({ ...f, location: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium mb-1 block">Booking Type</label>
+                      <Input placeholder="e.g. Local Package (12 Hrs)" value={invoiceForm.bookingType}
+                        onChange={e => setInvoiceForm(f => ({ ...f, bookingType: e.target.value }))} />
+                    </div>
+                  </div>
+
+                  {/* Line Items */}
+                  <div>
+                    <label className="text-xs font-medium mb-2 block">Line Items *</label>
+                    <div className="space-y-2">
+                      {invoiceLineItems.map((item, i) => (
+                        <div key={i} className="grid grid-cols-12 gap-1.5 items-start">
+                          <div className="col-span-4">
+                            {i === 0 && <span className="text-[10px] text-muted-foreground block mb-1">Vehicle</span>}
+                            <Input placeholder="Vehicle name" value={item.vehicle}
+                              onChange={e => setInvoiceLineItems(its => its.map((x, j) => j === i ? { ...x, vehicle: e.target.value } : x))} />
+                          </div>
+                          <div className="col-span-5">
+                            {i === 0 && <span className="text-[10px] text-muted-foreground block mb-1">Description</span>}
+                            <Input placeholder="e.g. Local hire — 12 hrs, 80 km included" value={item.description}
+                              onChange={e => setInvoiceLineItems(its => its.map((x, j) => j === i ? { ...x, description: e.target.value } : x))} />
+                          </div>
+                          <div className="col-span-2">
+                            {i === 0 && <span className="text-[10px] text-muted-foreground block mb-1">Amount (₹)</span>}
+                            <Input type="number" placeholder="0" value={item.amount || ""}
+                              onChange={e => setInvoiceLineItems(its => its.map((x, j) => j === i ? { ...x, amount: Number(e.target.value) } : x))} />
+                          </div>
+                          <div className="col-span-1 flex items-end pb-0.5">
+                            {i === 0 && <span className="text-[10px] block mb-1 invisible">x</span>}
+                            {invoiceLineItems.length > 1 && (
+                              <button className="text-slate-400 hover:text-red-500 mt-1"
+                                onClick={() => setInvoiceLineItems(its => its.filter((_, j) => j !== i))}>
+                                <X className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <button className="mt-2 text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                      onClick={() => setInvoiceLineItems(its => [...its, { vehicle: "", description: "", amount: 0 }])}>
+                      <Plus className="w-3.5 h-3.5" />Add item
+                    </button>
+                  </div>
+
+                  {/* Total display */}
+                  <div className="flex justify-end">
+                    <div className="bg-blue-600 text-white px-4 py-2 rounded flex gap-4 items-center">
+                      <span className="text-sm font-semibold">Total Amount</span>
+                      <span className="text-base font-bold">₹{invoiceTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                    </div>
+                  </div>
+
+                  {/* Notes */}
+                  <div>
+                    <label className="text-xs font-medium mb-1 block">Notes (optional)</label>
+                    <Textarea placeholder="Any additional notes to appear on the invoice…" rows={2}
+                      value={invoiceForm.notes}
+                      onChange={e => setInvoiceForm(f => ({ ...f, notes: e.target.value }))} />
+                  </div>
+
+                  {/* Action buttons */}
+                  <div className="flex flex-wrap gap-2 pt-1 border-t border-slate-100">
+                    <Button size="sm" className="gap-1.5 bg-slate-800 hover:bg-slate-700 text-white"
+                      disabled={!invoiceForm.customerName || invoiceLineItems.filter(it => it.vehicle).length === 0 || createInvoiceMut.isPending || updateInvoiceMut.isPending}
+                      onClick={saveOrUpdateInvoice}>
+                      <FileText className="w-4 h-4" />
+                      {savedInvoiceId ? (updateInvoiceMut.isPending ? "Saving…" : "Save Changes") : (createInvoiceMut.isPending ? "Creating…" : "Save Invoice")}
+                    </Button>
+                    {savedInvoiceId && (
+                      <>
+                        <Button size="sm" variant="outline" className="gap-1.5"
+                          disabled={generatePdfMut.isPending}
+                          onClick={() => generatePdfMut.mutate({ id: savedInvoiceId })}>
+                          <Download className="w-4 h-4" />{generatePdfMut.isPending ? "Generating…" : "Download PDF"}
+                        </Button>
+                        <Button size="sm" variant="outline" className="gap-1.5"
+                          disabled={sendEmailMut.isPending || !invoiceForm.customerEmail}
+                          onClick={() => sendEmailMut.mutate({ id: savedInvoiceId })}
+                          title={!invoiceForm.customerEmail ? "Add email first" : ""}>
+                          <Mail className="w-4 h-4" />{sendEmailMut.isPending ? "Sending…" : "Email PDF"}
+                        </Button>
+                        <Button size="sm" variant="outline" className="gap-1.5"
+                          disabled={sendWaMut.isPending || !invoiceForm.customerPhone}
+                          onClick={() => sendWaMut.mutate({ id: savedInvoiceId })}
+                          title={!invoiceForm.customerPhone ? "Add phone first" : ""}>
+                          <MessageCircle className="w-4 h-4" />{sendWaMut.isPending ? "Sending…" : "WhatsApp"}
+                        </Button>
+                      </>
+                    )}
+                    <Button size="sm" variant="ghost" className="gap-1.5 ml-auto"
+                      onClick={() => setInvoicePreviewMode(m => !m)}>
+                      <Eye className="w-4 h-4" />{invoicePreviewMode ? "Hide Preview" : "Preview"}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* ── Live Preview ── */}
+              <div className={`${invoicePreviewMode ? "block" : "hidden xl:block"}`}>
+                <div className="sticky top-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2 flex items-center gap-1.5">
+                    <Eye className="w-3.5 h-3.5" />Invoice Preview
+                  </p>
+                  <div className="rounded-xl overflow-hidden border border-slate-200 shadow-sm" style={{ transform: "scale(0.72)", transformOrigin: "top left", width: "139%", marginBottom: "-28%" }}>
+                    <InvoicePreview data={invoiceData} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+
         </Tabs>
         </div>{/* end dark-panel */}
       </div>

@@ -250,6 +250,31 @@ async function runStartupMigrations() {
       `));
     } catch { /* already exists */ }
 
+    // Invoices table
+    try {
+      await db.execute(sql.raw(`
+        CREATE TABLE IF NOT EXISTS invoices (
+          id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+          invoiceNumber VARCHAR(30) NOT NULL UNIQUE,
+          bookingId BIGINT UNSIGNED NULL,
+          customerName VARCHAR(255) NOT NULL,
+          customerPhone VARCHAR(20) NULL,
+          customerEmail VARCHAR(320) NULL,
+          serviceDate VARCHAR(30) NOT NULL,
+          duration VARCHAR(150) NULL,
+          location TEXT NULL,
+          bookingType VARCHAR(100) NULL,
+          lineItemsJson JSON NOT NULL,
+          totalAmount DECIMAL(12,2) NOT NULL,
+          notes TEXT NULL,
+          status ENUM('draft','sent') NOT NULL DEFAULT 'draft',
+          emailSentAt TIMESTAMP NULL,
+          waSentAt TIMESTAMP NULL,
+          createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+      `));
+    } catch { /* already exists */ }
+
     // Master accounts always get super_admin
     await db.execute(sql.raw(
       `UPDATE users SET role = 'super_admin' WHERE phone = '9958556011' OR email = 'parmindersinghtalwar@gmail.com'`

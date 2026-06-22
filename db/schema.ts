@@ -317,3 +317,25 @@ export const bookingEvents = mysqlTable("bookingEvents", {
   metaJson: json("metaJson"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
+
+export const invoices = mysqlTable("invoices", {
+  id: serial("id").primaryKey(),
+  invoiceNumber: varchar("invoiceNumber", { length: 30 }).notNull().unique(),
+  bookingId: bigint("bookingId", { mode: "number", unsigned: true }),
+  customerName: varchar("customerName", { length: 255 }).notNull(),
+  customerPhone: varchar("customerPhone", { length: 20 }),
+  customerEmail: varchar("customerEmail", { length: 320 }),
+  serviceDate: varchar("serviceDate", { length: 30 }).notNull(),
+  duration: varchar("duration", { length: 150 }),
+  location: text("location"),
+  bookingType: varchar("bookingType", { length: 100 }),
+  lineItemsJson: json("lineItemsJson").notNull(),
+  totalAmount: decimal("totalAmount", { precision: 12, scale: 2 }).notNull(),
+  notes: text("notes"),
+  status: mysqlEnum("status", ["draft", "sent"]).default("draft").notNull(),
+  emailSentAt: timestamp("emailSentAt"),
+  waSentAt: timestamp("waSentAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Invoice = typeof invoices.$inferSelect;
