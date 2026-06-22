@@ -46,6 +46,28 @@ export default function CancellationPolicy() {
             <h3 className="font-semibold text-slate-900 mb-2">Driver No-Show Policy</h3>
             <p className="text-sm text-slate-600">If our driver fails to show up without prior notice, you will receive a 100% refund and compensation. Contact us immediately at easyoutstation@gmail.com or WhatsApp +91-87965 64111.</p>
           </div>
+
+          {/* Local Hourly Rental Cancellation */}
+          <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-4">
+            <h3 className="font-semibold text-slate-900 text-base">Local Hourly Rental — Cancellation Policy</h3>
+            <p className="text-xs text-slate-500 italic">Applies to hourly rental bookings (Delhi NCR local trips) only.</p>
+            <div className="space-y-3">
+              {[
+                { icon: CheckCircle, color: "text-green-600 bg-green-50 border-green-200", title: "Free Cancellation — More than 12 Hours Before Start", desc: "Cancel your hourly rental more than 12 hours before the scheduled pickup and receive a full refund of the advance payment (25% of base + GST)." },
+                { icon: XCircle, color: "text-red-600 bg-red-50 border-red-200", title: "No Refund — Within 12 Hours of Start or No-Show", desc: "If you cancel within 12 hours of the scheduled pickup time, or if you do not show up, the advance payment is forfeited. Driver allocation and vehicle prep costs cannot be recovered at short notice." },
+              ].map((item, i) => (
+                <div key={i} className={`p-4 rounded-xl border ${item.color}`}>
+                  <div className="flex items-start gap-3">
+                    <item.icon className={`w-5 h-5 shrink-0 mt-0.5 ${item.color.split(" ")[0]}`} />
+                    <div>
+                      <h4 className="font-semibold text-slate-900 mb-1 text-sm">{item.title}</h4>
+                      <p className="text-sm text-slate-600">{item.desc}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </main>
       <Footer />

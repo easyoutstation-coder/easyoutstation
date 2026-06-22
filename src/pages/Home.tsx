@@ -98,6 +98,22 @@ const homeSchema = [
           "@type": "Answer",
           "text": "Yes. Free cancellation up to 24 hours before pickup. The 10% advance is refunded in full for cancellations made more than 24 hours in advance."
         }
+      },
+      {
+        "@type": "Question",
+        "name": "What is Local Hourly Rental?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Local Hourly Rental lets you book a cab by the hour for travel within Delhi NCR — ideal for multiple stops, shopping, hospital visits, and airport loops. Minimum 8 hours, maximum 12 hours. Starting from ₹327/hr for a Sedan. 10 km included per hour; extras billed after the trip."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How is the hourly rental fare calculated?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Base fare = booked hours × hourly rate. GST at 5% is added. 25% of (base + GST) is paid as advance at booking. Extra km beyond the included allowance and extra time beyond the package are billed after the trip. Parking and tolls are at actuals."
+        }
       }
     ]
   }

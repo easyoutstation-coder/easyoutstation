@@ -85,11 +85,21 @@ export const bookingRouter = createRouter({
         customerEmail: z.string().optional(),
         pickupAddress: z.string().optional(),
         specialRequests: z.string().optional(),
+        // Local Hourly Rental fields (optional — accepted silently if DB columns absent)
+        rentalHours: z.number().min(8).max(12).optional(),
+        rentalBandId: z.string().optional(),
+        rentalIncludedKm: z.number().optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
       const db = getDb();
       const userId = ctx.user?.id ?? 0;
+
+      // For rental bookings, append rental metadata to specialRequests if no dedicated columns
+      const rentalNote = input.rentalHours
+        ? `[Rental: ${input.rentalHours}h, band=${input.rentalBandId ?? "sedan"}, includedKm=${input.rentalIncludedKm ?? input.rentalHours * 10}]`
+        : undefined;
+      const mergedSpecialRequests = [input.specialRequests, rentalNote].filter(Boolean).join(" ") || undefined;
 
       const result = await db.insert(bookings).values({
         userId,
@@ -108,7 +118,7 @@ export const bookingRouter = createRouter({
         customerPhone: input.customerPhone,
         customerEmail: input.customerEmail,
         pickupAddress: input.pickupAddress,
-        specialRequests: input.specialRequests,
+        specialRequests: mergedSpecialRequests,
       });
 
       const bookingId = Number((result as any).insertId) || Math.floor(Math.random() * 90000 + 10000);

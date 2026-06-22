@@ -7,6 +7,7 @@ import { format } from "date-fns";
 import { MapPin, CalendarDays, ArrowRight, Shield, Clock, CheckCircle, Loader2, AlertCircle, Route, History, Building2 } from "lucide-react";
 import { saveRecentSearch, getRecentSearches, type RecentSearch } from "@/hooks/useRecentSearches";
 import { trpc } from "@/providers/trpc";
+import { RENTAL_BANDS, RENTAL_MIN_HOURS, RENTAL_MAX_HOURS, RENTAL_KM_PER_HOUR } from "@/lib/rental";
 
 // Delhi center — pickup restricted to 40km radius (covers full NCR: Gurgaon, Noida, Faridabad, Ghaziabad, Rohtak, Sonipat)
 const DELHI_CENTER = { lat: 28.6139, lng: 77.2090 };
@@ -179,6 +180,7 @@ export default function HeroSection() {
   const [returnTime, setReturnTime] = useState("08:00");
   const [tripType, setTripType] = useState("one_way");
   const [sameDayReturn, setSameDayReturn] = useState(false);
+  const [rentalHours, setRentalHours] = useState(RENTAL_MIN_HOURS);
 
   const [distanceKm, setDistanceKm] = useState<number | null>(null);
   const [durationText, setDurationText] = useState("");
@@ -276,6 +278,25 @@ export default function HeroSection() {
     navigate(`/cars?${params.toString()}`);
   };
 
+  const isRental = tripType === "rental";
+
+  const handleRentalSearch = () => {
+    setFormError("");
+    if (!fromAddress) { setFormError("Please enter a pickup location."); return; }
+    if (!pickupDate) { setFormError("Please select a departure date."); return; }
+    const params = new URLSearchParams({
+      tripType: "rental",
+      hours: String(rentalHours),
+      from: fromAddress.split(",")[0],
+      fromFull: fromAddress,
+    });
+    if (pickupDate) params.set("date", format(pickupDate, "yyyy-MM-dd"));
+    params.set("time", pickupTime);
+    if (fromPincode) params.set("fromPincode", fromPincode);
+    if (fromLat && fromLng) { params.set("fromLat", String(fromLat)); params.set("fromLng", String(fromLng)); }
+    navigate(`/cars?${params.toString()}`);
+  };
+
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden">
       <div className="absolute inset-0">
@@ -304,14 +325,16 @@ export default function HeroSection() {
               <div className="space-y-4">
                 {/* Trip type */}
                 <div className="space-y-2">
-                  <div className="grid grid-cols-2 gap-1 p-1 bg-slate-100 rounded-xl">
+                  <div className="grid grid-cols-3 gap-1 p-1 bg-slate-100 rounded-xl">
                     {[
                       { value: "one_way", label: "One Way" },
                       { value: "round_trip", label: "Round Trip" },
+                      { value: "rental", label: "Rentals" },
                     ].map((type) => (
                       <button key={type.value} onClick={() => {
                         setTripType(type.value);
                         if (type.value === "one_way") { setReturnDate(undefined); setSameDayReturn(false); }
+                        if (type.value === "rental") { setReturnDate(undefined); setSameDayReturn(false); }
                       }}
                         className={`py-2 px-2 rounded-lg text-xs font-semibold transition-all ${
                           tripType === type.value
@@ -323,7 +346,7 @@ export default function HeroSection() {
                     ))}
                   </div>
                   {/* Same day return sub-toggle */}
-                  {isRoundTrip && (
+                  {isRoundTrip && !isRental && (
                     <div className="flex gap-1.5 px-0.5">
                       {[
                         { sd: true,  label: "Same day return" },
@@ -343,7 +366,14 @@ export default function HeroSection() {
 
                   {/* Use case chips */}
                   <div className="flex flex-wrap gap-1.5 px-0.5">
-                    {isRoundTrip ? (
+                    {isRental ? (
+                      <>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-100 text-[11px] text-amber-700 font-medium">🏥 Hospital Visits</span>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-100 text-[11px] text-amber-700 font-medium">🛍️ Shopping Trips</span>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-100 text-[11px] text-amber-700 font-medium">✈️ Airport Loops</span>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-100 text-[11px] text-amber-700 font-medium">📍 Multiple Stops</span>
+                      </>
+                    ) : isRoundTrip ? (
                       <>
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-100 text-[11px] text-blue-600 font-medium">🏖️ Weekend Getaway</span>
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-100 text-[11px] text-blue-600 font-medium">🛕 Pilgrimage</span>
@@ -368,15 +398,45 @@ export default function HeroSection() {
                   onSelect={(addr, lat, lng, pincode) => { setFromAddress(addr); setFromLat(lat); setFromLng(lng); setFromPincode(pincode); }}
                 />
 
-                {/* To location */}
-                <PlaceInput
-                  label="DROP-OFF LOCATION"
-                  placeholder="Enter destination address or city"
-                  onSelect={(addr, lat, lng, pincode) => { setToAddress(addr); setToLat(lat); setToLng(lng); setToPincode(pincode); }}
-                />
+                {/* Rental: hours stepper + summary (no drop-off field) */}
+                {isRental ? (
+                  <div className="space-y-3">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">PACKAGE DURATION</label>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => setRentalHours(h => Math.max(RENTAL_MIN_HOURS, h - 1))}
+                          disabled={rentalHours <= RENTAL_MIN_HOURS}
+                          className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 disabled:opacity-40"
+                        >−</button>
+                        <span className="text-slate-900 font-semibold w-16 text-center">{rentalHours} hrs</span>
+                        <button
+                          onClick={() => setRentalHours(h => Math.min(RENTAL_MAX_HOURS, h + 1))}
+                          disabled={rentalHours >= RENTAL_MAX_HOURS}
+                          className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 disabled:opacity-40"
+                        >+</button>
+                      </div>
+                    </div>
+                    <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-800">
+                      <span className="font-semibold">{rentalHours} hrs</span>
+                      {" · "}
+                      <span>{rentalHours * RENTAL_KM_PER_HOUR} km included</span>
+                      {" · "}
+                      <span>from <strong>₹{(RENTAL_BANDS[0].hourly * rentalHours).toLocaleString("en-IN")}</strong></span>
+                      <div className="text-[11px] text-amber-600 mt-0.5">Local Delhi NCR travel · multiple stops OK</div>
+                    </div>
+                  </div>
+                ) : (
+                  /* To location — outstation only */
+                  <PlaceInput
+                    label="DROP-OFF LOCATION"
+                    placeholder="Enter destination address or city"
+                    onSelect={(addr, lat, lng, pincode) => { setToAddress(addr); setToLat(lat); setToLng(lng); setToPincode(pincode); }}
+                  />
+                )}
 
-                {/* Distance + Fare result */}
-                {(isCalc || distanceKm) && (
+                {/* Distance + Fare result — outstation only */}
+                {!isRental && (isCalc || distanceKm) && (
                   <div className={`p-3 rounded-xl border transition-all ${
                     isCalc ? "bg-slate-50 border-slate-200" : "bg-blue-50 border-blue-200"
                   }`}>
@@ -406,7 +466,7 @@ export default function HeroSection() {
                 )}
 
                 {/* Date row */}
-                <div className={`grid gap-3 ${isRoundTrip ? "grid-cols-2" : "grid-cols-1"}`}>
+                <div className={`grid gap-3 ${isRoundTrip && !isRental ? "grid-cols-2" : "grid-cols-1"}`}>
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                       {isRoundTrip ? "DEPARTURE" : "DATE"}
@@ -430,8 +490,8 @@ export default function HeroSection() {
                     </Popover>
                   </div>
 
-                  {/* Return date — only shown for round trips */}
-                  {isRoundTrip && (sameDayReturn ? (
+                  {/* Return date — only shown for round trips (not rentals) */}
+                  {isRoundTrip && !isRental && (sameDayReturn ? (
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">RETURN</label>
                       <div className="w-full h-11 px-3 rounded-xl border border-blue-200 bg-blue-50 text-sm flex items-center gap-2">
@@ -465,7 +525,7 @@ export default function HeroSection() {
                 </div>
 
                 {/* Time row — 2 cols for round trip */}
-                <div className={`grid gap-3 ${isRoundTrip ? "grid-cols-2" : "grid-cols-1"}`}>
+                <div className={`grid gap-3 ${isRoundTrip && !isRental ? "grid-cols-2" : "grid-cols-1"}`}>
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">PICKUP TIME</label>
                     <div className="relative">
@@ -483,7 +543,7 @@ export default function HeroSection() {
                       </select>
                     </div>
                   </div>
-                  {isRoundTrip && (
+                  {isRoundTrip && !isRental && (
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">DROP-OFF TIME</label>
                       <div className="relative">
@@ -511,11 +571,13 @@ export default function HeroSection() {
                   </p>
                 )}
 
-                <Button onClick={handleSearch}
+                <Button onClick={isRental ? handleRentalSearch : handleSearch}
                   className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm gap-2 shadow-sm transition-all">
-                  {displayFareMin
-                    ? `See Vehicles · ₹${displayFareMin.toLocaleString("en-IN")}–₹${displayFareMax?.toLocaleString("en-IN")}${tripDays > 1 ? ` (${tripDays}d)` : ""}`
-                    : "See Available Vehicles & Fares"}
+                  {isRental
+                    ? `See Rental Vehicles · from ₹${(RENTAL_BANDS[0].hourly * rentalHours).toLocaleString("en-IN")}`
+                    : displayFareMin
+                      ? `See Vehicles · ₹${displayFareMin.toLocaleString("en-IN")}–₹${displayFareMax?.toLocaleString("en-IN")}${tripDays > 1 ? ` (${tripDays}d)` : ""}`
+                      : "See Available Vehicles & Fares"}
                   <ArrowRight className="w-4 h-4" />
                 </Button>
 

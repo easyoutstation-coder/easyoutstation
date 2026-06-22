@@ -25,6 +25,11 @@ const FALLBACK_FAQS = [
   { question: "Does EasyOutstation have a referral program?", answer: "Yes! Refer a friend and you both earn ₹100 travel credit when they complete their first ride. Credits are added within 24 hours of trip completion and are valid for 90 days. There's no limit on referrals." },
   { question: "How do I refer a friend?", answer: "Log in to your account, go to your Dashboard and click the 'Refer & Earn' tab. Copy your unique referral link and share it with friends. When they complete their first ride, you both earn ₹100." },
   { question: "Do referral credits expire?", answer: "Yes, referral credits expire 90 days from the date they are added to your account. You can view your credit balance and expiry dates in your dashboard under the Refer & Earn tab." },
+  // --- Local Hourly Rental FAQs ---
+  { question: "What is Local Hourly Rental?", answer: "Local Hourly Rental is EasyOutstation's product for travel within Delhi NCR. Instead of a point-to-point fare, you book a car by the hour — great for multiple stops, shopping trips, hospital visits, airport loops, and any local travel where you need the car to wait. Minimum package is 8 hours, maximum is 12 hours (in 1-hour steps). 80 km is included in the 8-hour package (10 km per hour)." },
+  { question: "How is the rental fare calculated?", answer: "The base fare is fixed: hours × hourly rate (e.g. 8 hours × ₹327/hr = ₹2,616 for a Sedan). GST at 5% is added on the base fare. You pay 25% of (base + GST) as an advance at booking. Extras are billed after the trip: additional kilometres beyond the included allowance are charged per-km, additional time beyond the package is charged per-minute. Parking and tolls are charged at actuals." },
+  { question: "What vehicles are available for hourly rental?", answer: "All four rental bands are available: Sedan (Swift Dzire, Toyota Etios) at ₹327/hr; MUV (Maruti Ertiga, Kia Carens) at ₹396/hr; Innova Crysta at ₹462/hr; and Innova Hycross at ₹485/hr. All are fully AC with verified drivers." },
+  { question: "Can I cancel a rental booking?", answer: "Yes. Rental bookings can be cancelled free of charge up to 12 hours before the scheduled start time. If you cancel within 12 hours of the start time, or do not show up, the advance payment (25% of base + GST) is forfeited." },
 ];
 
 export default function FAQ() {

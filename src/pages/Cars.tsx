@@ -1,6 +1,7 @@
 import { useSeo } from "@/hooks/useSeo";
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router";
+import { vehicleToBand, rentalFare, RENTAL_BANDS } from "@/lib/rental";
 import { trpc } from "@/providers/trpc";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -174,6 +175,8 @@ export default function CarsPage() {
   const DRIVER_CHARGE = 250;
 
   const tripTypeParam = searchParams.get("tripType") || "one_way";
+  const isRentalMode = tripTypeParam === "rental";
+  const rentalHours = parseInt(searchParams.get("hours") || "8");
   const dateParam = searchParams.get("date") || "";
   const returnDateParam = searchParams.get("returnDate") || "";
 
@@ -204,6 +207,7 @@ export default function CarsPage() {
     if (dateParam) p.set("date", dateParam);
     if (returnDateParam) p.set("returnDate", returnDateParam);
     if (tripTypeParam) p.set("tripType", tripTypeParam);
+    if (isRentalMode) p.set("hours", String(rentalHours));
     const timeParam = searchParams.get("time");
     if (timeParam) p.set("time", timeParam);
     if (fromPincode) p.set("fromPincode", fromPincode);
@@ -320,8 +324,24 @@ export default function CarsPage() {
         {/* Header */}
         <div className="bg-white border-b border-slate-200">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+            {/* Rental banner */}
+            {isRentalMode && fromCity && (
+              <div className="mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200">
+                <div className="flex items-center gap-3 text-amber-800">
+                  <MapPin className="w-4 h-4 text-amber-500 shrink-0" />
+                  <span className="font-semibold">Local Rental · {fromCity}</span>
+                  <span className="text-sm text-amber-500">· Delhi NCR</span>
+                </div>
+                <div className="text-sm text-amber-700 font-medium">
+                  {rentalHours} hrs · {rentalHours * 10} km included · from{" "}
+                  <span className="font-bold">₹{(RENTAL_BANDS[0].hourly * rentalHours).toLocaleString("en-IN")}</span>
+                  <span className="text-amber-500 text-xs ml-1">(sedan)</span>
+                </div>
+              </div>
+            )}
+
             {/* Route banner */}
-            {fromCity && toCity && distanceKm > 0 && (
+            {!isRentalMode && fromCity && toCity && distanceKm > 0 && (
               <div className="mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-blue-50 border border-blue-200">
                 <div className="flex items-center gap-3 text-blue-800">
                   <MapPin className="w-4 h-4 text-blue-500 shrink-0" />
@@ -351,10 +371,14 @@ export default function CarsPage() {
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
                 <h1 className="text-3xl font-bold text-slate-900 font-['DM_Serif_Display']">
-                  {fromCity && toCity ? `Vehicles for ${fromCity} → ${toCity}` : "Vehicles"}
+                  {isRentalMode
+                    ? `Rental Vehicles · ${rentalHours} hrs`
+                    : fromCity && toCity ? `Vehicles for ${fromCity} → ${toCity}` : "Vehicles"}
                 </h1>
                 <p className="text-slate-500 mt-1">
-                  {displayCars.length} vehicles available{distanceKm > 0 ? ` · Prices for ${tripDays > 1 ? `${tripDays} days, min ${Math.max(effectiveKm, tripDays * 250)} km` : `${Math.max(effectiveKm, 80)} km · min 80 km / 8 hrs`}` : " for your journey"}
+                  {displayCars.length} vehicles available{isRentalMode
+                    ? ` · ${rentalHours} hrs · ${rentalHours * 10} km included · Delhi NCR`
+                    : distanceKm > 0 ? ` · Prices for ${tripDays > 1 ? `${tripDays} days, min ${Math.max(effectiveKm, tripDays * 250)} km` : `${Math.max(effectiveKm, 80)} km · min 80 km / 8 hrs`}` : " for your journey"}
                 </p>
               </div>
               <div className="flex flex-col gap-2 w-full md:w-auto">
@@ -515,7 +539,7 @@ export default function CarsPage() {
                     return (
                       <Card
                         key={car.id}
-                        className="group overflow-hidden border-0 shadow-md cursor-pointer bg-white"
+                        className="group overflow-hidden border-0 shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer bg-white"
                         onClick={() => navigate(`/booking?carId=${car.id}&${passthroughParams()}`)}
                       >
                         <div className="relative aspect-[4/3] overflow-hidden">
@@ -553,14 +577,23 @@ export default function CarsPage() {
                               <p className="text-xs text-slate-500">{car.brand}</p>
                             </div>
                             <div className="text-right">
-                              {calcFare(car.pricePerKm, car.seats, car.driverCharges ?? "250") ? (() => {
+                              {isRentalMode ? (() => {
+                                const band = vehicleToBand(car.name);
+                                const fare = rentalFare(band, rentalHours);
+                                return (
+                                  <>
+                                    <div className="text-lg font-bold text-amber-700">₹{fare.base.toLocaleString("en-IN")}</div>
+                                    <div className="text-[10px] text-slate-400">{rentalHours} hrs · {fare.includedKm} km incl.</div>
+                                  </>
+                                );
+                              })() : calcFare(car.pricePerKm, car.seats, car.driverCharges ?? "250") ? (() => {
                                 const fare = calcFare(car.pricePerKm, car.seats, car.driverCharges ?? "250")!;
                                 const discounted = applyDiscount(fare);
                                 const saving = discountAmount(fare);
                                 return (
                                   <>
                                     {saving > 0 && <div className="text-xs text-slate-400 line-through">₹{fare.toLocaleString("en-IN")}</div>}
-                                    <div className={`text-lg font-bold ${saving > 0 ? "text-green-700" : "text-primary"}`}>
+                                    <div className={`text-lg font-bold ${saving > 0 ? "text-green-700" : "text-blue-700"}`}>
                                       ₹{discounted.toLocaleString("en-IN")}
                                     </div>
                                     {saving > 0
@@ -577,7 +610,19 @@ export default function CarsPage() {
                             </div>
                           </div>
                           <p className="text-sm text-slate-500 line-clamp-2 mb-3">{car.description}</p>
-                          {calcFare(car.pricePerKm, car.seats, car.driverCharges ?? "250") && (() => {
+                          {isRentalMode ? (() => {
+                            const band = vehicleToBand(car.name);
+                            const fare = rentalFare(band, rentalHours);
+                            const advance = Math.round((fare.base + fare.gst) * 0.25);
+                            return (
+                              <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-[11px] mb-3 bg-amber-50 rounded-lg px-2.5 py-1.5">
+                                <span className="text-amber-700">
+                                  ₹{band.hourly}/hr × {rentalHours} hrs + GST 5% · extra ₹{band.extraKm}/km after
+                                </span>
+                                <span className="text-amber-800 font-semibold">₹{advance.toLocaleString("en-IN")} advance (25%)</span>
+                              </div>
+                            );
+                          })() : calcFare(car.pricePerKm, car.seats, car.driverCharges ?? "250") && (() => {
                             const bkm = billedKmFor(car.seats);
                             const minApplies = bkm > effectiveKm;
                             const perCarDriver = parseFloat(car.driverCharges ?? "250");
@@ -586,7 +631,7 @@ export default function CarsPage() {
                                 <span className="text-slate-400">
                                   ₹{car.pricePerKm}/km × {bkm} km{minApplies ? (tripDays > 1 ? ` (min ${tripDays * 250} km)` : car.seats > 7 ? " (min 250 km)" : " (min 80 km/8 hrs)") : ""} + ₹{(perCarDriver * tripDays).toLocaleString("en-IN")} driver
                                 </span>
-                                <span className="text-primary font-semibold">₹{Math.max(100, Math.round(applyDiscount(calcFare(car.pricePerKm, car.seats, car.driverCharges ?? "250")!) * 0.1)).toLocaleString("en-IN")} advance</span>
+                                <span className="text-green-700 font-semibold">₹{Math.max(100, Math.round(applyDiscount(calcFare(car.pricePerKm, car.seats, car.driverCharges ?? "250")!) * 0.1)).toLocaleString("en-IN")} advance</span>
                               </div>
                             );
                           })()}
