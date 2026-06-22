@@ -747,7 +747,7 @@ export default function BookingPage() {
             {steps.map((step, idx) => (
               <div key={step.id} className="flex items-center gap-2">
                 <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                  currentStep === step.id ? "bg-primary text-white shadow-md" :
+                  currentStep === step.id ? "bg-primary text-primary-foreground shadow-sm" :
                   currentStep > step.id ? "bg-green-100 text-green-700" : "bg-white text-muted-foreground border"
                 }`}>
                   {currentStep > step.id ? <Check className="w-4 h-4" /> : <step.icon className="w-4 h-4" />}
@@ -1133,11 +1133,11 @@ export default function BookingPage() {
                         <ArrowLeft className="w-4 h-4" /> Back
                       </Button>
                     {currentStep < 3 ? (
-                      <Button onClick={handleNext} className="bg-primary gap-2">
+                      <Button onClick={handleNext} className="bg-primary hover:bg-primary/90 text-white gap-2">
                         Continue <ArrowRight className="w-4 h-4" />
                       </Button>
                     ) : (
-                      <Button onClick={handleSubmit} disabled={isSubmitting} className="bg-primary gap-1.5">
+                      <Button onClick={handleSubmit} disabled={isSubmitting} className="bg-primary hover:bg-primary/90 text-white gap-1.5">
                         {isSubmitting
                           ? <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</>
                           : <><span className="hidden sm:inline">Pay ₹{Math.max(100, Math.round(totalPrice * 0.1)).toLocaleString("en-IN")} & Confirm</span><span className="sm:hidden">Pay ₹{Math.max(100, Math.round(totalPrice * 0.1)).toLocaleString("en-IN")}</span><Check className="w-4 h-4" /></>
@@ -1176,7 +1176,7 @@ export default function BookingPage() {
                       {tripType === "round_trip" ? "Round Trip Total" :
                        "One Way Total"}
                     </div>
-                    <div className="text-2xl font-bold text-primary">₹{(resumeBookingId > 0 && resumeBooking ? totalPrice : basePrice + totalDriverCharges).toLocaleString("en-IN")}</div>
+                    <div className="text-2xl font-bold text-foreground">₹{(resumeBookingId > 0 && resumeBooking ? totalPrice : basePrice + totalDriverCharges).toLocaleString("en-IN")}</div>
                     <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
                       <div>₹{pricePerKm}/km × {billedKm} km</div>
                       <div>Driver: ₹{totalDriverCharges} · Tolls: at actuals</div>

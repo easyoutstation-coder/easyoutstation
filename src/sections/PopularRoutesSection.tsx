@@ -3,7 +3,6 @@ import { trpc } from "@/providers/trpc";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Clock, Route, TrendingUp, CheckCircle, MapPin } from "lucide-react";
 import { getLandmark } from "@/data/routeImages";
-
 function routeSlug(from: string, to: string) {
   return `${from.toLowerCase()}-to-${to.toLowerCase()}`;
 }
@@ -24,8 +23,8 @@ export default function PopularRoutesSection() {
     <section className="py-12 sm:py-20 bg-slate-50">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
-          <div className="space-y-2">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600 flex items-center gap-2">
+          <div className="space-y-3">
+            <p className="text-sm font-semibold text-blue-600 flex items-center gap-1.5">
               <TrendingUp className="w-3.5 h-3.5" /> Most Booked Routes
             </p>
             <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 font-['DM_Serif_Display']">
@@ -41,74 +40,74 @@ export default function PopularRoutesSection() {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {displayRoutes.map((route) => {
-            const landmark = getLandmark(route.toCity);
-            const imgSrc = landmark?.image || route.imageUrl || "/hero-bg.jpg";
-            return (
-            <Link key={route.id} to={`/cab/${routeSlug(route.fromCity, route.toCity)}`}
-              className="group bg-white rounded-2xl border border-slate-100 hover:border-blue-200 overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 block no-underline">
-              <div className="relative h-52 overflow-hidden">
-                <img src={imgSrc} alt={landmark?.landmark || `${route.fromCity} to ${route.toCity}`}
-                  onError={(e) => { (e.target as HTMLImageElement).src = "/hero-bg.jpg"; }}
-                  style={{ objectPosition: landmark?.objectPosition ?? "center center" }}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent" />
-                <div className="absolute top-3 left-3">
-                  <span className="px-2.5 py-1 rounded-full bg-blue-600 text-white text-[10px] font-bold uppercase tracking-wide">
-                    Popular
-                  </span>
-                </div>
-                {landmark && (
-                  <div className="absolute bottom-3 left-3 flex items-center gap-1">
-                    <MapPin className="w-3 h-3 text-white/70" />
-                    <span className="text-white/80 text-[10px] font-medium">{landmark.landmark}</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {displayRoutes.map((route) => {
+              const landmark = getLandmark(route.toCity);
+              const imgSrc = landmark?.image || route.imageUrl || "/hero-bg.jpg";
+              return (
+              <Link key={route.id} to={`/cab/${routeSlug(route.fromCity, route.toCity)}`}
+                className="group bg-white rounded-2xl border border-slate-100 hover:border-blue-200 overflow-hidden cursor-pointer block no-underline">
+                <div className="relative h-52 overflow-hidden">
+                  <img src={imgSrc} alt={landmark?.landmark || `${route.fromCity} to ${route.toCity}`}
+                    onError={(e) => { (e.target as HTMLImageElement).src = "/hero-bg.jpg"; }}
+                    style={{ objectPosition: landmark?.objectPosition ?? "center center" }}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent" />
+                  <div className="absolute top-3 left-3">
+                    <span className="px-2.5 py-1 rounded-full bg-blue-600 text-white text-[10px] font-bold uppercase tracking-wide">
+                      Popular
+                    </span>
                   </div>
-                )}
-              </div>
-
-              <div className="p-5">
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <div className="flex items-center gap-2 text-slate-900 font-semibold">
-                      <span>{route.fromCity}</span>
-                      <ArrowRight className="w-3.5 h-3.5 text-blue-500" />
-                      <span>{route.toCity}</span>
+                  {landmark && (
+                    <div className="absolute bottom-3 left-3 flex items-center gap-1">
+                      <MapPin className="w-3 h-3 text-white/70" />
+                      <span className="text-white/80 text-[10px] font-medium">{landmark.landmark}</span>
                     </div>
-                    <p className="text-xs text-slate-500 mt-0.5">{route.description}</p>
-                  </div>
-                  <div className="text-right shrink-0 ml-4">
-                    <div className="text-lg font-bold text-slate-900">₹{route.basePrice}</div>
-                    <div className="text-[10px] text-slate-400">onwards</div>
-                  </div>
+                  )}
                 </div>
 
-                <div className="flex items-center gap-4 text-[10px] text-slate-400 mb-3">
-                  <span className="flex items-center gap-1"><Route className="w-3 h-3" />{route.distanceKm} km</span>
-                  <span className="flex items-center gap-1"><Clock className="w-3 h-3" />~{route.durationHours} hrs</span>
-                </div>
-
-                {route.highlights && (
-                  <div className="flex flex-wrap gap-1.5">
-                    {route.highlights.map((h, j) => (
-                      <span key={j} className="flex items-center gap-1 text-[10px] text-slate-600 bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-full">
-                        <CheckCircle className="w-2.5 h-2.5 text-blue-500" />{h}
-                      </span>
-                    ))}
+                <div className="p-5">
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <div className="flex items-center gap-2 text-slate-900 font-semibold">
+                        <span>{route.fromCity}</span>
+                        <ArrowRight className="w-3.5 h-3.5 text-blue-500" />
+                        <span>{route.toCity}</span>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-0.5">{route.description}</p>
+                    </div>
+                    <div className="text-right shrink-0 ml-4">
+                      <div className="text-lg font-bold text-primary">₹{route.basePrice}</div>
+                      <div className="text-[10px] text-slate-400">onwards</div>
+                    </div>
                   </div>
-                )}
 
-                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                  <span className="text-[10px] text-slate-400">Driver charge included · Toll at actuals</span>
-                  <span className="text-xs font-semibold text-blue-600 group-hover:underline flex items-center gap-1">
-                    Book Now <ArrowRight className="w-3 h-3" />
-                  </span>
+                  <div className="flex items-center gap-4 text-[10px] text-slate-400 mb-3">
+                    <span className="flex items-center gap-1"><Route className="w-3 h-3" />{route.distanceKm} km</span>
+                    <span className="flex items-center gap-1"><Clock className="w-3 h-3" />~{route.durationHours} hrs</span>
+                  </div>
+
+                  {route.highlights && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {route.highlights.map((h, j) => (
+                        <span key={j} className="flex items-center gap-1 text-[10px] text-slate-600 bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-full">
+                          <CheckCircle className="w-2.5 h-2.5 text-blue-500" />{h}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                    <span className="text-[10px] text-slate-400">Driver charge included · Toll at actuals</span>
+                    <span className="text-xs font-semibold text-blue-600 group-hover:underline flex items-center gap-1">
+                      Book Now <ArrowRight className="w-3 h-3" />
+                    </span>
+                  </div>
                 </div>
-              </div>
-            </Link>
-          );
-          })}
-        </div>
+              </Link>
+            );
+            })}
+          </div>
       </div>
     </section>
   );

@@ -254,7 +254,7 @@ export default function CarDetailPage() {
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between">
                     <span className="text-slate-400">Rate per km</span>
-                    <span>₹{displayCar.pricePerKm}</span>
+                    <span className="font-bold text-white">₹{displayCar.pricePerKm}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-400">Driver charges</span>
@@ -276,7 +276,7 @@ export default function CarDetailPage() {
                   <Separator className="bg-slate-700" />
                   <div className="flex justify-between text-base">
                     <span className="text-slate-300 font-medium">Fixed Fare</span>
-                    <span className="font-bold text-blue-400">₹{(parseFloat(displayCar.pricePerKm) * distance + driverCharge).toLocaleString("en-IN")}</span>
+                    <span className="font-bold text-white">₹{(parseFloat(displayCar.pricePerKm) * distance + driverCharge).toLocaleString("en-IN")}</span>
                   </div>
                   <div className="flex justify-between text-xs text-slate-500">
                     <span>Minimum charge ({isHeavyVehicle ? "250 km" : "80 km / 8 hrs"})</span>

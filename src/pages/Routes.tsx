@@ -74,7 +74,7 @@ function RouteCard({ route }: { route: RouteEntry & { from: string } }) {
   return (
     <Link
       to={`/cab/${route.slug}`}
-      className="group bg-white rounded-2xl border border-slate-100 hover:border-blue-200 hover:shadow-md transition-all duration-300 overflow-hidden block no-underline"
+      className="group bg-white rounded-2xl border border-slate-100 hover:border-blue-200 overflow-hidden block no-underline"
     >
       {/* Landmark thumbnail */}
       <div className="relative aspect-[16/9] overflow-hidden bg-slate-800">
@@ -178,14 +178,14 @@ export default function RoutesPage() {
         <div className="max-w-6xl mx-auto px-4 py-12 space-y-14">
           {sections.map((section) => (
             <div key={section.label}>
-              <h2 className="text-xl font-bold text-slate-800 font-['DM_Serif_Display'] mb-6 pb-3 border-b border-slate-200">
-                {section.label}
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {section.routes.map((route) => (
-                  <RouteCard key={route.slug} route={{ ...route, from: "Delhi" }} />
-                ))}
-              </div>
+                <h2 className="text-xl font-bold text-slate-800 font-['DM_Serif_Display'] mb-6 pb-3 border-b border-slate-200">
+                  {section.label}
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {section.routes.map((route) => (
+                    <RouteCard key={route.slug} route={{ ...route, from: "Delhi" }} />
+                  ))}
+                </div>
             </div>
           ))}
         </div>

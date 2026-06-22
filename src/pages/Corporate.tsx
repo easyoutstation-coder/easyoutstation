@@ -476,7 +476,7 @@ export default function Corporate() {
                 }[f.accent]!;
                 return (
                   <Reveal key={i} delay={i * 80} className="relative overflow-hidden eo-shimmer-card">
-                    <div className={`h-full bg-white/[0.03] border border-white/8 ${accentCls.border} rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/30 cursor-default`}>
+                    <div className={`h-full bg-white/[0.03] border border-white/8 ${accentCls.border} rounded-2xl p-6 cursor-default`}>
                       <div className={`w-11 h-11 rounded-xl ${accentCls.bg} border flex items-center justify-center mb-5`}>
                         <f.icon className={`w-5 h-5 ${accentCls.icon}`} />
                       </div>
@@ -545,7 +545,7 @@ export default function Corporate() {
                 },
               ].map((u, i) => (
                 <Reveal key={i} delay={i * 70}>
-                  <div className="bg-white/[0.03] border border-white/8 hover:border-white/15 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 group">
+                  <div className="bg-white/[0.03] border border-white/8 hover:border-white/15 rounded-2xl p-6 group">
                     <div className="text-3xl mb-4">{u.icon}</div>
                     <h3 className="text-white font-semibold mb-2">{u.title}</h3>
                     <p className="text-slate-500 text-sm leading-relaxed mb-4">{u.desc}</p>
@@ -652,7 +652,7 @@ export default function Corporate() {
                 },
               ].map((v, i) => (
                 <Reveal key={i} delay={i * 100}>
-                  <div className={`relative rounded-2xl overflow-hidden border transition-all duration-300 hover:-translate-y-1 ${v.featured ? "border-blue-500/30 shadow-lg shadow-blue-900/20" : "border-white/8 hover:border-white/15"}`}>
+                  <div className={`relative rounded-2xl overflow-hidden border ${v.featured ? "border-blue-500/30 shadow-lg shadow-blue-900/20" : "border-white/8 hover:border-white/15"}`}>
                     {v.featured && (
                       <div className="absolute top-3 left-3 z-10 bg-blue-600 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full">Most Popular</div>
                     )}

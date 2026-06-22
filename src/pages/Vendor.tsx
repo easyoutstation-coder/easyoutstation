@@ -141,15 +141,15 @@ export default function Vendor() {
         {/* Stats */}
         <div className="grid grid-cols-3 gap-2 sm:gap-3">
           <div className="dp-stat p-4 text-center" style={{ animationDelay: "0ms" }}>
-            <p className="text-2xl font-bold text-blue-400">{myDrivers?.length ?? 0}</p>
+            <p className="text-2xl font-bold text-white">{myDrivers?.length ?? 0}</p>
             <p className="text-xs text-slate-400 mt-0.5">Drivers</p>
           </div>
           <div className="dp-stat p-4 text-center" style={{ animationDelay: "60ms" }}>
-            <p className="text-2xl font-bold text-emerald-400">{activeTrips.length}</p>
+            <p className="text-2xl font-bold text-white">{activeTrips.length}</p>
             <p className="text-xs text-slate-400 mt-0.5">Active Trips</p>
           </div>
           <div className="dp-stat p-4 text-center" style={{ animationDelay: "120ms" }}>
-            <p className="text-2xl font-bold text-violet-400">{pastTrips.length}</p>
+            <p className="text-2xl font-bold text-white">{pastTrips.length}</p>
             <p className="text-xs text-slate-400 mt-0.5">Completed</p>
           </div>
         </div>

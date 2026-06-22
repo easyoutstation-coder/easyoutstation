@@ -29,13 +29,13 @@ export default function Navbar() {
 
   return (
     <header className="fixed top-0 inset-x-0 z-50 flex justify-center px-4 pointer-events-none" style={{ paddingTop: 'max(1rem, env(safe-area-inset-top))' }}>
-      <div className={`pointer-events-auto flex items-center gap-2 px-3 py-2 rounded-full w-full max-w-5xl transition-all duration-300 bg-[#1e3a5f] ${
+      <div className={`pointer-events-auto flex items-center gap-2 px-3 py-2 rounded-full w-full max-w-5xl transition-all duration-300 ${
         scrolled
-          ? "shadow-[0_16px_48px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.13),inset_0_-1px_0_rgba(0,0,0,0.15)]"
-          : "shadow-[0_8px_32px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.10),inset_0_-1px_0_rgba(0,0,0,0.08)]"
+          ? "bg-[#1e3a5f]/88 backdrop-blur-md shadow-[0_16px_48px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.13),inset_0_-1px_0_rgba(0,0,0,0.15)]"
+          : "bg-[#1e3a5f] shadow-[0_8px_32px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.10),inset_0_-1px_0_rgba(0,0,0,0.08)]"
       }`}>
 
-        {/* Logo */}
+        {/* Logo — unchanged */}
         <Link to="/" className="flex items-center gap-2 shrink-0 pl-1 group">
           <img
             src="/logo-icon.png"
@@ -53,15 +53,22 @@ export default function Navbar() {
         <div className="flex-1" />
 
         {/* Desktop Nav links */}
-        <nav className="hidden lg:flex items-center gap-1">
+        <nav className="hidden lg:flex items-center gap-0.5">
           {navLinks.map((link) => {
             const isActive = location.pathname === link.href;
-            const cls = `text-sm font-medium px-3.5 py-1.5 rounded-full transition-all duration-200 ${
-              isActive
-                ? "bg-white/15 text-white"
-                : "text-blue-100/90 hover:bg-white/10 hover:text-white"
-            }`;
-            return <Link key={link.href} to={link.href} className={cls}>{link.label}</Link>;
+            return (
+              <Link
+                key={link.href}
+                to={link.href}
+                className={`eo-nav-link${isActive ? " is-active" : ""} text-[13px] font-semibold px-3.5 py-1.5 rounded-full font-['Plus_Jakarta_Sans'] tracking-[-0.01em] transition-colors duration-200 ${
+                  isActive
+                    ? "text-white"
+                    : "text-blue-100/80 hover:text-white hover:bg-white/10"
+                }`}
+              >
+                {link.label}
+              </Link>
+            );
           })}
         </nav>
 
@@ -70,7 +77,7 @@ export default function Navbar() {
           {isAuthenticated ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 px-3 py-1.5 rounded-full text-white hover:bg-white/10 transition-all text-sm font-medium">
+                <button className="flex items-center gap-2 px-3 py-1.5 rounded-full text-white hover:bg-white/10 transition-all text-[13px] font-semibold font-['Plus_Jakarta_Sans']">
                   <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center">
                     <User className="w-3.5 h-3.5 text-white" />
                   </div>
@@ -99,7 +106,7 @@ export default function Navbar() {
           ) : (
             <Button
               onClick={() => navigate("/login")}
-              className="rounded-full bg-white text-[#1e3a5f] hover:bg-blue-50 font-semibold px-5 h-8 text-sm shadow-none border-0"
+              className="rounded-full bg-white text-[#1e3a5f] hover:bg-blue-50 font-semibold px-5 h-8 text-[13px] font-['Plus_Jakarta_Sans'] shadow-none border-0"
             >
               Sign In
             </Button>
@@ -115,7 +122,7 @@ export default function Navbar() {
               </button>
             </SheetTrigger>
             <SheetContent side="right" className="bg-[#1e3a5f] border-blue-900/60 w-72 p-0">
-              <div className="px-6 py-5 border-b border-blue-800/50 flex items-center gap-2.5">
+              <div className="px-6 py-5 border-b border-[#D4AF37]/20 flex items-center gap-2.5">
                 <img
                   src="/logo-icon.png"
                   alt="EasyOutstation"
@@ -128,17 +135,23 @@ export default function Navbar() {
               <nav className="px-4 py-4 flex flex-col gap-1">
                 {navLinks.map((link) => {
                   const isActive = location.pathname === link.href;
-                  const cls = `flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                    isActive ? "bg-white/15 text-white" : "text-blue-100 hover:bg-white/10 hover:text-white"
-                  }`;
                   return (
-                    <Link key={link.href} to={link.href} onClick={() => setMobileOpen(false)} className={cls}>
+                    <Link
+                      key={link.href}
+                      to={link.href}
+                      onClick={() => setMobileOpen(false)}
+                      className={`flex items-center px-4 py-3 rounded-xl text-[13px] font-semibold font-['Plus_Jakarta_Sans'] tracking-[-0.01em] transition-all ${
+                        isActive
+                          ? "bg-white/15 text-white border-l-2 border-[#D4AF37]"
+                          : "text-blue-100 hover:bg-white/10 hover:text-white"
+                      }`}
+                    >
                       {link.label}
                     </Link>
                   );
                 })}
               </nav>
-              <div className="px-4 pb-6 border-t border-blue-800/50 pt-4 space-y-2.5">
+              <div className="px-4 pb-6 border-t border-[#D4AF37]/20 pt-4 space-y-2.5">
                 {isAuthenticated ? (
                   <>
                     <Button onClick={() => { navigate("/dashboard"); setMobileOpen(false); }}

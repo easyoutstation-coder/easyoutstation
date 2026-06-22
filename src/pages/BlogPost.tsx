@@ -140,7 +140,7 @@ export default function BlogPost() {
           </div>
 
           {/* Intro */}
-          <p className="text-base text-slate-700 leading-relaxed mb-10">{post.intro}</p>
+          <p className="text-base text-slate-700 leading-relaxed mb-10 max-w-2xl">{post.intro}</p>
 
           {/* Fare Card + CTA */}
           <div className="bg-slate-900 rounded-2xl p-6 mb-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -154,14 +154,14 @@ export default function BlogPost() {
                 <div className="w-px h-10 bg-white/10" />
                 <div>
                   <div className="text-white/50 text-[10px]">Innova / SUV</div>
-                  <div className="text-2xl font-bold text-blue-400">₹{post.route.innova}</div>
+                  <div className="text-2xl font-bold text-white">₹{post.route.innova}</div>
                 </div>
               </div>
               <div className="text-white/40 text-[10px] mt-2">Driver charges included · Toll & parking at actuals</div>
             </div>
             <Link
               to={bookingUrl}
-              className="shrink-0 px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl text-sm transition-all flex items-center gap-2"
+              className="shrink-0 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm transition-all flex items-center gap-2"
             >
               <Car className="w-4 h-4" />
               Book This Cab
@@ -220,7 +220,7 @@ export default function BlogPost() {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {post.placesToVisit.map((place) => (
-                <div key={place.name} className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                <div key={place.name} className="p-4 bg-slate-50 rounded-xl border border-slate-100 cursor-default">
                   <div className="font-semibold text-slate-900 text-sm mb-1">{place.name}</div>
                   <p className="text-xs text-slate-500 leading-relaxed">{place.description}</p>
                 </div>
@@ -269,26 +269,28 @@ export default function BlogPost() {
           </section>
 
           {/* Bottom CTA */}
-          <div className="bg-blue-600 rounded-2xl p-7 text-center">
-            <h3 className="text-white font-bold text-lg font-['DM_Serif_Display'] mb-2">
-              Ready to Book Your {post.route.from} to {post.route.to} Cab?
-            </h3>
-            <p className="text-blue-100 text-sm mb-5">
-              Sedan from ₹{post.route.sedan} · Innova from ₹{post.route.innova} · Driver charges included
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link
-                to={bookingUrl}
-                className="px-6 py-3 bg-white text-blue-600 font-semibold rounded-xl text-sm hover:bg-blue-50 transition-all"
-              >
-                Book Cab Now →
-              </Link>
-              <Link
-                to={`/cab/${post.route.routeSlug}`}
-                className="px-6 py-3 bg-blue-700 text-white font-semibold rounded-xl text-sm hover:bg-blue-800 transition-all border border-blue-500"
-              >
-                View Route Details
-              </Link>
+          <div className="bg-slate-900 rounded-2xl p-7 text-center">
+            <div className="relative">
+              <h3 className="text-white font-bold text-lg font-['DM_Serif_Display'] mb-2">
+                Ready to Book Your {post.route.from} to {post.route.to} Cab?
+              </h3>
+              <p className="text-slate-400 text-sm mb-5">
+                Sedan from ₹{post.route.sedan} · Innova from ₹{post.route.innova} · Driver charges included
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Link
+                  to={bookingUrl}
+                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm transition-all"
+                >
+                  Book Cab Now →
+                </Link>
+                <Link
+                  to={`/cab/${post.route.routeSlug}`}
+                  className="px-6 py-3 bg-white/10 text-white font-semibold rounded-xl text-sm hover:bg-white/20 transition-all border border-white/20"
+                >
+                  View Route Details
+                </Link>
+              </div>
             </div>
           </div>
 

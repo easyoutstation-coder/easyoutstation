@@ -631,7 +631,7 @@ export default function ReferralProgram() {
                 { icon: Star, title: "Credits Stack Up", desc: `Refer 5 friends and save ₹${5*amount} on your next big trip. Refer 10 and unlock a ₹200 bonus.` },
                 { icon: Gift, title: "Your Friend Saves Too", desc: `Your friend gets ₹${amount} credit as well — not just you. No one loses. No hidden conditions.` },
               ].map(f => (
-                <div key={f.title} className="bg-slate-50 rounded-2xl p-5 sm:p-6 border border-slate-100 hover:shadow-lg hover:border-blue-100 hover:-translate-y-1 transition-all duration-200">
+                <div key={f.title} className="bg-slate-50 rounded-2xl p-5 sm:p-6 border border-slate-100 hover:border-blue-100">
                   <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center mb-4">
                     <f.icon className="w-5 h-5 text-white" />
                   </div>

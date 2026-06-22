@@ -1,0 +1,105 @@
+/* =============================================================================
+   EasyOutstation — Motion & Restyle Layer  (eo-motion.css)
+   Extends the EXISTING system (shadcn HSL tokens, gold #D4AF37,
+   DM Serif Display + Plus Jakarta Sans). Additive only — every class is
+   namespaced `eo-` so it never collides with current styles.
+
+   Install: append this to src/index.css (after the existing @layer blocks),
+   or import it once in src/main.tsx.  Colours reuse your real navies:
+   #0B2447 / #19376D (deep) and gold #D4AF37.
+   ============================================================================= */
+
+:root{
+  --eo-gold:#D4AF37;
+  --eo-gold-soft:#E8CA5A;
+  --eo-navy:#19376D;
+  --eo-navy-deep:#0B2447;
+  --eo-ink:#0B1A36;
+  --eo-sky:#93B5E8;
+  --eo-ease-out:cubic-bezier(.16,1,.3,1);
+  --eo-dur:.56s;
+}
+
+/* ---------- Eyebrow (section kicker) ---------- */
+.eo-eyebrow{
+  font-family:'Plus Jakarta Sans',sans-serif;font-size:.72rem;font-weight:700;
+  letter-spacing:.24em;text-transform:uppercase;color:var(--eo-navy);
+  display:inline-flex;align-items:center;gap:8px;
+}
+.eo-eyebrow::before{content:"";width:18px;height:1px;background:var(--eo-gold)}
+.eo-on-dark .eo-eyebrow,.eo-feature .eo-eyebrow{color:var(--eo-sky)}
+
+/* ---------- Entrance: stagger with inline style --d ---------- */
+.eo-enter{opacity:0;animation:eo-rise var(--eo-dur) var(--eo-ease-out) forwards;animation-delay:var(--d,0ms)}
+@keyframes eo-rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+
+/* ---------- Scroll reveal (paired with <Reveal/> or useReveal) ---------- */
+.eo-reveal{opacity:0;transform:translateY(26px);
+  transition:opacity var(--eo-dur) var(--eo-ease-out),transform var(--eo-dur) var(--eo-ease-out)}
+.eo-reveal.is-in{opacity:1;transform:none}
+.eo-reveal[data-eo="left"]{transform:translateX(-26px)}
+.eo-reveal[data-eo="scale"]{transform:scale(.96)}
+.eo-reveal.is-in[data-eo]{transform:none}
+
+/* ---------- Card lift (hover) ---------- */
+.eo-lift{transition:transform .28s var(--eo-ease-out),box-shadow .28s var(--eo-ease-out)}
+.eo-lift:hover{transform:translateY(-4px);box-shadow:0 18px 40px -18px rgba(11,36,71,.35)}
+
+/* ---------- Gold CTA shimmer (add to existing gold buttons) ---------- */
+.eo-shine{position:relative;overflow:hidden}
+.eo-shine::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.5),transparent);
+  transform:skewX(-20deg);animation:eo-shine 3.8s ease-in-out infinite;pointer-events:none}
+@keyframes eo-shine{0%,62%{left:-60%}100%{left:135%}}
+
+/* ---------- Dark cinematic feature band ---------- */
+.eo-feature{position:relative;overflow:hidden;color:#F5F8FF;
+  background:linear-gradient(180deg,var(--eo-ink) 0%,var(--eo-navy-deep) 52%,var(--eo-navy) 100%)}
+
+/* ---------- Hero atmosphere (used by <HeroBackdrop/>) ---------- */
+.eo-atmos{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.eo-glow{position:absolute;left:50%;top:40%;width:42%;aspect-ratio:1;transform:translate(-50%,-50%);
+  border-radius:50%;background:radial-gradient(circle,rgba(212,175,55,.38),rgba(212,175,55,.06) 46%,transparent 70%);
+  filter:blur(6px);animation:eo-breathe 9s ease-in-out infinite}
+.eo-aura{position:absolute;border-radius:50%;filter:blur(48px);opacity:.45}
+.eo-aura.a{width:42%;aspect-ratio:1;left:-8%;top:8%;background:rgba(37,99,235,.5);animation:eo-drift1 19s ease-in-out infinite}
+.eo-aura.b{width:36%;aspect-ratio:1;right:-9%;top:24%;background:rgba(147,181,232,.4);animation:eo-drift2 23s ease-in-out infinite}
+.eo-star{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;opacity:.5;animation:eo-tw 3.4s ease-in-out infinite}
+.eo-route-dash{stroke:rgba(212,175,55,.6);stroke-width:2;fill:none;stroke-dasharray:5 7;stroke-linecap:round;
+  stroke-dashoffset:600;animation:eo-draw 2s .4s ease forwards}
+.eo-ping{transform-origin:center;animation:eo-ping 2.6s ease-out infinite}
+
+@keyframes eo-breathe{0%,100%{opacity:.7;transform:translate(-50%,-50%) scale(1)}50%{opacity:1;transform:translate(-50%,-52%) scale(1.06)}}
+@keyframes eo-drift1{0%,100%{transform:translate(0,0)}50%{transform:translate(38px,16px)}}
+@keyframes eo-drift2{0%,100%{transform:translate(0,0)}50%{transform:translate(-32px,22px)}}
+@keyframes eo-tw{0%,100%{opacity:.15}50%{opacity:.9}}
+@keyframes eo-draw{to{stroke-dashoffset:0}}
+@keyframes eo-ping{0%{transform:scale(.5);opacity:.7}80%,100%{transform:scale(2.4);opacity:0}}
+
+/* ---------- Navbar gold underline slide ---------- */
+.eo-nav-link{
+  position:relative;
+  transition:color .2s var(--eo-ease-out);
+}
+.eo-nav-link::after{
+  content:"";position:absolute;left:10px;right:10px;bottom:-1px;
+  height:2px;border-radius:2px;background:var(--eo-gold);
+  transform:scaleX(0);transform-origin:left center;
+  transition:transform .28s var(--eo-ease-out);
+}
+.eo-nav-link.is-active::after{transform:scaleX(1)}
+
+/* ---------- WhatsApp attention pulse (after initial ring fades at 6 s) ---------- */
+@keyframes eo-wa-attn{
+  0%,65%,100%{transform:scale(1)}
+  32%{transform:scale(1.09)}
+}
+.eo-wa-pulse{animation:eo-wa-attn 3.8s ease-in-out 6.5s infinite}
+
+/* ---------- Accessibility floor ---------- */
+@media (prefers-reduced-motion:reduce){
+  .eo-enter,.eo-reveal{opacity:1!important;transform:none!important;animation:none!important;transition:none!important}
+  .eo-glow,.eo-aura,.eo-star,.eo-shine::after,.eo-ping,.eo-route-dash{animation:none!important}
+  .eo-nav-link::after{transition:none!important}
+  .eo-wa-pulse{animation:none!important}
+}

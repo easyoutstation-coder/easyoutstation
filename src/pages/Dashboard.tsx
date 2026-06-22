@@ -364,26 +364,26 @@ export default function DashboardPage() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <Card>
                   <CardContent className="p-3 sm:p-4">
-                    <div className="text-xl sm:text-2xl font-bold">{upcomingBookings.length}</div>
+                    <div className="text-xl sm:text-2xl font-bold text-foreground">{upcomingBookings.length}</div>
                     <div className="text-xs text-muted-foreground">Upcoming Trips</div>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="p-3 sm:p-4">
-                    <div className="text-xl sm:text-2xl font-bold">{pastBookings.length}</div>
+                    <div className="text-xl sm:text-2xl font-bold text-foreground">{pastBookings.length}</div>
                     <div className="text-xs text-muted-foreground">Completed Trips</div>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="p-3 sm:p-4">
-                    <div className="text-xl sm:text-2xl font-bold">{recentSearches?.length || 0}</div>
+                    <div className="text-xl sm:text-2xl font-bold text-foreground">{recentSearches?.length || 0}</div>
                     <div className="text-xs text-muted-foreground">Searches</div>
                   </CardContent>
                 </Card>
-                <Card className="border-green-200 bg-green-50">
+                <Card className="border-amber-200 bg-amber-50">
                   <CardContent className="p-3 sm:p-4">
-                    <div className="text-xl sm:text-2xl font-bold text-green-700">₹{referralStats?.balance ?? 0}</div>
-                    <div className="text-xs text-green-600">Credits</div>
+                    <div className="text-xl sm:text-2xl font-bold text-amber-700">₹{referralStats?.balance ?? 0}</div>
+                    <div className="text-xs text-amber-600">Credits</div>
                   </CardContent>
                 </Card>
               </div>
@@ -642,22 +642,22 @@ export default function DashboardPage() {
 
                       {/* Points balance */}
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <Card className="border-green-200 bg-green-50/50">
+                        <Card className="border-amber-200 bg-amber-50/50">
                           <CardContent className="p-4 flex sm:block items-center justify-between">
                             <div className="text-xs text-muted-foreground sm:mb-1">Credits Available</div>
-                            <div className="text-2xl font-bold text-green-600">₹{referralStats?.balance ?? 0}</div>
+                            <div className="text-2xl font-bold text-amber-700">₹{referralStats?.balance ?? 0}</div>
                           </CardContent>
                         </Card>
                         <Card>
                           <CardContent className="p-4 flex sm:block items-center justify-between">
                             <div className="text-xs text-muted-foreground sm:mb-1">Friends Referred</div>
-                            <div className="text-2xl font-bold">{referralStats?.referrals.length ?? 0}</div>
+                            <div className="text-2xl font-bold text-foreground">{referralStats?.referrals.length ?? 0}</div>
                           </CardContent>
                         </Card>
                         <Card>
                           <CardContent className="p-4 flex sm:block items-center justify-between">
                             <div className="text-xs text-muted-foreground sm:mb-1">Rides Rewarded</div>
-                            <div className="text-2xl font-bold">
+                            <div className="text-2xl font-bold text-foreground">
                               {referralStats?.referrals.filter(r => r.status === "points_allocated").length ?? 0}
                             </div>
                           </CardContent>

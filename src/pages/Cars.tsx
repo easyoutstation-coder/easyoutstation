@@ -515,7 +515,7 @@ export default function CarsPage() {
                     return (
                       <Card
                         key={car.id}
-                        className="group overflow-hidden border-0 shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer bg-white"
+                        className="group overflow-hidden border-0 shadow-md cursor-pointer bg-white"
                         onClick={() => navigate(`/booking?carId=${car.id}&${passthroughParams()}`)}
                       >
                         <div className="relative aspect-[4/3] overflow-hidden">
@@ -560,7 +560,7 @@ export default function CarsPage() {
                                 return (
                                   <>
                                     {saving > 0 && <div className="text-xs text-slate-400 line-through">₹{fare.toLocaleString("en-IN")}</div>}
-                                    <div className={`text-lg font-bold ${saving > 0 ? "text-green-700" : "text-blue-700"}`}>
+                                    <div className={`text-lg font-bold ${saving > 0 ? "text-green-700" : "text-primary"}`}>
                                       ₹{discounted.toLocaleString("en-IN")}
                                     </div>
                                     {saving > 0
@@ -586,7 +586,7 @@ export default function CarsPage() {
                                 <span className="text-slate-400">
                                   ₹{car.pricePerKm}/km × {bkm} km{minApplies ? (tripDays > 1 ? ` (min ${tripDays * 250} km)` : car.seats > 7 ? " (min 250 km)" : " (min 80 km/8 hrs)") : ""} + ₹{(perCarDriver * tripDays).toLocaleString("en-IN")} driver
                                 </span>
-                                <span className="text-green-700 font-semibold">₹{Math.max(100, Math.round(applyDiscount(calcFare(car.pricePerKm, car.seats, car.driverCharges ?? "250")!) * 0.1)).toLocaleString("en-IN")} advance</span>
+                                <span className="text-primary font-semibold">₹{Math.max(100, Math.round(applyDiscount(calcFare(car.pricePerKm, car.seats, car.driverCharges ?? "250")!) * 0.1)).toLocaleString("en-IN")} advance</span>
                               </div>
                             );
                           })()}

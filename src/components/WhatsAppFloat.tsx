@@ -37,7 +37,7 @@ export default function WhatsAppFloat() {
           target="_blank"
           rel="noopener noreferrer"
           onClick={() => setShowTooltip(false)}
-          className="relative w-14 h-14 rounded-full bg-[#25D366] flex items-center justify-center shadow-lg shadow-green-500/40 hover:scale-110 hover:shadow-green-500/60 transition-all"
+          className="eo-wa-pulse relative w-14 h-14 rounded-full bg-[#25D366] flex items-center justify-center shadow-lg shadow-green-500/40 hover:scale-110 hover:shadow-green-500/60 transition-all"
           aria-label="Book on WhatsApp"
         >
           <svg viewBox="0 0 32 32" className="w-8 h-8" fill="white" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">

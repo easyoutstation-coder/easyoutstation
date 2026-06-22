@@ -5,7 +5,6 @@ import { useSeo } from "@/hooks/useSeo";
 import { blogPosts } from "@/data/blogPosts";
 import { getLandmark } from "@/data/routeImages";
 import { Clock, ArrowRight, MapPin } from "lucide-react";
-
 export default function Blog() {
   useSeo({
     title: "Travel Guides & Road Trip Itineraries | EasyOutstation Blog",
@@ -41,64 +40,64 @@ export default function Blog() {
 
         {/* Grid */}
         <div className="max-w-6xl mx-auto px-4 py-12">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {blogPosts.map((post) => {
-              const lm = getLandmark(post.heroKey);
-              return (
-                <Link
-                  key={post.slug}
-                  to={`/blog/${post.slug}`}
-                  className="group bg-white rounded-2xl border border-slate-100 hover:border-blue-200 hover:shadow-lg transition-all duration-300 overflow-hidden block"
-                >
-                  {/* Image */}
-                  <div className="relative h-48 overflow-hidden bg-slate-800">
-                    {lm && (
-                      <img
-                        src={lm.image}
-                        alt={lm.landmark}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                        style={{ objectPosition: lm.objectPosition }}
-                        loading="lazy"
-                        onError={(e) => { (e.target as HTMLImageElement).src = "/hero-bg.jpg"; }}
-                      />
-                    )}
-                    {!lm && <div className="absolute inset-0 bg-slate-700" />}
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/70 via-slate-900/20 to-transparent" />
-                    <div className="absolute top-3 left-3">
-                      <span className="px-2.5 py-1 rounded-full bg-blue-600 text-white text-[10px] font-bold uppercase tracking-wide">
-                        {post.category}
-                      </span>
-                    </div>
-                    {lm && (
-                      <div className="absolute bottom-3 left-3 flex items-center gap-1">
-                        <MapPin className="w-3 h-3 text-white/70" />
-                        <span className="text-white/80 text-[10px] font-medium">{lm.landmark}</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {blogPosts.map((post) => {
+                const lm = getLandmark(post.heroKey);
+                return (
+                  <Link
+                    key={post.slug}
+                    to={`/blog/${post.slug}`}
+                    className="group bg-white rounded-2xl border border-slate-100 hover:border-blue-200 overflow-hidden block"
+                  >
+                    {/* Image */}
+                    <div className="relative h-48 overflow-hidden bg-slate-800">
+                      {lm && (
+                        <img
+                          src={lm.image}
+                          alt={lm.landmark}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                          style={{ objectPosition: lm.objectPosition }}
+                          loading="lazy"
+                          onError={(e) => { (e.target as HTMLImageElement).src = "/hero-bg.jpg"; }}
+                        />
+                      )}
+                      {!lm && <div className="absolute inset-0 bg-slate-700" />}
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-900/70 via-slate-900/20 to-transparent" />
+                      <div className="absolute top-3 left-3">
+                        <span className="px-2.5 py-1 rounded-full bg-blue-600 text-white text-[10px] font-bold uppercase tracking-wide">
+                          {post.category}
+                        </span>
                       </div>
-                    )}
-                  </div>
+                      {lm && (
+                        <div className="absolute bottom-3 left-3 flex items-center gap-1">
+                          <MapPin className="w-3 h-3 text-white/70" />
+                          <span className="text-white/80 text-[10px] font-medium">{lm.landmark}</span>
+                        </div>
+                      )}
+                    </div>
 
-                  {/* Content */}
-                  <div className="p-5">
-                    <h2 className="text-sm font-bold text-slate-900 leading-snug mb-2 group-hover:text-blue-700 transition-colors line-clamp-2">
-                      {post.title}
-                    </h2>
-                    <p className="text-xs text-slate-500 leading-relaxed line-clamp-2 mb-4">
-                      {post.metaDescription}
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1 text-[10px] text-slate-400">
-                        <Clock className="w-3 h-3" />
-                        {post.readTime} min read
+                    {/* Content */}
+                    <div className="p-5">
+                      <h2 className="text-sm font-bold text-slate-900 leading-snug mb-2 group-hover:text-blue-700 transition-colors line-clamp-2">
+                        {post.title}
+                      </h2>
+                      <p className="text-xs text-slate-500 leading-relaxed line-clamp-2 mb-4">
+                        {post.metaDescription}
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1 text-[10px] text-slate-400">
+                          <Clock className="w-3 h-3" />
+                          {post.readTime} min read
+                        </div>
+                        <span className="text-xs font-semibold text-blue-600 group-hover:underline flex items-center gap-1">
+                          Read Guide <ArrowRight className="w-3 h-3" />
+                        </span>
                       </div>
-                      <span className="text-xs font-semibold text-blue-600 group-hover:underline flex items-center gap-1">
-                        Read Guide <ArrowRight className="w-3 h-3" />
-                      </span>
                     </div>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
+                  </Link>
+                );
+              })}
+            </div>
         </div>
       </main>
       <Footer />
