@@ -1353,7 +1353,10 @@ Thank you for choosing EasyOutstation.`;
       pickupArea: z.string().min(1),
       pickupDate: z.string(), // YYYY-MM-DD
       pickupTime: z.string(), // HH:MM
-      carId: z.number().int().positive(),
+      vehicles: z.array(z.object({
+        carId: z.number().int().positive(),
+        quantity: z.number().int().min(1).max(5),
+      })).min(1),
       rentalHours: z.number().min(8).max(12),
       totalFare: z.number().positive(),
       advanceCollected: z.number().min(0),
@@ -1383,19 +1386,25 @@ Thank you for choosing EasyOutstation.`;
         userId = newUser.id;
       }
 
-      const [car] = await db.select({ id: cars.id, name: cars.name })
-        .from(cars).where(eq(cars.id, input.carId)).limit(1);
-      if (!car) throw new TRPCError({ code: "NOT_FOUND", message: "Car not found" });
+      const primaryCarId = input.vehicles[0].carId;
+      const carRows = await db.select({ id: cars.id, name: cars.name })
+        .from(cars).where(sql`id IN (${sql.join(input.vehicles.map(v => sql`${v.carId}`), sql`, `)})`);
+      const carMap = Object.fromEntries(carRows.map(c => [c.id, c.name]));
+      if (!carMap[primaryCarId]) throw new TRPCError({ code: "NOT_FOUND", message: "Car not found" });
+
+      const vehicleSummary = input.vehicles
+        .map(v => `${carMap[v.carId] ?? v.carId}${v.quantity > 1 ? ` ×${v.quantity}` : ""}`)
+        .join(" + ");
 
       const includedKm = input.rentalHours * 10;
       const specialRequests = [
-        `[Offline Rental: ${input.rentalHours}h, Vehicle: ${car.name}, Advance paid: ₹${input.advanceCollected}]`,
+        `[Offline Rental: ${input.rentalHours}h, Vehicles: ${vehicleSummary}, Advance paid: ₹${input.advanceCollected}]`,
         input.notes,
       ].filter(Boolean).join(" ");
 
       const [result] = await db.insert(bookings).values({
         userId,
-        carId: input.carId,
+        carId: primaryCarId,
         fromCity: input.pickupArea,
         toCity: "Local Rental",
         pickupDate: new Date(input.pickupDate) as any,
@@ -1414,7 +1423,7 @@ Thank you for choosing EasyOutstation.`;
 
       const bookingId = result.id;
       const date = new Date(input.pickupDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
-      const defaultSms = `EasyOutstation: Booking #${bookingId} CONFIRMED! ${input.pickupArea} to Local Rental. Pickup: ${date} at ${input.pickupTime}. Fare: Rs ${input.totalFare.toLocaleString("en-IN")}. Driver details within 60 mins. Help: 8796564111`;
+      const defaultSms = `EasyOutstation: Booking #${bookingId} CONFIRMED! ${input.pickupArea} to Local Rental. Pickup: ${date} at ${input.pickupTime}. Vehicles: ${vehicleSummary}. Fare: Rs ${input.totalFare.toLocaleString("en-IN")}. Driver details within 60 mins. Help: 8796564111`;
       const smsText = input.customSmsText?.trim() || defaultSms;
 
       dispatchWhatsApp(
@@ -1428,7 +1437,7 @@ Thank you for choosing EasyOutstation.`;
             { type: "text", text: input.pickupArea },
             { type: "text", text: "Local Rental" },
             { type: "text", text: date },
-            { type: "text", text: car.name },
+            { type: "text", text: vehicleSummary },
             { type: "text", text: input.totalFare.toLocaleString("en-IN") },
           ],
         }],

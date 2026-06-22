@@ -307,26 +307,33 @@ export default function AdminPage() {
   const [offlineForm, setOfflineForm] = useState({
     customerName: "", customerPhone: "", customerEmail: "",
     pickupArea: "", pickupDate: new Date().toISOString().slice(0, 10),
-    pickupTime: "09:00", carId: "", rentalHours: RENTAL_MIN_HOURS,
+    pickupTime: "09:00", rentalHours: RENTAL_MIN_HOURS,
     totalFare: "", advanceCollected: "", notes: "", customSmsText: "",
   });
+  const [offlineVehicles, setOfflineVehicles] = useState<{ carId: string; quantity: number }[]>([{ carId: "", quantity: 1 }]);
   const [offlineBookingResult, setOfflineBookingResult] = useState<{ bookingId: number } | null>(null);
   const { data: carsList } = trpc.car.list.useQuery(undefined, { enabled: isAdmin });
   const rentalCars = (carsList ?? []).filter(c => c.seats <= 7 && c.isAvailable);
   const createOfflineBooking = trpc.admin.createOfflineBooking.useMutation({
     onSuccess: (res) => {
       setOfflineBookingResult(res);
-      setOfflineForm(f => ({ ...f, customerName: "", customerPhone: "", customerEmail: "", pickupArea: "", notes: "", totalFare: "", advanceCollected: "", carId: "", customSmsText: "" }));
+      setOfflineForm(f => ({ ...f, customerName: "", customerPhone: "", customerEmail: "", pickupArea: "", notes: "", totalFare: "", advanceCollected: "", customSmsText: "" }));
+      setOfflineVehicles([{ carId: "", quantity: 1 }]);
       toast.success(`Offline booking #${res.bookingId} created — confirmation sent!`);
       invalidateBookings();
     },
     onError: (e) => toast.error(e.message),
   });
-  const selectedOfflineCar = rentalCars.find(c => c.id === parseInt(offlineForm.carId));
-  const offlineAutoFare = (() => {
-    if (!selectedOfflineCar) return null;
-    try { return rentalFare(vehicleToBand(selectedOfflineCar.name), offlineForm.rentalHours); } catch { return null; }
-  })();
+  const offlineVehicleRows = offlineVehicles.map(v => {
+    const car = rentalCars.find(c => c.id === parseInt(v.carId));
+    if (!car) return { car: null, fare: null, quantity: v.quantity };
+    try { return { car, fare: rentalFare(vehicleToBand(car.name), offlineForm.rentalHours), quantity: v.quantity }; }
+    catch { return { car, fare: null, quantity: v.quantity }; }
+  });
+  const offlineAutoTotal = offlineVehicleRows.every(r => r.fare !== null) && offlineVehicleRows.length > 0
+    ? offlineVehicleRows.reduce((sum, r) => sum + (r.fare!.total * r.quantity), 0) : null;
+  const offlineVehicleSummary = offlineVehicleRows
+    .filter(r => r.car).map(r => `${r.car!.name}${r.quantity > 1 ? ` ×${r.quantity}` : ""}`).join(" + ");
 
   // Danger Zone — data-clear state
   type ClearCategory = "bookings" | "expenses" | "searches" | "reviews" | "all";
@@ -3037,57 +3044,116 @@ export default function AdminPage() {
 
                 {/* Vehicle & hours */}
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Vehicle & Package</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="sm:col-span-2">
-                      <label className="text-xs font-medium mb-1 block">Vehicle *</label>
-                      <Select value={offlineForm.carId} onValueChange={v => {
-                        const car = rentalCars.find(c => c.id === parseInt(v));
-                        const autoFare = car ? (() => { try { return rentalFare(vehicleToBand(car.name), offlineForm.rentalHours); } catch { return null; } })() : null;
-                        setOfflineForm(f => ({ ...f, carId: v, totalFare: autoFare ? String(autoFare.total) : f.totalFare }));
-                      }}>
-                        <SelectTrigger><SelectValue placeholder="Select vehicle…" /></SelectTrigger>
-                        <SelectContent>
-                          {rentalCars.map(c => (
-                            <SelectItem key={c.id} value={String(c.id)}>
-                              {c.name} · {c.seats} seats
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Vehicles & Package</p>
+
+                  {/* Hours — global for all vehicles */}
+                  <div className="flex items-center gap-3 mb-3">
+                    <label className="text-xs font-medium shrink-0">Hours ({RENTAL_MIN_HOURS}–{RENTAL_MAX_HOURS}) — all vehicles</label>
+                    <div className="flex items-center gap-2">
+                      <button className="w-7 h-7 rounded border flex items-center justify-center text-sm font-bold hover:bg-slate-100 disabled:opacity-40"
+                        disabled={offlineForm.rentalHours <= RENTAL_MIN_HOURS}
+                        onClick={() => {
+                          const h = offlineForm.rentalHours - 1;
+                          const newTotal = offlineVehicles.reduce((sum, v) => {
+                            const c = rentalCars.find(x => x.id === parseInt(v.carId));
+                            if (!c) return null;
+                            try { return sum !== null ? sum + rentalFare(vehicleToBand(c.name), h).total * v.quantity : null; } catch { return null; }
+                          }, 0 as number | null);
+                          setOfflineForm(f => ({ ...f, rentalHours: h, ...(newTotal !== null ? { totalFare: String(newTotal) } : {}) }));
+                        }}>−</button>
+                      <span className="w-8 text-center font-semibold text-sm">{offlineForm.rentalHours}h</span>
+                      <button className="w-7 h-7 rounded border flex items-center justify-center text-sm font-bold hover:bg-slate-100 disabled:opacity-40"
+                        disabled={offlineForm.rentalHours >= RENTAL_MAX_HOURS}
+                        onClick={() => {
+                          const h = offlineForm.rentalHours + 1;
+                          const newTotal = offlineVehicles.reduce((sum, v) => {
+                            const c = rentalCars.find(x => x.id === parseInt(v.carId));
+                            if (!c) return null;
+                            try { return sum !== null ? sum + rentalFare(vehicleToBand(c.name), h).total * v.quantity : null; } catch { return null; }
+                          }, 0 as number | null);
+                          setOfflineForm(f => ({ ...f, rentalHours: h, ...(newTotal !== null ? { totalFare: String(newTotal) } : {}) }));
+                        }}>+</button>
                     </div>
-                    <div>
-                      <label className="text-xs font-medium mb-1 block">Hours ({RENTAL_MIN_HOURS}–{RENTAL_MAX_HOURS})</label>
-                      <div className="flex items-center gap-2">
-                        <button
-                          className="w-8 h-9 rounded border flex items-center justify-center text-sm font-bold hover:bg-slate-100 disabled:opacity-40"
-                          disabled={offlineForm.rentalHours <= RENTAL_MIN_HOURS}
-                          onClick={() => {
-                            const h = offlineForm.rentalHours - 1;
-                            const autoFare = selectedOfflineCar ? (() => { try { return rentalFare(vehicleToBand(selectedOfflineCar.name), h); } catch { return null; } })() : null;
-                            setOfflineForm(f => ({ ...f, rentalHours: h, totalFare: autoFare ? String(autoFare.total) : f.totalFare }));
-                          }}
-                        >−</button>
-                        <span className="flex-1 text-center font-semibold">{offlineForm.rentalHours}h</span>
-                        <button
-                          className="w-8 h-9 rounded border flex items-center justify-center text-sm font-bold hover:bg-slate-100 disabled:opacity-40"
-                          disabled={offlineForm.rentalHours >= RENTAL_MAX_HOURS}
-                          onClick={() => {
-                            const h = offlineForm.rentalHours + 1;
-                            const autoFare = selectedOfflineCar ? (() => { try { return rentalFare(vehicleToBand(selectedOfflineCar.name), h); } catch { return null; } })() : null;
-                            setOfflineForm(f => ({ ...f, rentalHours: h, totalFare: autoFare ? String(autoFare.total) : f.totalFare }));
-                          }}
-                        >+</button>
-                      </div>
-                    </div>
+                    <span className="text-xs text-muted-foreground">{offlineForm.rentalHours * 10} km incl. per vehicle</span>
                   </div>
 
-                  {offlineAutoFare && (
-                    <div className="mt-2 p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800 flex gap-4">
-                      <span>Base ₹{offlineAutoFare.base.toLocaleString("en-IN")}</span>
-                      <span>GST ₹{offlineAutoFare.gst}</span>
-                      <span className="font-semibold">Total ₹{offlineAutoFare.total.toLocaleString("en-IN")}</span>
-                      <span className="text-amber-600">{offlineForm.rentalHours * 10} km incl.</span>
+                  {/* Vehicle rows */}
+                  <div className="space-y-2">
+                    {offlineVehicles.map((v, idx) => {
+                      const row = offlineVehicleRows[idx];
+                      return (
+                        <div key={idx} className="flex items-center gap-2">
+                          <div className="flex-1">
+                            <Select value={v.carId} onValueChange={val => {
+                              const updated = offlineVehicles.map((r, i) => i === idx ? { ...r, carId: val } : r);
+                              setOfflineVehicles(updated);
+                              const newRows = updated.map(r => {
+                                const c = rentalCars.find(x => x.id === parseInt(r.carId));
+                                if (!c) return null;
+                                try { return rentalFare(vehicleToBand(c.name), offlineForm.rentalHours).total * r.quantity; } catch { return null; }
+                              });
+                              if (newRows.every(x => x !== null)) setOfflineForm(f => ({ ...f, totalFare: String(newRows.reduce((s, x) => s! + x!, 0)) }));
+                            }}>
+                              <SelectTrigger className="text-sm h-9"><SelectValue placeholder="Select vehicle…" /></SelectTrigger>
+                              <SelectContent>
+                                {rentalCars.map(c => (
+                                  <SelectItem key={c.id} value={String(c.id)}>{c.name} · {c.seats} seats</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          {/* Quantity */}
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button className="w-7 h-9 rounded border text-sm font-bold hover:bg-slate-100 disabled:opacity-40"
+                              disabled={v.quantity <= 1}
+                              onClick={() => {
+                                const updated = offlineVehicles.map((r, i) => i === idx ? { ...r, quantity: r.quantity - 1 } : r);
+                                setOfflineVehicles(updated);
+                                const t = updated.reduce((sum, r) => { const c = rentalCars.find(x => x.id === parseInt(r.carId)); if (!c) return null; try { return sum !== null ? sum + rentalFare(vehicleToBand(c.name), offlineForm.rentalHours).total * r.quantity : null; } catch { return null; } }, 0 as number | null);
+                                if (t !== null) setOfflineForm(f => ({ ...f, totalFare: String(t) }));
+                              }}>−</button>
+                            <span className="w-6 text-center text-sm font-semibold">{v.quantity}</span>
+                            <button className="w-7 h-9 rounded border text-sm font-bold hover:bg-slate-100 disabled:opacity-40"
+                              disabled={v.quantity >= 5}
+                              onClick={() => {
+                                const updated = offlineVehicles.map((r, i) => i === idx ? { ...r, quantity: r.quantity + 1 } : r);
+                                setOfflineVehicles(updated);
+                                const t = updated.reduce((sum, r) => { const c = rentalCars.find(x => x.id === parseInt(r.carId)); if (!c) return null; try { return sum !== null ? sum + rentalFare(vehicleToBand(c.name), offlineForm.rentalHours).total * r.quantity : null; } catch { return null; } }, 0 as number | null);
+                                if (t !== null) setOfflineForm(f => ({ ...f, totalFare: String(t) }));
+                              }}>+</button>
+                          </div>
+                          {/* Per-row fare */}
+                          {row.fare && (
+                            <span className="text-xs text-amber-700 font-medium shrink-0 w-20 text-right">
+                              ₹{(row.fare.total * row.quantity).toLocaleString("en-IN")}
+                            </span>
+                          )}
+                          {/* Remove */}
+                          {offlineVehicles.length > 1 && (
+                            <button className="text-slate-400 hover:text-red-500 shrink-0"
+                              onClick={() => setOfflineVehicles(offlineVehicles.filter((_, i) => i !== idx))}>
+                              <X className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Add vehicle */}
+                  <button
+                    className="mt-2 flex items-center gap-1.5 text-xs text-primary hover:underline"
+                    onClick={() => setOfflineVehicles(v => [...v, { carId: "", quantity: 1 }])}>
+                    <Plus className="w-3.5 h-3.5" />Add Vehicle
+                  </button>
+
+                  {/* Combined fare summary */}
+                  {offlineAutoTotal !== null && (
+                    <div className="mt-3 p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800 flex flex-wrap gap-3">
+                      {offlineVehicleRows.map((r, i) => r.fare && (
+                        <span key={i}>{r.car!.name}{r.quantity > 1 ? ` ×${r.quantity}` : ""}: ₹{(r.fare.total * r.quantity).toLocaleString("en-IN")}</span>
+                      ))}
+                      <span className="font-semibold border-l border-amber-300 pl-3">Combined ₹{offlineAutoTotal.toLocaleString("en-IN")}</span>
                     </div>
                   )}
                 </div>
@@ -3120,10 +3186,10 @@ export default function AdminPage() {
                 {(() => {
                   const fareFormatted = offlineForm.totalFare ? parseFloat(offlineForm.totalFare).toLocaleString("en-IN") : "—";
                   const dateFormatted = offlineForm.pickupDate ? new Date(offlineForm.pickupDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—";
-                  const carName = selectedOfflineCar?.name ?? "—";
+                  const carName = offlineVehicleSummary || "—";
                   const area = offlineForm.pickupArea.trim() || "—";
                   const name = offlineForm.customerName.trim() || "Customer";
-                  const defaultSms = `EasyOutstation: Booking #[ID] CONFIRMED! ${area} to Local Rental. Pickup: ${dateFormatted} at ${offlineForm.pickupTime}. Fare: Rs ${fareFormatted}. Driver details within 60 mins. Help: 8796564111`;
+                  const defaultSms = `EasyOutstation: Booking #[ID] CONFIRMED! ${area} to Local Rental. Pickup: ${dateFormatted} at ${offlineForm.pickupTime}. Vehicles: ${carName}. Fare: Rs ${fareFormatted}. Driver details within 60 mins. Help: 8796564111`;
                   return (
                     <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
                       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Messages to Customer</p>
@@ -3181,7 +3247,7 @@ export default function AdminPage() {
                     !offlineForm.customerName.trim() ||
                     offlineForm.customerPhone.length !== 10 ||
                     !offlineForm.pickupArea.trim() ||
-                    !offlineForm.carId ||
+                    offlineVehicles.some(v => !v.carId) ||
                     !offlineForm.totalFare ||
                     !offlineForm.advanceCollected
                   }
@@ -3192,7 +3258,7 @@ export default function AdminPage() {
                     pickupArea: offlineForm.pickupArea.trim(),
                     pickupDate: offlineForm.pickupDate,
                     pickupTime: offlineForm.pickupTime,
-                    carId: parseInt(offlineForm.carId),
+                    vehicles: offlineVehicles.map(v => ({ carId: parseInt(v.carId), quantity: v.quantity })),
                     rentalHours: offlineForm.rentalHours,
                     totalFare: parseFloat(offlineForm.totalFare),
                     advanceCollected: parseFloat(offlineForm.advanceCollected),
