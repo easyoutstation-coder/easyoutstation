@@ -16,8 +16,9 @@ import {
   Phone, UserCog, StickyNote, CheckCheck, X, Plus, Pencil, Trash2,
   MessageCircle, Mail, AlertTriangle, TrendingUp, MapPin, Wallet, ShieldCheck,
   Globe, WifiOff, Search, FileText, Bot, Send, Loader2, ChevronRight, Tag,
-  Gift, Share2, RefreshCw, Building2, Activity, Map, Truck,
+  Gift, Share2, RefreshCw, Building2, Activity, Map, Truck, CalendarPlus,
 } from "lucide-react";
+import { vehicleToBand, rentalFare, RENTAL_MIN_HOURS, RENTAL_MAX_HOURS } from "@/lib/rental";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import L from "leaflet";
@@ -301,6 +302,31 @@ export default function AdminPage() {
   const sendAbandonedReminders = trpc.booking.sendAbandonedReminders.useMutation({
     onSuccess: (res) => setAbandonedResult(res),
   });
+
+  // Offline booking form
+  const [offlineForm, setOfflineForm] = useState({
+    customerName: "", customerPhone: "", customerEmail: "",
+    pickupArea: "", pickupDate: new Date().toISOString().slice(0, 10),
+    pickupTime: "09:00", carId: "", rentalHours: RENTAL_MIN_HOURS,
+    totalFare: "", advanceCollected: "", notes: "",
+  });
+  const [offlineBookingResult, setOfflineBookingResult] = useState<{ bookingId: number } | null>(null);
+  const { data: carsList } = trpc.car.list.useQuery(undefined, { enabled: isAdmin });
+  const rentalCars = (carsList ?? []).filter(c => c.seats <= 7 && c.isAvailable);
+  const createOfflineBooking = trpc.admin.createOfflineBooking.useMutation({
+    onSuccess: (res) => {
+      setOfflineBookingResult(res);
+      setOfflineForm(f => ({ ...f, customerName: "", customerPhone: "", customerEmail: "", pickupArea: "", notes: "", totalFare: "", advanceCollected: "", carId: "" }));
+      toast.success(`Offline booking #${res.bookingId} created — confirmation sent!`);
+      invalidateBookings();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+  const selectedOfflineCar = rentalCars.find(c => c.id === parseInt(offlineForm.carId));
+  const offlineAutoFare = (() => {
+    if (!selectedOfflineCar) return null;
+    try { return rentalFare(vehicleToBand(selectedOfflineCar.name), offlineForm.rentalHours); } catch { return null; }
+  })();
 
   // Danger Zone — data-clear state
   type ClearCategory = "bookings" | "expenses" | "searches" | "reviews" | "all";
@@ -704,6 +730,7 @@ export default function AdminPage() {
                 <span className="ml-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{liveTrips!.length}</span>
               )}
             </TabsTrigger>
+            <TabsTrigger value="offline" className="gap-1.5 shrink-0"><CalendarPlus className="w-4 h-4" />Offline Booking</TabsTrigger>
           </TabsList>
 
           {/* ── Overview ────────────────────────────────────────────── */}
@@ -2942,6 +2969,182 @@ export default function AdminPage() {
                 </div>
               </>
             )}
+          </TabsContent>
+
+          {/* ── Offline Booking ──────────────────────────────────────── */}
+          <TabsContent value="offline" className="space-y-4">
+            <div>
+              <h3 className="font-semibold text-base">Create Offline Rental Booking</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">Log an offline booking and send the customer a WhatsApp + SMS confirmation.</p>
+            </div>
+
+            {offlineBookingResult && (
+              <div className="flex items-center gap-3 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800">
+                <CheckCircle className="w-5 h-5 shrink-0 text-emerald-600" />
+                <div>
+                  <p className="font-semibold">Booking #{offlineBookingResult.bookingId} created</p>
+                  <p className="text-sm">Confirmation sent via WhatsApp (SMS fallback). Visible in Bookings tab.</p>
+                </div>
+                <button onClick={() => setOfflineBookingResult(null)} className="ml-auto text-emerald-600 hover:text-emerald-800"><X className="w-4 h-4" /></button>
+              </div>
+            )}
+
+            <Card>
+              <CardContent className="p-5 space-y-4">
+                {/* Customer details */}
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Customer</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="text-xs font-medium mb-1 block">Name *</label>
+                      <Input placeholder="Customer name" value={offlineForm.customerName}
+                        onChange={e => setOfflineForm(f => ({ ...f, customerName: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium mb-1 block">Phone * (10 digits)</label>
+                      <Input placeholder="9876543210" maxLength={10} value={offlineForm.customerPhone}
+                        onChange={e => setOfflineForm(f => ({ ...f, customerPhone: e.target.value.replace(/\D/g, "").slice(0, 10) }))} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium mb-1 block">Email (optional)</label>
+                      <Input type="email" placeholder="customer@email.com" value={offlineForm.customerEmail}
+                        onChange={e => setOfflineForm(f => ({ ...f, customerEmail: e.target.value }))} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Trip details */}
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Trip</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div className="sm:col-span-2">
+                      <label className="text-xs font-medium mb-1 block">Pickup Area *</label>
+                      <Input placeholder="e.g. Connaught Place, Delhi" value={offlineForm.pickupArea}
+                        onChange={e => setOfflineForm(f => ({ ...f, pickupArea: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium mb-1 block">Date *</label>
+                      <Input type="date" value={offlineForm.pickupDate}
+                        onChange={e => setOfflineForm(f => ({ ...f, pickupDate: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium mb-1 block">Time *</label>
+                      <Input type="time" value={offlineForm.pickupTime}
+                        onChange={e => setOfflineForm(f => ({ ...f, pickupTime: e.target.value }))} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Vehicle & hours */}
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Vehicle & Package</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="sm:col-span-2">
+                      <label className="text-xs font-medium mb-1 block">Vehicle *</label>
+                      <Select value={offlineForm.carId} onValueChange={v => {
+                        const car = rentalCars.find(c => c.id === parseInt(v));
+                        const autoFare = car ? (() => { try { return rentalFare(vehicleToBand(car.name), offlineForm.rentalHours); } catch { return null; } })() : null;
+                        setOfflineForm(f => ({ ...f, carId: v, totalFare: autoFare ? String(autoFare.total) : f.totalFare }));
+                      }}>
+                        <SelectTrigger><SelectValue placeholder="Select vehicle…" /></SelectTrigger>
+                        <SelectContent>
+                          {rentalCars.map(c => (
+                            <SelectItem key={c.id} value={String(c.id)}>
+                              {c.name} · {c.seats} seats
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium mb-1 block">Hours ({RENTAL_MIN_HOURS}–{RENTAL_MAX_HOURS})</label>
+                      <div className="flex items-center gap-2">
+                        <button
+                          className="w-8 h-9 rounded border flex items-center justify-center text-sm font-bold hover:bg-slate-100 disabled:opacity-40"
+                          disabled={offlineForm.rentalHours <= RENTAL_MIN_HOURS}
+                          onClick={() => {
+                            const h = offlineForm.rentalHours - 1;
+                            const autoFare = selectedOfflineCar ? (() => { try { return rentalFare(vehicleToBand(selectedOfflineCar.name), h); } catch { return null; } })() : null;
+                            setOfflineForm(f => ({ ...f, rentalHours: h, totalFare: autoFare ? String(autoFare.total) : f.totalFare }));
+                          }}
+                        >−</button>
+                        <span className="flex-1 text-center font-semibold">{offlineForm.rentalHours}h</span>
+                        <button
+                          className="w-8 h-9 rounded border flex items-center justify-center text-sm font-bold hover:bg-slate-100 disabled:opacity-40"
+                          disabled={offlineForm.rentalHours >= RENTAL_MAX_HOURS}
+                          onClick={() => {
+                            const h = offlineForm.rentalHours + 1;
+                            const autoFare = selectedOfflineCar ? (() => { try { return rentalFare(vehicleToBand(selectedOfflineCar.name), h); } catch { return null; } })() : null;
+                            setOfflineForm(f => ({ ...f, rentalHours: h, totalFare: autoFare ? String(autoFare.total) : f.totalFare }));
+                          }}
+                        >+</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {offlineAutoFare && (
+                    <div className="mt-2 p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800 flex gap-4">
+                      <span>Base ₹{offlineAutoFare.base.toLocaleString("en-IN")}</span>
+                      <span>GST ₹{offlineAutoFare.gst}</span>
+                      <span className="font-semibold">Total ₹{offlineAutoFare.total.toLocaleString("en-IN")}</span>
+                      <span className="text-amber-600">{offlineForm.rentalHours * 10} km incl.</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Fare */}
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Payment</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-medium mb-1 block">Total Fare ₹ * <span className="text-muted-foreground font-normal">(auto-filled, editable)</span></label>
+                      <Input type="number" placeholder="e.g. 2747" value={offlineForm.totalFare}
+                        onChange={e => setOfflineForm(f => ({ ...f, totalFare: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium mb-1 block">Advance Collected ₹ *</label>
+                      <Input type="number" placeholder="e.g. 687" value={offlineForm.advanceCollected}
+                        onChange={e => setOfflineForm(f => ({ ...f, advanceCollected: e.target.value }))} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Notes */}
+                <div>
+                  <label className="text-xs font-medium mb-1 block">Internal Notes (optional)</label>
+                  <Textarea placeholder="Any additional notes for this booking…" rows={2} value={offlineForm.notes}
+                    onChange={e => setOfflineForm(f => ({ ...f, notes: e.target.value }))} />
+                </div>
+
+                <Button
+                  className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
+                  disabled={
+                    createOfflineBooking.isPending ||
+                    !offlineForm.customerName.trim() ||
+                    offlineForm.customerPhone.length !== 10 ||
+                    !offlineForm.pickupArea.trim() ||
+                    !offlineForm.carId ||
+                    !offlineForm.totalFare ||
+                    !offlineForm.advanceCollected
+                  }
+                  onClick={() => createOfflineBooking.mutate({
+                    customerName: offlineForm.customerName.trim(),
+                    customerPhone: offlineForm.customerPhone,
+                    customerEmail: offlineForm.customerEmail.trim() || undefined,
+                    pickupArea: offlineForm.pickupArea.trim(),
+                    pickupDate: offlineForm.pickupDate,
+                    pickupTime: offlineForm.pickupTime,
+                    carId: parseInt(offlineForm.carId),
+                    rentalHours: offlineForm.rentalHours,
+                    totalFare: parseFloat(offlineForm.totalFare),
+                    advanceCollected: parseFloat(offlineForm.advanceCollected),
+                    notes: offlineForm.notes.trim() || undefined,
+                  })}
+                >
+                  {createOfflineBooking.isPending ? <><Loader2 className="w-4 h-4 animate-spin" />Creating…</> : <><Send className="w-4 h-4" />Create & Send Confirmation</>}
+                </Button>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
         </div>{/* end dark-panel */}

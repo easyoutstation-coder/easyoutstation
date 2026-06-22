@@ -1344,6 +1344,90 @@ Thank you for choosing EasyOutstation.`;
       return events;
     }),
 
+  // ── Offline Booking ────────────────────────────────────────────────────
+  createOfflineBooking: adminQuery
+    .input(z.object({
+      customerName: z.string().min(1),
+      customerPhone: z.string().length(10),
+      customerEmail: z.string().email().optional(),
+      pickupArea: z.string().min(1),
+      pickupDate: z.string(), // YYYY-MM-DD
+      pickupTime: z.string(), // HH:MM
+      carId: z.number().int().positive(),
+      rentalHours: z.number().min(8).max(12),
+      totalFare: z.number().positive(),
+      advanceCollected: z.number().min(0),
+      notes: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+
+      const phone = input.customerPhone.replace(/\D/g, "").slice(-10);
+
+      // Find or create shadow user by phone
+      const [existingUser] = await db.select({ id: users.id })
+        .from(users).where(sql`${users.phone} = ${phone}`).limit(1);
+
+      let userId: number;
+      if (existingUser) {
+        userId = existingUser.id;
+      } else {
+        const [newUser] = await db.insert(users).values({
+          unionId: `offline_${phone}_${Date.now()}`,
+          name: input.customerName,
+          phone,
+          email: input.customerEmail ?? null,
+          role: "user",
+        } as any).$returningId();
+        userId = newUser.id;
+      }
+
+      const [car] = await db.select({ id: cars.id, name: cars.name })
+        .from(cars).where(eq(cars.id, input.carId)).limit(1);
+      if (!car) throw new TRPCError({ code: "NOT_FOUND", message: "Car not found" });
+
+      const includedKm = input.rentalHours * 10;
+      const specialRequests = [
+        `[Offline Rental: ${input.rentalHours}h, Vehicle: ${car.name}, Advance paid: ₹${input.advanceCollected}]`,
+        input.notes,
+      ].filter(Boolean).join(" ");
+
+      const [result] = await db.insert(bookings).values({
+        userId,
+        carId: input.carId,
+        fromCity: input.pickupArea,
+        toCity: "Local Rental",
+        pickupDate: new Date(input.pickupDate) as any,
+        tripType: "one_way",
+        totalKm: includedKm,
+        totalPrice: input.totalFare.toFixed(2),
+        status: "confirmed",
+        paymentStatus: "paid",
+        customerName: input.customerName,
+        customerPhone: phone,
+        customerEmail: input.customerEmail ?? null,
+        pickupAddress: `${input.pickupArea} · ${input.pickupTime}`,
+        specialRequests,
+        adminNotes: "Offline booking created by admin",
+      } as any).$returningId();
+
+      const bookingId = result.id;
+      const date = new Date(input.pickupDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+
+      sendBookingSms(
+        phone, bookingId,
+        input.pickupArea, "Local Rental",
+        date, input.totalFare, "confirmation",
+        undefined, undefined,
+        input.carId, includedKm,
+        input.customerName, car.name,
+      ).catch(console.error);
+
+      logBookingEvent(bookingId, "booking_confirmed", { source: "offline_admin" }).catch(() => {});
+
+      return { success: true, bookingId };
+    }),
+
   getAnalytics: adminQuery
     .input(z.object({ days: z.number().min(7).max(90).default(30) }).optional())
     .query(async ({ input }) => {
