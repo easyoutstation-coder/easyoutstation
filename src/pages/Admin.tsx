@@ -699,7 +699,7 @@ export default function AdminPage() {
 
         <div className="dark-panel">
         <Tabs defaultValue="bookings">
-          <TabsList className="mb-6 flex overflow-x-auto h-auto gap-1 pb-1 no-scrollbar w-full justify-start">
+          <TabsList className="mb-6 flex flex-wrap h-auto gap-1 w-full">
             <TabsTrigger value="overview" className="gap-1.5 shrink-0"><LayoutDashboard className="w-4 h-4" />Overview</TabsTrigger>
             <TabsTrigger value="bookings" className="gap-1.5 shrink-0">
               <Car className="w-4 h-4" />Bookings

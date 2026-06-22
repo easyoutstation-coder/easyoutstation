@@ -115,6 +115,22 @@
     background-color: #FFFFFF !important;
     color: #1E293B !important;
   }
+
+  /* Radix Select trigger is a <button>, not <input>, so must be targeted explicitly */
+  [data-slot="select-trigger"] {
+    background-color: #FFFFFF !important;
+    color: #1E293B !important;
+    border-color: #E2E8F0 !important;
+  }
+
+  [data-slot="select-trigger"][data-placeholder] span,
+  [data-slot="select-trigger"] span {
+    color: #1E293B !important;
+  }
+
+  [data-slot="select-trigger"][data-placeholder] {
+    color: #94A3B8 !important;
+  }
 }
 
 @layer utilities {
@@ -191,6 +207,19 @@
   background: linear-gradient(135deg, rgba(59,130,246,0.25), rgba(139,92,246,0.2)) !important;
   color: white !important;
   box-shadow: 0 0 0 1px rgba(59,130,246,0.3) !important;
+}
+
+/* ── Radix Select trigger — white bg + dark text even inside dark-panel ── */
+.dark-panel [data-slot="select-trigger"] {
+  background-color: #FFFFFF !important;
+  color: #1E293B !important;
+  border-color: rgba(255,255,255,0.25) !important;
+}
+.dark-panel [data-slot="select-trigger"] span {
+  color: #1E293B !important;
+}
+.dark-panel [data-slot="select-trigger"][data-placeholder] {
+  color: #94A3B8 !important;
 }
 
 /* ── Glassmorphism card primitives ── */
