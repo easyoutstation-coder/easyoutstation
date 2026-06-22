@@ -286,6 +286,7 @@ export default function CarsPage() {
   ];
 
   const displayCars = (cars ?? fallbackCars)
+    .filter(c => !isRentalMode || c.seats <= 7)
     .slice()
     .sort((a, b) => {
       if (sortBy === "price_asc") return parseFloat(a.pricePerKm) - parseFloat(b.pricePerKm);
