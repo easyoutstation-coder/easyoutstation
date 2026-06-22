@@ -3,6 +3,7 @@
   "outputDirectory": "dist/public",
   "rewrites": [
     { "source": "/sitemap.xml", "destination": "https://easyoutstation-production.up.railway.app/sitemap.xml" },
+    { "source": "/api/:path*", "destination": "https://easyoutstation-production.up.railway.app/api/:path*" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
