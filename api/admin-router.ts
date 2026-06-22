@@ -9,7 +9,7 @@ import { defaultProgramConfig } from "./referral-router";
 import { sendReferralPointsNotification, sendVendorTripAssignment, sendCorporateApprovalEmail, sendRefundNotification, sendBookingSms } from "./lib/notifications";
 import { logBookingEvent } from "./lib/bookingEvents";
 import { sendFcmNotification } from "./lib/fcm";
-import { sendWhatsAppTextRaw, toWaPhone } from "./lib/whatsapp";
+import { sendWhatsAppTextRaw, toWaPhone, dispatchWhatsApp } from "./lib/whatsapp";
 
 // In-memory OTP store for data-clear verification (process-scoped, 10-min TTL)
 const clearDataOtpStore = new Map<string, { otp: string; category: string; expiresAt: number }>();
@@ -1358,6 +1358,7 @@ Thank you for choosing EasyOutstation.`;
       totalFare: z.number().positive(),
       advanceCollected: z.number().min(0),
       notes: z.string().optional(),
+      customSmsText: z.string().optional(),
     }))
     .mutation(async ({ input }) => {
       const db = getDb();
@@ -1413,14 +1414,26 @@ Thank you for choosing EasyOutstation.`;
 
       const bookingId = result.id;
       const date = new Date(input.pickupDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+      const defaultSms = `EasyOutstation: Booking #${bookingId} CONFIRMED! ${input.pickupArea} to Local Rental. Pickup: ${date} at ${input.pickupTime}. Fare: Rs ${input.totalFare.toLocaleString("en-IN")}. Driver details within 60 mins. Help: 8796564111`;
+      const smsText = input.customSmsText?.trim() || defaultSms;
 
-      sendBookingSms(
-        phone, bookingId,
-        input.pickupArea, "Local Rental",
-        date, input.totalFare, "confirmation",
-        undefined, undefined,
-        input.carId, includedKm,
-        input.customerName, car.name,
+      dispatchWhatsApp(
+        phone,
+        "eo_booking_confirmed_v2",
+        "en",
+        [{
+          type: "body",
+          parameters: [
+            { type: "text", text: input.customerName },
+            { type: "text", text: input.pickupArea },
+            { type: "text", text: "Local Rental" },
+            { type: "text", text: date },
+            { type: "text", text: car.name },
+            { type: "text", text: input.totalFare.toLocaleString("en-IN") },
+          ],
+        }],
+        { bookingId, notificationType: "confirmation" },
+        smsText,
       ).catch(console.error);
 
       logBookingEvent(bookingId, "booking_confirmed", { source: "offline_admin" }).catch(() => {});

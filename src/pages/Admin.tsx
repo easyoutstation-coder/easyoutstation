@@ -308,7 +308,7 @@ export default function AdminPage() {
     customerName: "", customerPhone: "", customerEmail: "",
     pickupArea: "", pickupDate: new Date().toISOString().slice(0, 10),
     pickupTime: "09:00", carId: "", rentalHours: RENTAL_MIN_HOURS,
-    totalFare: "", advanceCollected: "", notes: "",
+    totalFare: "", advanceCollected: "", notes: "", customSmsText: "",
   });
   const [offlineBookingResult, setOfflineBookingResult] = useState<{ bookingId: number } | null>(null);
   const { data: carsList } = trpc.car.list.useQuery(undefined, { enabled: isAdmin });
@@ -316,7 +316,7 @@ export default function AdminPage() {
   const createOfflineBooking = trpc.admin.createOfflineBooking.useMutation({
     onSuccess: (res) => {
       setOfflineBookingResult(res);
-      setOfflineForm(f => ({ ...f, customerName: "", customerPhone: "", customerEmail: "", pickupArea: "", notes: "", totalFare: "", advanceCollected: "", carId: "" }));
+      setOfflineForm(f => ({ ...f, customerName: "", customerPhone: "", customerEmail: "", pickupArea: "", notes: "", totalFare: "", advanceCollected: "", carId: "", customSmsText: "" }));
       toast.success(`Offline booking #${res.bookingId} created — confirmation sent!`);
       invalidateBookings();
     },
@@ -3116,6 +3116,64 @@ export default function AdminPage() {
                     onChange={e => setOfflineForm(f => ({ ...f, notes: e.target.value }))} />
                 </div>
 
+                {/* Message Preview */}
+                {(() => {
+                  const fareFormatted = offlineForm.totalFare ? parseFloat(offlineForm.totalFare).toLocaleString("en-IN") : "—";
+                  const dateFormatted = offlineForm.pickupDate ? new Date(offlineForm.pickupDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—";
+                  const carName = selectedOfflineCar?.name ?? "—";
+                  const area = offlineForm.pickupArea.trim() || "—";
+                  const name = offlineForm.customerName.trim() || "Customer";
+                  const defaultSms = `EasyOutstation: Booking #[ID] CONFIRMED! ${area} to Local Rental. Pickup: ${dateFormatted} at ${offlineForm.pickupTime}. Fare: Rs ${fareFormatted}. Driver details within 60 mins. Help: 8796564111`;
+                  return (
+                    <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Messages to Customer</p>
+
+                      {/* WhatsApp preview */}
+                      <div>
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <MessageCircle className="w-3.5 h-3.5 text-green-600" />
+                          <span className="text-xs font-medium text-green-700">WhatsApp (template — auto-sent)</span>
+                          <span className="text-[10px] bg-green-100 text-green-600 px-1.5 py-0.5 rounded font-mono">eo_booking_confirmed_v2</span>
+                        </div>
+                        <div className="rounded-lg bg-white border border-green-200 p-3 text-xs space-y-1 text-slate-700">
+                          <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+                            <span className="text-muted-foreground">Customer</span><span className="font-medium">{name}</span>
+                            <span className="text-muted-foreground">From</span><span>{area}</span>
+                            <span className="text-muted-foreground">To</span><span>Local Rental</span>
+                            <span className="text-muted-foreground">Date</span><span>{dateFormatted}</span>
+                            <span className="text-muted-foreground">Car</span><span>{carName}</span>
+                            <span className="text-muted-foreground">Fare</span><span>₹{fareFormatted}</span>
+                          </div>
+                          <p className="text-[10px] text-slate-400 pt-1 border-t border-slate-100">WhatsApp Business template — structure fixed by Meta, values filled from form</p>
+                        </div>
+                      </div>
+
+                      {/* SMS — editable */}
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <div className="flex items-center gap-2">
+                            <Phone className="w-3.5 h-3.5 text-blue-600" />
+                            <span className="text-xs font-medium text-blue-700">SMS fallback (editable)</span>
+                          </div>
+                          {offlineForm.customSmsText && (
+                            <button className="text-[10px] text-slate-400 hover:text-slate-600 underline"
+                              onClick={() => setOfflineForm(f => ({ ...f, customSmsText: "" }))}>
+                              Reset to default
+                            </button>
+                          )}
+                        </div>
+                        <Textarea
+                          rows={3}
+                          className="text-xs font-mono bg-white"
+                          value={offlineForm.customSmsText || defaultSms}
+                          onChange={e => setOfflineForm(f => ({ ...f, customSmsText: e.target.value }))}
+                        />
+                        <p className="text-[10px] text-slate-400 mt-1">Sent only if WhatsApp delivery fails · {(offlineForm.customSmsText || defaultSms).length} chars</p>
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 <Button
                   className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
                   disabled={
@@ -3139,6 +3197,7 @@ export default function AdminPage() {
                     totalFare: parseFloat(offlineForm.totalFare),
                     advanceCollected: parseFloat(offlineForm.advanceCollected),
                     notes: offlineForm.notes.trim() || undefined,
+                    customSmsText: offlineForm.customSmsText.trim() || undefined,
                   })}
                 >
                   {createOfflineBooking.isPending ? <><Loader2 className="w-4 h-4 animate-spin" />Creating…</> : <><Send className="w-4 h-4" />Create & Send Confirmation</>}
