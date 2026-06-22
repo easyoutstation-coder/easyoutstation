@@ -19,6 +19,7 @@ import {
   Gift, Share2, RefreshCw, Building2, Activity, Map, Truck, CalendarPlus,
 } from "lucide-react";
 import { vehicleToBand, rentalFare, RENTAL_MIN_HOURS, RENTAL_MAX_HOURS } from "@/lib/rental";
+import AddressAutocomplete from "@/components/AddressAutocomplete";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import L from "leaflet";
@@ -3026,8 +3027,11 @@ export default function AdminPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                     <div className="sm:col-span-2">
                       <label className="text-xs font-medium mb-1 block">Pickup Area *</label>
-                      <Input placeholder="e.g. Connaught Place, Delhi" value={offlineForm.pickupArea}
-                        onChange={e => setOfflineForm(f => ({ ...f, pickupArea: e.target.value }))} />
+                      <AddressAutocomplete
+                        value={offlineForm.pickupArea}
+                        onChange={(address) => setOfflineForm(f => ({ ...f, pickupArea: address }))}
+                        placeholder="e.g. Connaught Place, Delhi"
+                      />
                     </div>
                     <div>
                       <label className="text-xs font-medium mb-1 block">Date *</label>
