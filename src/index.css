@@ -328,6 +328,20 @@
 .dark-panel .text-cyan-700,
 .dark-panel .text-cyan-800 { color: #67e8f9 !important; }
 
+/* ── Form inputs: always white bg + dark text even inside dark-panel ──
+   Specificity (0,2,1) beats the (0,2,0) text-* color overrides above.
+   Without this, text-slate-900 on <Input> would flip to near-white = invisible on white bg. */
+.dark-panel input:not([type="hidden"]),
+.dark-panel textarea:not([disabled]) {
+  background-color: #FFFFFF !important;
+  color: #1E293B !important;
+  border-color: #E2E8F0 !important;
+}
+.dark-panel input:not([type="hidden"])::placeholder,
+.dark-panel textarea:not([disabled])::placeholder {
+  color: #94A3B8 !important;
+}
+
 /* ── Backgrounds ── */
 /* Light neutral → dark glass (exclude form elements which have their own !important rule) */
 .dark-panel .bg-white:not(input):not(textarea):not(select) { background-color: rgba(255,255,255,0.04) !important; }
