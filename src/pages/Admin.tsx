@@ -314,7 +314,7 @@ export default function AdminPage() {
     totalFare: "", advanceCollected: "", notes: "", customSmsText: "",
   });
   const [offlineVehicles, setOfflineVehicles] = useState<{ carId: string; quantity: number }[]>([{ carId: "", quantity: 1 }]);
-  const [offlineBookingResult, setOfflineBookingResult] = useState<{ bookingId: number } | null>(null);
+  const [offlineBookingResult, setOfflineBookingResult] = useState<{ bookingId: number; waSent?: boolean; smsSent?: boolean; waError?: string; smsError?: string } | null>(null);
   const { data: carsList } = trpc.car.list.useQuery(undefined, { enabled: isAdmin });
   const rentalCars = (carsList ?? []).filter(c => c.seats <= 7 && c.isAvailable);
   const createOfflineBooking = trpc.admin.createOfflineBooking.useMutation({
@@ -322,7 +322,14 @@ export default function AdminPage() {
       setOfflineBookingResult(res);
       setOfflineForm(f => ({ ...f, customerName: "", customerPhone: "", customerEmail: "", pickupArea: "", notes: "", totalFare: "", advanceCollected: "", customSmsText: "" }));
       setOfflineVehicles([{ carId: "", quantity: 1 }]);
-      toast.success(`Offline booking #${res.bookingId} created — confirmation sent!`);
+      if (res.waSent) {
+        toast.success(`Booking #${res.bookingId} created — WhatsApp sent ✓`);
+      } else if (res.smsSent) {
+        toast.success(`Booking #${res.bookingId} created — WhatsApp failed, SMS sent ✓`);
+      } else {
+        const reason = res.waError || res.smsError || "unknown error";
+        toast.warning(`Booking #${res.bookingId} created — notification failed: ${reason}`);
+      }
       invalidateBookings();
     },
     onError: (e) => toast.error(e.message),
@@ -3102,13 +3109,17 @@ export default function AdminPage() {
             </div>
 
             {offlineBookingResult && (
-              <div className="flex items-center gap-3 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800">
-                <CheckCircle className="w-5 h-5 shrink-0 text-emerald-600" />
+              <div className={`flex items-center gap-3 p-4 rounded-xl border ${offlineBookingResult.waSent || offlineBookingResult.smsSent ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-amber-50 border-amber-200 text-amber-800"}`}>
+                <CheckCircle className={`w-5 h-5 shrink-0 ${offlineBookingResult.waSent || offlineBookingResult.smsSent ? "text-emerald-600" : "text-amber-500"}`} />
                 <div>
                   <p className="font-semibold">Booking #{offlineBookingResult.bookingId} created</p>
-                  <p className="text-sm">Confirmation sent via WhatsApp (SMS fallback). Visible in Bookings tab.</p>
+                  <p className="text-sm">
+                    {offlineBookingResult.waSent && "WhatsApp confirmation sent ✓"}
+                    {!offlineBookingResult.waSent && offlineBookingResult.smsSent && "WhatsApp failed — SMS sent as fallback ✓"}
+                    {!offlineBookingResult.waSent && !offlineBookingResult.smsSent && `Notification failed — ${offlineBookingResult.waError || offlineBookingResult.smsError || "unknown error"}. Call the customer manually.`}
+                  </p>
                 </div>
-                <button onClick={() => setOfflineBookingResult(null)} className="ml-auto text-emerald-600 hover:text-emerald-800"><X className="w-4 h-4" /></button>
+                <button onClick={() => setOfflineBookingResult(null)} className="ml-auto opacity-60 hover:opacity-100"><X className="w-4 h-4" /></button>
               </div>
             )}
 

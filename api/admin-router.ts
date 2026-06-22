@@ -9,7 +9,7 @@ import { defaultProgramConfig } from "./referral-router";
 import { sendReferralPointsNotification, sendVendorTripAssignment, sendCorporateApprovalEmail, sendRefundNotification, sendBookingSms } from "./lib/notifications";
 import { logBookingEvent } from "./lib/bookingEvents";
 import { sendFcmNotification } from "./lib/fcm";
-import { sendWhatsAppTextRaw, toWaPhone, dispatchWhatsApp } from "./lib/whatsapp";
+import { sendWhatsAppTextRaw, sendWhatsAppTemplateRaw, toWaPhone, dispatchWhatsApp } from "./lib/whatsapp";
 
 // In-memory OTP store for data-clear verification (process-scoped, 10-min TTL)
 const clearDataOtpStore = new Map<string, { otp: string; category: string; expiresAt: number }>();
@@ -1426,11 +1426,15 @@ Thank you for choosing EasyOutstation.`;
       const defaultSms = `EasyOutstation: Booking #${bookingId} CONFIRMED! ${input.pickupArea} to Local Rental. Pickup: ${date} at ${input.pickupTime}. Vehicles: ${vehicleSummary}. Fare: Rs ${input.totalFare.toLocaleString("en-IN")}. Driver details within 60 mins. Help: 8796564111`;
       const smsText = input.customSmsText?.trim() || defaultSms;
 
-      dispatchWhatsApp(
-        phone,
-        "eo_booking_confirmed_v2",
-        "en",
-        [{
+      const waPhone = `91${phone}`;
+      let waSent = false;
+      let waError: string | undefined;
+      let smsSent = false;
+      let smsError: string | undefined;
+
+      // Send WhatsApp directly so admin gets immediate feedback on success/failure
+      try {
+        await sendWhatsAppTemplateRaw(waPhone, "eo_booking_confirmed_v2", "en", [{
           type: "body",
           parameters: [
             { type: "text", text: input.customerName },
@@ -1440,14 +1444,54 @@ Thank you for choosing EasyOutstation.`;
             { type: "text", text: vehicleSummary },
             { type: "text", text: input.totalFare.toLocaleString("en-IN") },
           ],
-        }],
-        { bookingId, notificationType: "confirmation" },
-        smsText,
-      ).catch(console.error);
+        }]);
+        waSent = true;
+        // Log to whatsappLogs
+        const db2 = getDb();
+        await db2.insert(whatsappLogs).values({
+          bookingId,
+          direction: "outbound",
+          templateName: "eo_booking_confirmed_v2",
+          phone: waPhone,
+          waStatus: "sent",
+          fallbackSent: false,
+        } as any).catch(() => {});
+      } catch (e) {
+        waError = e instanceof Error ? e.message : String(e);
+        console.error("[createOfflineBooking] WA failed:", waError);
+      }
+
+      // If WhatsApp failed, send SMS fallback directly
+      if (!waSent) {
+        try {
+          const apiKey = process.env.FAST2SMS_API_KEY?.trim();
+          if (apiKey) {
+            const params = new URLSearchParams({
+              authorization: apiKey,
+              route: "q",
+              message: smsText,
+              language: "english",
+              flash: "0",
+              numbers: phone,
+            });
+            const smsRes = await fetch(`https://www.fast2sms.com/dev/bulkV2?${params.toString()}`);
+            const smsData = await smsRes.json() as any;
+            if (smsData.return === true) {
+              smsSent = true;
+            } else {
+              smsError = smsData.message ?? "SMS failed";
+            }
+          } else {
+            smsError = "FAST2SMS_API_KEY not configured";
+          }
+        } catch (e) {
+          smsError = e instanceof Error ? e.message : String(e);
+        }
+      }
 
       logBookingEvent(bookingId, "booking_confirmed", { source: "offline_admin" }).catch(() => {});
 
-      return { success: true, bookingId };
+      return { success: true, bookingId, waSent, waError, smsSent, smsError };
     }),
 
   getAnalytics: adminQuery
