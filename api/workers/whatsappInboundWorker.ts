@@ -274,6 +274,7 @@ async function executeTool(name: string, input: any, phone: string): Promise<str
     return JSON.stringify({
       found: true, bookingId: b.id, status: b.status, paymentStatus: b.paymentStatus,
       from: b.fromCity, to: b.toCity, pickupDate: b.pickupDate,
+      totalPrice: b.totalPrice ? Number(b.totalPrice) : null,
       driverName: b.driverName ?? "Not yet assigned", driverPhone: b.driverPhone ?? null,
     });
   }
@@ -478,6 +479,7 @@ RULES for Disha (rentals):
 - MANDATORY: Every fare quote MUST end with: "⚠️ Toll, parking & state taxes: additional at actuals (paid on road, no markup)"
 - Never ask for phone number — you already have it
 - Booking status → use check_my_booking
+- If customer asks about their bill, fare, total charges, or amount due, call check_my_booking — the result includes a totalPrice field (₹). Say e.g. "Your confirmed fare is ₹5,500 as recorded for Booking #123."
 - Driver details sent within 60 min of confirmation
 - Day-before reminder SMS auto-sent with driver name & number
 - Support: +91-8796564111 | easyoutstation@gmail.com

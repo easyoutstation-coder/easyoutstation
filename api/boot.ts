@@ -278,6 +278,24 @@ async function runStartupMigrations() {
     // Driver vehicle fields
     try { await db.execute(sql.raw(`ALTER TABLE drivers ADD COLUMN vehicleNumber VARCHAR(30) NULL`)); } catch { /* already exists */ }
     try { await db.execute(sql.raw(`ALTER TABLE drivers ADD COLUMN vehicleModel VARCHAR(100) NULL`)); } catch { /* already exists */ }
+    // Per-vehicle driver assignments for multi-vehicle offline bookings
+    try {
+      await db.execute(sql.raw(`
+        CREATE TABLE IF NOT EXISTS bookingDrivers (
+          id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+          bookingId BIGINT UNSIGNED NOT NULL,
+          vehicleIndex INT NOT NULL DEFAULT 1,
+          vehicleLabel VARCHAR(100) NULL,
+          driverName VARCHAR(255) NOT NULL,
+          driverPhone VARCHAR(20) NOT NULL,
+          vehicleNumber VARCHAR(30) NULL,
+          vehicleModel VARCHAR(100) NULL,
+          notifiedAt TIMESTAMP NULL,
+          createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          INDEX idx_bookingDrivers_bookingId (bookingId)
+        )
+      `));
+    } catch { /* already exists */ }
 
     // Master accounts always get super_admin
     await db.execute(sql.raw(

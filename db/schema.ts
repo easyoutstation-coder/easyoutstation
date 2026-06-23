@@ -341,3 +341,18 @@ export const invoices = mysqlTable("invoices", {
 });
 
 export type Invoice = typeof invoices.$inferSelect;
+
+export const bookingDrivers = mysqlTable("bookingDrivers", {
+  id: serial("id").primaryKey(),
+  bookingId: bigint("bookingId", { mode: "number", unsigned: true }).notNull(),
+  vehicleIndex: int("vehicleIndex").notNull().default(1),
+  vehicleLabel: varchar("vehicleLabel", { length: 100 }),
+  driverName: varchar("driverName", { length: 255 }).notNull(),
+  driverPhone: varchar("driverPhone", { length: 20 }).notNull(),
+  vehicleNumber: varchar("vehicleNumber", { length: 30 }),
+  vehicleModel: varchar("vehicleModel", { length: 100 }),
+  notifiedAt: timestamp("notifiedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type BookingDriver = typeof bookingDrivers.$inferSelect;

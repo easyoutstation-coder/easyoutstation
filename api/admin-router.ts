@@ -2,7 +2,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createRouter, publicQuery, adminQuery, superAdminQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { users, bookings, drivers, vendors, expenses, siteSettings, faqs, routes, cars, userSearches, carReviews, referralEvents, referralPoints, corporateEnquiries, corporateAccounts, whatsappLogs, bookingEvents } from "@db/schema";
+import { users, bookings, drivers, vendors, expenses, siteSettings, faqs, routes, cars, userSearches, carReviews, referralEvents, referralPoints, corporateEnquiries, corporateAccounts, whatsappLogs, bookingEvents, bookingDrivers } from "@db/schema";
 import { getRedis } from "./lib/redis";
 import { eq, desc, sql, and, gte, lt, count, like } from "drizzle-orm";
 import { defaultProgramConfig } from "./referral-router";
@@ -1297,6 +1297,17 @@ Thank you for choosing EasyOutstation.`;
       return { logs, total: Number(total), page, pageSize };
     }),
 
+  getWhatsAppThread: adminQuery
+    .input(z.object({ phone: z.string() }))
+    .query(async ({ input }) => {
+      const db = getDb();
+      const phone = input.phone.replace(/\D/g, "").slice(-10);
+      const logs = await db.select().from(whatsappLogs)
+        .where(like(whatsappLogs.phone, `%${phone}%`))
+        .orderBy(whatsappLogs.createdAt);
+      return logs;
+    }),
+
   getLiveTrips: adminQuery.query(async () => {
     const db = getDb();
     const redis = getRedis();
@@ -1502,6 +1513,8 @@ Thank you for choosing EasyOutstation.`;
       vehicleNumber: z.string().optional(),
       vehicleModel: z.string().optional(),
       saveAsNewDriver: z.boolean().default(false),
+      vehicleIndex: z.number().int().min(1).optional(),
+      vehicleLabel: z.string().optional(),
     }))
     .mutation(async ({ input }) => {
       const db = getDb();
@@ -1513,16 +1526,22 @@ Thank you for choosing EasyOutstation.`;
         fromCity: bookings.fromCity,
         pickupDate: bookings.pickupDate,
         pickupAddress: bookings.pickupAddress,
+        specialRequests: bookings.specialRequests,
       }).from(bookings).where(eq(bookings.id, input.bookingId)).limit(1);
 
       if (!booking) throw new TRPCError({ code: "NOT_FOUND", message: "Booking not found" });
 
-      // 2. Update booking with driver info and status
-      await db.update(bookings).set({
-        status: "driver_assigned",
-        driverName: input.driverName,
-        driverPhone: input.driverPhone,
-      } as any).where(eq(bookings.id, input.bookingId));
+      // 2. Update booking status; update driverName/driverPhone only for first/sole vehicle
+      if (!input.vehicleIndex || input.vehicleIndex === 1) {
+        await db.update(bookings).set({
+          status: "driver_assigned",
+          driverName: input.driverName,
+          driverPhone: input.driverPhone,
+        } as any).where(eq(bookings.id, input.bookingId));
+      } else {
+        await db.update(bookings).set({ status: "driver_assigned" } as any)
+          .where(eq(bookings.id, input.bookingId));
+      }
 
       // 3. Optionally save/update driver record
       if (input.saveAsNewDriver) {
@@ -1553,22 +1572,40 @@ Thank you for choosing EasyOutstation.`;
       const waPhone = `91${customerPhone}`;
       const vehicleDesc = [input.vehicleModel, input.vehicleNumber].filter(Boolean).join(", ");
 
-      // No fare shown to driver at any point
+      // Extract rental hours and pickup time from booking fields
+      const hoursMatch = (booking.specialRequests ?? "").match(/Offline Rental: (\d+)h/);
+      const rentalHoursStr = hoursMatch ? `${hoursMatch[1]}h` : "";
+      const pickupTime = booking.pickupAddress?.split(" · ")[1] ?? "";
+      const pickupLocation = booking.pickupAddress?.split(" · ")[0] ?? booking.fromCity ?? "Pickup";
+
+      // Record in bookingDrivers table for multi-vehicle tracking
+      await db.insert(bookingDrivers).values({
+        bookingId: input.bookingId,
+        vehicleIndex: input.vehicleIndex ?? 1,
+        vehicleLabel: input.vehicleLabel ?? null,
+        driverName: input.driverName,
+        driverPhone: input.driverPhone,
+        vehicleNumber: input.vehicleNumber ?? null,
+        vehicleModel: input.vehicleModel ?? null,
+        notifiedAt: new Date(),
+      } as any).catch(() => {});
+
+      // Informational driver message: hours, location, customer name+number (no fare, no confirmation needed)
       const driverWaPhone = `91${input.driverPhone}`;
-      const driverTripText = `EasyOutstation: Trip #${input.bookingId} assigned to you. Customer: ${booking.customerName ?? "Customer"} (+91-${customerPhone}). Pickup: ${booking.fromCity ?? ""}${booking.pickupAddress ? `, ${booking.pickupAddress}` : ""}. Date: ${pickupDate}.${vehicleDesc ? ` Vehicle: ${vehicleDesc}.` : ""} Help: 8796564111`;
+      const driverTripText = `EasyOutstation: Trip #${input.bookingId} for you. Customer: ${booking.customerName ?? "Customer"} +91-${customerPhone}. Pickup: ${pickupLocation}${pickupTime ? ` at ${pickupTime}` : ""}. Date: ${pickupDate}.${rentalHoursStr ? ` Duration: ${rentalHoursStr}.` : ""}${vehicleDesc ? ` Vehicle: ${vehicleDesc}.` : ""} Help: 8796564111`;
 
       let driverWaSent = false;
 
-      // 4. Send WhatsApp to driver FIRST (no fare)
+      // 4. Send WhatsApp to driver FIRST — informational, includes hours/location/customer name+number
       try {
         await sendWhatsAppTemplateRaw(driverWaPhone, "eo_vendor_trip_assigned_v2", "en", [{
           type: "body",
           parameters: [
             { type: "text", text: String(input.bookingId) },
-            { type: "text", text: booking.fromCity ?? "Pickup" },
-            { type: "text", text: "Local Rental" },
-            { type: "text", text: pickupDate },
-            { type: "text", text: booking.customerName ?? "Customer" },
+            { type: "text", text: pickupLocation },
+            { type: "text", text: rentalHoursStr ? `Local Rental (${rentalHoursStr})` : "Local Rental" },
+            { type: "text", text: pickupTime ? `${pickupDate} at ${pickupTime}` : pickupDate },
+            { type: "text", text: `${booking.customerName ?? "Customer"} +91-${customerPhone}` },
           ],
         }]);
         driverWaSent = true;
@@ -1600,14 +1637,15 @@ Thank you for choosing EasyOutstation.`;
       let smsSent = false;
       let smsError: string | undefined;
 
-      // 6. Send WhatsApp to customer with driver details
+      // 6. Send WhatsApp to customer with driver details (include vehicle label for multi-vehicle)
+      const toDestLabel = input.vehicleLabel ? `Local Rental (${input.vehicleLabel})` : "Local Rental";
       try {
         await sendWhatsAppTemplateRaw(waPhone, "eo_driver_assigned_v2_", "en", [{
           type: "body",
           parameters: [
             { type: "text", text: booking.customerName ?? "Customer" },
             { type: "text", text: booking.fromCity ?? "pickup location" },
-            { type: "text", text: "Local Rental" },
+            { type: "text", text: toDestLabel },
             { type: "text", text: pickupDate },
             { type: "text", text: input.driverName },
             { type: "text", text: input.driverPhone },
