@@ -93,6 +93,8 @@ interface ConfirmModal {
   customerPhone: string;
   customerEmail: string;
   route: string;
+  fromCity: string;
+  toCity: string;
   date: string;
   carName: string;
   pickupAddress: string;
@@ -146,9 +148,12 @@ export default function AdminPage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth({ redirectOnUnauthenticated: true });
 
   const [statusFilter, setStatusFilter] = useState("pending");
+  const [confirmMode, setConfirmMode] = useState<"vendor" | "direct">("vendor");
+  const [directDriver, setDirectDriver] = useState({ driverName: "", driverPhone: "", vehicleNumber: "", vehicleModel: "", saveAsNewDriver: false, selectedDriverId: "" });
+  const confirmAndAssignMut = trpc.admin.confirmAndAssignDriver.useMutation();
   const [confirmModal, setConfirmModal] = useState<ConfirmModal>({
     open: false, bookingId: 0, customerName: "", customerPhone: "", customerEmail: "",
-    route: "", date: "", carName: "", pickupAddress: "",
+    route: "", fromCity: "", toCity: "", date: "", carName: "", pickupAddress: "",
   });
   const [cancelModal, setCancelModal] = useState<CancelModal>({
     open: false, bookingId: 0, customerName: "", customerPhone: "", customerEmail: "",
@@ -748,6 +753,8 @@ export default function AdminPage() {
   function openConfirmModal(b: any) {
     setSelectedVendorId("");
     setVendorPhoneInput("");
+    setConfirmMode("vendor");
+    setDirectDriver({ driverName: "", driverPhone: "", vehicleNumber: "", vehicleModel: "", saveAsNewDriver: false, selectedDriverId: "" });
     setConfirmModal({
       open: true,
       bookingId: Number(b.id),
@@ -755,6 +762,8 @@ export default function AdminPage() {
       customerPhone: b.customerPhone ?? "",
       customerEmail: b.customerEmail ?? "",
       route: `${b.fromCity} → ${b.toCity}`,
+      fromCity: b.fromCity ?? "",
+      toCity: b.toCity ?? "",
       date: new Date(b.pickupDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
       carName: b.car?.name ?? "",
       pickupAddress: b.pickupAddress ?? "",
@@ -4142,8 +4151,8 @@ export default function AdminPage() {
       </div>
 
       {/* ── Confirm Booking Modal ──────────────────────────────────── */}
-      <Dialog open={confirmModal.open} onOpenChange={open => setConfirmModal(m => ({ ...m, open }))}>
-        <DialogContent className="sm:max-w-md">
+      <Dialog open={confirmModal.open} onOpenChange={open => { setConfirmModal(m => ({ ...m, open })); }}>
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CheckCircle className="w-5 h-5 text-green-600" />
@@ -4151,7 +4160,8 @@ export default function AdminPage() {
             </DialogTitle>
           </DialogHeader>
 
-          <div className="bg-slate-50 rounded-lg p-3 text-sm space-y-1 mb-2">
+          {/* Booking summary */}
+          <div className="bg-slate-50 rounded-lg p-3 text-sm space-y-1">
             <p><span className="text-muted-foreground">Customer:</span> <strong>{confirmModal.customerName}</strong>
               {confirmModal.customerPhone && <> · <a href={`tel:+91${confirmModal.customerPhone}`} className="text-primary hover:underline">{confirmModal.customerPhone}</a></>}
             </p>
@@ -4160,54 +4170,182 @@ export default function AdminPage() {
             {confirmModal.pickupAddress && <p><span className="text-muted-foreground">Pickup:</span> {confirmModal.pickupAddress}</p>}
           </div>
 
-          <div className="space-y-3">
-            {/* Vendor dropdown */}
-            <div>
-              <label className="text-sm font-medium mb-1 block">Assign Vendor *</label>
-              <Select value={selectedVendorId} onValueChange={selectVendor}>
-                <SelectTrigger className="text-sm">
-                  <SelectValue placeholder="Choose a vendor…" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="manual">— Enter phone manually —</SelectItem>
-                  {(vendorsList ?? []).map(v => (
-                    <SelectItem key={v.id} value={String(v.id)}>
-                      {v.name}{v.company ? ` (${v.company})` : ""} · {v.phone}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Manual phone fallback — shown when no vendor selected or manual chosen */}
-            {(!selectedVendorId || selectedVendorId === "manual") && (
-              <div>
-                <label className="text-sm font-medium mb-1 block">Vendor WhatsApp Phone *</label>
-                <Input
-                  placeholder="10-digit mobile"
-                  value={vendorPhoneInput}
-                  onChange={e => setVendorPhoneInput(e.target.value.replace(/\D/g, "").slice(0, 10))}
-                />
-              </div>
-            )}
-
-            <div className="bg-blue-50 rounded-lg p-2 text-xs text-blue-700 flex gap-2">
-              <Mail className="w-3 h-3 shrink-0 mt-0.5" />
-              <span>
-                Vendor will receive a WhatsApp message to confirm their driver. Customer will be notified automatically once vendor replies.
-                {confirmModal.customerEmail && <> Email also sent to <strong>{confirmModal.customerEmail}</strong>.</>}
-              </span>
-            </div>
-
-            <Button
-              className="w-full bg-green-600 hover:bg-green-700 text-white"
-              disabled={vendorPhoneInput.trim().length < 10 || confirmBooking.isPending}
-              onClick={() => confirmBooking.mutate({ id: confirmModal.bookingId, vendorPhone: vendorPhoneInput.trim() })}
+          {/* Mode toggle */}
+          <div className="flex rounded-lg border overflow-hidden text-sm font-medium">
+            <button
+              className={`flex-1 py-2 transition-colors ${confirmMode === "vendor" ? "bg-blue-600 text-white" : "bg-white text-slate-600 hover:bg-slate-50"}`}
+              onClick={() => setConfirmMode("vendor")}
             >
-              <CheckCheck className="w-4 h-4 mr-2" />
-              {confirmBooking.isPending ? "Assigning…" : "Assign to Vendor & Request Driver"}
-            </Button>
+              Via Vendor
+            </button>
+            <button
+              className={`flex-1 py-2 transition-colors border-l ${confirmMode === "direct" ? "bg-blue-600 text-white" : "bg-white text-slate-600 hover:bg-slate-50"}`}
+              onClick={() => setConfirmMode("direct")}
+            >
+              Direct Driver
+            </button>
           </div>
+
+          {/* ── Vendor mode ── */}
+          {confirmMode === "vendor" && (
+            <div className="space-y-3">
+              <div>
+                <label className="text-sm font-medium mb-1 block">Assign Vendor *</label>
+                <Select value={selectedVendorId} onValueChange={selectVendor}>
+                  <SelectTrigger className="text-sm"><SelectValue placeholder="Choose a vendor…" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="manual">— Enter phone manually —</SelectItem>
+                    {(vendorsList ?? []).map(v => (
+                      <SelectItem key={v.id} value={String(v.id)}>
+                        {v.name}{v.company ? ` (${v.company})` : ""} · {v.phone}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {(!selectedVendorId || selectedVendorId === "manual") && (
+                <div>
+                  <label className="text-sm font-medium mb-1 block">Vendor WhatsApp Phone *</label>
+                  <Input placeholder="10-digit mobile" value={vendorPhoneInput}
+                    onChange={e => setVendorPhoneInput(e.target.value.replace(/\D/g, "").slice(0, 10))} />
+                </div>
+              )}
+
+              {/* Vendor message preview */}
+              {vendorPhoneInput.length >= 10 && (
+                <div className="rounded-lg border border-blue-100 bg-blue-50/50 p-3 space-y-1.5">
+                  <p className="text-[11px] font-semibold text-blue-700 uppercase tracking-wide">Message Preview</p>
+                  <div>
+                    <p className="text-[10px] text-slate-500 mb-0.5">📤 To Vendor (+91-{vendorPhoneInput})</p>
+                    <p className="text-xs text-slate-700 bg-white rounded px-2 py-1.5 border">
+                      Trip #{confirmModal.bookingId} · {confirmModal.fromCity} → {confirmModal.toCity} · {confirmModal.date} · Customer: {confirmModal.customerName} — vendor replies with driver name &amp; mobile
+                    </p>
+                  </div>
+                  {confirmModal.customerEmail && (
+                    <p className="text-[10px] text-slate-500">✉ Booking confirmation email → {confirmModal.customerEmail}</p>
+                  )}
+                </div>
+              )}
+
+              <Button
+                className="w-full bg-green-600 hover:bg-green-700 text-white"
+                disabled={vendorPhoneInput.trim().length < 10 || confirmBooking.isPending}
+                onClick={() => confirmBooking.mutate({ id: confirmModal.bookingId, vendorPhone: vendorPhoneInput.trim() })}
+              >
+                <CheckCheck className="w-4 h-4 mr-2" />
+                {confirmBooking.isPending ? "Assigning…" : "Assign to Vendor & Request Driver"}
+              </Button>
+            </div>
+          )}
+
+          {/* ── Direct driver mode ── */}
+          {confirmMode === "direct" && (() => {
+            const vehicleDesc = [directDriver.vehicleModel, directDriver.vehicleNumber].filter(Boolean).join(", ");
+            const route = confirmModal.route;
+            const previewDriver = directDriver.driverName
+              ? `Trip #${confirmModal.bookingId} · ${confirmModal.fromCity} → ${confirmModal.toCity} · ${confirmModal.date} · Customer: ${confirmModal.customerName}${confirmModal.customerPhone ? ` +91-${confirmModal.customerPhone}` : ""}`
+              : null;
+            const previewCustomer = directDriver.driverName && directDriver.driverPhone.length === 10
+              ? `Driver: ${vehicleDesc ? `${directDriver.driverName} (${vehicleDesc})` : directDriver.driverName} +91-${directDriver.driverPhone} · ${route} · ${confirmModal.date}`
+              : null;
+
+            return (
+              <div className="space-y-3">
+                {/* Saved driver picker */}
+                <Select value={directDriver.selectedDriverId} onValueChange={(val) => {
+                  const d = (driversList ?? []).find(dr => String(dr.id) === val);
+                  if (d) setDirectDriver(f => ({ ...f, selectedDriverId: val, driverName: d.name, driverPhone: d.phone, vehicleNumber: (d as any).vehicleNumber ?? "", vehicleModel: (d as any).vehicleModel ?? "" }));
+                }}>
+                  <SelectTrigger className="text-sm"><SelectValue placeholder="Pick saved driver (auto-fills)…" /></SelectTrigger>
+                  <SelectContent>
+                    {(driversList ?? []).filter(d => d.isActive).map(d => (
+                      <SelectItem key={d.id} value={String(d.id)} className="text-sm">
+                        {d.name} · {d.phone}{(d as any).vehicleModel ? ` · ${(d as any).vehicleModel}` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-xs font-medium mb-1 block">Driver Name *</label>
+                    <Input placeholder="e.g. Suresh Kumar" value={directDriver.driverName}
+                      onChange={e => setDirectDriver(f => ({ ...f, driverName: e.target.value, selectedDriverId: "" }))} />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium mb-1 block">Driver Phone *</label>
+                    <Input placeholder="10-digit" maxLength={10} value={directDriver.driverPhone}
+                      onChange={e => setDirectDriver(f => ({ ...f, driverPhone: e.target.value.replace(/\D/g, ""), selectedDriverId: "" }))} />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium mb-1 block">Vehicle Number</label>
+                    <Input placeholder="DL 01 AB 1234" value={directDriver.vehicleNumber}
+                      onChange={e => setDirectDriver(f => ({ ...f, vehicleNumber: e.target.value.toUpperCase() }))} />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium mb-1 block">Vehicle Model</label>
+                    <Input placeholder="e.g. Innova Crysta" value={directDriver.vehicleModel}
+                      onChange={e => setDirectDriver(f => ({ ...f, vehicleModel: e.target.value }))} />
+                  </div>
+                </div>
+
+                <label className="flex items-center gap-2 text-xs cursor-pointer">
+                  <input type="checkbox" checked={directDriver.saveAsNewDriver}
+                    onChange={e => setDirectDriver(f => ({ ...f, saveAsNewDriver: e.target.checked }))}
+                    className="rounded" />
+                  Save as new driver in database
+                </label>
+
+                {/* Message preview */}
+                {(previewDriver || previewCustomer) && (
+                  <div className="rounded-lg border border-blue-100 bg-blue-50/50 p-3 space-y-2">
+                    <p className="text-[11px] font-semibold text-blue-700 uppercase tracking-wide">Message Preview</p>
+                    {previewDriver && (
+                      <div>
+                        <p className="text-[10px] text-slate-500 mb-0.5">📤 To Driver (+91-{directDriver.driverPhone || "…"})</p>
+                        <p className="text-xs text-slate-700 bg-white rounded px-2 py-1.5 border">{previewDriver}</p>
+                      </div>
+                    )}
+                    {previewCustomer && (
+                      <div>
+                        <p className="text-[10px] text-slate-500 mb-0.5">📤 To Customer (+91-{confirmModal.customerPhone})</p>
+                        <p className="text-xs text-slate-700 bg-white rounded px-2 py-1.5 border">{previewCustomer}</p>
+                      </div>
+                    )}
+                    {confirmModal.customerEmail && (
+                      <p className="text-[10px] text-slate-500">✉ Booking confirmation email → {confirmModal.customerEmail}</p>
+                    )}
+                  </div>
+                )}
+
+                <Button
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                  disabled={!directDriver.driverName || directDriver.driverPhone.length !== 10 || confirmAndAssignMut.isPending}
+                  onClick={() => confirmAndAssignMut.mutate({
+                    id: confirmModal.bookingId,
+                    driverName: directDriver.driverName,
+                    driverPhone: directDriver.driverPhone,
+                    vehicleNumber: directDriver.vehicleNumber || undefined,
+                    vehicleModel: directDriver.vehicleModel || undefined,
+                    saveAsNewDriver: directDriver.saveAsNewDriver,
+                  }, {
+                    onSuccess: (res) => {
+                      setConfirmModal(m => ({ ...m, open: false }));
+                      invalidateBookings();
+                      if (res.waSent) toast.success("Driver assigned — WA sent to driver & customer ✓");
+                      else if (res.smsSent) toast.success("Driver assigned — SMS sent to customer ✓");
+                      else toast.warning(`Driver assigned — customer notification failed`);
+                    },
+                    onError: (e) => toast.error(e.message),
+                  })}
+                >
+                  <Truck className="w-4 h-4 mr-2" />
+                  {confirmAndAssignMut.isPending ? "Assigning…" : "Assign Driver & Notify Both"}
+                </Button>
+              </div>
+            );
+          })()}
         </DialogContent>
       </Dialog>
 
