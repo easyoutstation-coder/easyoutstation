@@ -275,6 +275,10 @@ async function runStartupMigrations() {
       `));
     } catch { /* already exists */ }
 
+    // Driver vehicle fields
+    try { await db.execute(sql.raw(`ALTER TABLE drivers ADD COLUMN vehicleNumber VARCHAR(30) NULL`)); } catch { /* already exists */ }
+    try { await db.execute(sql.raw(`ALTER TABLE drivers ADD COLUMN vehicleModel VARCHAR(100) NULL`)); } catch { /* already exists */ }
+
     // Master accounts always get super_admin
     await db.execute(sql.raw(
       `UPDATE users SET role = 'super_admin' WHERE phone = '9958556011' OR email = 'parmindersinghtalwar@gmail.com'`

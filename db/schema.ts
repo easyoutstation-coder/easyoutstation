@@ -155,6 +155,8 @@ export const drivers = mysqlTable("drivers", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
   phone: varchar("phone", { length: 20 }).notNull(),
+  vehicleNumber: varchar("vehicleNumber", { length: 30 }),
+  vehicleModel: varchar("vehicleModel", { length: 100 }),
   vehicleInfo: varchar("vehicleInfo", { length: 255 }),
   isActive: boolean("isActive").default(true).notNull(),
   vendorId: bigint("vendorId", { mode: "number", unsigned: true }),

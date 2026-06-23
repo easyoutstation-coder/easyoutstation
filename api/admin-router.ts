@@ -1494,6 +1494,127 @@ Thank you for choosing EasyOutstation.`;
       return { success: true, bookingId, waSent, waError, smsSent, smsError };
     }),
 
+  assignOfflineDriver: adminQuery
+    .input(z.object({
+      bookingId: z.number().int().positive(),
+      driverName: z.string().min(1),
+      driverPhone: z.string().length(10),
+      vehicleNumber: z.string().optional(),
+      vehicleModel: z.string().optional(),
+      saveAsNewDriver: z.boolean().default(false),
+    }))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+
+      // 1. Fetch the booking for customer contact + trip details
+      const [booking] = await db.select({
+        customerName: bookings.customerName,
+        customerPhone: bookings.customerPhone,
+        fromCity: bookings.fromCity,
+        pickupDate: bookings.pickupDate,
+        pickupAddress: bookings.pickupAddress,
+      }).from(bookings).where(eq(bookings.id, input.bookingId)).limit(1);
+
+      if (!booking) throw new TRPCError({ code: "NOT_FOUND", message: "Booking not found" });
+
+      // 2. Update booking with driver info and status
+      await db.update(bookings).set({
+        status: "driver_assigned",
+        driverName: input.driverName,
+        driverPhone: input.driverPhone,
+      } as any).where(eq(bookings.id, input.bookingId));
+
+      // 3. Optionally save/update driver record
+      if (input.saveAsNewDriver) {
+        const existingDriver = await db.select({ id: drivers.id })
+          .from(drivers).where(eq(drivers.phone, input.driverPhone)).limit(1);
+        if (existingDriver.length > 0) {
+          await db.update(drivers).set({
+            name: input.driverName,
+            vehicleNumber: input.vehicleNumber ?? null,
+            vehicleModel: input.vehicleModel ?? null,
+          } as any).where(eq(drivers.id, existingDriver[0].id));
+        } else {
+          await db.insert(drivers).values({
+            name: input.driverName,
+            phone: input.driverPhone,
+            vehicleNumber: input.vehicleNumber ?? null,
+            vehicleModel: input.vehicleModel ?? null,
+            vehicleInfo: [input.vehicleModel, input.vehicleNumber].filter(Boolean).join(" · ") || null,
+            isActive: true,
+          } as any);
+        }
+      }
+
+      const pickupDate = booking.pickupDate
+        ? new Date(booking.pickupDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+        : "N/A";
+      const customerPhone = (booking.customerPhone ?? "").replace(/\D/g, "").slice(-10);
+      const waPhone = `91${customerPhone}`;
+      const vehicleDesc = [input.vehicleModel, input.vehicleNumber].filter(Boolean).join(", ");
+
+      let waSent = false;
+      let waError: string | undefined;
+      let smsSent = false;
+      let smsError: string | undefined;
+
+      // 4. Send WhatsApp to customer directly with driver details
+      try {
+        await sendWhatsAppTemplateRaw(waPhone, "eo_driver_assigned_v2_", "en", [{
+          type: "body",
+          parameters: [
+            { type: "text", text: booking.customerName ?? "Customer" },
+            { type: "text", text: booking.fromCity ?? "pickup location" },
+            { type: "text", text: "Local Rental" },
+            { type: "text", text: pickupDate },
+            { type: "text", text: input.driverName },
+            { type: "text", text: input.driverPhone },
+          ],
+        }]);
+        waSent = true;
+        await db.insert(whatsappLogs).values({
+          bookingId: input.bookingId,
+          direction: "outbound",
+          templateName: "eo_driver_assigned_v2_",
+          phone: waPhone,
+          waStatus: "sent",
+          fallbackSent: false,
+        } as any).catch(() => {});
+      } catch (e) {
+        waError = e instanceof Error ? e.message : String(e);
+        console.error("[assignOfflineDriver] WA to customer failed:", waError);
+      }
+
+      // 5. If WhatsApp to customer failed, send SMS fallback to customer
+      if (!waSent && customerPhone) {
+        const customerSms = `EasyOutstation: Your driver for Booking #${input.bookingId} on ${pickupDate} is ${input.driverName}, +91-${input.driverPhone}.${vehicleDesc ? ` Vehicle: ${vehicleDesc}.` : ""} Help: 8796564111`;
+        try {
+          const apiKey = process.env.FAST2SMS_API_KEY?.trim();
+          if (apiKey) {
+            const params = new URLSearchParams({ authorization: apiKey, route: "q", message: customerSms, language: "english", flash: "0", numbers: customerPhone });
+            const r = await fetch(`https://www.fast2sms.com/dev/bulkV2?${params}`);
+            const d = await r.json() as any;
+            if (d.return === true) smsSent = true;
+            else smsError = d.message ?? "SMS failed";
+          }
+        } catch (e) { smsError = e instanceof Error ? e.message : String(e); }
+      }
+
+      // 6. SMS to driver with trip details
+      const driverSms = `EasyOutstation: Trip #${input.bookingId} assigned to you. Customer: ${booking.customerName ?? "Customer"} (+91-${customerPhone}). Pickup: ${booking.fromCity ?? ""}${booking.pickupAddress ? `, ${booking.pickupAddress}` : ""}. Date: ${pickupDate}. Help: 8796564111`;
+      try {
+        const apiKey = process.env.FAST2SMS_API_KEY?.trim();
+        if (apiKey) {
+          const params = new URLSearchParams({ authorization: apiKey, route: "q", message: driverSms, language: "english", flash: "0", numbers: input.driverPhone });
+          await fetch(`https://www.fast2sms.com/dev/bulkV2?${params}`);
+        }
+      } catch { /* non-fatal */ }
+
+      logBookingEvent(input.bookingId, "driver_assigned", { driverName: input.driverName, driverPhone: input.driverPhone, vehicleNumber: input.vehicleNumber }).catch(() => {});
+
+      return { success: true, waSent, waError, smsSent, smsError };
+    }),
+
   getAnalytics: adminQuery
     .input(z.object({ days: z.number().min(7).max(90).default(30) }).optional())
     .query(async ({ input }) => {
