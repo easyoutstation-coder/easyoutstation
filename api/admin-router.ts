@@ -1713,7 +1713,7 @@ Thank you for choosing EasyOutstation.`;
             { type: "text", text: booking.fromCity ?? "pickup location" },
             { type: "text", text: toDestLabel },
             { type: "text", text: pickupDate },
-            { type: "text", text: input.driverName },
+            { type: "text", text: vehicleDesc ? `${input.driverName} (${vehicleDesc})` : input.driverName },
             { type: "text", text: input.driverPhone },
           ],
         }]);
@@ -1722,7 +1722,7 @@ Thank you for choosing EasyOutstation.`;
           bookingId: input.bookingId,
           direction: "outbound",
           templateName: "eo_driver_assigned_v2_",
-          messageBody: `[To Customer] Driver assigned: ${booking.customerName ?? "Customer"} · ${booking.fromCity ?? "pickup"} → ${toDestLabel} · ${pickupDate} · Driver: ${input.driverName} +91-${input.driverPhone}${vehicleDesc ? ` · ${vehicleDesc}` : ""}`,
+          messageBody: `[To Customer] Driver: ${vehicleDesc ? `${input.driverName} (${vehicleDesc})` : input.driverName} +91-${input.driverPhone} · ${booking.fromCity ?? "pickup"} → ${toDestLabel} · ${pickupDate}`,
           phone: waPhone,
           waStatus: "sent",
           fallbackSent: false,
