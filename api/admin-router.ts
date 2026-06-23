@@ -1297,6 +1297,71 @@ Thank you for choosing EasyOutstation.`;
       return { logs, total: Number(total), page, pageSize };
     }),
 
+  backfillWaMessageBodies: adminQuery
+    .input(z.object({ limit: z.number().min(1).max(200).default(10) }).optional())
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      const n = input?.limit ?? 10;
+
+      // Find recent logs missing messageBody that have a known template
+      const rows = await db.select().from(whatsappLogs)
+        .where(sql`messageBody IS NULL AND templateName IS NOT NULL`)
+        .orderBy(desc(whatsappLogs.createdAt))
+        .limit(n);
+
+      let updated = 0;
+      for (const row of rows) {
+        let body: string | null = null;
+
+        if (row.bookingId) {
+          const [b] = await db.select({
+            customerName: bookings.customerName,
+            customerPhone: bookings.customerPhone,
+            fromCity: bookings.fromCity,
+            toCity: bookings.toCity,
+            pickupDate: bookings.pickupDate,
+            totalPrice: bookings.totalPrice,
+            driverName: bookings.driverName,
+            driverPhone: bookings.driverPhone,
+            specialRequests: bookings.specialRequests,
+            pickupAddress: bookings.pickupAddress,
+          }).from(bookings).where(eq(bookings.id, row.bookingId)).limit(1);
+
+          if (b) {
+            const date = b.pickupDate
+              ? new Date(b.pickupDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+              : "N/A";
+            const fare = b.totalPrice ? `₹${Number(b.totalPrice).toLocaleString("en-IN")}` : "";
+            const hoursMatch = (b.specialRequests ?? "").match(/Offline Rental: (\d+)h/);
+            const hours = hoursMatch ? `${hoursMatch[1]}h` : "";
+            const pickupTime = b.pickupAddress?.split(" · ")[1] ?? "";
+            const pickupLoc = b.pickupAddress?.split(" · ")[0] ?? b.fromCity ?? "";
+            const custPhone = (b.customerPhone ?? "").replace(/\D/g, "").slice(-10);
+
+            if (row.templateName === "eo_booking_confirmed_v2") {
+              body = `Booking confirmed: ${b.customerName ?? "Customer"} · ${b.fromCity} → ${b.toCity} · ${date}${fare ? ` · ${fare}` : ""}`;
+            } else if (row.templateName === "eo_vendor_trip_assigned_v2") {
+              body = `[To Driver] Trip #${row.bookingId} · Pickup: ${pickupLoc}${pickupTime ? ` at ${pickupTime}` : ""} · ${date}${hours ? ` · ${hours}` : ""} · Customer: ${b.customerName ?? "Customer"}${custPhone ? ` +91-${custPhone}` : ""}`;
+            } else if (row.templateName?.startsWith("eo_driver_assigned")) {
+              body = `[To Customer] Driver: ${b.driverName ?? "TBD"}${b.driverPhone ? ` +91-${b.driverPhone}` : ""} · ${b.fromCity} → ${b.toCity} · ${date}`;
+            } else if (row.templateName?.startsWith("eo_booking")) {
+              body = `Booking #${row.bookingId}: ${b.customerName ?? "Customer"} · ${b.fromCity} → ${b.toCity} · ${date}${fare ? ` · ${fare}` : ""}`;
+            }
+          }
+        }
+
+        if (!body) {
+          // Generic fallback — at least show the template name clearly
+          body = `[${row.templateName}] — booking #${row.bookingId ?? "unknown"}`;
+        }
+
+        await db.update(whatsappLogs).set({ messageBody: body } as any).where(eq(whatsappLogs.id, row.id));
+        updated++;
+      }
+
+      return { updated, total: rows.length };
+    }),
+
   getWhatsAppThread: adminQuery
     .input(z.object({ phone: z.string() }))
     .query(async ({ input }) => {

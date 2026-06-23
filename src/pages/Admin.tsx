@@ -599,6 +599,7 @@ export default function AdminPage() {
   const [waLogsPhone, setWaLogsPhone] = useState("");
   const [expandedLogId, setExpandedLogId] = useState<number | null>(null);
   const [waThreadPhone, setWaThreadPhone] = useState<string | null>(null);
+  const backfillWaMut = trpc.admin.backfillWaMessageBodies.useMutation();
   const { data: waLogsData } = trpc.admin.getWhatsappLogs.useQuery({ page: waLogsPage, phone: waLogsPhone || undefined }, { enabled: isAdmin });
   const { data: waThreadData, isLoading: waThreadLoading } = trpc.admin.getWhatsAppThread.useQuery(
     { phone: waThreadPhone ?? "" },
@@ -2965,9 +2966,23 @@ export default function AdminPage() {
 
           {/* ── WA Logs ─────────────────────────────────────────────── */}
           <TabsContent value="wa-logs" className="space-y-4">
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center justify-between gap-4 flex-wrap">
               <h2 className="text-lg font-semibold">WhatsApp Communication Log</h2>
-              {waLogsData && <p className="text-sm text-muted-foreground">{waLogsData.total} messages</p>}
+              <div className="flex items-center gap-2">
+                {waLogsData && <p className="text-sm text-muted-foreground">{waLogsData.total} messages</p>}
+                <Button
+                  variant="outline" size="sm"
+                  className="gap-1.5 text-xs"
+                  disabled={backfillWaMut.isPending}
+                  onClick={() => backfillWaMut.mutate({ limit: 10 }, {
+                    onSuccess: (r) => { toast.success(`Restored ${r.updated} message bodies`); utils.admin.getWhatsappLogs.invalidate(); },
+                    onError: (e) => toast.error(e.message),
+                  })}
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${backfillWaMut.isPending ? "animate-spin" : ""}`} />
+                  {backfillWaMut.isPending ? "Restoring…" : "Restore last 10 messages"}
+                </Button>
+              </div>
             </div>
             <div className="flex gap-2">
               <Input
