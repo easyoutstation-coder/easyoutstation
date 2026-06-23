@@ -1298,14 +1298,19 @@ Thank you for choosing EasyOutstation.`;
     }),
 
   backfillWaMessageBodies: adminQuery
-    .input(z.object({ limit: z.number().min(1).max(200).default(10) }).optional())
+    .input(z.object({ limit: z.number().min(1).max(200).default(10), force: z.boolean().optional() }).optional())
     .mutation(async ({ input }) => {
       const db = getDb();
       const n = input?.limit ?? 10;
+      const force = input?.force ?? false;
 
-      // Find recent logs missing messageBody that have a known template
+      // Find recent logs missing messageBody (or force-reprocess already-backfilled entries)
       const rows = await db.select().from(whatsappLogs)
-        .where(sql`messageBody IS NULL AND templateName IS NOT NULL`)
+        .where(
+          force
+            ? sql`templateName IS NOT NULL`
+            : sql`messageBody IS NULL AND templateName IS NOT NULL`
+        )
         .orderBy(desc(whatsappLogs.createdAt))
         .limit(n);
 
@@ -1343,7 +1348,42 @@ Thank you for choosing EasyOutstation.`;
             } else if (row.templateName === "eo_vendor_trip_assigned_v2") {
               body = `[To Driver] Trip #${row.bookingId} · Pickup: ${pickupLoc}${pickupTime ? ` at ${pickupTime}` : ""} · ${date}${hours ? ` · ${hours}` : ""} · Customer: ${b.customerName ?? "Customer"}${custPhone ? ` +91-${custPhone}` : ""}`;
             } else if (row.templateName?.startsWith("eo_driver_assigned")) {
-              body = `[To Customer] Driver: ${b.driverName ?? "TBD"}${b.driverPhone ? ` +91-${b.driverPhone}` : ""} · ${b.fromCity} → ${b.toCity} · ${date}`;
+              // For multi-vehicle bookings, the booking row only stores Vehicle 1's driver.
+              // Find the driver WA log sent immediately before this customer WA (same booking)
+              // — its phone column holds the driver's number, which we can match in bookingDrivers.
+              let driverName = b.driverName ?? "TBD";
+              let driverPhone = b.driverPhone ?? "";
+              let vehicleLabel = "";
+              try {
+                const [precedingDriverLog] = await db.select()
+                  .from(whatsappLogs)
+                  .where(
+                    and(
+                      eq(whatsappLogs.bookingId, row.bookingId),
+                      sql`${whatsappLogs.templateName} = 'eo_vendor_trip_assigned_v2'`,
+                      sql`${whatsappLogs.id} < ${row.id}`
+                    )
+                  )
+                  .orderBy(desc(whatsappLogs.id))
+                  .limit(1);
+                if (precedingDriverLog) {
+                  const driverPhoneFromLog = precedingDriverLog.phone.replace(/\D/g, "").slice(-10);
+                  const [bd] = await db.select().from(bookingDrivers)
+                    .where(
+                      and(
+                        eq(bookingDrivers.bookingId, row.bookingId),
+                        eq(bookingDrivers.driverPhone, driverPhoneFromLog)
+                      )
+                    )
+                    .limit(1);
+                  if (bd) {
+                    driverName = bd.driverName;
+                    driverPhone = bd.driverPhone;
+                    vehicleLabel = bd.vehicleLabel ?? "";
+                  }
+                }
+              } catch { /* non-fatal — fall through to booking defaults */ }
+              body = `[To Customer] Driver: ${driverName}${driverPhone ? ` +91-${driverPhone}` : ""} · ${b.fromCity} → ${vehicleLabel ? `Local Rental (${vehicleLabel})` : b.toCity} · ${date}`;
             } else if (row.templateName?.startsWith("eo_booking")) {
               body = `Booking #${row.bookingId}: ${b.customerName ?? "Customer"} · ${b.fromCity} → ${b.toCity} · ${date}${fare ? ` · ${fare}` : ""}`;
             }

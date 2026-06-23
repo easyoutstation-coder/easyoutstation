@@ -2982,6 +2982,18 @@ export default function AdminPage() {
                   <RefreshCw className={`w-3.5 h-3.5 ${backfillWaMut.isPending ? "animate-spin" : ""}`} />
                   {backfillWaMut.isPending ? "Restoring…" : "Restore last 10 messages"}
                 </Button>
+                <Button
+                  variant="outline" size="sm"
+                  className="gap-1.5 text-xs text-amber-700 border-amber-200 hover:bg-amber-50"
+                  disabled={backfillWaMut.isPending}
+                  onClick={() => backfillWaMut.mutate({ limit: 20, force: true }, {
+                    onSuccess: (r) => { toast.success(`Re-processed ${r.updated} messages`); utils.admin.getWhatsappLogs.invalidate(); },
+                    onError: (e) => toast.error(e.message),
+                  })}
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${backfillWaMut.isPending ? "animate-spin" : ""}`} />
+                  Fix last 20
+                </Button>
               </div>
             </div>
             <div className="flex gap-2">
