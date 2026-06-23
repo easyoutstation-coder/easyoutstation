@@ -321,9 +321,10 @@ export default function AdminPage() {
   const assignOfflineDriverMut = trpc.admin.assignOfflineDriver.useMutation({
     onSuccess: (res) => {
       setDriverAssignResult(res);
-      if (res.waSent) toast.success("Driver assigned — WhatsApp sent to customer ✓");
-      else if (res.smsSent) toast.success("Driver assigned — WhatsApp failed, SMS sent to customer ✓");
-      else toast.warning(`Driver assigned — notification failed: ${res.waError || res.smsError || "unknown"}`);
+      const driverStatus = (res as any).driverWaSent ? "driver WA ✓" : "driver SMS sent";
+      if (res.waSent) toast.success(`Driver assigned — ${driverStatus}, customer WA ✓`);
+      else if (res.smsSent) toast.success(`Driver assigned — ${driverStatus}, customer SMS sent ✓`);
+      else toast.warning(`Driver assigned — ${driverStatus}. Customer notification failed: ${res.waError || res.smsError || "unknown"}`);
     },
     onError: (e) => toast.error(e.message),
   });
@@ -3495,10 +3496,9 @@ export default function AdminPage() {
                 </label>
 
                 {driverAssignResult && (
-                  <div className={`text-xs px-3 py-2 rounded-lg border ${driverAssignResult.waSent || driverAssignResult.smsSent ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-amber-50 text-amber-700 border-amber-200"}`}>
-                    {driverAssignResult.waSent && "✓ WhatsApp sent to customer with driver details"}
-                    {!driverAssignResult.waSent && driverAssignResult.smsSent && "✓ SMS sent to customer (WhatsApp failed)"}
-                    {!driverAssignResult.waSent && !driverAssignResult.smsSent && `Notification failed — ${driverAssignResult.waError || driverAssignResult.smsError || "unknown"}. Inform customer manually.`}
+                  <div className={`text-xs px-3 py-2 rounded-lg border space-y-1 ${driverAssignResult.waSent || driverAssignResult.smsSent ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-amber-50 text-amber-700 border-amber-200"}`}>
+                    <p>{(driverAssignResult as any).driverWaSent ? "✓ WhatsApp sent to driver (no fare shown)" : "✓ SMS sent to driver (no fare shown)"}</p>
+                    <p>{driverAssignResult.waSent ? "✓ WhatsApp sent to customer with driver details" : driverAssignResult.smsSent ? "✓ SMS sent to customer (WhatsApp failed)" : `Customer notification failed — ${driverAssignResult.waError || driverAssignResult.smsError || "unknown"}. Inform customer manually.`}</p>
                   </div>
                 )}
 

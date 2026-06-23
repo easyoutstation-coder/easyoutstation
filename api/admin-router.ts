@@ -1553,12 +1553,54 @@ Thank you for choosing EasyOutstation.`;
       const waPhone = `91${customerPhone}`;
       const vehicleDesc = [input.vehicleModel, input.vehicleNumber].filter(Boolean).join(", ");
 
+      // No fare shown to driver at any point
+      const driverWaPhone = `91${input.driverPhone}`;
+      const driverTripText = `EasyOutstation: Trip #${input.bookingId} assigned to you. Customer: ${booking.customerName ?? "Customer"} (+91-${customerPhone}). Pickup: ${booking.fromCity ?? ""}${booking.pickupAddress ? `, ${booking.pickupAddress}` : ""}. Date: ${pickupDate}.${vehicleDesc ? ` Vehicle: ${vehicleDesc}.` : ""} Help: 8796564111`;
+
+      let driverWaSent = false;
+
+      // 4. Send WhatsApp to driver FIRST (no fare)
+      try {
+        await sendWhatsAppTemplateRaw(driverWaPhone, "eo_vendor_trip_assigned_v2", "en", [{
+          type: "body",
+          parameters: [
+            { type: "text", text: String(input.bookingId) },
+            { type: "text", text: booking.fromCity ?? "Pickup" },
+            { type: "text", text: "Local Rental" },
+            { type: "text", text: pickupDate },
+            { type: "text", text: booking.customerName ?? "Customer" },
+          ],
+        }]);
+        driverWaSent = true;
+        await db.insert(whatsappLogs).values({
+          bookingId: input.bookingId,
+          direction: "outbound",
+          templateName: "eo_vendor_trip_assigned_v2",
+          phone: driverWaPhone,
+          waStatus: "sent",
+          fallbackSent: false,
+        } as any).catch(() => {});
+      } catch (e) {
+        console.error("[assignOfflineDriver] WA to driver failed:", e instanceof Error ? e.message : e);
+      }
+
+      // 5. SMS to driver as fallback if WhatsApp failed (no fare)
+      if (!driverWaSent) {
+        try {
+          const apiKey = process.env.FAST2SMS_API_KEY?.trim();
+          if (apiKey) {
+            const params = new URLSearchParams({ authorization: apiKey, route: "q", message: driverTripText, language: "english", flash: "0", numbers: input.driverPhone });
+            await fetch(`https://www.fast2sms.com/dev/bulkV2?${params}`);
+          }
+        } catch { /* non-fatal */ }
+      }
+
       let waSent = false;
       let waError: string | undefined;
       let smsSent = false;
       let smsError: string | undefined;
 
-      // 4. Send WhatsApp to customer directly with driver details
+      // 6. Send WhatsApp to customer with driver details
       try {
         await sendWhatsAppTemplateRaw(waPhone, "eo_driver_assigned_v2_", "en", [{
           type: "body",
@@ -1585,7 +1627,7 @@ Thank you for choosing EasyOutstation.`;
         console.error("[assignOfflineDriver] WA to customer failed:", waError);
       }
 
-      // 5. If WhatsApp to customer failed, send SMS fallback to customer
+      // 7. SMS fallback to customer if WhatsApp failed
       if (!waSent && customerPhone) {
         const customerSms = `EasyOutstation: Your driver for Booking #${input.bookingId} on ${pickupDate} is ${input.driverName}, +91-${input.driverPhone}.${vehicleDesc ? ` Vehicle: ${vehicleDesc}.` : ""} Help: 8796564111`;
         try {
@@ -1600,19 +1642,9 @@ Thank you for choosing EasyOutstation.`;
         } catch (e) { smsError = e instanceof Error ? e.message : String(e); }
       }
 
-      // 6. SMS to driver with trip details
-      const driverSms = `EasyOutstation: Trip #${input.bookingId} assigned to you. Customer: ${booking.customerName ?? "Customer"} (+91-${customerPhone}). Pickup: ${booking.fromCity ?? ""}${booking.pickupAddress ? `, ${booking.pickupAddress}` : ""}. Date: ${pickupDate}. Help: 8796564111`;
-      try {
-        const apiKey = process.env.FAST2SMS_API_KEY?.trim();
-        if (apiKey) {
-          const params = new URLSearchParams({ authorization: apiKey, route: "q", message: driverSms, language: "english", flash: "0", numbers: input.driverPhone });
-          await fetch(`https://www.fast2sms.com/dev/bulkV2?${params}`);
-        }
-      } catch { /* non-fatal */ }
-
       logBookingEvent(input.bookingId, "driver_assigned", { driverName: input.driverName, driverPhone: input.driverPhone, vehicleNumber: input.vehicleNumber }).catch(() => {});
 
-      return { success: true, waSent, waError, smsSent, smsError };
+      return { success: true, waSent, waError, smsSent, smsError, driverWaSent };
     }),
 
   getAnalytics: adminQuery
