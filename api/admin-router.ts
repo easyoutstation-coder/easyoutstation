@@ -1457,12 +1457,12 @@ Thank you for choosing EasyOutstation.`;
           ],
         }]);
         waSent = true;
-        // Log to whatsappLogs
         const db2 = getDb();
         await db2.insert(whatsappLogs).values({
           bookingId,
           direction: "outbound",
           templateName: "eo_booking_confirmed_v2",
+          messageBody: `Booking confirmed: ${input.customerName} · ${input.pickupArea} → Local Rental · ${date} · ${vehicleSummary} · ₹${input.totalFare.toLocaleString("en-IN")}`,
           phone: waPhone,
           waStatus: "sent",
           fallbackSent: false,
@@ -1613,6 +1613,7 @@ Thank you for choosing EasyOutstation.`;
           bookingId: input.bookingId,
           direction: "outbound",
           templateName: "eo_vendor_trip_assigned_v2",
+          messageBody: `[To Driver] Trip #${input.bookingId} · Pickup: ${pickupLocation}${pickupTime ? ` at ${pickupTime}` : ""} · ${pickupDate}${rentalHoursStr ? ` · ${rentalHoursStr}` : ""} · Customer: ${booking.customerName ?? "Customer"} +91-${customerPhone}${vehicleDesc ? ` · ${vehicleDesc}` : ""}`,
           phone: driverWaPhone,
           waStatus: "sent",
           fallbackSent: false,
@@ -1656,6 +1657,7 @@ Thank you for choosing EasyOutstation.`;
           bookingId: input.bookingId,
           direction: "outbound",
           templateName: "eo_driver_assigned_v2_",
+          messageBody: `[To Customer] Driver assigned: ${booking.customerName ?? "Customer"} · ${booking.fromCity ?? "pickup"} → ${toDestLabel} · ${pickupDate} · Driver: ${input.driverName} +91-${input.driverPhone}${vehicleDesc ? ` · ${vehicleDesc}` : ""}`,
           phone: waPhone,
           waStatus: "sent",
           fallbackSent: false,

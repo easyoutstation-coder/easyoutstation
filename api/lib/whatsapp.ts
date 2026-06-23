@@ -95,10 +95,15 @@ export async function dispatchWhatsApp(
   if (queue) {
     try {
       const db = getDb();
+      const paramTexts = components
+        .filter(c => c.type === "body")
+        .flatMap(c => ((c as any).parameters ?? []).map((p: any) => p.text ?? "").filter(Boolean))
+        .join(" · ");
       const [result] = await db.insert(whatsappLogs).values({
         bookingId: meta.bookingId,
         direction: "outbound",
         templateName,
+        messageBody: paramTexts || undefined,
         phone: waPhone,
         waStatus: "sent",
         fallbackSent: false,
