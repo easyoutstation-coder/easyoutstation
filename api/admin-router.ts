@@ -10,6 +10,7 @@ import { sendReferralPointsNotification, sendVendorTripAssignment, sendCorporate
 import { logBookingEvent } from "./lib/bookingEvents";
 import { sendFcmNotification } from "./lib/fcm";
 import { sendWhatsAppTextRaw, sendWhatsAppTemplateRaw, toWaPhone, dispatchWhatsApp } from "./lib/whatsapp";
+import type { WhatsAppTemplateComponent } from "./workers/queues";
 
 // In-memory OTP store for data-clear verification (process-scoped, 10-min TTL)
 const clearDataOtpStore = new Map<string, { otp: string; category: string; expiresAt: number }>();
@@ -1426,7 +1427,7 @@ Thank you for choosing EasyOutstation.`;
     }),
 
   getWhatsappLogs: adminQuery
-    .input(z.object({ page: z.number().min(1).default(1), phone: z.string().optional() }).optional())
+    .input(z.object({ page: z.number().min(1).default(1), phone: z.string().optional(), onlyUndelivered: z.boolean().optional() }).optional())
     .query(async ({ input }) => {
       const db = getDb();
       const page = input?.page ?? 1;
@@ -1434,11 +1435,109 @@ Thank you for choosing EasyOutstation.`;
       const offset = (page - 1) * pageSize;
       const phoneFilter = input?.phone ? like(whatsappLogs.phone, `%${input.phone.replace(/\D/g, "").slice(-10)}%`) : undefined;
       const where = phoneFilter ? phoneFilter : undefined;
-      const [logs, [{ total }]] = await Promise.all([
+      const [logs, [{ total }], inboundPhones] = await Promise.all([
         db.select().from(whatsappLogs).where(where).orderBy(desc(whatsappLogs.createdAt)).limit(pageSize).offset(offset),
         db.select({ total: sql<number>`COUNT(*)` }).from(whatsappLogs).where(where),
+        db.selectDistinct({ phone: whatsappLogs.phone }).from(whatsappLogs).where(sql`direction = 'inbound'`),
       ]);
-      return { logs, total: Number(total), page, pageSize };
+      const inboundSet = new Set(inboundPhones.map(r => r.phone.replace(/\D/g, "").slice(-10)));
+      const issueStart = new Date("2026-06-01").getTime();
+      const logsWithFlag = logs.map(log => ({
+        ...log,
+        suspectedUndelivered: log.direction === "outbound"
+          && new Date(log.createdAt).getTime() >= issueStart
+          && !inboundSet.has(log.phone.replace(/\D/g, "").slice(-10)),
+      }));
+      const filtered = input?.onlyUndelivered ? logsWithFlag.filter(l => l.suspectedUndelivered) : logsWithFlag;
+      return { logs: filtered, total: Number(total), page, pageSize };
+    }),
+
+  resendWaLog: adminQuery
+    .input(z.object({ logId: z.number(), testPhone: z.string().optional() }))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      const targetPhone = `91${(input.testPhone ?? "9958556011").replace(/\D/g, "").slice(-10)}`;
+      const [log] = await db.select().from(whatsappLogs).where(eq(whatsappLogs.id, input.logId)).limit(1);
+      if (!log) throw new TRPCError({ code: "NOT_FOUND", message: "Log entry not found" });
+      if (log.direction !== "outbound") throw new TRPCError({ code: "BAD_REQUEST", message: "Can only resend outbound messages" });
+      if (!log.templateName) throw new TRPCError({ code: "BAD_REQUEST", message: "No template on this log entry" });
+
+      let booking: { id: number; customerName: string | null; customerPhone: string | null; fromCity: string | null; toCity: string | null; pickupDate: Date | null; totalPrice: string | null; driverName: string | null; driverPhone: string | null; specialRequests: string | null; pickupAddress: string | null } | null = null;
+      if (log.bookingId) {
+        const [b] = await db.select({
+          id: bookings.id, customerName: bookings.customerName, customerPhone: bookings.customerPhone,
+          fromCity: bookings.fromCity, toCity: bookings.toCity, pickupDate: bookings.pickupDate,
+          totalPrice: bookings.totalPrice, driverName: bookings.driverName, driverPhone: bookings.driverPhone,
+          specialRequests: bookings.specialRequests, pickupAddress: bookings.pickupAddress,
+        }).from(bookings).where(eq(bookings.id, log.bookingId)).limit(1);
+        booking = b ?? null;
+      }
+
+      let components: WhatsAppTemplateComponent[] = [];
+
+      if (log.templateName === "eo_booking_confirmed_v2" && booking) {
+        const date = booking.pickupDate ? new Date(booking.pickupDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "N/A";
+        const vehicleMatch = (booking.specialRequests ?? "").match(/Vehicles: ([^\]]+)\]/);
+        const vehicleSummary = vehicleMatch ? vehicleMatch[1].trim() : (booking.toCity ?? "N/A");
+        const fare = booking.totalPrice ? Number(booking.totalPrice).toLocaleString("en-IN") : "0";
+        components = [{ type: "body", parameters: [
+          { type: "text", text: booking.customerName ?? "Customer" },
+          { type: "text", text: booking.fromCity ?? "N/A" },
+          { type: "text", text: booking.toCity ?? "N/A" },
+          { type: "text", text: date },
+          { type: "text", text: vehicleSummary },
+          { type: "text", text: fare },
+        ]}];
+      } else if (log.templateName === "eo_vendor_trip_assigned_v2" && booking) {
+        const date = booking.pickupDate ? new Date(booking.pickupDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "N/A";
+        const addr = booking.pickupAddress ?? "";
+        const timeOut = /Time:\s*(\d{1,2}:\d{2})/i.exec(addr);
+        const pickupTime = timeOut ? timeOut[1] : (addr.includes(" · ") ? addr.split(" · ")[1] : "");
+        const pickupLocation = addr ? addr.replace(/,?\s*Pincode:\s*\d+/gi, "").replace(/,?\s*Time:\s*\d{1,2}:\d{2}/gi, "").replace(/,?\s*GPS:\s*[-\d.,]+/gi, "").split(" · ")[0].trim() : (booking.fromCity ?? "");
+        const hoursMatch = (booking.specialRequests ?? "").match(/Offline Rental: (\d+)h/);
+        const hours = hoursMatch ? ` (${hoursMatch[1]}h)` : "";
+        const route = `${booking.fromCity} → ${booking.toCity}${hours}`;
+        const dateWithTime = pickupTime ? `${date} at ${pickupTime}` : date;
+        const custPhone = (booking.customerPhone ?? "").replace(/\D/g, "").slice(-10);
+        components = [{ type: "body", parameters: [
+          { type: "text", text: String(log.bookingId ?? booking.id) },
+          { type: "text", text: pickupLocation },
+          { type: "text", text: route },
+          { type: "text", text: dateWithTime },
+          { type: "text", text: `${booking.customerName ?? "Customer"}${custPhone ? ` (+91-${custPhone})` : ""}` },
+        ]}];
+      } else if (log.templateName?.startsWith("eo_driver_assigned") && booking) {
+        const date = booking.pickupDate ? new Date(booking.pickupDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "N/A";
+        let driverName = booking.driverName ?? "TBD";
+        let driverPhone = booking.driverPhone ?? "";
+        let vehicleLabel = "";
+        try {
+          const [prev] = await db.select().from(whatsappLogs).where(and(eq(whatsappLogs.bookingId, log.bookingId!), sql`${whatsappLogs.templateName} = 'eo_vendor_trip_assigned_v2'`, sql`${whatsappLogs.id} < ${log.id}`)).orderBy(desc(whatsappLogs.id)).limit(1);
+          if (prev) {
+            const dp = prev.phone.replace(/\D/g, "").slice(-10);
+            const [bd] = await db.select().from(bookingDrivers).where(and(eq(bookingDrivers.bookingId, log.bookingId!), eq(bookingDrivers.driverPhone, dp))).limit(1);
+            if (bd) { driverName = bd.driverName; driverPhone = bd.driverPhone; vehicleLabel = bd.vehicleLabel ?? ""; }
+          }
+        } catch {}
+        const route = vehicleLabel ? `${booking.fromCity} → Local Rental (${vehicleLabel})` : `${booking.fromCity} → ${booking.toCity}`;
+        components = [{ type: "body", parameters: [
+          { type: "text", text: booking.customerName ?? "Customer" },
+          { type: "text", text: booking.fromCity ?? "" },
+          { type: "text", text: route },
+          { type: "text", text: date },
+          { type: "text", text: driverName },
+          { type: "text", text: driverPhone ? `+91-${driverPhone.replace(/\D/g, "").slice(-10)}` : "TBD" },
+        ]}];
+      } else {
+        throw new TRPCError({ code: "BAD_REQUEST", message: `Cannot reconstruct template: ${log.templateName}` });
+      }
+
+      try {
+        const waId = await sendWhatsAppTemplateRaw(targetPhone, log.templateName, "en", components);
+        return { success: true, waId, testPhone: targetPhone };
+      } catch (e) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: e instanceof Error ? e.message : String(e) });
+      }
     }),
 
   backfillWaMessageBodies: adminQuery

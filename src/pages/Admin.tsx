@@ -609,10 +609,13 @@ export default function AdminPage() {
   const { data: adminRoutes } = trpc.admin.getAdminRoutes.useQuery(undefined, { enabled: isAdmin });
   const [waLogsPage, setWaLogsPage] = useState(1);
   const [waLogsPhone, setWaLogsPhone] = useState("");
+  const [waLogsOnlyUndelivered, setWaLogsOnlyUndelivered] = useState(false);
+  const [resendingLogId, setResendingLogId] = useState<number | null>(null);
   const [expandedLogId, setExpandedLogId] = useState<number | null>(null);
   const [waThreadPhone, setWaThreadPhone] = useState<string | null>(null);
   const backfillWaMut = trpc.admin.backfillWaMessageBodies.useMutation();
-  const { data: waLogsData } = trpc.admin.getWhatsappLogs.useQuery({ page: waLogsPage, phone: waLogsPhone || undefined }, { enabled: isAdmin });
+  const resendWaLogMut = trpc.admin.resendWaLog.useMutation();
+  const { data: waLogsData } = trpc.admin.getWhatsappLogs.useQuery({ page: waLogsPage, phone: waLogsPhone || undefined, onlyUndelivered: waLogsOnlyUndelivered || undefined }, { enabled: isAdmin });
   const { data: waThreadData, isLoading: waThreadLoading } = trpc.admin.getWhatsAppThread.useQuery(
     { phone: waThreadPhone ?? "" },
     { enabled: !!waThreadPhone, refetchInterval: 10000 },
@@ -3012,7 +3015,7 @@ export default function AdminPage() {
                 </Button>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <Input
                 placeholder="Filter by phone number…"
                 value={waLogsPhone}
@@ -3020,6 +3023,15 @@ export default function AdminPage() {
                 className="max-w-xs text-sm"
               />
               {waLogsPhone && <Button variant="outline" size="sm" onClick={() => { setWaLogsPhone(""); setWaLogsPage(1); }}>Clear</Button>}
+              <Button
+                variant={waLogsOnlyUndelivered ? "default" : "outline"}
+                size="sm"
+                className={`gap-1.5 text-xs ${waLogsOnlyUndelivered ? "bg-amber-500 hover:bg-amber-600 text-white" : "text-amber-700 border-amber-300 hover:bg-amber-50"}`}
+                onClick={() => { setWaLogsOnlyUndelivered(v => !v); setWaLogsPage(1); }}
+              >
+                <AlertTriangle className="w-3.5 h-3.5" />
+                {waLogsOnlyUndelivered ? "Showing undelivered" : "Show undelivered only"}
+              </Button>
             </div>
 
             {/* Conversation thread view */}
@@ -3073,20 +3085,26 @@ export default function AdminPage() {
                       <th className="px-4 py-3">Message</th>
                       <th className="px-4 py-3">Status</th>
                       <th className="px-4 py-3">Booking</th>
+                      <th className="px-4 py-3">Action</th>
                     </tr>
                   </thead>
                   <tbody>
                     {!waLogsData && (
-                      <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Loading…</td></tr>
+                      <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Loading…</td></tr>
                     )}
                     {waLogsData?.logs.length === 0 && (
-                      <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">No messages found.</td></tr>
+                      <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">No messages found.</td></tr>
                     )}
                     {waLogsData?.logs.map(log => (
                       <>
-                      <tr key={log.id} className="border-b hover:bg-slate-50/50 cursor-pointer" onClick={() => setExpandedLogId(expandedLogId === log.id ? null : log.id)}>
+                      <tr key={log.id} className={`border-b hover:bg-slate-50/50 cursor-pointer ${'suspectedUndelivered' in log && log.suspectedUndelivered ? "bg-amber-50/40" : ""}`} onClick={() => setExpandedLogId(expandedLogId === log.id ? null : log.id)}>
                         <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
-                          {new Date(log.createdAt).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                          <div className="flex items-center gap-1.5">
+                            {'suspectedUndelivered' in log && log.suspectedUndelivered && (
+                              <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" title="Suspected undelivered — payment issue" />
+                            )}
+                            {new Date(log.createdAt).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                          </div>
                         </td>
                         <td className="px-4 py-3 font-mono text-xs">
                           <button
@@ -3123,10 +3141,30 @@ export default function AdminPage() {
                         <td className="px-4 py-3 text-xs">
                           {log.bookingId ? <span className="font-medium">#{log.bookingId}</span> : <span className="text-muted-foreground">—</span>}
                         </td>
+                        <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                          {log.direction === "outbound" && log.templateName && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-xs h-7 px-2 gap-1"
+                              disabled={resendingLogId === log.id}
+                              onClick={() => {
+                                setResendingLogId(log.id);
+                                resendWaLogMut.mutate({ logId: log.id }, {
+                                  onSuccess: () => { toast.success(`Resent to 9958556011`); setResendingLogId(null); },
+                                  onError: (e) => { toast.error(e.message); setResendingLogId(null); },
+                                });
+                              }}
+                            >
+                              {resendingLogId === log.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+                              Resend
+                            </Button>
+                          )}
+                        </td>
                       </tr>
                       {expandedLogId === log.id && log.messageBody && (
                         <tr key={`${log.id}-expanded`} className="border-b bg-slate-50">
-                          <td colSpan={6} className="px-6 py-3">
+                          <td colSpan={7} className="px-6 py-3">
                             <div className="text-xs text-slate-700 whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto font-mono bg-white border rounded-lg p-3">
                               {log.messageBody}
                             </div>
