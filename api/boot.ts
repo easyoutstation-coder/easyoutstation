@@ -278,6 +278,15 @@ async function runStartupMigrations() {
     // Driver vehicle fields
     try { await db.execute(sql.raw(`ALTER TABLE drivers ADD COLUMN vehicleNumber VARCHAR(30) NULL`)); } catch { /* already exists */ }
     try { await db.execute(sql.raw(`ALTER TABLE drivers ADD COLUMN vehicleModel VARCHAR(100) NULL`)); } catch { /* already exists */ }
+    // Honda Amaze
+    try {
+      await db.execute(sql.raw(
+        `INSERT INTO cars (name, brand, model, category, seats, pricePerKm, driverCharges, imageUrl, description, fuelType, transmission, rating, reviewCount, isAvailable, isPopular)
+         SELECT 'Honda Amaze','Honda','Amaze','sedan',4,12.00,250.00,'/cars/honda-amaze.jpg','Compact sedan with comfortable interiors. Toll, parking & state taxes at actuals.','petrol','manual',4.50,20,TRUE,FALSE
+         WHERE NOT EXISTS (SELECT 1 FROM cars WHERE name = 'Honda Amaze')`
+      ));
+    } catch { /* already exists */ }
+
     // Per-vehicle driver assignments for multi-vehicle offline bookings
     try {
       await db.execute(sql.raw(`

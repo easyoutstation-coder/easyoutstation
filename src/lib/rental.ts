@@ -1,5 +1,5 @@
 export const RENTAL_BANDS = [
-  { id: "sedan",   label: "Sedan",          vehicles: ["Swift Dzire", "Toyota Etios"],       hourly: 327, extraKm: 16, extraMin: 6 },
+  { id: "sedan",   label: "Sedan",          vehicles: ["Swift Dzire", "Toyota Etios", "Honda Amaze"],       hourly: 327, extraKm: 16, extraMin: 6 },
   { id: "muv",     label: "MUV",            vehicles: ["Maruti Ertiga", "Kia Carens"],        hourly: 396, extraKm: 17, extraMin: 6 },
   { id: "crysta",  label: "Innova Crysta",  vehicles: ["Toyota Innova Crysta"],               hourly: 462, extraKm: 18, extraMin: 6 },
   { id: "hycross", label: "Innova Hycross", vehicles: ["Toyota Innova Hycross"],              hourly: 485, extraKm: 19, extraMin: 7 },
