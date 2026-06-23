@@ -337,6 +337,13 @@ export default function AdminPage() {
   const [assigningVehicleIdx, setAssigningVehicleIdx] = useState<number | null>(null);
   const assignVehicleDriverMut = trpc.admin.assignOfflineDriver.useMutation();
 
+  // Reassign driver for live trips
+  const [reassignOpenId, setReassignOpenId] = useState<number | null>(null);
+  const [reassignForms, setReassignForms] = useState<Record<number, VehicleDriverForm>>({});
+  const [reassignResults, setReassignResults] = useState<Record<number, { waSent: boolean; smsSent?: boolean; driverWaSent?: boolean; waError?: string } | null>>({});
+  const [reassigning, setReassigning] = useState<number | null>(null);
+  const reassignDriverMut = trpc.admin.assignOfflineDriver.useMutation();
+
   const { data: carsList } = trpc.car.list.useQuery(undefined, { enabled: isAdmin });
   const rentalCars = (carsList ?? []).filter(c => c.seats <= 7 && c.isAvailable);
   const createOfflineBooking = trpc.admin.createOfflineBooking.useMutation({
@@ -3175,9 +3182,33 @@ export default function AdminPage() {
 
                 {/* Trip list */}
                 <div className="space-y-3">
-                  {liveTrips.map(trip => (
+                  {liveTrips.map(trip => {
+                    const rForm = reassignForms[trip.id] ?? defaultVehicleDriverForm;
+                    const rResult = reassignResults[trip.id] ?? null;
+                    const isReassigning = reassigning === trip.id;
+                    const panelOpen = reassignOpenId === trip.id;
+
+                    // Compute message preview from current form + trip data
+                    const pickupLocation = trip.pickupAddress?.split(" · ")[0] ?? trip.fromCity ?? "";
+                    const pickupTime = trip.pickupAddress?.split(" · ")[1] ?? "";
+                    const hoursMatch = (trip.specialRequests ?? "").match(/Offline Rental: (\d+)h/);
+                    const rentalHours = hoursMatch ? `${hoursMatch[1]}h` : "";
+                    const tripDate = trip.pickupDate
+                      ? new Date(trip.pickupDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+                      : "—";
+                    const custPhone = (trip.customerPhone ?? "").replace(/\D/g, "").slice(-10);
+                    const vehicleDesc = [rForm.vehicleModel, rForm.vehicleNumber].filter(Boolean).join(", ");
+
+                    const previewToDriver = rForm.driverName
+                      ? `Trip #${trip.id} · Pickup: ${pickupLocation}${pickupTime ? ` at ${pickupTime}` : ""} · ${tripDate}${rentalHours ? ` · ${rentalHours}` : ""} · Customer: ${trip.customerName ?? "Customer"}${custPhone ? ` +91-${custPhone}` : ""}`
+                      : null;
+                    const previewToCustomer = rForm.driverName && rForm.driverPhone.length === 10
+                      ? `Driver: ${vehicleDesc ? `${rForm.driverName} (${vehicleDesc})` : rForm.driverName} +91-${rForm.driverPhone} · ${trip.fromCity ?? "pickup"} → ${rentalHours ? `Local Rental (${rentalHours})` : trip.toCity ?? "destination"} · ${tripDate}`
+                      : null;
+
+                    return (
                     <Card key={trip.id} className="overflow-hidden">
-                      <CardContent className="p-4">
+                      <CardContent className="p-4 space-y-3">
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap mb-0.5">
@@ -3207,11 +3238,127 @@ export default function AdminPage() {
                             {trip.tripPin && (
                               <span className="text-[10px] font-mono bg-amber-50 text-amber-700 px-2 py-0.5 rounded">PIN: {trip.tripPin}</span>
                             )}
+                            <Button
+                              size="sm" variant="outline"
+                              className="text-xs h-7 px-2 mt-0.5 gap-1"
+                              onClick={() => {
+                                setReassignOpenId(panelOpen ? null : trip.id);
+                                setReassignResults(r => ({ ...r, [trip.id]: null }));
+                                if (!reassignForms[trip.id]) {
+                                  setReassignForms(f => ({ ...f, [trip.id]: { ...defaultVehicleDriverForm, driverName: trip.driverName ?? "", driverPhone: (trip.driverPhone ?? "").replace(/\D/g, "").slice(-10) } }));
+                                }
+                              }}
+                            >
+                              <Truck className="w-3 h-3" />{panelOpen ? "Close" : "Reassign Driver"}
+                            </Button>
                           </div>
                         </div>
+
+                        {/* Reassign panel */}
+                        {panelOpen && (
+                          <div className="border-t pt-3 space-y-3">
+                            {/* Saved driver picker */}
+                            <Select
+                              value={rForm.selectedDriverId}
+                              onValueChange={(val) => {
+                                const d = (driversList ?? []).find(dr => String(dr.id) === val);
+                                if (d) setReassignForms(f => ({ ...f, [trip.id]: { ...rForm, selectedDriverId: val, driverName: d.name, driverPhone: d.phone, vehicleNumber: (d as any).vehicleNumber ?? "", vehicleModel: (d as any).vehicleModel ?? "" } }));
+                              }}
+                            >
+                              <SelectTrigger className="text-xs h-8"><SelectValue placeholder="Pick saved driver (auto-fills)…" /></SelectTrigger>
+                              <SelectContent>
+                                {(driversList ?? []).filter(d => d.isActive).map(d => (
+                                  <SelectItem key={d.id} value={String(d.id)} className="text-xs">
+                                    {d.name} · {d.phone}{(d as any).vehicleModel ? ` · ${(d as any).vehicleModel}` : ""}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <label className="text-xs font-medium mb-1 block">Driver Name *</label>
+                                <Input placeholder="e.g. Suresh Kumar" value={rForm.driverName} className="h-8 text-xs"
+                                  onChange={e => setReassignForms(f => ({ ...f, [trip.id]: { ...rForm, driverName: e.target.value, selectedDriverId: "" } }))} />
+                              </div>
+                              <div>
+                                <label className="text-xs font-medium mb-1 block">Driver Phone *</label>
+                                <Input placeholder="10-digit" maxLength={10} value={rForm.driverPhone} className="h-8 text-xs"
+                                  onChange={e => setReassignForms(f => ({ ...f, [trip.id]: { ...rForm, driverPhone: e.target.value.replace(/\D/g, ""), selectedDriverId: "" } }))} />
+                              </div>
+                              <div>
+                                <label className="text-xs font-medium mb-1 block">Vehicle Number</label>
+                                <Input placeholder="DL 01 AB 1234" value={rForm.vehicleNumber} className="h-8 text-xs"
+                                  onChange={e => setReassignForms(f => ({ ...f, [trip.id]: { ...rForm, vehicleNumber: e.target.value.toUpperCase() } }))} />
+                              </div>
+                              <div>
+                                <label className="text-xs font-medium mb-1 block">Vehicle Model</label>
+                                <Input placeholder="e.g. Innova Crysta" value={rForm.vehicleModel} className="h-8 text-xs"
+                                  onChange={e => setReassignForms(f => ({ ...f, [trip.id]: { ...rForm, vehicleModel: e.target.value } }))} />
+                              </div>
+                            </div>
+
+                            {/* Message preview */}
+                            {(previewToDriver || previewToCustomer) && (
+                              <div className="rounded-lg border border-blue-100 bg-blue-50/50 p-3 space-y-2">
+                                <p className="text-[11px] font-semibold text-blue-700 uppercase tracking-wide">Message Preview</p>
+                                {previewToDriver && (
+                                  <div>
+                                    <p className="text-[10px] text-slate-500 mb-0.5">📤 To Driver (+91-{rForm.driverPhone || "…"})</p>
+                                    <p className="text-xs text-slate-700 bg-white rounded px-2 py-1.5 border">{previewToDriver}</p>
+                                  </div>
+                                )}
+                                {previewToCustomer && (
+                                  <div>
+                                    <p className="text-[10px] text-slate-500 mb-0.5">📤 To Customer (+91-{custPhone || "…"})</p>
+                                    <p className="text-xs text-slate-700 bg-white rounded px-2 py-1.5 border">{previewToCustomer}</p>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {rResult && (
+                              <div className="text-xs px-3 py-2 rounded-lg border bg-emerald-50 text-emerald-700 border-emerald-200 space-y-0.5">
+                                <p>{rResult.driverWaSent ? "✓ WhatsApp sent to driver" : "✓ SMS sent to driver"}</p>
+                                <p>{rResult.waSent ? "✓ WhatsApp sent to customer" : rResult.smsSent ? "✓ SMS sent to customer (WA failed)" : `Customer notification failed — ${rResult.waError || "unknown"}`}</p>
+                              </div>
+                            )}
+
+                            <Button
+                              size="sm"
+                              className="w-full gap-1.5 bg-blue-600 hover:bg-blue-700 text-white"
+                              disabled={!rForm.driverName || rForm.driverPhone.length !== 10 || isReassigning}
+                              onClick={() => {
+                                setReassigning(trip.id);
+                                reassignDriverMut.mutate({
+                                  bookingId: trip.id,
+                                  driverName: rForm.driverName,
+                                  driverPhone: rForm.driverPhone,
+                                  vehicleNumber: rForm.vehicleNumber || undefined,
+                                  vehicleModel: rForm.vehicleModel || undefined,
+                                  saveAsNewDriver: false,
+                                }, {
+                                  onSuccess: (res) => {
+                                    setReassigning(null);
+                                    setReassignResults(r => ({ ...r, [trip.id]: res as any }));
+                                    refetchLive();
+                                    if (res.waSent) toast.success(`Driver reassigned — WA sent to driver & customer ✓`);
+                                    else if (res.smsSent) toast.success(`Driver reassigned — SMS sent to customer ✓`);
+                                    else toast.warning(`Driver reassigned — notifications failed`);
+                                  },
+                                  onError: (e) => { setReassigning(null); toast.error(e.message); },
+                                });
+                              }}
+                            >
+                              <Truck className="w-3.5 h-3.5" />
+                              {isReassigning ? "Sending…" : "Reassign & Notify"}
+                            </Button>
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
-                  ))}
+                    );
+                  })}
                 </div>
               </>
             )}

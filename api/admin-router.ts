@@ -1425,6 +1425,7 @@ Thank you for choosing EasyOutstation.`;
       toCity: bookings.toCity,
       pickupDate: bookings.pickupDate,
       pickupAddress: bookings.pickupAddress,
+      specialRequests: bookings.specialRequests,
       driverName: bookings.driverName,
       driverPhone: bookings.driverPhone,
       status: bookings.status,
