@@ -4219,7 +4219,7 @@ export default function AdminPage() {
                   <div>
                     <p className="text-[10px] text-slate-500 mb-0.5">📤 To Vendor (+91-{vendorPhoneInput})</p>
                     <p className="text-xs text-slate-700 bg-white rounded px-2 py-1.5 border">
-                      Trip #{confirmModal.bookingId} · {confirmModal.fromCity} → {confirmModal.toCity} · {confirmModal.date} · Customer: {confirmModal.customerName} — vendor replies with driver name &amp; mobile
+                      Trip #{confirmModal.bookingId} · {confirmModal.fromCity} → {confirmModal.toCity} · {confirmModal.date}{(() => { const t = /Time:\s*(\d{1,2}:\d{2})/i.exec(confirmModal.pickupAddress); const pt = t ? t[1] : confirmModal.pickupAddress.includes(" · ") ? confirmModal.pickupAddress.split(" · ")[1] : ""; return pt ? ` at ${pt}` : ""; })()} · Customer: {confirmModal.customerName} — vendor replies with driver name &amp; mobile
                     </p>
                   </div>
                   {confirmModal.customerEmail && (
@@ -4243,11 +4243,20 @@ export default function AdminPage() {
           {confirmMode === "direct" && (() => {
             const vehicleDesc = [directDriver.vehicleModel, directDriver.vehicleNumber].filter(Boolean).join(", ");
             const route = confirmModal.route;
+            // Extract pickup location and time from pickupAddress (handles both outstation and rental formats)
+            const addr = confirmModal.pickupAddress;
+            const timeOut = /Time:\s*(\d{1,2}:\d{2})/i.exec(addr);
+            const pickupTime = timeOut ? timeOut[1] : (addr.includes(" · ") ? addr.split(" · ")[1] : "");
+            const pickupLocation = addr
+              ? addr.replace(/,?\s*Pincode:\s*\d+/gi, "").replace(/,?\s*Time:\s*\d{1,2}:\d{2}/gi, "").replace(/,?\s*GPS:\s*[-\d.,]+/gi, "").split(" · ")[0].trim()
+              : confirmModal.fromCity;
+            const dateWithTime = pickupTime ? `${confirmModal.date} at ${pickupTime}` : confirmModal.date;
+
             const previewDriver = directDriver.driverName
-              ? `Trip #${confirmModal.bookingId} · ${confirmModal.fromCity} → ${confirmModal.toCity} · ${confirmModal.date} · Customer: ${confirmModal.customerName}${confirmModal.customerPhone ? ` +91-${confirmModal.customerPhone}` : ""}`
+              ? `Trip #${confirmModal.bookingId} · Pickup: ${pickupLocation}${pickupTime ? ` at ${pickupTime}` : ""} · ${route} · ${confirmModal.date} · Customer: ${confirmModal.customerName}${confirmModal.customerPhone ? ` +91-${confirmModal.customerPhone}` : ""}`
               : null;
             const previewCustomer = directDriver.driverName && directDriver.driverPhone.length === 10
-              ? `Driver: ${vehicleDesc ? `${directDriver.driverName} (${vehicleDesc})` : directDriver.driverName} +91-${directDriver.driverPhone} · ${route} · ${confirmModal.date}`
+              ? `Driver: ${vehicleDesc ? `${directDriver.driverName} (${vehicleDesc})` : directDriver.driverName} +91-${directDriver.driverPhone} · ${pickupLocation ? `Pickup: ${pickupLocation}${pickupTime ? ` at ${pickupTime}` : ""} · ` : ""}${route} · ${confirmModal.date}`
               : null;
 
             return (

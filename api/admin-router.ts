@@ -311,18 +311,34 @@ Team EasyOutstation`;
         } as any).catch(() => {});
       }
 
+      // Extract pickup location and time from pickupAddress
+      const pickupAddr = booking?.pickupAddress ?? "";
+      // Outstation format: "Address, Time: HH:MM, ..." — rental format: "Location · HH:MM"
+      const timeMatchOut = /Time:\s*(\d{1,2}:\d{2})/i.exec(pickupAddr);
+      const timeMatchRental = pickupAddr.includes(" · ") ? pickupAddr.split(" · ")[1] : null;
+      const pickupTime = timeMatchOut ? timeMatchOut[1] : (timeMatchRental ?? "");
+      const pickupLocation = pickupAddr
+        ? pickupAddr
+            .replace(/,?\s*Pincode:\s*\d+/gi, "")
+            .replace(/,?\s*Time:\s*\d{1,2}:\d{2}/gi, "")
+            .replace(/,?\s*GPS:\s*[-\d.,]+/gi, "")
+            .split(" · ")[0]
+            .trim()
+        : (booking?.fromCity ?? "pickup");
+      const dateWithTime = pickupTime ? `${date} at ${pickupTime}` : date;
+
       let driverWaSent = false;
       const driverWaPhone = `91${input.driverPhone}`;
 
-      // WA to driver — uses vendor trip template (5 params: bookingId, from, to, date, customerName+phone)
+      // WA to driver — 5 params: bookingId, pickupLocation, route, date(+time), customerName+phone
       try {
         await sendWhatsAppTemplateRaw(driverWaPhone, "eo_vendor_trip_assigned_v2", "en", [{
           type: "body",
           parameters: [
             { type: "text", text: String(input.id) },
-            { type: "text", text: booking?.fromCity ?? "pickup" },
-            { type: "text", text: booking?.toCity ?? "destination" },
-            { type: "text", text: date },
+            { type: "text", text: pickupLocation },
+            { type: "text", text: route },
+            { type: "text", text: dateWithTime },
             { type: "text", text: `${booking?.customerName ?? "Customer"} +91-${customerPhone}` },
           ],
         }]);
@@ -331,7 +347,7 @@ Team EasyOutstation`;
           bookingId: input.id,
           direction: "outbound",
           templateName: "eo_vendor_trip_assigned_v2",
-          messageBody: `[To Driver] Trip #${input.id} · ${route} · ${date} · Customer: ${booking?.customerName ?? "Customer"} +91-${customerPhone}`,
+          messageBody: `[To Driver] Trip #${input.id} · Pickup: ${pickupLocation}${pickupTime ? ` at ${pickupTime}` : ""} · ${route} · ${date} · Customer: ${booking?.customerName ?? "Customer"} +91-${customerPhone}`,
           phone: driverWaPhone,
           waStatus: "sent",
           fallbackSent: false,
