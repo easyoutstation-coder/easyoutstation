@@ -315,7 +315,7 @@ export default function AdminPage() {
   });
   const [offlineVehicles, setOfflineVehicles] = useState<{ carId: string; quantity: number }[]>([{ carId: "", quantity: 1 }]);
   const [offlineBookingResult, setOfflineBookingResult] = useState<{ bookingId: number; waSent?: boolean; smsSent?: boolean; waError?: string; smsError?: string } | null>(null);
-  const defaultDriverForm = { driverName: "", driverPhone: "", vehicleNumber: "", vehicleModel: "", saveAsNewDriver: false, selectedDriverId: "" };
+  const defaultDriverForm = { bookingId: undefined as number | undefined, driverName: "", driverPhone: "", vehicleNumber: "", vehicleModel: "", saveAsNewDriver: false, selectedDriverId: "" };
   const [driverForm, setDriverForm] = useState(defaultDriverForm);
   const [driverAssignResult, setDriverAssignResult] = useState<{ waSent: boolean; waError?: string; smsSent?: boolean; smsError?: string } | null>(null);
   const assignOfflineDriverMut = trpc.admin.assignOfflineDriver.useMutation({
@@ -3122,115 +3122,17 @@ export default function AdminPage() {
             </div>
 
             {offlineBookingResult && (
-              <div className="space-y-3">
-                {/* Booking created banner */}
-                <div className={`flex items-center gap-3 p-4 rounded-xl border ${offlineBookingResult.waSent || offlineBookingResult.smsSent ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-amber-50 border-amber-200 text-amber-800"}`}>
-                  <CheckCircle className={`w-5 h-5 shrink-0 ${offlineBookingResult.waSent || offlineBookingResult.smsSent ? "text-emerald-600" : "text-amber-500"}`} />
-                  <div>
-                    <p className="font-semibold">Booking #{offlineBookingResult.bookingId} created</p>
-                    <p className="text-sm">
-                      {offlineBookingResult.waSent && "WhatsApp confirmation sent ✓"}
-                      {!offlineBookingResult.waSent && offlineBookingResult.smsSent && "WhatsApp failed — SMS sent as fallback ✓"}
-                      {!offlineBookingResult.waSent && !offlineBookingResult.smsSent && `Notification failed — ${offlineBookingResult.waError || offlineBookingResult.smsError || "unknown error"}. Call the customer manually.`}
-                    </p>
-                  </div>
-                  <button onClick={() => { setOfflineBookingResult(null); setDriverForm(defaultDriverForm); setDriverAssignResult(null); }} className="ml-auto opacity-60 hover:opacity-100"><X className="w-4 h-4" /></button>
+              <div className={`flex items-center gap-3 p-4 rounded-xl border ${offlineBookingResult.waSent || offlineBookingResult.smsSent ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-amber-50 border-amber-200 text-amber-800"}`}>
+                <CheckCircle className={`w-5 h-5 shrink-0 ${offlineBookingResult.waSent || offlineBookingResult.smsSent ? "text-emerald-600" : "text-amber-500"}`} />
+                <div>
+                  <p className="font-semibold">Booking #{offlineBookingResult.bookingId} created</p>
+                  <p className="text-sm">
+                    {offlineBookingResult.waSent && "WhatsApp confirmation sent ✓"}
+                    {!offlineBookingResult.waSent && offlineBookingResult.smsSent && "WhatsApp failed — SMS sent as fallback ✓"}
+                    {!offlineBookingResult.waSent && !offlineBookingResult.smsSent && `Notification failed — ${offlineBookingResult.waError || offlineBookingResult.smsError || "unknown error"}. Call the customer manually.`}
+                  </p>
                 </div>
-
-                {/* Driver assignment card */}
-                <Card className="border-blue-100">
-                  <CardContent className="p-5 space-y-4">
-                    <div className="flex items-center gap-2">
-                      <Truck className="w-4 h-4 text-blue-600" />
-                      <p className="font-semibold text-sm">Assign Driver for Booking #{offlineBookingResult.bookingId}</p>
-                    </div>
-
-                    {/* Pick existing driver */}
-                    <div>
-                      <label className="text-xs font-medium mb-1 block">Pick Existing Driver (optional)</label>
-                      <Select
-                        value={driverForm.selectedDriverId}
-                        onValueChange={(val) => {
-                          const d = (driversList ?? []).find(dr => String(dr.id) === val);
-                          if (d) {
-                            setDriverForm(f => ({
-                              ...f,
-                              selectedDriverId: val,
-                              driverName: d.name,
-                              driverPhone: d.phone,
-                              vehicleNumber: (d as any).vehicleNumber ?? "",
-                              vehicleModel: (d as any).vehicleModel ?? "",
-                            }));
-                          }
-                        }}
-                      >
-                        <SelectTrigger className="text-xs"><SelectValue placeholder="Select from saved drivers…" /></SelectTrigger>
-                        <SelectContent>
-                          {(driversList ?? []).filter(d => d.isActive).map(d => (
-                            <SelectItem key={d.id} value={String(d.id)} className="text-xs">
-                              {d.name} · {d.phone}{(d as any).vehicleModel ? ` · ${(d as any).vehicleModel}` : ""}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-xs font-medium mb-1 block">Driver Name *</label>
-                        <Input placeholder="e.g. Suresh Kumar" value={driverForm.driverName}
-                          onChange={e => setDriverForm(f => ({ ...f, driverName: e.target.value, selectedDriverId: "" }))} />
-                      </div>
-                      <div>
-                        <label className="text-xs font-medium mb-1 block">Driver Phone *</label>
-                        <Input placeholder="10-digit" maxLength={10} value={driverForm.driverPhone}
-                          onChange={e => setDriverForm(f => ({ ...f, driverPhone: e.target.value.replace(/\D/g, ""), selectedDriverId: "" }))} />
-                      </div>
-                      <div>
-                        <label className="text-xs font-medium mb-1 block">Vehicle Number</label>
-                        <Input placeholder="e.g. DL 01 AB 1234" value={driverForm.vehicleNumber}
-                          onChange={e => setDriverForm(f => ({ ...f, vehicleNumber: e.target.value.toUpperCase() }))} />
-                      </div>
-                      <div>
-                        <label className="text-xs font-medium mb-1 block">Vehicle Model</label>
-                        <Input placeholder="e.g. Swift Dzire" value={driverForm.vehicleModel}
-                          onChange={e => setDriverForm(f => ({ ...f, vehicleModel: e.target.value }))} />
-                      </div>
-                    </div>
-
-                    <label className="flex items-center gap-2 text-xs cursor-pointer">
-                      <input type="checkbox" checked={driverForm.saveAsNewDriver}
-                        onChange={e => setDriverForm(f => ({ ...f, saveAsNewDriver: e.target.checked }))}
-                        className="rounded" />
-                      Save as new driver in database
-                    </label>
-
-                    {driverAssignResult && (
-                      <div className={`text-xs px-3 py-2 rounded-lg ${driverAssignResult.waSent || driverAssignResult.smsSent ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-amber-50 text-amber-700 border border-amber-200"}`}>
-                        {driverAssignResult.waSent && "✓ WhatsApp sent to customer with driver details"}
-                        {!driverAssignResult.waSent && driverAssignResult.smsSent && "✓ SMS sent to customer (WhatsApp failed)"}
-                        {!driverAssignResult.waSent && !driverAssignResult.smsSent && `Notification failed — ${driverAssignResult.waError || driverAssignResult.smsError || "unknown"}. Inform customer manually.`}
-                      </div>
-                    )}
-
-                    <Button
-                      size="sm"
-                      className="gap-1.5 bg-blue-600 hover:bg-blue-700 text-white w-full"
-                      disabled={!driverForm.driverName || driverForm.driverPhone.length !== 10 || assignOfflineDriverMut.isPending}
-                      onClick={() => assignOfflineDriverMut.mutate({
-                        bookingId: offlineBookingResult.bookingId,
-                        driverName: driverForm.driverName,
-                        driverPhone: driverForm.driverPhone,
-                        vehicleNumber: driverForm.vehicleNumber || undefined,
-                        vehicleModel: driverForm.vehicleModel || undefined,
-                        saveAsNewDriver: driverForm.saveAsNewDriver,
-                      })}
-                    >
-                      <Truck className="w-4 h-4" />
-                      {assignOfflineDriverMut.isPending ? "Assigning…" : "Assign Driver & Notify Customer"}
-                    </Button>
-                  </CardContent>
-                </Card>
+                <button onClick={() => { setOfflineBookingResult(null); setDriverForm(defaultDriverForm); setDriverAssignResult(null); }} className="ml-auto opacity-60 hover:opacity-100"><X className="w-4 h-4" /></button>
               </div>
             )}
 
@@ -3511,6 +3413,123 @@ export default function AdminPage() {
                 </Button>
               </CardContent>
             </Card>
+
+            {/* ── Assign Driver ─────────────────────────────────────── */}
+            <Card className="border-blue-100">
+              <CardContent className="p-5 space-y-4">
+                <div className="flex items-center gap-2">
+                  <Truck className="w-4 h-4 text-blue-600" />
+                  <p className="font-semibold text-sm">Assign Driver & Notify Customer</p>
+                </div>
+
+                {/* Booking ID — auto-filled from last created booking */}
+                <div>
+                  <label className="text-xs font-medium mb-1 block">Booking ID *</label>
+                  <Input
+                    type="number"
+                    placeholder="e.g. 142 — auto-filled after creating a booking above"
+                    value={driverForm.bookingId ?? (offlineBookingResult?.bookingId ?? "")}
+                    onChange={e => setDriverForm(f => ({ ...f, bookingId: e.target.value ? Number(e.target.value) : undefined }))}
+                  />
+                  {offlineBookingResult && !driverForm.bookingId && (
+                    <p className="text-[10px] text-blue-600 mt-0.5">Auto-filled: Booking #{offlineBookingResult.bookingId}</p>
+                  )}
+                </div>
+
+                {/* Pick existing driver */}
+                <div>
+                  <label className="text-xs font-medium mb-1 block">Pick Saved Driver (optional — auto-fills fields)</label>
+                  <Select
+                    value={driverForm.selectedDriverId}
+                    onValueChange={(val) => {
+                      const d = (driversList ?? []).find(dr => String(dr.id) === val);
+                      if (d) setDriverForm(f => ({
+                        ...f,
+                        selectedDriverId: val,
+                        driverName: d.name,
+                        driverPhone: d.phone,
+                        vehicleNumber: (d as any).vehicleNumber ?? "",
+                        vehicleModel: (d as any).vehicleModel ?? "",
+                      }));
+                    }}
+                  >
+                    <SelectTrigger className="text-xs"><SelectValue placeholder="Select from saved drivers…" /></SelectTrigger>
+                    <SelectContent>
+                      {(driversList ?? []).filter(d => d.isActive).map(d => (
+                        <SelectItem key={d.id} value={String(d.id)} className="text-xs">
+                          {d.name} · {d.phone}{(d as any).vehicleModel ? ` · ${(d as any).vehicleModel}` : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-medium mb-1 block">Driver Name *</label>
+                    <Input placeholder="e.g. Suresh Kumar" value={driverForm.driverName}
+                      onChange={e => setDriverForm(f => ({ ...f, driverName: e.target.value, selectedDriverId: "" }))} />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium mb-1 block">Driver Phone *</label>
+                    <Input placeholder="10-digit" maxLength={10} value={driverForm.driverPhone}
+                      onChange={e => setDriverForm(f => ({ ...f, driverPhone: e.target.value.replace(/\D/g, ""), selectedDriverId: "" }))} />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium mb-1 block">Vehicle Number</label>
+                    <Input placeholder="e.g. DL 01 AB 1234" value={driverForm.vehicleNumber}
+                      onChange={e => setDriverForm(f => ({ ...f, vehicleNumber: e.target.value.toUpperCase() }))} />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium mb-1 block">Vehicle Model</label>
+                    <Input placeholder="e.g. Swift Dzire" value={driverForm.vehicleModel}
+                      onChange={e => setDriverForm(f => ({ ...f, vehicleModel: e.target.value }))} />
+                  </div>
+                </div>
+
+                <label className="flex items-center gap-2 text-xs cursor-pointer">
+                  <input type="checkbox" checked={driverForm.saveAsNewDriver}
+                    onChange={e => setDriverForm(f => ({ ...f, saveAsNewDriver: e.target.checked }))}
+                    className="rounded" />
+                  Save as new driver in database
+                </label>
+
+                {driverAssignResult && (
+                  <div className={`text-xs px-3 py-2 rounded-lg border ${driverAssignResult.waSent || driverAssignResult.smsSent ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-amber-50 text-amber-700 border-amber-200"}`}>
+                    {driverAssignResult.waSent && "✓ WhatsApp sent to customer with driver details"}
+                    {!driverAssignResult.waSent && driverAssignResult.smsSent && "✓ SMS sent to customer (WhatsApp failed)"}
+                    {!driverAssignResult.waSent && !driverAssignResult.smsSent && `Notification failed — ${driverAssignResult.waError || driverAssignResult.smsError || "unknown"}. Inform customer manually.`}
+                  </div>
+                )}
+
+                <Button
+                  size="sm"
+                  className="gap-1.5 bg-blue-600 hover:bg-blue-700 text-white w-full"
+                  disabled={
+                    !(driverForm.bookingId ?? offlineBookingResult?.bookingId) ||
+                    !driverForm.driverName ||
+                    driverForm.driverPhone.length !== 10 ||
+                    assignOfflineDriverMut.isPending
+                  }
+                  onClick={() => {
+                    const bId = driverForm.bookingId ?? offlineBookingResult?.bookingId;
+                    if (!bId) return;
+                    assignOfflineDriverMut.mutate({
+                      bookingId: bId,
+                      driverName: driverForm.driverName,
+                      driverPhone: driverForm.driverPhone,
+                      vehicleNumber: driverForm.vehicleNumber || undefined,
+                      vehicleModel: driverForm.vehicleModel || undefined,
+                      saveAsNewDriver: driverForm.saveAsNewDriver,
+                    });
+                  }}
+                >
+                  <Truck className="w-4 h-4" />
+                  {assignOfflineDriverMut.isPending ? "Assigning…" : "Assign Driver & Notify Customer"}
+                </Button>
+              </CardContent>
+            </Card>
+
           </TabsContent>
 
           {/* ── Invoices ─────────────────────────────────────────────── */}
