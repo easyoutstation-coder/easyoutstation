@@ -217,6 +217,8 @@ export default function CarsPage() {
 
   const recommendations: { carId: number; reason: string; confidence: number }[] = [];
 
+  const ONE_WAY_MULTIPLIER = 1.25;
+
   const calcFare = (pricePerKm: string, carSeats: number, driverCharges: string) => {
     if (!distanceKm) return null;
     const isHeavy = carSeats > 7;
@@ -224,7 +226,16 @@ export default function CarsPage() {
     if (tripDays > 1) billedKm = Math.max(effectiveKm, tripDays * 250);
     else if (isHeavy) billedKm = Math.max(effectiveKm, 250);
     else billedKm = Math.max(effectiveKm, 80);
-    return Math.round(parseFloat(pricePerKm) * billedKm + parseFloat(driverCharges || "250") * tripDays);
+    const multiplier = tripTypeParam === "one_way" ? ONE_WAY_MULTIPLIER : 1;
+    return Math.round(parseFloat(pricePerKm) * billedKm * multiplier + parseFloat(driverCharges || "250") * tripDays);
+  };
+
+  // Calculates hypothetical one-way fare for savings comparison on round-trip cards
+  const calcFareAsOneWay = (pricePerKm: string, carSeats: number, driverCharges: string) => {
+    if (!distanceKm) return null;
+    const isHeavy = carSeats > 7;
+    const billedKm = isHeavy ? Math.max(distanceKm, 250) : Math.max(distanceKm, 80);
+    return Math.round(parseFloat(pricePerKm) * billedKm * ONE_WAY_MULTIPLIER + parseFloat(driverCharges || "250"));
   };
 
   const billedKmFor = (carSeats: number) => {
@@ -356,9 +367,9 @@ export default function CarsPage() {
                     return (
                       <>
                         Fares from{" "}
-                        <span className="font-bold">₹{(minBilledKm * 12 + DRIVER_CHARGE * tripDays).toLocaleString("en-IN")}</span>
+                        <span className="font-bold">₹{(minBilledKm * 12 * (tripTypeParam === "one_way" ? ONE_WAY_MULTIPLIER : 1) + DRIVER_CHARGE * tripDays).toLocaleString("en-IN")}</span>
                         {" "}to{" "}
-                        <span className="font-bold">₹{(minBilledKm * 22 + DRIVER_CHARGE * tripDays).toLocaleString("en-IN")}</span>
+                        <span className="font-bold">₹{(minBilledKm * 22 * (tripTypeParam === "one_way" ? ONE_WAY_MULTIPLIER : 1) + DRIVER_CHARGE * tripDays).toLocaleString("en-IN")}</span>
                         {tripDays > 1
                           ? <span className="text-blue-500 text-xs ml-1">({tripDays} days · {minBilledKm} km min{minApplies ? " applies" : ""})</span>
                           : <span className="text-blue-500 text-xs ml-1">(min 80 km / 8 hrs for cars · min 250 km for tempo/bus)</span>}
@@ -537,6 +548,14 @@ export default function CarsPage() {
                     ];
                     const urgency = urgencyMessages[carIndex % urgencyMessages.length];
 
+                    const rtSaving = tripTypeParam === "round_trip" && distanceKm > 0
+                      ? (() => {
+                          const ow = calcFareAsOneWay(car.pricePerKm, car.seats, car.driverCharges ?? "250");
+                          const rt = calcFare(car.pricePerKm, car.seats, car.driverCharges ?? "250");
+                          return ow && rt && (ow * 2 - rt) > 0 ? ow * 2 - rt : null;
+                        })()
+                      : null;
+
                     return (
                       <Card
                         key={car.id}
@@ -557,6 +576,11 @@ export default function CarsPage() {
                             <Badge className="bg-blue-500/90 text-white border-0 text-xs flex items-center gap-1 backdrop-blur-sm">
                               <Wind className="w-2.5 h-2.5" /> AC
                             </Badge>
+                            {rtSaving && (
+                              <Badge className="bg-green-600/90 text-white border-0 text-xs backdrop-blur-sm">
+                                Round Trip Saver
+                              </Badge>
+                            )}
                           </div>
                           <div className="absolute top-3 right-3 flex items-center gap-1 bg-white/90 backdrop-blur-sm rounded-full px-2 py-0.5">
                             <Star className="w-3 h-3 text-primary fill-primary" />
@@ -627,10 +651,15 @@ export default function CarsPage() {
                             const bkm = billedKmFor(car.seats);
                             const minApplies = bkm > effectiveKm;
                             const perCarDriver = parseFloat(car.driverCharges ?? "250");
+                            const effectiveRate = tripTypeParam === "one_way"
+                              ? (parseFloat(car.pricePerKm) * ONE_WAY_MULTIPLIER).toFixed(2)
+                              : car.pricePerKm;
                             return (
                               <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-[11px] mb-3 bg-slate-50 rounded-lg px-2.5 py-1.5">
                                 <span className="text-slate-400">
-                                  ₹{car.pricePerKm}/km × {bkm} km{minApplies ? (tripDays > 1 ? ` (min ${tripDays * 250} km)` : car.seats > 7 ? " (min 250 km)" : " (min 80 km/8 hrs)") : ""} + ₹{(perCarDriver * tripDays).toLocaleString("en-IN")} driver
+                                  ₹{effectiveRate}/km × {bkm} km{minApplies ? (tripDays > 1 ? ` (min ${tripDays * 250} km)` : car.seats > 7 ? " (min 250 km)" : " (min 80 km/8 hrs)") : ""} + ₹{(perCarDriver * tripDays).toLocaleString("en-IN")} driver
+                                  {tripTypeParam === "one_way" && <span className="text-slate-300"> · one-way, driver returns empty</span>}
+                                  {rtSaving && <span className="text-green-600 font-medium"> · save ₹{rtSaving.toLocaleString("en-IN")} vs two one-ways</span>}
                                 </span>
                                 <span className="text-green-700 font-semibold">₹{Math.max(100, Math.round(applyDiscount(calcFare(car.pricePerKm, car.seats, car.driverCharges ?? "250")!) * 0.1)).toLocaleString("en-IN")} advance</span>
                               </div>

@@ -178,7 +178,7 @@ export default function HeroSection() {
   const [returnOpen, setReturnOpen] = useState(false);
   const [pickupTime, setPickupTime] = useState("08:00");
   const [returnTime, setReturnTime] = useState("08:00");
-  const [tripType, setTripType] = useState("one_way");
+  const [tripType, setTripType] = useState("round_trip");
   const [sameDayReturn, setSameDayReturn] = useState(false);
   const [rentalHours, setRentalHours] = useState(RENTAL_MIN_HOURS);
 
