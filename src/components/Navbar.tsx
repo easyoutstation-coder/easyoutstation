@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -15,25 +15,14 @@ const navLinks = [
 ];
 
 export default function Navbar() {
-  const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 30);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
   return (
     <header className="fixed top-0 inset-x-0 z-50 flex justify-center px-4 pointer-events-none" style={{ paddingTop: 'max(1rem, env(safe-area-inset-top))' }}>
-      <div className={`pointer-events-auto flex items-center gap-2 px-3 py-2 rounded-full w-full max-w-5xl transition-all duration-300 ${
-        scrolled
-          ? "bg-[#1e3a5f]/88 backdrop-blur-md shadow-[0_16px_48px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.13),inset_0_-1px_0_rgba(0,0,0,0.15)]"
-          : "bg-[#1e3a5f] shadow-[0_8px_32px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.10),inset_0_-1px_0_rgba(0,0,0,0.08)]"
-      }`}>
+      <div className="pointer-events-auto flex items-center gap-2 px-3 py-2 rounded-full w-full max-w-5xl bg-[#1e3a5f] shadow-[0_8px_32px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.10),inset_0_-1px_0_rgba(0,0,0,0.08)]">
 
         {/* Logo — unchanged */}
         <Link to="/" className="flex items-center gap-2 shrink-0 pl-1 group">
