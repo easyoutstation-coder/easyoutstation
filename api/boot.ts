@@ -287,6 +287,15 @@ async function runStartupMigrations() {
       ));
     } catch { /* already exists */ }
 
+    // Tata Hexa
+    try {
+      await db.execute(sql.raw(
+        `INSERT INTO cars (name, brand, model, category, seats, pricePerKm, driverCharges, imageUrl, description, fuelType, transmission, rating, reviewCount, isAvailable, isPopular)
+         SELECT 'Tata Hexa','Tata','Hexa','muv',7,19.00,250.00,'/cars/tata-hexa.jpg','Powerful 6+1 seater MUV with bold design, VARICOR diesel engine, and captain seats. Ideal for family outstation trips. Toll, parking & state taxes at actuals.','diesel','manual',4.65,28,TRUE,FALSE
+         WHERE NOT EXISTS (SELECT 1 FROM cars WHERE name = 'Tata Hexa')`
+      ));
+    } catch { /* already exists */ }
+
     // Per-vehicle driver assignments for multi-vehicle offline bookings
     try {
       await db.execute(sql.raw(`
