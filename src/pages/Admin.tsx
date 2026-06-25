@@ -477,8 +477,13 @@ export default function AdminPage() {
       location: bk.pickupAddress || "",
       bookingType: bk.tripType === "rental" ? "Local Package" : bk.tripType === "round_trip" ? "Round Trip" : "One Way",
     }));
+    // 1. Try Razorpay — find a paid order for this booking
+    const rzpEntry = rzpPayments?.find(p => String(p.bookingId) === bkId && p.status === "paid");
+    // 2. Fall back to offline booking specialRequests
     const advanceMatch = (bk as any).specialRequests?.match(/Advance paid: ₹(\d+(?:\.\d+)?)/);
-    const autoAdvance = advanceMatch ? advanceMatch[1] : "";
+    const autoAdvance = rzpEntry
+      ? String(rzpEntry.amountPaid)
+      : advanceMatch ? advanceMatch[1] : "";
     setInvoiceForm(f => ({ ...f, advancePaid: autoAdvance }));
     setInvoiceLineItems([{
       vehicle: `${bk.fromCity} to ${bk.toCity}`,
