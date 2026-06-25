@@ -593,6 +593,7 @@ export default function AdminPage() {
 
   // Payments
   const { data: paymentsList, refetch: refetchPayments } = trpc.admin.getPayments.useQuery(undefined, { enabled: isSuperAdmin });
+  const { data: rzpPayments, refetch: refetchRzp, isFetching: rzpFetching } = trpc.admin.getRazorpayPayments.useQuery(undefined, { enabled: isSuperAdmin, staleTime: 60_000 });
   const processRefund = trpc.admin.processRefund.useMutation({
     onSuccess: (res) => {
       refetchPayments();
@@ -895,6 +896,7 @@ export default function AdminPage() {
             <TabsTrigger value="customers" className="gap-1.5 shrink-0"><Users className="w-4 h-4" />Customers</TabsTrigger>
             {canManageContent && <TabsTrigger value="content" className="gap-1.5 shrink-0"><FileText className="w-4 h-4" />Content</TabsTrigger>}
             {isSuperAdmin && <TabsTrigger value="payments" className="gap-1.5 shrink-0"><IndianRupee className="w-4 h-4" />Payments</TabsTrigger>}
+            {isSuperAdmin && <TabsTrigger value="razorpay" className="gap-1.5 shrink-0"><IndianRupee className="w-4 h-4" />Razorpay</TabsTrigger>}
             {isSuperAdmin && <TabsTrigger value="financials" className="gap-1.5 shrink-0"><TrendingUp className="w-4 h-4" />Financials</TabsTrigger>}
             {isSuperAdmin && <TabsTrigger value="referral" className="gap-1.5 shrink-0"><Gift className="w-4 h-4" />Referral</TabsTrigger>}
             <TabsTrigger value="corporate" className="gap-1.5 shrink-0">
@@ -2129,6 +2131,93 @@ export default function AdminPage() {
                       </CardContent>
                     </Card>
                   ))}
+                </div>
+              )}
+            </TabsContent>
+          )}
+
+          {/* ── Razorpay Live Log (super_admin only) ──────────────── */}
+          {isSuperAdmin && (
+            <TabsContent value="razorpay" className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold">Razorpay Payments</h2>
+                  <p className="text-sm text-muted-foreground">
+                    {rzpPayments?.filter(p => p.status === "paid").length ?? 0} paid ·{" "}
+                    {rzpPayments?.filter(p => p.status === "created" || p.status === "attempted").length ?? 0} pending ·{" "}
+                    ₹{(rzpPayments?.filter(p => p.status === "paid").reduce((s, p) => s + p.amountPaid, 0) ?? 0).toLocaleString("en-IN")} received
+                  </p>
+                </div>
+                <button onClick={() => refetchRzp()} className="text-muted-foreground hover:text-foreground" title="Refresh">
+                  <RefreshCw className={`w-4 h-4 ${rzpFetching ? "animate-spin" : ""}`} />
+                </button>
+              </div>
+
+              {!rzpPayments ? (
+                <Card><CardContent className="p-10 text-center text-muted-foreground text-sm">{rzpFetching ? "Loading…" : "No data"}</CardContent></Card>
+              ) : rzpPayments.length === 0 ? (
+                <Card><CardContent className="p-10 text-center text-muted-foreground text-sm">No Razorpay orders found.</CardContent></Card>
+              ) : (
+                <div className="overflow-x-auto rounded-xl border border-slate-200">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-600">
+                        <th className="px-4 py-3 text-left">Date & Time</th>
+                        <th className="px-4 py-3 text-left">Order / Payment ID</th>
+                        <th className="px-4 py-3 text-left">Booking #</th>
+                        <th className="px-4 py-3 text-left">Contact</th>
+                        <th className="px-4 py-3 text-left">Method</th>
+                        <th className="px-4 py-3 text-right">Amount</th>
+                        <th className="px-4 py-3 text-center">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rzpPayments.map((p, i) => {
+                        const isPaid = p.status === "paid";
+                        const isFailed = p.paymentStatus === "failed";
+                        const isPending = !isPaid && !isFailed;
+                        return (
+                          <tr key={p.orderId ?? i} className={`border-b border-slate-100 last:border-0 ${isPaid ? "bg-white" : isFailed ? "bg-red-50" : "bg-amber-50"}`}>
+                            <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">
+                              {new Date(p.createdAt).toLocaleString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                            </td>
+                            <td className="px-4 py-3">
+                              <div className="font-mono text-[10px] text-slate-500">{p.orderId ?? "—"}</div>
+                              {p.paymentId && <div className="font-mono text-[10px] text-emerald-700">{p.paymentId}</div>}
+                            </td>
+                            <td className="px-4 py-3">
+                              {p.bookingId ? <span className="font-semibold text-blue-700">#{p.bookingId}</span> : <span className="text-slate-300">—</span>}
+                            </td>
+                            <td className="px-4 py-3 text-xs">
+                              {p.contact && <div className="text-slate-700">{p.contact}</div>}
+                              {p.email && <div className="text-slate-400 text-[10px]">{p.email}</div>}
+                              {p.vpa && <div className="text-slate-400 text-[10px]">{p.vpa}</div>}
+                            </td>
+                            <td className="px-4 py-3 text-xs capitalize text-slate-600">
+                              {p.paymentMethod ?? "—"}
+                              {p.bank && <span className="text-slate-400"> · {p.bank}</span>}
+                            </td>
+                            <td className="px-4 py-3 text-right font-semibold">
+                              <span className={isPaid ? "text-emerald-700" : isFailed ? "text-red-500" : "text-amber-700"}>
+                                ₹{p.amountPaid > 0 ? p.amountPaid.toLocaleString("en-IN") : p.amount.toLocaleString("en-IN")}
+                              </span>
+                              {p.amountDue > 0 && p.amountPaid > 0 && (
+                                <div className="text-[10px] text-slate-400">due ₹{p.amountDue.toLocaleString("en-IN")}</div>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              {isPaid && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Paid ✓</span>}
+                              {isFailed && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700">Failed</span>}
+                              {isPending && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">Pending</span>}
+                              {isFailed && p.errorDescription && (
+                                <div className="text-[9px] text-red-400 mt-0.5 max-w-[120px] mx-auto">{p.errorDescription}</div>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </TabsContent>

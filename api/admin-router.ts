@@ -2159,4 +2159,75 @@ Thank you for choosing EasyOutstation.`;
         days,
       };
     }),
+
+  getRazorpayPayments: superAdminQuery.query(async () => {
+    const keyId = process.env.RAZORPAY_KEY_ID;
+    const keySecret = process.env.RAZORPAY_SECRET || process.env.RAZORPAY_KEY_SECRET;
+    if (!keyId || !keySecret) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Razorpay not configured" });
+
+    const auth = Buffer.from(`${keyId}:${keySecret}`).toString("base64");
+    const headers = { Authorization: `Basic ${auth}`, "Content-Type": "application/json" };
+
+    const [ordersRes, paymentsRes] = await Promise.all([
+      fetch("https://api.razorpay.com/v1/orders?count=100&expand[]=payments", { headers }),
+      fetch("https://api.razorpay.com/v1/payments?count=100", { headers }),
+    ]);
+
+    const [ordersData, paymentsData] = await Promise.all([
+      ordersRes.json() as Promise<any>,
+      paymentsRes.json() as Promise<any>,
+    ]);
+
+    // Build payment map for quick lookup
+    const paymentMap = new Map<string, any>();
+    for (const p of (paymentsData.items ?? [])) {
+      paymentMap.set(p.order_id, p);
+    }
+
+    const orders = (ordersData.items ?? []).map((o: any) => {
+      const payment = paymentMap.get(o.id) ?? o.payments?.items?.[0] ?? null;
+      const bookingId = o.receipt?.replace("booking_", "") ?? o.notes?.bookingId ?? null;
+      return {
+        orderId: o.id,
+        bookingId,
+        amount: o.amount / 100,
+        amountPaid: o.amount_paid / 100,
+        amountDue: o.amount_due / 100,
+        status: o.status as "created" | "attempted" | "paid",
+        createdAt: o.created_at * 1000,
+        paymentId: payment?.id ?? null,
+        paymentMethod: payment?.method ?? null,
+        paymentStatus: payment?.status ?? null,
+        contact: payment?.contact ?? null,
+        email: payment?.email ?? null,
+        vpa: payment?.vpa ?? null,
+        bank: payment?.bank ?? null,
+        errorDescription: payment?.error_description ?? null,
+      };
+    });
+
+    // Also include any standalone payments not linked to orders in our list
+    const linkedOrderIds = new Set(orders.map((o: any) => o.orderId));
+    const standalonePayments = (paymentsData.items ?? [])
+      .filter((p: any) => !linkedOrderIds.has(p.order_id))
+      .map((p: any) => ({
+        orderId: p.order_id,
+        bookingId: p.notes?.bookingId ?? null,
+        amount: p.amount / 100,
+        amountPaid: p.captured ? p.amount / 100 : 0,
+        amountDue: p.captured ? 0 : p.amount / 100,
+        status: p.captured ? "paid" : p.status,
+        createdAt: p.created_at * 1000,
+        paymentId: p.id,
+        paymentMethod: p.method,
+        paymentStatus: p.status,
+        contact: p.contact,
+        email: p.email,
+        vpa: p.vpa,
+        bank: p.bank,
+        errorDescription: p.error_description,
+      }));
+
+    return [...orders, ...standalonePayments].sort((a, b) => b.createdAt - a.createdAt);
+  }),
 });
