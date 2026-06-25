@@ -258,6 +258,8 @@ export const invoiceRouter = createRouter({
         tripType: bookings.tripType,
         totalPrice: bookings.totalPrice,
         pickupAddress: bookings.pickupAddress,
+        specialRequests: bookings.specialRequests,
+        razorpayPaymentId: bookings.razorpayPaymentId,
       })
       .from(bookings)
       .orderBy(desc(bookings.createdAt))
