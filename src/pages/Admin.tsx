@@ -397,7 +397,7 @@ export default function AdminPage() {
     bookingId: "",
     customerName: "", customerPhone: "", customerEmail: "",
     serviceDate: new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }),
-    duration: "", location: "", bookingType: "", notes: "",
+    duration: "", location: "", bookingType: "", advancePaid: "", notes: "",
   };
   const [invoiceForm, setInvoiceForm] = useState(defaultInvoiceForm);
   const [invoiceLineItems, setInvoiceLineItems] = useState<InvoiceLineItem[]>([{ vehicle: "", description: "", amount: 0 }]);
@@ -416,6 +416,7 @@ export default function AdminPage() {
     bookingType: invoiceForm.bookingType || undefined,
     lineItems: invoiceLineItems.filter(it => it.vehicle),
     totalAmount: invoiceTotal,
+    advancePaid: parseFloat(invoiceForm.advancePaid) || undefined,
     notes: invoiceForm.notes || undefined,
   };
 
@@ -476,6 +477,9 @@ export default function AdminPage() {
       location: bk.pickupAddress || "",
       bookingType: bk.tripType === "rental" ? "Local Package" : bk.tripType === "round_trip" ? "Round Trip" : "One Way",
     }));
+    const advanceMatch = (bk as any).specialRequests?.match(/Advance paid: ₹(\d+(?:\.\d+)?)/);
+    const autoAdvance = advanceMatch ? advanceMatch[1] : "";
+    setInvoiceForm(f => ({ ...f, advancePaid: autoAdvance }));
     setInvoiceLineItems([{
       vehicle: `${bk.fromCity} to ${bk.toCity}`,
       description: "",
@@ -4117,12 +4121,24 @@ export default function AdminPage() {
                     </button>
                   </div>
 
-                  {/* Total display */}
-                  <div className="flex justify-end">
-                    <div className="bg-blue-600 text-white px-4 py-2 rounded flex gap-4 items-center">
+                  {/* Total + Advance Paid + Balance Due */}
+                  <div className="flex flex-col items-end gap-1">
+                    <div className="bg-blue-600 text-white px-4 py-2 rounded flex gap-4 items-center min-w-[240px]">
                       <span className="text-sm font-semibold">Total Amount</span>
-                      <span className="text-base font-bold">₹{invoiceTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                      <span className="text-base font-bold ml-auto">₹{invoiceTotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
                     </div>
+                    <div className="flex items-center gap-2 min-w-[240px]">
+                      <label className="text-xs font-medium text-slate-600 whitespace-nowrap">Advance Paid (₹)</label>
+                      <Input type="number" placeholder="0" className="h-8 text-sm"
+                        value={invoiceForm.advancePaid}
+                        onChange={e => setInvoiceForm(f => ({ ...f, advancePaid: e.target.value }))} />
+                    </div>
+                    {parseFloat(invoiceForm.advancePaid) > 0 && (
+                      <div className={`px-4 py-2 rounded flex gap-4 items-center min-w-[240px] ${Math.max(0, invoiceTotal - parseFloat(invoiceForm.advancePaid)) === 0 ? "bg-green-700" : "bg-orange-600"} text-white`}>
+                        <span className="text-sm font-semibold">{Math.max(0, invoiceTotal - parseFloat(invoiceForm.advancePaid)) === 0 ? "✓ Fully Paid" : "Balance Due"}</span>
+                        <span className="text-base font-bold ml-auto">₹{Math.max(0, invoiceTotal - parseFloat(invoiceForm.advancePaid)).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Notes */}

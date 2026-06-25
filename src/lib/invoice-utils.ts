@@ -14,6 +14,7 @@ export interface InvoiceData {
   bookingType?: string;
   lineItems: InvoiceLineItem[];
   totalAmount: number;
+  advancePaid?: number;
   notes?: string;
 }
 

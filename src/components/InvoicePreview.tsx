@@ -28,7 +28,9 @@ export default function InvoicePreview({ data }: { data: InvoiceData }) {
       .catch(() => {});
   }, []);
 
-  const amountInWords = toIndianWords(data.totalAmount);
+  const advancePaid = data.advancePaid ?? 0;
+  const balanceDue = Math.max(0, data.totalAmount - advancePaid);
+  const amountInWords = toIndianWords(advancePaid > 0 ? balanceDue : data.totalAmount);
 
   return (
     <div style={{ fontFamily: "Arial, Helvetica, sans-serif", background: "#fff", maxWidth: 794, margin: "0 auto", border: "1px solid #ddd", fontSize: 12, color: "#1a1a1a" }}>
@@ -106,18 +108,33 @@ export default function InvoicePreview({ data }: { data: InvoiceData }) {
           </tbody>
         </table>
 
-        {/* Total row */}
-        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 0 }}>
-          <div style={{ background: BLUE_TOTAL, padding: "10px 16px", display: "flex", gap: 60, alignItems: "center", minWidth: 280 }}>
+        {/* Total / Advance / Balance rows */}
+        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 0, flexDirection: "column", alignItems: "flex-end", gap: 0 }}>
+          <div style={{ background: BLUE_TOTAL, padding: "10px 16px", display: "flex", gap: 60, alignItems: "center", minWidth: 300 }}>
             <span style={{ color: "#fff", fontWeight: 700, fontSize: 13 }}>Total Amount</span>
             <span style={{ color: "#fff", fontWeight: 800, fontSize: 15, marginLeft: "auto" }}>₹ {Number(data.totalAmount).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
           </div>
+          {advancePaid > 0 && (
+            <div style={{ background: "#166534", padding: "8px 16px", display: "flex", gap: 60, alignItems: "center", minWidth: 300 }}>
+              <span style={{ color: "#bbf7d0", fontWeight: 600, fontSize: 12 }}>Advance Paid</span>
+              <span style={{ color: "#bbf7d0", fontWeight: 700, fontSize: 13, marginLeft: "auto" }}>₹ {Number(advancePaid).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+            </div>
+          )}
+          {advancePaid > 0 && (
+            <div style={{ background: balanceDue === 0 ? "#166534" : ORANGE, padding: "9px 16px", display: "flex", gap: 60, alignItems: "center", minWidth: 300 }}>
+              <span style={{ color: "#fff", fontWeight: 700, fontSize: 13 }}>{balanceDue === 0 ? "✓ Fully Paid" : "Balance Due"}</span>
+              <span style={{ color: "#fff", fontWeight: 800, fontSize: 15, marginLeft: "auto" }}>₹ {Number(balanceDue).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+            </div>
+          )}
         </div>
       </div>
 
       {/* ── Amount in words + disclaimer ── */}
       <div style={{ margin: "16px 28px 0" }}>
-        <p style={{ fontSize: 11, fontWeight: 700, margin: 0 }}>Amount in words: <span style={{ fontWeight: 400 }}>{amountInWords}</span></p>
+        <p style={{ fontSize: 11, fontWeight: 700, margin: 0 }}>
+          {advancePaid > 0 ? "Balance due in words: " : "Amount in words: "}
+          <span style={{ fontWeight: 400 }}>{amountInWords}</span>
+        </p>
         <p style={{ fontSize: 10, color: "#64748b", margin: "4px 0 0" }}>Total is inclusive of applicable taxes. Toll, parking and state permits, where applicable, are charged at actuals. Usage beyond 12 hours is charged at ₹ 250/hour, subject to approval.</p>
         {data.notes && <p style={{ fontSize: 10.5, color: "#334155", margin: "6px 0 0", fontStyle: "italic" }}>{data.notes}</p>}
       </div>
