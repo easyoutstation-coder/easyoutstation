@@ -448,6 +448,8 @@ export default function BookingPage() {
       event: 'booking_started',
       route: `${effectiveFromCity}-${effectiveToCity}`,
       cab_type: cabTypeMap[effectiveCar?.category ?? ''] ?? 'Sedan',
+      trip_type: tripType,
+      vehicle_name: effectiveCar?.name ?? '',
     });
   };
 

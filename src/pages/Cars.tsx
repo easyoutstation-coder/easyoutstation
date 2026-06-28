@@ -324,8 +324,12 @@ export default function CarsPage() {
       origin: fromCity || 'Delhi',
       destination: toCity,
       travel_date: dateParam,
+      return_date: returnDateParam || null,
+      trip_type: tripTypeParam,
       quoted_fare: applyDiscount(fare),
       cab_type_shown: cabTypeMap[cheapestCar.category] ?? 'Sedan',
+      distance_km: distanceKm || undefined,
+      trip_duration_days: tripDays > 1 ? tripDays : undefined,
     });
   }, [cars, distanceKm]); // eslint-disable-line react-hooks/exhaustive-deps
 
