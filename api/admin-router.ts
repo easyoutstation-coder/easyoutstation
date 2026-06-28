@@ -1436,7 +1436,24 @@ Thank you for choosing EasyOutstation.`;
       const phoneFilter = input?.phone ? like(whatsappLogs.phone, `%${input.phone.replace(/\D/g, "").slice(-10)}%`) : undefined;
       const where = phoneFilter ? phoneFilter : undefined;
       const [logs, [{ total }], inboundPhones] = await Promise.all([
-        db.select().from(whatsappLogs).where(where).orderBy(desc(whatsappLogs.createdAt)).limit(pageSize).offset(offset),
+        db.select({
+          id: whatsappLogs.id,
+          bookingId: whatsappLogs.bookingId,
+          userId: whatsappLogs.userId,
+          direction: whatsappLogs.direction,
+          waMessageId: whatsappLogs.waMessageId,
+          templateName: whatsappLogs.templateName,
+          phone: whatsappLogs.phone,
+          messageBody: whatsappLogs.messageBody,
+          waStatus: whatsappLogs.waStatus,
+          failureReason: whatsappLogs.failureReason,
+          sentAt: whatsappLogs.sentAt,
+          deliveredAt: whatsappLogs.deliveredAt,
+          readAt: whatsappLogs.readAt,
+          fallbackSent: whatsappLogs.fallbackSent,
+          createdAt: whatsappLogs.createdAt,
+          customerName: bookings.customerName,
+        }).from(whatsappLogs).leftJoin(bookings, eq(whatsappLogs.bookingId, bookings.id)).where(where).orderBy(desc(whatsappLogs.createdAt)).limit(pageSize).offset(offset),
         db.select({ total: sql<number>`COUNT(*)` }).from(whatsappLogs).where(where),
         db.selectDistinct({ phone: whatsappLogs.phone }).from(whatsappLogs).where(sql`direction = 'inbound'`),
       ]);

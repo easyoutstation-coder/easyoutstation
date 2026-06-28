@@ -3183,6 +3183,7 @@ export default function AdminPage() {
                     <tr className="border-b bg-slate-50 text-left text-xs text-muted-foreground uppercase tracking-wide">
                       <th className="px-4 py-3">Date/Time</th>
                       <th className="px-4 py-3">Phone</th>
+                      <th className="px-4 py-3">Customer</th>
                       <th className="px-4 py-3">Dir</th>
                       <th className="px-4 py-3">Message</th>
                       <th className="px-4 py-3">Status</th>
@@ -3192,10 +3193,10 @@ export default function AdminPage() {
                   </thead>
                   <tbody>
                     {!waLogsData && (
-                      <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Loading…</td></tr>
+                      <tr><td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">Loading…</td></tr>
                     )}
                     {waLogsData?.logs.length === 0 && (
-                      <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">No messages found.</td></tr>
+                      <tr><td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">No messages found.</td></tr>
                     )}
                     {waLogsData?.logs.map(log => (
                       <>
@@ -3216,6 +3217,9 @@ export default function AdminPage() {
                           >
                             {log.phone}
                           </button>
+                        </td>
+                        <td className="px-4 py-3 text-xs font-medium text-slate-700">
+                          {(log as any).customerName ?? <span className="text-muted-foreground">—</span>}
                         </td>
                         <td className="px-4 py-3">
                           <Badge className={log.direction === "outbound" ? "bg-blue-100 text-blue-700" : "bg-purple-100 text-purple-700"}>
@@ -3266,7 +3270,7 @@ export default function AdminPage() {
                       </tr>
                       {expandedLogId === log.id && log.messageBody && (
                         <tr key={`${log.id}-expanded`} className="border-b bg-slate-50">
-                          <td colSpan={7} className="px-6 py-3">
+                          <td colSpan={8} className="px-6 py-3">
                             <div className="text-xs text-slate-700 whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto font-mono bg-white border rounded-lg p-3">
                               {log.messageBody}
                             </div>
