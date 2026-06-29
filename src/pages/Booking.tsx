@@ -904,6 +904,7 @@ export default function BookingPage() {
                         {pickupPincode && (
                           <p className="text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-1.5 flex items-center gap-1">
                             <Check className="w-3 h-3" /> Pincode auto-detected: <strong>{pickupPincode}</strong>
+                            <button type="button" onClick={() => setPickupPincode("")} className="ml-auto text-green-500 hover:text-red-500 transition-colors" title="Clear and enter manually">✕</button>
                           </p>
                         )}
                         {!pickupPincode && pickupAddress && (
@@ -935,6 +936,7 @@ export default function BookingPage() {
                           {dropPincode && (
                             <p className="text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-1.5 flex items-center gap-1">
                               <Check className="w-3 h-3" /> Pincode auto-detected: <strong>{dropPincode}</strong>
+                              <button type="button" onClick={() => setDropPincode("")} className="ml-auto text-green-500 hover:text-red-500 transition-colors" title="Clear and enter manually">✕</button>
                             </p>
                           )}
                           {!dropPincode && dropAddress && (

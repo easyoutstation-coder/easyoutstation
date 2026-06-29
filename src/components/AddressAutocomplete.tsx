@@ -63,10 +63,11 @@ export default function AddressAutocomplete({ value, onChange, placeholder }: Ad
         const lng = place.geometry.location.lng();
         const address = place.formatted_address || place.name || "";
 
-        // Extract pincode from address_components
-        const pincode = place.address_components
+        // Extract pincode — only accept valid 6-digit Indian pincodes
+        const rawPincode = place.address_components
           ?.find((c: any) => c.types.includes("postal_code"))
           ?.long_name || "";
+        const pincode = /^\d{6}$/.test(rawPincode) ? rawPincode : "";
 
         setInputValue(address);
         onChange(address, pincode, lat, lng);
