@@ -339,6 +339,108 @@ app.get("/api/webhooks/whatsapp", async (c) => {
   return c.json({ error: "Forbidden" }, 403);
 });
 
+app.post("/api/webhooks/razorpay", async (c) => {
+  const rawBody = await c.req.text();
+  const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+  if (webhookSecret) {
+    const { createHmac } = await import("node:crypto");
+    const sig = c.req.header("x-razorpay-signature") ?? "";
+    const expected = createHmac("sha256", webhookSecret).update(rawBody).digest("hex");
+    if (sig !== expected) {
+      console.warn("[RZP Webhook] Invalid signature — rejected");
+      return c.json({ error: "Forbidden" }, 403);
+    }
+  }
+
+  try {
+    const payload = JSON.parse(rawBody);
+    const event = payload.event as string;
+
+    if (event === "payment.captured") {
+      const payment = payload.payload?.payment?.entity;
+      if (!payment) return c.json({ status: "ok" });
+
+      const orderId = payment.order_id as string;
+      const paymentId = payment.id as string;
+
+      // Fetch the order to get the receipt (booking_X)
+      const rpKeyId = process.env.RAZORPAY_KEY_ID || "";
+      const rpSecret = process.env.RAZORPAY_SECRET || process.env.RAZORPAY_KEY_SECRET || "";
+      const auth = Buffer.from(`${rpKeyId}:${rpSecret}`).toString("base64");
+
+      const orderRes = await fetch(`https://api.razorpay.com/v1/orders/${orderId}`, {
+        headers: { Authorization: `Basic ${auth}` },
+      });
+      if (!orderRes.ok) return c.json({ status: "ok" });
+      const order = await orderRes.json() as any;
+
+      const receipt: string = order.receipt ?? order.notes?.bookingId ? `booking_${order.notes.bookingId}` : "";
+      const bookingIdStr = receipt.replace("booking_", "");
+      const bookingId = parseInt(bookingIdStr, 10);
+      if (!bookingId || isNaN(bookingId)) return c.json({ status: "ok" });
+
+      const { getDb } = await import("./queries/connection");
+      const { bookings, users, cars } = await import("@db/schema");
+      const { eq } = await import("drizzle-orm");
+      const { sendBookingEmails, sendBookingSms } = await import("./lib/notifications");
+      const { logBookingEvent } = await import("./lib/bookingEvents");
+
+      const db = getDb();
+      const [booking] = await db.select().from(bookings).where(eq(bookings.id, bookingId)).limit(1);
+      if (!booking) return c.json({ status: "ok" });
+
+      // Skip if already confirmed (verifyPayment already ran)
+      if (booking.paymentStatus === "paid") return c.json({ status: "ok" });
+
+      await db.update(bookings)
+        .set({ paymentStatus: "paid", status: "confirmed", razorpayPaymentId: paymentId })
+        .where(eq(bookings.id, bookingId));
+      logBookingEvent(bookingId, "payment_received", { paymentId, source: "webhook" }).catch(() => {});
+
+      // Resolve contact from users table if missing
+      let bk = { ...booking } as any;
+      if ((!bk.customerPhone || !bk.customerEmail) && bk.userId) {
+        const [u] = await db.select({ phone: users.phone, email: users.email }).from(users).where(eq(users.id, bk.userId)).limit(1);
+        if (!bk.customerPhone) bk.customerPhone = u?.phone ?? null;
+        if (!bk.customerEmail) bk.customerEmail = u?.email ?? null;
+      }
+
+      const fmt = (d: Date | string | null) => d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : undefined;
+      const pickupDateStr = fmt(bk.pickupDate) ?? String(bk.pickupDate);
+      const returnDateStr = bk.returnDate ? fmt(bk.returnDate) : undefined;
+      const price = parseFloat(bk.totalPrice);
+
+      try {
+        await sendBookingEmails({
+          bookingId: bk.id, customerName: bk.customerName, customerEmail: bk.customerEmail ?? undefined,
+          customerPhone: bk.customerPhone ?? undefined, fromCity: bk.fromCity, toCity: bk.toCity,
+          pickupDate: pickupDateStr, returnDate: returnDateStr, returnTime: bk.returnTime ?? undefined,
+          totalKm: bk.totalKm, totalPrice: price, tripType: bk.tripType,
+          passengerCount: bk.passengerCount ?? 1, pickupAddress: bk.pickupAddress ?? undefined,
+          specialRequests: bk.specialRequests ?? undefined,
+        });
+      } catch (e) { console.error("[RZP Webhook] Email failed:", e); }
+
+      if (bk.customerPhone) {
+        try {
+          let carName = "Car";
+          if (bk.carId) {
+            const [car] = await db.select({ name: cars.name }).from(cars).where(eq(cars.id, bk.carId)).limit(1);
+            if (car) carName = car.name;
+          }
+          await sendBookingSms(bk.customerPhone, bk.id, bk.fromCity, bk.toCity, pickupDateStr, price, "confirmation", returnDateStr, bk.returnTime ?? undefined, bk.carId ?? undefined, bk.totalKm ?? undefined, bk.customerName, carName);
+        } catch (e) { console.error("[RZP Webhook] SMS failed:", e); }
+      }
+
+      console.log(`[RZP Webhook] Booking #${bookingId} confirmed via webhook — payment ${paymentId}`);
+    }
+  } catch (e) {
+    console.error("[RZP Webhook] Processing error:", e);
+  }
+
+  return c.json({ status: "ok" });
+});
+
 app.post("/api/webhooks/whatsapp", async (c) => {
   const rawBody = await c.req.text();
   const appSecret = process.env.WHATSAPP_APP_SECRET;

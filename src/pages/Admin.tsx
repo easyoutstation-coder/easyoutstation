@@ -1588,6 +1588,23 @@ export default function AdminPage() {
                               </Button>
                             )}
 
+                            {/* Refund — super admin only, not already refunded */}
+                            {isSuperAdmin && b.paymentStatus !== "refunded" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-8 text-xs gap-1 border-orange-200 text-orange-600 hover:bg-orange-50"
+                                disabled={processRefund.isPending}
+                                onClick={() => {
+                                  if (confirm(`Refund advance for booking #${b.id} (${b.customerName})? This will trigger a Razorpay refund and notify the customer.`)) {
+                                    processRefund.mutate({ bookingId: Number(b.id) });
+                                  }
+                                }}
+                              >
+                                <IndianRupee className="w-3 h-3" /> Refund
+                              </Button>
+                            )}
+
                             {/* Cancel — only if not already cancelled */}
                             {!isCancelled && (
                               <Button

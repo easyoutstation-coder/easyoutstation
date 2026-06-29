@@ -741,21 +741,46 @@ Thank you for choosing EasyOutstation.`;
       const db = getDb();
       const booking = await db.query.bookings.findFirst({ where: eq(bookings.id, input.bookingId) });
       if (!booking) throw new TRPCError({ code: "NOT_FOUND" });
-      if (booking.paymentStatus !== "paid") throw new TRPCError({ code: "BAD_REQUEST", message: "Booking is not in paid status" });
+      if (booking.paymentStatus === "refunded") throw new TRPCError({ code: "BAD_REQUEST", message: "Already refunded" });
+
+      const rpKeyId = process.env.RAZORPAY_KEY_ID || "";
+      const rpSecret = process.env.RAZORPAY_SECRET || process.env.RAZORPAY_KEY_SECRET || "";
+      const auth = Buffer.from(`${rpKeyId}:${rpSecret}`).toString("base64");
+
+      // Resolve payment ID — use stored one or look it up via Razorpay order receipt
+      let paymentId = booking.razorpayPaymentId ?? null;
+      if (!paymentId && rpKeyId && rpSecret) {
+        try {
+          const ordersRes = await fetch(
+            `https://api.razorpay.com/v1/orders?receipt=booking_${booking.id}&count=5`,
+            { headers: { Authorization: `Basic ${auth}` } },
+          );
+          if (ordersRes.ok) {
+            const ordersData = await ordersRes.json() as any;
+            const order = (ordersData.items as any[])?.find((o: any) => o.status === "paid");
+            if (order) {
+              const pmtsRes = await fetch(
+                `https://api.razorpay.com/v1/orders/${order.id}/payments`,
+                { headers: { Authorization: `Basic ${auth}` } },
+              );
+              if (pmtsRes.ok) {
+                const pmtsData = await pmtsRes.json() as any;
+                const captured = (pmtsData.items as any[])?.find((p: any) => p.status === "captured");
+                if (captured) paymentId = captured.id;
+              }
+            }
+          }
+        } catch (e) { console.error("[processRefund] Razorpay lookup failed:", e); }
+      }
 
       // Advance = 10% of total, minimum ₹100
       const totalPrice = parseFloat(booking.totalPrice);
       const refundRupees = Math.max(100, Math.round(totalPrice * 0.1));
       const refundPaise = refundRupees * 100;
 
-      // Issue refund via Razorpay API (only when a payment ID exists)
-      if (booking.razorpayPaymentId) {
-        const rpKeyId = process.env.RAZORPAY_KEY_ID || "";
-        const rpSecret = process.env.RAZORPAY_SECRET || process.env.RAZORPAY_KEY_SECRET || "";
-        if (!rpKeyId || !rpSecret) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Razorpay not configured" });
-
-        const auth = Buffer.from(`${rpKeyId}:${rpSecret}`).toString("base64");
-        const refundRes = await fetch(`https://api.razorpay.com/v1/payments/${booking.razorpayPaymentId}/refund`, {
+      // Issue refund via Razorpay API
+      if (paymentId && rpKeyId && rpSecret) {
+        const refundRes = await fetch(`https://api.razorpay.com/v1/payments/${paymentId}/refund`, {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Basic ${auth}` },
           body: JSON.stringify({ amount: refundPaise }),
@@ -763,6 +788,10 @@ Thank you for choosing EasyOutstation.`;
         if (!refundRes.ok) {
           const err = await refundRes.json() as any;
           throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: err.error?.description || "Razorpay refund API failed" });
+        }
+        // Save the payment ID if we just discovered it
+        if (!booking.razorpayPaymentId) {
+          await db.update(bookings).set({ razorpayPaymentId: paymentId }).where(eq(bookings.id, input.bookingId));
         }
         logBookingEvent(booking.id, "razorpay_refund_issued", { refundRupees }).catch(() => {});
       }
