@@ -401,6 +401,15 @@ Team EasyOutstation`;
         }
       }
 
+      // Email to customer with driver details
+      if (booking?.resolvedEmail) {
+        const vehicleInfo = vehicleDesc ? ` (${vehicleDesc})` : "";
+        sendEmail(booking.resolvedEmail,
+          `Driver Assigned — Booking #${input.id} | EasyOutstation`,
+          `Dear ${booking.customerName ?? "Customer"},\n\nYour driver has been assigned for your upcoming trip.\n\nDRIVER DETAILS\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nDriver Name  : ${input.driverName}${vehicleInfo}\nDriver Phone : +91-${input.driverPhone}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nTrip         : ${route}\nDate         : ${date}\nBooking ID   : #${input.id}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nYour driver will contact you before pickup.\nFor any queries: +91-8796564111 | easyoutstation@gmail.com\n\nHave a safe journey!\nTeam EasyOutstation`
+        ).catch(console.error);
+      }
+
       logBookingEvent(input.id, "driver_assigned", { driverName: input.driverName, driverPhone: input.driverPhone }).catch(() => {});
       return { success: true, waSent, waError, smsSent, driverWaSent };
     }),
@@ -1918,13 +1927,23 @@ Thank you for choosing EasyOutstation.`;
       const [booking] = await db.select({
         customerName: bookings.customerName,
         customerPhone: bookings.customerPhone,
+        customerEmail: bookings.customerEmail,
         fromCity: bookings.fromCity,
+        toCity: bookings.toCity,
         pickupDate: bookings.pickupDate,
         pickupAddress: bookings.pickupAddress,
         specialRequests: bookings.specialRequests,
+        userId: bookings.userId,
       }).from(bookings).where(eq(bookings.id, input.bookingId)).limit(1);
 
       if (!booking) throw new TRPCError({ code: "NOT_FOUND", message: "Booking not found" });
+
+      // Resolve email from users table if not on booking
+      let resolvedEmail = booking.customerEmail ?? null;
+      if (!resolvedEmail && booking.userId) {
+        const [u] = await db.select({ email: users.email }).from(users).where(eq(users.id, booking.userId)).limit(1);
+        resolvedEmail = u?.email ?? null;
+      }
 
       // 2. Update booking status; update driverName/driverPhone only for first/sole vehicle
       if (!input.vehicleIndex || input.vehicleIndex === 1) {
@@ -2112,6 +2131,17 @@ Thank you for choosing EasyOutstation.`;
               else smsError = d.message ?? "SMS failed";
             }
           } catch (e) { smsError = e instanceof Error ? e.message : String(e); }
+        }
+
+        // 8. Email to customer — always send regardless of WA/SMS outcome
+        if (resolvedEmail) {
+          const driverLines = isMulti
+            ? allDriverRows.map((d, i) => `${d.vehicleLabel ?? `Car ${i + 1}`}    : ${d.driverName}, +91-${d.driverPhone}${d.vehicleModel ? ` (${d.vehicleModel})` : ""}`).join("\n")
+            : `Driver       : ${input.driverName}, +91-${input.driverPhone}${vehicleDesc ? ` (${vehicleDesc})` : ""}`;
+          sendEmail(resolvedEmail,
+            `Driver Assigned — Booking #${input.bookingId} | EasyOutstation`,
+            `Dear ${booking.customerName ?? "Customer"},\n\nYour driver has been assigned for your upcoming trip.\n\nDRIVER DETAILS\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n${driverLines}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nRoute        : ${booking.fromCity ?? "pickup"} → ${toDestLabel}\nDate         : ${pickupDate}\nBooking ID   : #${input.bookingId}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nYour driver will contact you before pickup.\nFor any queries: +91-8796564111 | easyoutstation@gmail.com\n\nHave a safe journey!\nTeam EasyOutstation`
+          ).catch(console.error);
         }
       }
 
