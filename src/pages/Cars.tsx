@@ -319,6 +319,9 @@ export default function CarsPage() {
     quoteViewedRef.current = true;
     const cabTypeMap: Record<string, string> = { sedan: 'Sedan', muv: 'MUV', suv: 'SUV', premium: 'Premium', luxury: 'Luxury', tempo: 'Tempo', bus: 'Bus', electric: 'Electric' };
     (window as any).dataLayer = (window as any).dataLayer || [];
+    const returnType = tripTypeParam === 'one_way' ? 'none'
+      : tripTypeParam === 'round_trip' && !returnDateParam ? 'same_day'
+      : 'overnight';
     (window as any).dataLayer.push({
       event: 'quote_viewed',
       origin: fromCity || 'Delhi',
@@ -326,6 +329,7 @@ export default function CarsPage() {
       travel_date: dateParam,
       return_date: returnDateParam || null,
       trip_type: tripTypeParam,
+      return_type: returnType,
       quoted_fare: applyDiscount(fare),
       cab_type_shown: cabTypeMap[cheapestCar.category] ?? 'Sedan',
       distance_km: distanceKm || undefined,

@@ -440,6 +440,10 @@ export default function BookingPage() {
 
   const cabTypeMap: Record<string, string> = { sedan: 'Sedan', muv: 'MUV', suv: 'SUV', premium: 'Premium', luxury: 'Luxury', tempo: 'Tempo', bus: 'Bus', electric: 'Electric' };
 
+  const getReturnType = () => tripType === 'one_way' ? 'none'
+    : tripType === 'round_trip' && !returnDate ? 'same_day'
+    : 'overnight';
+
   const fireBookingStarted = () => {
     if (bookingStartedFiredRef.current) return;
     bookingStartedFiredRef.current = true;
@@ -449,6 +453,7 @@ export default function BookingPage() {
       route: `${effectiveFromCity}-${effectiveToCity}`,
       cab_type: cabTypeMap[effectiveCar?.category ?? ''] ?? 'Sedan',
       trip_type: tripType,
+      return_type: getReturnType(),
       vehicle_name: effectiveCar?.name ?? '',
     });
   };
@@ -548,6 +553,7 @@ export default function BookingPage() {
             route: `${effectiveFromCity}-${effectiveToCity}`,
             cab_type: cabTypeMap[effectiveCar?.category ?? ''] ?? 'Sedan',
             travel_date: pickupDate ? format(pickupDate, 'yyyy-MM-dd') : '',
+            return_type: getReturnType(),
             advance_paid: 0,
             customer_email: customerEmail,
             customer_phone: `+91${customerPhone}`,
@@ -614,6 +620,7 @@ export default function BookingPage() {
                 route: `${effectiveFromCity}-${effectiveToCity}`,
                 cab_type: cabTypeMap[effectiveCar?.category ?? ''] ?? 'Sedan',
                 travel_date: pickupDate ? format(pickupDate, 'yyyy-MM-dd') : '',
+                return_type: getReturnType(),
                 advance_paid: Math.max(100, Math.round(totalPrice * 0.1)),
                 customer_email: customerEmail,
                 customer_phone: `+91${customerPhone}`,
