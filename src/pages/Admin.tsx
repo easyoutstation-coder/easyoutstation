@@ -143,6 +143,126 @@ const DEFAULT_VEHICLE_FORM = {
   description: "", imageUrl: "",
 };
 
+// ── Link Hub Tab ─────────────────────────────────────────────────────────────
+function LinkHubTab() {
+  const { data: cards = [], refetch } = trpc.admin.getLinkHubCards.useQuery();
+  const upsert = trpc.admin.upsertLinkHubCard.useMutation({ onSuccess: () => { refetch(); setEditCard(null); toast.success("Card saved"); } });
+  const del = trpc.admin.deleteLinkHubCard.useMutation({ onSuccess: () => { refetch(); toast.success("Card deleted"); } });
+  const reorder = trpc.admin.reorderLinkHubCards.useMutation({ onSuccess: () => refetch() });
+
+  const [editCard, setEditCard] = useState<{
+    id?: number; label: string; imageUrl: string; linkUrl: string; displayOrder: number; isActive: boolean;
+  } | null>(null);
+
+  const openNew = () => setEditCard({ label: "", imageUrl: "", linkUrl: "/cab/delhi-to-", displayOrder: (cards.length + 1), isActive: true });
+
+  const moveCard = (id: number, direction: "up" | "down") => {
+    const sorted = [...cards].sort((a, b) => a.displayOrder - b.displayOrder);
+    const idx = sorted.findIndex(c => c.id === id);
+    const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= sorted.length) return;
+    const updates = [
+      { id: sorted[idx].id, displayOrder: sorted[swapIdx].displayOrder },
+      { id: sorted[swapIdx].id, displayOrder: sorted[idx].displayOrder },
+    ];
+    reorder.mutate(updates);
+  };
+
+  const sorted = [...cards].sort((a, b) => a.displayOrder - b.displayOrder);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold">Link Hub</h2>
+          <p className="text-xs text-muted-foreground">Manage cards shown at <a href="/go" target="_blank" className="underline text-blue-600">easyoutstation.com/go</a> — your Instagram bio link page.</p>
+        </div>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" asChild><a href="/go" target="_blank">Preview</a></Button>
+          <Button size="sm" onClick={openNew}><Plus className="w-3.5 h-3.5 mr-1" />Add Card</Button>
+        </div>
+      </div>
+
+      <Card>
+        <CardContent className="p-0">
+          {sorted.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-10">No cards yet. Add one to get started.</p>
+          ) : (
+            <div className="divide-y">
+              {sorted.map((card, idx) => (
+                <div key={card.id} className="flex items-center gap-3 px-4 py-3">
+                  <img src={card.imageUrl} alt={card.label} className="w-14 h-10 rounded-lg object-cover shrink-0 bg-slate-100" onError={e => { (e.target as HTMLImageElement).src = ""; }} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{card.label}</p>
+                    <p className="text-xs text-muted-foreground truncate">{card.linkUrl}</p>
+                  </div>
+                  <Badge variant={card.isActive ? "default" : "secondary"} className="shrink-0 text-xs">
+                    {card.isActive ? "Live" : "Hidden"}
+                  </Badge>
+                  <div className="flex gap-1 shrink-0">
+                    <Button size="icon" variant="ghost" className="h-7 w-7" disabled={idx === 0} onClick={() => moveCard(card.id, "up")}>↑</Button>
+                    <Button size="icon" variant="ghost" className="h-7 w-7" disabled={idx === sorted.length - 1} onClick={() => moveCard(card.id, "down")}>↓</Button>
+                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditCard({ id: card.id, label: card.label, imageUrl: card.imageUrl, linkUrl: card.linkUrl, displayOrder: card.displayOrder, isActive: card.isActive })}><Pencil className="w-3.5 h-3.5" /></Button>
+                    <Button size="icon" variant="ghost" className="h-7 w-7 text-red-500 hover:text-red-700" onClick={() => { if (confirm(`Delete "${card.label}"?`)) del.mutate({ id: card.id }); }}><Trash2 className="w-3.5 h-3.5" /></Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Edit / Add dialog */}
+      <Dialog open={!!editCard} onOpenChange={open => { if (!open) setEditCard(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>{editCard?.id ? "Edit Card" : "Add Card"}</DialogTitle></DialogHeader>
+          {editCard && (
+            <div className="space-y-4 pt-2">
+              {/* Image preview */}
+              {editCard.imageUrl && (
+                <img src={editCard.imageUrl} alt="" className="w-full h-40 object-cover rounded-xl bg-slate-100" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              )}
+              <div>
+                <label className="text-xs font-medium mb-1 block">Image URL</label>
+                <Input placeholder="https://images.unsplash.com/…" value={editCard.imageUrl} onChange={e => setEditCard(f => f && ({ ...f, imageUrl: e.target.value }))} />
+                <p className="text-xs text-muted-foreground mt-1">Paste any Unsplash, Pexels or other image URL</p>
+              </div>
+              <div>
+                <label className="text-xs font-medium mb-1 block">Label</label>
+                <Input placeholder="Delhi → Manali" value={editCard.label} onChange={e => setEditCard(f => f && ({ ...f, label: e.target.value }))} />
+              </div>
+              <div>
+                <label className="text-xs font-medium mb-1 block">Link URL</label>
+                <Input placeholder="/cab/delhi-to-manali" value={editCard.linkUrl} onChange={e => setEditCard(f => f && ({ ...f, linkUrl: e.target.value }))} />
+                <p className="text-xs text-muted-foreground mt-1">Relative path or full URL (WhatsApp, Instagram, etc.)</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <label className="text-xs font-medium">Visible on /go page</label>
+                <button
+                  onClick={() => setEditCard(f => f && ({ ...f, isActive: !f.isActive }))}
+                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${editCard.isActive ? "bg-blue-600" : "bg-slate-300"}`}
+                >
+                  <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${editCard.isActive ? "translate-x-4" : "translate-x-1"}`} />
+                </button>
+              </div>
+              <div className="flex gap-2 pt-1">
+                <Button variant="outline" className="flex-1" onClick={() => setEditCard(null)}>Cancel</Button>
+                <Button
+                  className="flex-1"
+                  disabled={!editCard.label || !editCard.imageUrl || !editCard.linkUrl || upsert.isPending}
+                  onClick={() => upsert.mutate({ id: editCard.id, label: editCard.label, imageUrl: editCard.imageUrl, linkUrl: editCard.linkUrl, displayOrder: editCard.displayOrder, isActive: editCard.isActive })}
+                >
+                  {upsert.isPending ? "Saving…" : "Save Card"}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
 export default function AdminPage() {
   const navigate = useNavigate();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth({ redirectOnUnauthenticated: true });
@@ -936,6 +1056,7 @@ export default function AdminPage() {
             </TabsTrigger>
             <TabsTrigger value="offline" className="gap-1.5 shrink-0"><CalendarPlus className="w-4 h-4" />Offline Booking</TabsTrigger>
             <TabsTrigger value="invoices" className="gap-1.5 shrink-0"><Receipt className="w-4 h-4" />Invoices</TabsTrigger>
+            <TabsTrigger value="linkhub" className="gap-1.5 shrink-0"><Share2 className="w-4 h-4" />Link Hub</TabsTrigger>
           </TabsList>
 
           {/* ── Overview ────────────────────────────────────────────── */}
@@ -4317,6 +4438,11 @@ export default function AdminPage() {
                 </div>
               </div>
             </div>
+          </TabsContent>
+
+          {/* ── Link Hub ─────────────────────────────────────────────── */}
+          <TabsContent value="linkhub" className="space-y-4">
+            <LinkHubTab />
           </TabsContent>
 
         </Tabs>

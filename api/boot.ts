@@ -296,6 +296,39 @@ async function runStartupMigrations() {
       ));
     } catch { /* already exists */ }
 
+    // Link hub cards for /go page
+    try {
+      await db.execute(sql.raw(`
+        CREATE TABLE IF NOT EXISTS linkHubCards (
+          id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+          label VARCHAR(100) NOT NULL,
+          imageUrl TEXT NOT NULL,
+          linkUrl VARCHAR(500) NOT NULL,
+          displayOrder INT NOT NULL DEFAULT 0,
+          isActive BOOLEAN NOT NULL DEFAULT TRUE,
+          createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        )
+      `));
+      // Seed defaults if table is empty
+      await db.execute(sql.raw(`
+        INSERT INTO linkHubCards (label, imageUrl, linkUrl, displayOrder, isActive)
+        SELECT * FROM (VALUES
+          ('Delhi → Kedarnath','https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=800&h=500&q=80&fit=crop&auto=format','/cab/delhi-to-kedarnath',1,TRUE),
+          ('Delhi → Manali','https://images.unsplash.com/photo-1677821374212-8c3e88292b1b?w=800&h=500&q=80&fit=crop&auto=format','/cab/delhi-to-manali',2,TRUE),
+          ('Delhi → Shimla','https://images.unsplash.com/photo-1648830802584-ec070946e591?w=800&h=500&q=80&fit=crop&auto=format','/cab/delhi-to-shimla',3,TRUE),
+          ('Delhi → Rishikesh','https://images.unsplash.com/photo-1642163168826-37f2233297ac?w=800&h=500&q=80&fit=crop&auto=format','/cab/delhi-to-rishikesh',4,TRUE),
+          ('Delhi → Haridwar','https://images.unsplash.com/photo-1653392083932-d5e9e7d2ccd1?w=800&h=500&q=80&fit=crop&auto=format','/cab/delhi-to-haridwar',5,TRUE),
+          ('Delhi → Chandigarh','https://images.unsplash.com/photo-1731593597977-acde4913bd19?w=800&h=500&q=80&fit=crop&auto=format','/cab/delhi-to-chandigarh',6,TRUE),
+          ('Delhi → Jaipur','https://images.unsplash.com/photo-1578999935853-4ec5fa6c1f60?w=800&h=500&q=80&fit=crop&auto=format','/cab/delhi-to-jaipur',7,TRUE),
+          ('Delhi → Agra','https://images.unsplash.com/photo-1564507592333-c60657eea523?w=800&h=500&q=80&fit=crop&auto=format','/cab/delhi-to-agra',8,TRUE),
+          ('Delhi → Dharamshala','https://images.unsplash.com/photo-1581321863389-ef7d7bfe4b75?w=800&h=500&q=80&fit=crop&auto=format','/cab/delhi-to-dharamshala',9,TRUE),
+          ('Delhi → Nainital','https://images.unsplash.com/photo-1610715936287-6c2ad208cdbf?w=800&h=500&q=80&fit=crop&auto=format','/cab/delhi-to-nainital',10,TRUE)
+        ) AS v(label,imageUrl,linkUrl,displayOrder,isActive)
+        WHERE NOT EXISTS (SELECT 1 FROM linkHubCards LIMIT 1)
+      `));
+    } catch { /* already exists */ }
+
     // Per-vehicle driver assignments for multi-vehicle offline bookings
     try {
       await db.execute(sql.raw(`

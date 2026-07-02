@@ -2,7 +2,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { createRouter, publicQuery, adminQuery, superAdminQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { users, bookings, drivers, vendors, expenses, siteSettings, faqs, routes, cars, userSearches, carReviews, referralEvents, referralPoints, corporateEnquiries, corporateAccounts, whatsappLogs, bookingEvents, bookingDrivers } from "@db/schema";
+import { users, bookings, drivers, vendors, expenses, siteSettings, faqs, routes, cars, userSearches, carReviews, referralEvents, referralPoints, corporateEnquiries, corporateAccounts, whatsappLogs, bookingEvents, bookingDrivers, linkHubCards } from "@db/schema";
 import { getRedis } from "./lib/redis";
 import { eq, desc, sql, and, gte, lt, count, like } from "drizzle-orm";
 import { defaultProgramConfig } from "./referral-router";
@@ -2306,4 +2306,53 @@ Thank you for choosing EasyOutstation.`;
 
     return [...orders, ...standalonePayments].sort((a, b) => b.createdAt - a.createdAt);
   }),
+
+  // ── Link Hub ─────────────────────────────────────────────────────────
+  getLinkHubCards: publicQuery.query(async () => {
+    const db = getDb();
+    return db.select().from(linkHubCards).orderBy(linkHubCards.displayOrder);
+  }),
+
+  upsertLinkHubCard: adminQuery
+    .input(z.object({
+      id: z.number().optional(),
+      label: z.string().min(1).max(100),
+      imageUrl: z.string().url(),
+      linkUrl: z.string().min(1).max(500),
+      displayOrder: z.number().int().min(0),
+      isActive: z.boolean(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      if (input.id) {
+        await db.update(linkHubCards)
+          .set({ label: input.label, imageUrl: input.imageUrl, linkUrl: input.linkUrl, displayOrder: input.displayOrder, isActive: input.isActive })
+          .where(eq(linkHubCards.id, input.id));
+        return { id: input.id };
+      } else {
+        const [res] = await db.insert(linkHubCards).values({
+          label: input.label, imageUrl: input.imageUrl, linkUrl: input.linkUrl,
+          displayOrder: input.displayOrder, isActive: input.isActive,
+        });
+        return { id: (res as any).insertId };
+      }
+    }),
+
+  deleteLinkHubCard: adminQuery
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      await db.delete(linkHubCards).where(eq(linkHubCards.id, input.id));
+      return { ok: true };
+    }),
+
+  reorderLinkHubCards: adminQuery
+    .input(z.array(z.object({ id: z.number(), displayOrder: z.number() })))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      await Promise.all(input.map(({ id, displayOrder }) =>
+        db.update(linkHubCards).set({ displayOrder }).where(eq(linkHubCards.id, id))
+      ));
+      return { ok: true };
+    }),
 });

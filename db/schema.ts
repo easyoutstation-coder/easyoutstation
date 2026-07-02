@@ -342,6 +342,19 @@ export const invoices = mysqlTable("invoices", {
 
 export type Invoice = typeof invoices.$inferSelect;
 
+export const linkHubCards = mysqlTable("linkHubCards", {
+  id: serial("id").primaryKey(),
+  label: varchar("label", { length: 100 }).notNull(),
+  imageUrl: text("imageUrl").notNull(),
+  linkUrl: varchar("linkUrl", { length: 500 }).notNull(),
+  displayOrder: int("displayOrder").default(0).notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull().$onUpdate(() => new Date()),
+});
+
+export type LinkHubCard = typeof linkHubCards.$inferSelect;
+
 export const bookingDrivers = mysqlTable("bookingDrivers", {
   id: serial("id").primaryKey(),
   bookingId: bigint("bookingId", { mode: "number", unsigned: true }).notNull(),

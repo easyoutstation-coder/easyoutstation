@@ -1,42 +1,33 @@
-import { MessageCircle, MapPin, Phone } from "lucide-react";
+import { MessageCircle, Phone, ExternalLink } from "lucide-react";
 import { useSeo } from "@/hooks/useSeo";
+import { trpc } from "@/providers/trpc";
 
 const UTM = "?utm_source=instagram&utm_medium=bio&utm_campaign=linkhub";
-
-const ROUTES = [
-  { label: "Delhi → Kedarnath", slug: "delhi-to-kedarnath", emoji: "🛕" },
-  { label: "Delhi → Manali", slug: "delhi-to-manali", emoji: "🏔️" },
-  { label: "Delhi → Shimla", slug: "delhi-to-shimla", emoji: "🌲" },
-  { label: "Delhi → Rishikesh", slug: "delhi-to-rishikesh", emoji: "🌊" },
-  { label: "Delhi → Haridwar", slug: "delhi-to-haridwar", emoji: "🪔" },
-  { label: "Delhi → Chandigarh", slug: "delhi-to-chandigarh", emoji: "🏙️" },
-  { label: "Delhi → Jaipur", slug: "delhi-to-jaipur", emoji: "🏯" },
-  { label: "Delhi → Agra", slug: "delhi-to-agra", emoji: "🕌" },
-  { label: "Delhi → Dharamshala", slug: "delhi-to-dharamshala", emoji: "🏔️" },
-  { label: "Delhi → Nainital", slug: "delhi-to-nainital", emoji: "🏞️" },
-];
-
 const WA_URL = `https://wa.me/918796564111?text=${encodeURIComponent("Hi, I want to book an outstation cab from Delhi. Can you help?")}`;
 
 export default function Go() {
   useSeo({
-    title: "EasyOutstation — Book Outstation Cabs from Delhi",
+    title: "EasyOutstation — Outstation Cabs from Delhi",
     description: "Fixed-fare outstation cab service from Delhi. Kedarnath, Manali, Shimla, Rishikesh, Jaipur and more. Book now.",
   });
 
+  const { data: cards = [], isLoading } = trpc.admin.getLinkHubCards.useQuery();
+  const activeCards = cards.filter(c => c.isActive);
+
+  const resolveUrl = (url: string) => {
+    if (url.startsWith("http")) return `${url}${UTM}`;
+    return `${url}${UTM}`;
+  };
+
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col items-center px-4 py-10">
+    <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center px-4 pb-12 pt-10">
       {/* Header */}
       <div className="flex flex-col items-center mb-8 text-center">
-        <div className="w-20 h-20 rounded-2xl bg-blue-600 flex items-center justify-center mb-4 shadow-lg shadow-blue-900/50">
-          <span className="text-3xl">🚗</span>
+        <div className="w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center mb-4 shadow-xl shadow-blue-900/60">
+          <span className="text-2xl">🚗</span>
         </div>
-        <h1 className="text-white text-2xl font-bold tracking-tight font-['DM_Serif_Display']">EasyOutstation</h1>
-        <p className="text-slate-400 text-sm mt-1">Fixed-fare cabs from Delhi · No surge</p>
-        <div className="flex items-center gap-1.5 mt-2 text-blue-400 text-xs">
-          <MapPin className="w-3 h-3" />
-          <span>Delhi NCR · Outstation Specialists</span>
-        </div>
+        <h1 className="text-white text-xl font-bold tracking-tight">EasyOutstation</h1>
+        <p className="text-zinc-400 text-sm mt-1">Outstation cabs from Delhi · Fixed fares</p>
       </div>
 
       {/* WhatsApp CTA */}
@@ -44,48 +35,67 @@ export default function Go() {
         href={WA_URL}
         target="_blank"
         rel="noopener noreferrer"
-        className="w-full max-w-sm mb-6 flex items-center justify-center gap-3 bg-green-600 hover:bg-green-500 active:scale-95 transition-all text-white font-semibold py-4 rounded-2xl shadow-lg shadow-green-900/40 text-base"
+        className="w-full max-w-sm mb-6 flex items-center justify-center gap-2.5 bg-[#25D366] hover:bg-[#1ebe5d] active:scale-95 transition-all text-white font-semibold py-3.5 rounded-2xl shadow-lg shadow-green-900/30 text-sm"
       >
-        <MessageCircle className="w-5 h-5" />
-        Chat on WhatsApp
+        <MessageCircle className="w-4 h-4" />
+        Chat &amp; Book on WhatsApp
       </a>
 
-      {/* Route Buttons */}
-      <div className="w-full max-w-sm flex flex-col gap-3">
-        {ROUTES.map((r) => (
-          <a
-            key={r.slug}
-            href={`/cab/${r.slug}${UTM}`}
-            className="flex items-center gap-4 bg-slate-800 hover:bg-slate-700 active:scale-95 transition-all rounded-2xl px-5 py-4 text-white border border-slate-700/60 shadow-sm"
-          >
-            <span className="text-2xl w-8 text-center">{r.emoji}</span>
-            <span className="font-medium text-sm flex-1">{r.label}</span>
-            <span className="text-slate-500 text-xs">Book →</span>
-          </a>
-        ))}
+      {/* Card grid */}
+      <div className="w-full max-w-sm">
+        {isLoading ? (
+          <div className="grid grid-cols-2 gap-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="aspect-[4/3] rounded-2xl bg-zinc-900 animate-pulse" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            {activeCards.map(card => (
+              <a
+                key={card.id}
+                href={resolveUrl(card.linkUrl)}
+                className="group relative aspect-[4/3] rounded-2xl overflow-hidden block active:scale-95 transition-transform"
+              >
+                {/* Background image */}
+                <img
+                  src={card.imageUrl}
+                  alt={card.label}
+                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  loading="lazy"
+                />
+                {/* Gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                {/* Label */}
+                <div className="absolute bottom-0 left-0 right-0 p-3">
+                  <p className="text-white text-xs font-semibold leading-tight">{card.label}</p>
+                  <p className="text-white/60 text-[10px] mt-0.5">Book now →</p>
+                </div>
+              </a>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* All Routes Link */}
+      {/* All routes link */}
       <a
         href={`/routes${UTM}`}
-        className="mt-6 text-slate-400 hover:text-white text-sm underline underline-offset-4 transition-colors"
+        className="mt-6 flex items-center gap-1.5 text-zinc-500 hover:text-zinc-300 text-xs transition-colors"
       >
-        See all 30+ routes →
+        <ExternalLink className="w-3 h-3" />
+        See all 42 routes
       </a>
 
-      {/* Call CTA */}
+      {/* Phone */}
       <a
         href="tel:+918796564111"
-        className="mt-4 flex items-center gap-2 text-slate-500 hover:text-slate-300 text-sm transition-colors"
+        className="mt-3 flex items-center gap-1.5 text-zinc-600 hover:text-zinc-400 text-xs transition-colors"
       >
-        <Phone className="w-3.5 h-3.5" />
+        <Phone className="w-3 h-3" />
         +91 87965 64111
       </a>
 
-      {/* Footer */}
-      <p className="mt-10 text-slate-700 text-xs text-center">
-        © EasyOutstation · easyoutstation.com
-      </p>
+      <p className="mt-8 text-zinc-800 text-[10px]">© EasyOutstation · easyoutstation.com</p>
     </div>
   );
 }
