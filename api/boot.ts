@@ -317,8 +317,55 @@ async function runStartupMigrations() {
     try { await db.execute(sql.raw(`ALTER TABLE linkHubCards ADD COLUMN subtitle VARCHAR(150) NULL`)); } catch {}
     try { await db.execute(sql.raw(`ALTER TABLE linkHubCards ADD COLUMN category VARCHAR(50) NULL`)); } catch {}
     try { await db.execute(sql.raw(`ALTER TABLE linkHubCards ADD COLUMN isPinned BOOLEAN NOT NULL DEFAULT FALSE`)); } catch {}
-    // Fix broken Kedarnath image
-    try { await db.execute(sql.raw(`UPDATE linkHubCards SET imageUrl='https://images.pexels.com/photos/13047013/pexels-photo-13047013.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop' WHERE label='Delhi → Kedarnath' AND imageUrl LIKE '%1626621341517%'`)); } catch {}
+    // Force-update all card images to HD site images (correct destination photo for each route)
+    try {
+      await db.execute(sql.raw(`
+        UPDATE linkHubCards SET imageUrl = CASE linkUrl
+          WHEN '/cab/delhi-to-kedarnath'      THEN 'https://images.pexels.com/photos/13047013/pexels-photo-13047013.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop'
+          WHEN '/cab/delhi-to-manali'         THEN 'https://images.unsplash.com/photo-1677821374212-8c3e88292b1b?w=800&h=500&q=90&fit=crop&auto=format'
+          WHEN '/cab/delhi-to-shimla'         THEN 'https://images.unsplash.com/photo-1648830802584-ec070946e591?w=800&h=500&q=90&fit=crop&auto=format'
+          WHEN '/cab/delhi-to-rishikesh'      THEN 'https://images.unsplash.com/photo-1642163168826-37f2233297ac?w=800&h=500&q=90&fit=crop&auto=format'
+          WHEN '/cab/delhi-to-haridwar'       THEN 'https://images.unsplash.com/photo-1653392083932-d5e9e7d2ccd1?w=800&h=500&q=90&fit=crop&auto=format'
+          WHEN '/cab/delhi-to-chandigarh'     THEN 'https://images.unsplash.com/photo-1731593597977-acde4913bd19?w=800&h=500&q=90&fit=crop&auto=format'
+          WHEN '/cab/delhi-to-jaipur'         THEN 'https://images.unsplash.com/photo-1578999935853-4ec5fa6c1f60?w=800&h=500&q=90&fit=crop&auto=format'
+          WHEN '/cab/delhi-to-agra'           THEN 'https://images.unsplash.com/photo-1564507592333-c60657eea523?w=800&h=500&q=90&fit=crop&auto=format'
+          WHEN '/cab/delhi-to-dharamshala'    THEN 'https://images.unsplash.com/photo-1581321863389-ef7d7bfe4b75?w=800&h=500&q=90&fit=crop&auto=format'
+          WHEN '/cab/delhi-to-nainital'       THEN 'https://images.unsplash.com/photo-1610715936287-6c2ad208cdbf?w=800&h=500&q=90&fit=crop&auto=format'
+          WHEN '/cab/delhi-to-dehradun'       THEN 'https://images.unsplash.com/photo-1590351742170-8737ea2e8ce8?w=800&h=500&q=90&fit=crop&auto=format'
+          WHEN '/cab/delhi-to-mussoorie'      THEN 'https://images.unsplash.com/photo-1637387568999-92c68bdee212?w=800&h=500&q=90&fit=crop&auto=format'
+          WHEN '/cab/delhi-to-mathura'        THEN 'https://images.pexels.com/photos/31626024/pexels-photo-31626024.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop'
+          WHEN '/cab/delhi-to-amritsar'       THEN 'https://images.unsplash.com/photo-1623059508779-2542c6e83753?w=800&h=500&q=90&fit=crop&auto=format'
+          WHEN '/cab/delhi-to-kashmir'        THEN 'https://images.pexels.com/photos/12750077/pexels-photo-12750077.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop'
+          WHEN '/cab/delhi-to-vaishno-devi'   THEN 'https://images.unsplash.com/photo-1717502713522-543a97e13dab?w=800&h=500&q=90&fit=crop&auto=format'
+          WHEN '/cab/delhi-to-ludhiana'       THEN 'https://images.pexels.com/photos/33134859/pexels-photo-33134859.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop'
+          WHEN '/cab/delhi-to-ayodhya'        THEN 'https://images.unsplash.com/photo-1672398760212-08ce34b88c62?w=800&h=500&q=90&fit=crop&auto=format'
+          WHEN '/cab/delhi-to-banaras'        THEN 'https://images.pexels.com/photos/10461752/pexels-photo-10461752.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop'
+          WHEN '/cab/delhi-to-jodhpur'        THEN 'https://images.unsplash.com/photo-1566873535350-a3f5d4a804b7?w=800&h=500&q=90&fit=crop&auto=format'
+          WHEN '/cab/delhi-to-udaipur'        THEN 'https://images.unsplash.com/photo-1633702738734-443da2c18f3c?w=800&h=500&q=90&fit=crop&auto=format'
+          WHEN '/cab/delhi-to-pushkar'        THEN 'https://images.unsplash.com/photo-1715168931029-2949161ee406?w=800&h=500&q=90&fit=crop&auto=format'
+          WHEN '/cab/delhi-to-corbett'        THEN 'https://images.unsplash.com/photo-1771922365997-8e687eda46b0?w=800&h=500&q=90&fit=crop&auto=format'
+          WHEN '/cab/delhi-to-kasauli'        THEN 'https://images.unsplash.com/photo-1720678599878-631001ea7bcc?w=800&h=500&q=90&fit=crop&auto=format'
+          WHEN '/cab/delhi-to-dalhousie'      THEN 'https://images.unsplash.com/photo-1589702413183-ca141958b7c5?w=800&h=500&q=90&fit=crop&auto=format'
+          WHEN '/cab/delhi-to-lucknow'        THEN 'https://images.unsplash.com/photo-1583504490792-3ceadbc5147c?w=800&h=500&q=90&fit=crop&auto=format'
+          WHEN '/cab/delhi-to-prayagraj'      THEN 'https://images.pexels.com/photos/31022593/pexels-photo-31022593.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop'
+          WHEN '/cab/delhi-to-vrindavan'      THEN 'https://images.unsplash.com/photo-1662376107358-21296a9234f1?w=800&h=500&q=90&fit=crop&auto=format'
+          WHEN '/cab/delhi-to-spiti'          THEN 'https://images.unsplash.com/photo-1653844573020-71f77a0ccb8c?w=800&h=500&q=90&fit=crop&auto=format'
+          WHEN '/cab/delhi-to-mount-abu'      THEN 'https://images.unsplash.com/photo-1652421027969-6df47aab314a?w=800&h=500&q=90&fit=crop&auto=format'
+          WHEN '/cab/delhi-to-lansdowne'      THEN 'https://images.pexels.com/photos/10607034/pexels-photo-10607034.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop'
+          WHEN '/cab/chandigarh-to-manali'    THEN 'https://images.unsplash.com/photo-1677821374212-8c3e88292b1b?w=800&h=500&q=90&fit=crop&auto=format'
+          WHEN '/cab/chandigarh-to-shimla'    THEN 'https://images.unsplash.com/photo-1648830802584-ec070946e591?w=800&h=500&q=90&fit=crop&auto=format'
+          WHEN '/cab/chandigarh-to-dharamshala' THEN 'https://images.unsplash.com/photo-1581321863389-ef7d7bfe4b75?w=800&h=500&q=90&fit=crop&auto=format'
+          WHEN '/cab/chandigarh-to-amritsar'  THEN 'https://images.unsplash.com/photo-1623059508779-2542c6e83753?w=800&h=500&q=90&fit=crop&auto=format'
+          WHEN '/cab/shimla-to-manali'        THEN 'https://images.unsplash.com/photo-1677821374212-8c3e88292b1b?w=800&h=500&q=90&fit=crop&auto=format'
+          WHEN '/cab/shimla-to-dharamshala'   THEN 'https://images.unsplash.com/photo-1581321863389-ef7d7bfe4b75?w=800&h=500&q=90&fit=crop&auto=format'
+          WHEN '/cab/manali-to-leh'           THEN 'https://images.unsplash.com/photo-1591154669695-5f2a8d20c089?w=800&h=500&q=90&fit=crop&auto=format'
+          WHEN '/cab/manali-to-spiti'         THEN 'https://images.unsplash.com/photo-1653844573020-71f77a0ccb8c?w=800&h=500&q=90&fit=crop&auto=format'
+          WHEN '/cab/manali-to-kasol'         THEN 'https://images.pexels.com/photos/2087391/pexels-photo-2087391.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop'
+          WHEN '/cab/amritsar-to-dharamshala' THEN 'https://images.unsplash.com/photo-1581321863389-ef7d7bfe4b75?w=800&h=500&q=90&fit=crop&auto=format'
+          WHEN '/cab/ludhiana-to-amritsar'    THEN 'https://images.unsplash.com/photo-1623059508779-2542c6e83753?w=800&h=500&q=90&fit=crop&auto=format'
+          ELSE imageUrl END
+      `));
+    } catch {}
     // Update existing rows with category + subtitle
     try {
       await db.execute(sql.raw(`

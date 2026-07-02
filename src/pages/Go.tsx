@@ -194,8 +194,8 @@ export default function Go() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-2 space-y-1">
-                  <p className="text-white text-[11px] font-semibold leading-tight line-clamp-2">{card.label}</p>
-                  <span className="inline-flex items-center bg-white/20 backdrop-blur-sm text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-white/30">
+                  <p className="text-white text-[13px] font-bold leading-tight line-clamp-2">{card.label}</p>
+                  <span className="inline-flex items-center bg-white/20 backdrop-blur-sm text-white text-[11px] font-bold px-2 py-0.5 rounded-full border border-white/30">
                     Book Now →
                   </span>
                 </div>
