@@ -69,14 +69,15 @@ export default function Footer() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12">
           <div className="lg:col-span-2 space-y-6">
-            <Link to="/" className="flex items-center group">
+            <Link to="/" className="flex items-center gap-3 group">
               <img
-                src="/logo.png"
+                src="/logo-icon.png"
                 alt="EasyOutstation"
-                className="h-[116px] sm:h-[136px] w-auto object-contain"
+                className="h-14 w-auto object-contain"
                 style={{ mixBlendMode: "screen" }}
                 loading="lazy"
               />
+              <span className="font-bold text-xl text-white font-['DM_Serif_Display']">EasyOutstation</span>
             </Link>
             <p className="text-sm text-slate-400 leading-relaxed max-w-xs">
               Delhi's most trusted outstation cab service. Verified drivers, fixed prices, zero hidden charges. Your journey, our responsibility.

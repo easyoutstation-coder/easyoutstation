@@ -23,10 +23,13 @@ export default function Go() {
     <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center px-4 pb-12 pt-10">
       {/* Header */}
       <div className="flex flex-col items-center mb-8 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center mb-4 shadow-xl shadow-blue-900/60">
-          <span className="text-2xl">🚗</span>
-        </div>
-        <h1 className="text-white text-xl font-bold tracking-tight">EasyOutstation</h1>
+        <img
+          src="/logo-icon.png"
+          alt="EasyOutstation"
+          className="w-16 h-16 object-contain mb-4"
+          style={{ mixBlendMode: "screen" }}
+        />
+        <h1 className="text-white text-xl font-bold tracking-tight font-['DM_Serif_Display']">EasyOutstation</h1>
         <p className="text-zinc-400 text-sm mt-1">Outstation cabs from Delhi · Fixed fares</p>
       </div>
 
