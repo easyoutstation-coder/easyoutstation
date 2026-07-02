@@ -180,8 +180,8 @@ export default function Go() {
             <div className="absolute bottom-0 left-0 right-0 p-4">
               <p className="text-white font-bold text-lg leading-tight font-['DM_Serif_Display']">{pinnedCard.label}</p>
               {pinnedCard.subtitle && <p className="text-white/70 text-xs mt-1">{pinnedCard.subtitle}</p>}
-              <span className="mt-2 inline-flex items-center gap-1 text-white/80 text-xs font-medium">
-                View fares <ChevronRight className="w-3 h-3" />
+              <span className="mt-2 inline-flex items-center gap-1 bg-white text-black text-xs font-bold px-3 py-1 rounded-full">
+                Book Now <ChevronRight className="w-3 h-3" />
               </span>
             </div>
           </button>
@@ -210,9 +210,12 @@ export default function Go() {
                   className="absolute inset-0 w-full h-full object-cover"
                   loading="lazy"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-1.5">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-1.5 space-y-1">
                   <p className="text-white text-[9px] font-semibold leading-tight line-clamp-2">{card.label}</p>
+                  <span className="inline-flex items-center bg-white/20 backdrop-blur-sm text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full border border-white/30">
+                    Book Now →
+                  </span>
                 </div>
               </button>
             ))}

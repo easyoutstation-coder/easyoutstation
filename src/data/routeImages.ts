@@ -164,7 +164,7 @@ export const routeLandmarks: Record<string, { image: string; landmark: string; o
     objectPosition: "center 40%",
   },
   kedarnath: {
-    image: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=1600&h=900&q=90&fit=crop&auto=format",
+    image: "https://images.pexels.com/photos/13047013/pexels-photo-13047013.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop",
     landmark: "Kedarnath Temple, Rudraprayag",
     objectPosition: "center 35%",
   },

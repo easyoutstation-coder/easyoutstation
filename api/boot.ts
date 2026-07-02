@@ -317,6 +317,8 @@ async function runStartupMigrations() {
     try { await db.execute(sql.raw(`ALTER TABLE linkHubCards ADD COLUMN subtitle VARCHAR(150) NULL`)); } catch {}
     try { await db.execute(sql.raw(`ALTER TABLE linkHubCards ADD COLUMN category VARCHAR(50) NULL`)); } catch {}
     try { await db.execute(sql.raw(`ALTER TABLE linkHubCards ADD COLUMN isPinned BOOLEAN NOT NULL DEFAULT FALSE`)); } catch {}
+    // Fix broken Kedarnath image
+    try { await db.execute(sql.raw(`UPDATE linkHubCards SET imageUrl='https://images.pexels.com/photos/13047013/pexels-photo-13047013.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop' WHERE label='Delhi → Kedarnath' AND imageUrl LIKE '%1626621341517%'`)); } catch {}
     // Update existing rows with category + subtitle
     try {
       await db.execute(sql.raw(`
