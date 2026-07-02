@@ -317,6 +317,8 @@ async function runStartupMigrations() {
     try { await db.execute(sql.raw(`ALTER TABLE linkHubCards ADD COLUMN subtitle VARCHAR(150) NULL`)); } catch {}
     try { await db.execute(sql.raw(`ALTER TABLE linkHubCards ADD COLUMN category VARCHAR(50) NULL`)); } catch {}
     try { await db.execute(sql.raw(`ALTER TABLE linkHubCards ADD COLUMN isPinned BOOLEAN NOT NULL DEFAULT FALSE`)); } catch {}
+    // Hide non-Delhi routes (only Delhi-originating routes show on /go)
+    try { await db.execute(sql.raw(`UPDATE linkHubCards SET isActive=FALSE WHERE linkUrl NOT LIKE '/cab/delhi-to-%'`)); } catch {}
     // Force-update all card images to HD site images (correct destination photo for each route)
     try {
       await db.execute(sql.raw(`
