@@ -1,6 +1,9 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist/public",
+  "redirects": [
+    { "source": "/blog/delhi-to-kashmir-road-trip-guide", "destination": "/cab/delhi-to-manali", "permanent": true }
+  ],
   "rewrites": [
     { "source": "/sitemap.xml", "destination": "https://easyoutstation-production.up.railway.app/sitemap.xml" },
     { "source": "/api/:path*", "destination": "https://easyoutstation-production.up.railway.app/api/:path*" },

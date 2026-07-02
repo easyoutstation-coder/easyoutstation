@@ -360,6 +360,20 @@ const ROUTES: Record<string, {
     ]
   },
 
+  "delhi-to-kedarnath": {
+    from: "Delhi", to: "Kedarnath", distance: 470, duration: "10-11 hours",
+    fare: { min: 5890, max: 10590 }, toll: 680,
+    description: "Book Delhi to Kedarnath cab at fixed fares. We drop you at Gaurikund, the base camp for the Kedarnath Jyotirlinga shrine (22 km trek ahead). Pilgrimage specialists, AC cars, verified mountain drivers.",
+    highlights: ["Highest Jyotirlinga at 3,583 m", "Drop at Gaurikund base camp", "Helicopter darshan from Phata/Sirsi", "Mandakini River valley route"],
+    faqs: [
+      { q: "How far is Delhi to Kedarnath by cab?", a: "Delhi to Gaurikund (Kedarnath base camp) is approximately 470 km via Haridwar, Rishikesh and Rudraprayag, taking 10-11 hours by road. From Gaurikund, the 22 km trek or helicopter ride to Kedarnath temple begins." },
+      { q: "Does the cab go to Kedarnath temple?", a: "No vehicle can go to Kedarnath temple itself. We drop you at Gaurikund (1,982 m), from where you trek 22 km to the shrine at 3,583 m. Pony, palki and helicopter services are available from Gaurikund and Phata/Sirsi." },
+      { q: "What is the cab fare from Delhi to Kedarnath (Gaurikund)?", a: "Fares start from ₹5,890 for a sedan to ₹10,590 for an Innova Hycross. Price includes driver charges. Toll & Uttarakhand state tax charged at actuals." },
+      { q: "When is Kedarnath temple open?", a: "Kedarnath temple opens in late April or early May (Akshaya Tritiya) and closes in November (Bhai Dooj) for winter. The exact dates are announced by the Char Dham Devasthanam Board each year — check before booking." },
+      { q: "Is a helicopter available from Kedarnath base?", a: "Yes. Helicopter services operate from Phata, Sirsi and Guptkashi to Kedarnath. Book online at heliservices.uk.gov.in well in advance, especially during peak season (May, June, September, October). Helicopters are weather-dependent." },
+    ]
+  },
+
   // ── Himachal Pradesh — Intra-State Routes ───────────────────────────
   "chandigarh-to-manali": {
     from: "Chandigarh", to: "Manali", distance: 315, duration: "7-8 hours",

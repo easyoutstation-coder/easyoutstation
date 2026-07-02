@@ -163,6 +163,11 @@ export const routeLandmarks: Record<string, { image: string; landmark: string; o
     landmark: "Tip'n'Top, Lansdowne",
     objectPosition: "center 40%",
   },
+  kedarnath: {
+    image: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=1600&h=900&q=90&fit=crop&auto=format",
+    landmark: "Kedarnath Temple, Rudraprayag",
+    objectPosition: "center 35%",
+  },
 };
 
 export function getLandmark(city: string) {

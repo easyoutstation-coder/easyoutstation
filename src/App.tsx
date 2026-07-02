@@ -24,6 +24,7 @@ import Corporate from './pages/Corporate'
 import CorporatePortal from './pages/CorporatePortal'
 import Driver from './pages/Driver'
 import Vendor from './pages/Vendor'
+import Go from './pages/Go'
 import { trpc } from './providers/trpc'
 import { useAuth } from './hooks/useAuth'
 import { usePushNotifications } from './hooks/usePushNotifications'
@@ -152,6 +153,7 @@ export default function App() {
         <Route path="/corporate-portal" element={<CorporatePortal />} />
         <Route path="/driver" element={<Driver />} />
         <Route path="/vendor" element={<Vendor />} />
+        <Route path="/go" element={<Go />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </SiteGate>
