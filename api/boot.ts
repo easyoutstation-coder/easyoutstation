@@ -302,32 +302,91 @@ async function runStartupMigrations() {
         CREATE TABLE IF NOT EXISTS linkHubCards (
           id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
           label VARCHAR(100) NOT NULL,
+          subtitle VARCHAR(150) NULL,
           imageUrl TEXT NOT NULL,
           linkUrl VARCHAR(500) NOT NULL,
+          category VARCHAR(50) NULL,
+          isPinned BOOLEAN NOT NULL DEFAULT FALSE,
           displayOrder INT NOT NULL DEFAULT 0,
           isActive BOOLEAN NOT NULL DEFAULT TRUE,
           createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
           updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         )
       `));
-      // Seed defaults if table is empty
-      await db.execute(sql.raw(`
-        INSERT INTO linkHubCards (label, imageUrl, linkUrl, displayOrder, isActive)
-        SELECT * FROM (VALUES
-          ('Delhi → Kedarnath','https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=800&h=500&q=80&fit=crop&auto=format','/cab/delhi-to-kedarnath',1,TRUE),
-          ('Delhi → Manali','https://images.unsplash.com/photo-1677821374212-8c3e88292b1b?w=800&h=500&q=80&fit=crop&auto=format','/cab/delhi-to-manali',2,TRUE),
-          ('Delhi → Shimla','https://images.unsplash.com/photo-1648830802584-ec070946e591?w=800&h=500&q=80&fit=crop&auto=format','/cab/delhi-to-shimla',3,TRUE),
-          ('Delhi → Rishikesh','https://images.unsplash.com/photo-1642163168826-37f2233297ac?w=800&h=500&q=80&fit=crop&auto=format','/cab/delhi-to-rishikesh',4,TRUE),
-          ('Delhi → Haridwar','https://images.unsplash.com/photo-1653392083932-d5e9e7d2ccd1?w=800&h=500&q=80&fit=crop&auto=format','/cab/delhi-to-haridwar',5,TRUE),
-          ('Delhi → Chandigarh','https://images.unsplash.com/photo-1731593597977-acde4913bd19?w=800&h=500&q=80&fit=crop&auto=format','/cab/delhi-to-chandigarh',6,TRUE),
-          ('Delhi → Jaipur','https://images.unsplash.com/photo-1578999935853-4ec5fa6c1f60?w=800&h=500&q=80&fit=crop&auto=format','/cab/delhi-to-jaipur',7,TRUE),
-          ('Delhi → Agra','https://images.unsplash.com/photo-1564507592333-c60657eea523?w=800&h=500&q=80&fit=crop&auto=format','/cab/delhi-to-agra',8,TRUE),
-          ('Delhi → Dharamshala','https://images.unsplash.com/photo-1581321863389-ef7d7bfe4b75?w=800&h=500&q=80&fit=crop&auto=format','/cab/delhi-to-dharamshala',9,TRUE),
-          ('Delhi → Nainital','https://images.unsplash.com/photo-1610715936287-6c2ad208cdbf?w=800&h=500&q=80&fit=crop&auto=format','/cab/delhi-to-nainital',10,TRUE)
-        ) AS v(label,imageUrl,linkUrl,displayOrder,isActive)
-        WHERE NOT EXISTS (SELECT 1 FROM linkHubCards LIMIT 1)
-      `));
     } catch { /* already exists */ }
+    try { await db.execute(sql.raw(`ALTER TABLE linkHubCards ADD COLUMN subtitle VARCHAR(150) NULL`)); } catch {}
+    try { await db.execute(sql.raw(`ALTER TABLE linkHubCards ADD COLUMN category VARCHAR(50) NULL`)); } catch {}
+    try { await db.execute(sql.raw(`ALTER TABLE linkHubCards ADD COLUMN isPinned BOOLEAN NOT NULL DEFAULT FALSE`)); } catch {}
+    // Update existing rows with category + subtitle
+    try {
+      await db.execute(sql.raw(`
+        UPDATE linkHubCards SET
+          category = CASE label
+            WHEN 'Delhi → Kedarnath' THEN 'pilgrimage'
+            WHEN 'Delhi → Manali' THEN 'hills' WHEN 'Delhi → Shimla' THEN 'hills'
+            WHEN 'Delhi → Rishikesh' THEN 'pilgrimage' WHEN 'Delhi → Haridwar' THEN 'pilgrimage'
+            WHEN 'Delhi → Chandigarh' THEN 'quick' WHEN 'Delhi → Jaipur' THEN 'rajasthan'
+            WHEN 'Delhi → Agra' THEN 'quick' WHEN 'Delhi → Dharamshala' THEN 'hills'
+            WHEN 'Delhi → Nainital' THEN 'hills' ELSE category END,
+          subtitle = CASE label
+            WHEN 'Delhi → Kedarnath' THEN '470 km · 10-11 hrs · from ₹5,890'
+            WHEN 'Delhi → Manali' THEN '540 km · 12-14 hrs · from ₹6,730'
+            WHEN 'Delhi → Shimla' THEN '350 km · 7-8 hrs · from ₹4,450'
+            WHEN 'Delhi → Rishikesh' THEN '250 km · 5-6 hrs · from ₹3,250'
+            WHEN 'Delhi → Haridwar' THEN '220 km · 4-5 hrs · from ₹2,890'
+            WHEN 'Delhi → Chandigarh' THEN '260 km · 4-5 hrs · from ₹3,370'
+            WHEN 'Delhi → Jaipur' THEN '280 km · 4-5 hrs · from ₹3,610'
+            WHEN 'Delhi → Agra' THEN '230 km · 3-4 hrs · from ₹3,010'
+            WHEN 'Delhi → Dharamshala' THEN '475 km · 10-11 hrs · from ₹5,950'
+            WHEN 'Delhi → Nainital' THEN '310 km · 6-7 hrs · from ₹3,970'
+            ELSE subtitle END
+        WHERE category IS NULL OR subtitle IS NULL
+      `));
+    } catch {}
+    // Insert all 42 routes (skip if linkUrl already exists)
+    try {
+      const allRoutes = [
+        ['Delhi → Dehradun','https://images.unsplash.com/photo-1590351742170-8737ea2e8ce8?w=800&h=500&q=80&fit=crop&auto=format','/cab/delhi-to-dehradun','hills','300 km · 5-6 hrs · from ₹3,850',11],
+        ['Delhi → Mussoorie','https://images.unsplash.com/photo-1637387568999-92c68bdee212?w=800&h=500&q=80&fit=crop&auto=format','/cab/delhi-to-mussoorie','hills','310 km · 6-7 hrs · from ₹3,970',12],
+        ['Delhi → Mathura','https://images.pexels.com/photos/31626024/pexels-photo-31626024.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop','/cab/delhi-to-mathura','pilgrimage','175 km · 2-3 hrs · from ₹2,350',13],
+        ['Delhi → Amritsar','https://images.unsplash.com/photo-1623059508779-2542c6e83753?w=800&h=500&q=80&fit=crop&auto=format','/cab/delhi-to-amritsar','quick','460 km · 7-8 hrs · from ₹5,770',14],
+        ['Delhi → Kashmir','https://images.pexels.com/photos/12750077/pexels-photo-12750077.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop','/cab/delhi-to-kashmir','longhaul','820 km · 14-16 hrs · from ₹10,090',15],
+        ['Delhi → Vaishno Devi','https://images.unsplash.com/photo-1717502713522-543a97e13dab?w=800&h=500&q=80&fit=crop&auto=format','/cab/delhi-to-vaishno-devi','pilgrimage','650 km · 12-13 hrs · from ₹8,050',16],
+        ['Delhi → Ludhiana','https://images.pexels.com/photos/33134859/pexels-photo-33134859.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop','/cab/delhi-to-ludhiana','quick','310 km · 5-6 hrs · from ₹3,970',17],
+        ['Delhi → Ayodhya','https://images.unsplash.com/photo-1672398760212-08ce34b88c62?w=800&h=500&q=80&fit=crop&auto=format','/cab/delhi-to-ayodhya','pilgrimage','640 km · 10-12 hrs · from ₹7,930',18],
+        ['Delhi → Banaras','https://images.pexels.com/photos/10461752/pexels-photo-10461752.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop','/cab/delhi-to-banaras','pilgrimage','820 km · 12-14 hrs · from ₹10,090',19],
+        ['Delhi → Jodhpur','https://images.unsplash.com/photo-1566873535350-a3f5d4a804b7?w=800&h=500&q=80&fit=crop&auto=format','/cab/delhi-to-jodhpur','rajasthan','600 km · 9-10 hrs · from ₹7,450',20],
+        ['Delhi → Udaipur','https://images.unsplash.com/photo-1633702738734-443da2c18f3c?w=800&h=500&q=80&fit=crop&auto=format','/cab/delhi-to-udaipur','rajasthan','665 km · 10-11 hrs · from ₹8,230',21],
+        ['Delhi → Pushkar','https://images.unsplash.com/photo-1715168931029-2949161ee406?w=800&h=500&q=80&fit=crop&auto=format','/cab/delhi-to-pushkar','rajasthan','395 km · 6-7 hrs · from ₹4,990',22],
+        ['Delhi → Corbett','https://images.unsplash.com/photo-1771922365997-8e687eda46b0?w=800&h=500&q=80&fit=crop&auto=format','/cab/delhi-to-corbett','quick','250 km · 5-6 hrs · from ₹3,250',23],
+        ['Delhi → Kasauli','https://images.unsplash.com/photo-1720678599878-631001ea7bcc?w=800&h=500&q=80&fit=crop&auto=format','/cab/delhi-to-kasauli','hills','315 km · 5-6 hrs · from ₹4,030',24],
+        ['Delhi → Dalhousie','https://images.unsplash.com/photo-1589702413183-ca141958b7c5?w=800&h=500&q=80&fit=crop&auto=format','/cab/delhi-to-dalhousie','hills','555 km · 10-11 hrs · from ₹6,910',25],
+        ['Delhi → Lucknow','https://images.unsplash.com/photo-1583504490792-3ceadbc5147c?w=800&h=500&q=80&fit=crop&auto=format','/cab/delhi-to-lucknow','quick','555 km · 7-8 hrs · from ₹6,910',26],
+        ['Delhi → Prayagraj','https://images.pexels.com/photos/31022593/pexels-photo-31022593.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop','/cab/delhi-to-prayagraj','pilgrimage','645 km · 9-10 hrs · from ₹7,990',27],
+        ['Delhi → Vrindavan','https://images.unsplash.com/photo-1662376107358-21296a9234f1?w=800&h=500&q=80&fit=crop&auto=format','/cab/delhi-to-vrindavan','pilgrimage','155 km · 2.5-3 hrs · from ₹2,110',28],
+        ['Delhi → Spiti Valley','https://images.unsplash.com/photo-1653844573020-71f77a0ccb8c?w=800&h=500&q=80&fit=crop&auto=format','/cab/delhi-to-spiti','longhaul','785 km · 14-16 hrs · from ₹9,670',29],
+        ['Delhi → Mount Abu','https://images.unsplash.com/photo-1652421027969-6df47aab314a?w=800&h=500&q=80&fit=crop&auto=format','/cab/delhi-to-mount-abu','rajasthan','780 km · 12-13 hrs · from ₹9,610',30],
+        ['Delhi → Lansdowne','https://images.pexels.com/photos/10607034/pexels-photo-10607034.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop','/cab/delhi-to-lansdowne','hills','265 km · 5-6 hrs · from ₹3,430',31],
+        ['Chandigarh → Manali','https://images.unsplash.com/photo-1677821374212-8c3e88292b1b?w=800&h=500&q=80&fit=crop&auto=format','/cab/chandigarh-to-manali','hills','315 km · 7-8 hrs · from ₹4,030',32],
+        ['Chandigarh → Shimla','https://images.unsplash.com/photo-1648830802584-ec070946e591?w=800&h=500&q=80&fit=crop&auto=format','/cab/chandigarh-to-shimla','hills','115 km · 3-4 hrs · from ₹1,630',33],
+        ['Chandigarh → Dharamshala','https://images.unsplash.com/photo-1581321863389-ef7d7bfe4b75?w=800&h=500&q=80&fit=crop&auto=format','/cab/chandigarh-to-dharamshala','hills','245 km · 5-6 hrs · from ₹3,190',34],
+        ['Chandigarh → Amritsar','https://images.unsplash.com/photo-1623059508779-2542c6e83753?w=800&h=500&q=80&fit=crop&auto=format','/cab/chandigarh-to-amritsar','quick','230 km · 3-4 hrs · from ₹3,010',35],
+        ['Shimla → Manali','https://images.unsplash.com/photo-1677821374212-8c3e88292b1b?w=800&h=500&q=80&fit=crop&auto=format','/cab/shimla-to-manali','hills','220 km · 6-7 hrs · from ₹2,890',36],
+        ['Shimla → Dharamshala','https://images.unsplash.com/photo-1581321863389-ef7d7bfe4b75?w=800&h=500&q=80&fit=crop&auto=format','/cab/shimla-to-dharamshala','hills','275 km · 6-7 hrs · from ₹3,550',37],
+        ['Manali → Leh','https://images.unsplash.com/photo-1591154669695-5f2a8d20c089?w=800&h=500&q=80&fit=crop&auto=format','/cab/manali-to-leh','longhaul','480 km · 12-14 hrs · from ₹5,810',38],
+        ['Manali → Spiti','https://images.unsplash.com/photo-1653844573020-71f77a0ccb8c?w=800&h=500&q=80&fit=crop&auto=format','/cab/manali-to-spiti','longhaul','220 km · 7-8 hrs · from ₹2,890',39],
+        ['Manali → Kasol','https://images.pexels.com/photos/2087391/pexels-photo-2087391.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop','/cab/manali-to-kasol','hills','80 km · 2.5-3 hrs · from ₹1,210',40],
+        ['Amritsar → Dharamshala','https://images.unsplash.com/photo-1581321863389-ef7d7bfe4b75?w=800&h=500&q=80&fit=crop&auto=format','/cab/amritsar-to-dharamshala','hills','200 km · 4-5 hrs · from ₹2,650',41],
+        ['Ludhiana → Amritsar','https://images.unsplash.com/photo-1623059508779-2542c6e83753?w=800&h=500&q=80&fit=crop&auto=format','/cab/ludhiana-to-amritsar','quick','130 km · 2-2.5 hrs · from ₹1,810',42],
+      ];
+      for (const [label, imageUrl, linkUrl, category, subtitle, displayOrder] of allRoutes) {
+        await db.execute(sql.raw(
+          `INSERT INTO linkHubCards (label, imageUrl, linkUrl, category, subtitle, displayOrder, isActive)
+           SELECT '${(label as string).replace(/'/g,"\\'")}','${imageUrl}','${linkUrl}','${category}','${(subtitle as string).replace(/₹/g,"\\u20B9")}',${displayOrder},TRUE
+           WHERE NOT EXISTS (SELECT 1 FROM linkHubCards WHERE linkUrl='${linkUrl}')`
+        ));
+      }
+    } catch {}
 
     // Per-vehicle driver assignments for multi-vehicle offline bookings
     try {

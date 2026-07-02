@@ -151,10 +151,11 @@ function LinkHubTab() {
   const reorder = trpc.admin.reorderLinkHubCards.useMutation({ onSuccess: () => refetch() });
 
   const [editCard, setEditCard] = useState<{
-    id?: number; label: string; imageUrl: string; linkUrl: string; displayOrder: number; isActive: boolean;
+    id?: number; label: string; subtitle: string; imageUrl: string; linkUrl: string;
+    category: string; isPinned: boolean; displayOrder: number; isActive: boolean;
   } | null>(null);
 
-  const openNew = () => setEditCard({ label: "", imageUrl: "", linkUrl: "/cab/delhi-to-", displayOrder: (cards.length + 1), isActive: true });
+  const openNew = () => setEditCard({ label: "", subtitle: "", imageUrl: "", linkUrl: "/cab/delhi-to-", category: "", isPinned: false, displayOrder: (cards.length + 1), isActive: true });
 
   const moveCard = (id: number, direction: "up" | "down") => {
     const sorted = [...cards].sort((a, b) => a.displayOrder - b.displayOrder);
@@ -193,8 +194,11 @@ function LinkHubTab() {
                 <div key={card.id} className="flex items-center gap-3 px-4 py-3">
                   <img src={card.imageUrl} alt={card.label} className="w-14 h-10 rounded-lg object-cover shrink-0 bg-slate-100" onError={e => { (e.target as HTMLImageElement).src = ""; }} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{card.label}</p>
-                    <p className="text-xs text-muted-foreground truncate">{card.linkUrl}</p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-sm font-medium truncate">{card.label}</p>
+                      {(card as any).isPinned && <span className="text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-semibold shrink-0">Pinned</span>}
+                    </div>
+                    <p className="text-xs text-muted-foreground truncate">{(card as any).subtitle || card.linkUrl}</p>
                   </div>
                   <Badge variant={card.isActive ? "default" : "secondary"} className="shrink-0 text-xs">
                     {card.isActive ? "Live" : "Hidden"}
@@ -202,7 +206,7 @@ function LinkHubTab() {
                   <div className="flex gap-1 shrink-0">
                     <Button size="icon" variant="ghost" className="h-7 w-7" disabled={idx === 0} onClick={() => moveCard(card.id, "up")}>↑</Button>
                     <Button size="icon" variant="ghost" className="h-7 w-7" disabled={idx === sorted.length - 1} onClick={() => moveCard(card.id, "down")}>↓</Button>
-                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditCard({ id: card.id, label: card.label, imageUrl: card.imageUrl, linkUrl: card.linkUrl, displayOrder: card.displayOrder, isActive: card.isActive })}><Pencil className="w-3.5 h-3.5" /></Button>
+                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditCard({ id: card.id, label: card.label, subtitle: (card as any).subtitle ?? "", imageUrl: card.imageUrl, linkUrl: card.linkUrl, category: (card as any).category ?? "", isPinned: (card as any).isPinned ?? false, displayOrder: card.displayOrder, isActive: card.isActive })}><Pencil className="w-3.5 h-3.5" /></Button>
                     <Button size="icon" variant="ghost" className="h-7 w-7 text-red-500 hover:text-red-700" onClick={() => { if (confirm(`Delete "${card.label}"?`)) del.mutate({ id: card.id }); }}><Trash2 className="w-3.5 h-3.5" /></Button>
                   </div>
                 </div>
@@ -225,22 +229,53 @@ function LinkHubTab() {
               <div>
                 <label className="text-xs font-medium mb-1 block">Image URL</label>
                 <Input placeholder="https://images.unsplash.com/…" value={editCard.imageUrl} onChange={e => setEditCard(f => f && ({ ...f, imageUrl: e.target.value }))} />
-                <p className="text-xs text-muted-foreground mt-1">Paste any Unsplash, Pexels or other image URL</p>
+                <p className="text-xs text-muted-foreground mt-1">Paste Unsplash, Pexels, or any image URL</p>
               </div>
               <div>
                 <label className="text-xs font-medium mb-1 block">Label</label>
                 <Input placeholder="Delhi → Manali" value={editCard.label} onChange={e => setEditCard(f => f && ({ ...f, label: e.target.value }))} />
               </div>
               <div>
+                <label className="text-xs font-medium mb-1 block">Subtitle <span className="text-muted-foreground font-normal">(optional)</span></label>
+                <Input placeholder="540 km · 12-14 hrs · from ₹6,730" value={editCard.subtitle} onChange={e => setEditCard(f => f && ({ ...f, subtitle: e.target.value }))} />
+              </div>
+              <div>
                 <label className="text-xs font-medium mb-1 block">Link URL</label>
                 <Input placeholder="/cab/delhi-to-manali" value={editCard.linkUrl} onChange={e => setEditCard(f => f && ({ ...f, linkUrl: e.target.value }))} />
-                <p className="text-xs text-muted-foreground mt-1">Relative path or full URL (WhatsApp, Instagram, etc.)</p>
+                <p className="text-xs text-muted-foreground mt-1">Relative path or full URL</p>
               </div>
-              <div className="flex items-center gap-3">
+              <div>
+                <label className="text-xs font-medium mb-1 block">Category</label>
+                <select
+                  className="w-full border rounded-md px-3 py-2 text-sm bg-background"
+                  value={editCard.category}
+                  onChange={e => setEditCard(f => f && ({ ...f, category: e.target.value }))}
+                >
+                  <option value="">— Select category —</option>
+                  <option value="hills">Hill Stations</option>
+                  <option value="pilgrimage">Pilgrimage</option>
+                  <option value="rajasthan">Rajasthan</option>
+                  <option value="quick">Quick Trips</option>
+                  <option value="longhaul">Long Haul</option>
+                </select>
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="text-xs font-medium">Pin as Featured Card</label>
+                  <p className="text-xs text-muted-foreground">Shows as full-width card at top of /go page</p>
+                </div>
+                <button
+                  onClick={() => setEditCard(f => f && ({ ...f, isPinned: !f.isPinned }))}
+                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors shrink-0 ${editCard.isPinned ? "bg-amber-500" : "bg-slate-300"}`}
+                >
+                  <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${editCard.isPinned ? "translate-x-4" : "translate-x-1"}`} />
+                </button>
+              </div>
+              <div className="flex items-center justify-between">
                 <label className="text-xs font-medium">Visible on /go page</label>
                 <button
                   onClick={() => setEditCard(f => f && ({ ...f, isActive: !f.isActive }))}
-                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${editCard.isActive ? "bg-blue-600" : "bg-slate-300"}`}
+                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors shrink-0 ${editCard.isActive ? "bg-blue-600" : "bg-slate-300"}`}
                 >
                   <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${editCard.isActive ? "translate-x-4" : "translate-x-1"}`} />
                 </button>
@@ -250,7 +285,12 @@ function LinkHubTab() {
                 <Button
                   className="flex-1"
                   disabled={!editCard.label || !editCard.imageUrl || !editCard.linkUrl || upsert.isPending}
-                  onClick={() => upsert.mutate({ id: editCard.id, label: editCard.label, imageUrl: editCard.imageUrl, linkUrl: editCard.linkUrl, displayOrder: editCard.displayOrder, isActive: editCard.isActive })}
+                  onClick={() => upsert.mutate({
+                    id: editCard.id, label: editCard.label, subtitle: editCard.subtitle || undefined,
+                    imageUrl: editCard.imageUrl, linkUrl: editCard.linkUrl,
+                    category: editCard.category || undefined, isPinned: editCard.isPinned,
+                    displayOrder: editCard.displayOrder, isActive: editCard.isActive,
+                  })}
                 >
                   {upsert.isPending ? "Saving…" : "Save Card"}
                 </Button>

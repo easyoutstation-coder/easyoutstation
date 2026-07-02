@@ -2317,23 +2317,27 @@ Thank you for choosing EasyOutstation.`;
     .input(z.object({
       id: z.number().optional(),
       label: z.string().min(1).max(100),
-      imageUrl: z.string().url(),
+      subtitle: z.string().max(150).optional(),
+      imageUrl: z.string().min(1),
       linkUrl: z.string().min(1).max(500),
+      category: z.string().max(50).optional(),
+      isPinned: z.boolean().optional(),
       displayOrder: z.number().int().min(0),
       isActive: z.boolean(),
     }))
     .mutation(async ({ input }) => {
       const db = getDb();
+      const vals = {
+        label: input.label, subtitle: input.subtitle ?? null,
+        imageUrl: input.imageUrl, linkUrl: input.linkUrl,
+        category: input.category ?? null, isPinned: input.isPinned ?? false,
+        displayOrder: input.displayOrder, isActive: input.isActive,
+      };
       if (input.id) {
-        await db.update(linkHubCards)
-          .set({ label: input.label, imageUrl: input.imageUrl, linkUrl: input.linkUrl, displayOrder: input.displayOrder, isActive: input.isActive })
-          .where(eq(linkHubCards.id, input.id));
+        await db.update(linkHubCards).set(vals).where(eq(linkHubCards.id, input.id));
         return { id: input.id };
       } else {
-        const [res] = await db.insert(linkHubCards).values({
-          label: input.label, imageUrl: input.imageUrl, linkUrl: input.linkUrl,
-          displayOrder: input.displayOrder, isActive: input.isActive,
-        });
+        const [res] = await db.insert(linkHubCards).values(vals);
         return { id: (res as any).insertId };
       }
     }),

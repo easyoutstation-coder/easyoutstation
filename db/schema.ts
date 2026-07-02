@@ -345,8 +345,11 @@ export type Invoice = typeof invoices.$inferSelect;
 export const linkHubCards = mysqlTable("linkHubCards", {
   id: serial("id").primaryKey(),
   label: varchar("label", { length: 100 }).notNull(),
+  subtitle: varchar("subtitle", { length: 150 }),
   imageUrl: text("imageUrl").notNull(),
   linkUrl: varchar("linkUrl", { length: 500 }).notNull(),
+  category: varchar("category", { length: 50 }),
+  isPinned: boolean("isPinned").default(false).notNull(),
   displayOrder: int("displayOrder").default(0).notNull(),
   isActive: boolean("isActive").default(true).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

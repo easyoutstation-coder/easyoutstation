@@ -476,3 +476,6 @@ button, [role="button"], label {
 .rdp-day { color: #1E293B !important; }
 .rdp-day_today { font-weight: 700 !important; }
 .rdp-head_cell { color: #64748B !important; }
+
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
