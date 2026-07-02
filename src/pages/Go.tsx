@@ -173,13 +173,13 @@ export default function Go() {
       {/* 3-column grid */}
       <div className="px-1">
         {isLoading ? (
-          <div className="grid grid-cols-3 gap-0.5">
+          <div className="grid grid-cols-4 gap-0.5">
             {Array.from({ length: 12 }).map((_, i) => (
               <div key={i} className="aspect-square bg-zinc-900 animate-pulse" />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-0.5">
+          <div className="grid grid-cols-4 gap-0.5">
             {gridCards.map(card => (
               <button
                 key={card.id}
