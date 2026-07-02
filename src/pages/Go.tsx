@@ -128,24 +128,6 @@ export default function Go() {
         <p className="text-zinc-400 text-xs mt-3 leading-relaxed">
           Fixed-fare outstation cabs from Delhi. Verified drivers · 24/7 support · No surge pricing.
         </p>
-        <div className="flex gap-2 mt-3">
-          <a
-            href={WA_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 flex items-center justify-center gap-1.5 bg-[#25D366] text-white text-xs font-semibold py-2 rounded-xl active:scale-95 transition-transform"
-          >
-            <MessageCircle className="w-3.5 h-3.5" />
-            Book on WhatsApp
-          </a>
-          <a
-            href="tel:+918796564111"
-            className="flex-1 flex items-center justify-center gap-1.5 bg-zinc-800 text-white text-xs font-semibold py-2 rounded-xl active:scale-95 transition-transform"
-          >
-            <Phone className="w-3.5 h-3.5" />
-            Call Now
-          </a>
-        </div>
       </div>
 
       {/* Story highlights / category filter */}
@@ -211,9 +193,9 @@ export default function Go() {
                   loading="lazy"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-1.5 space-y-1">
-                  <p className="text-white text-[9px] font-semibold leading-tight line-clamp-2">{card.label}</p>
-                  <span className="inline-flex items-center bg-white/20 backdrop-blur-sm text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full border border-white/30">
+                <div className="absolute bottom-0 left-0 right-0 p-2 space-y-1">
+                  <p className="text-white text-[11px] font-semibold leading-tight line-clamp-2">{card.label}</p>
+                  <span className="inline-flex items-center bg-white/20 backdrop-blur-sm text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-white/30">
                     Book Now →
                   </span>
                 </div>
