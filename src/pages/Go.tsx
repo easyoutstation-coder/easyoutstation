@@ -170,20 +170,20 @@ export default function Go() {
         </div>
       )}
 
-      {/* 3-column grid */}
-      <div className="px-1">
+      {/* 2-column card grid */}
+      <div className="px-3">
         {isLoading ? (
-          <div className="grid grid-cols-4 gap-0.5">
-            {Array.from({ length: 12 }).map((_, i) => (
-              <div key={i} className="aspect-square bg-zinc-900 animate-pulse" />
+          <div className="grid grid-cols-2 gap-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="aspect-[3/4] rounded-2xl bg-zinc-900 animate-pulse" />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-4 gap-0.5">
+          <div className="grid grid-cols-2 gap-3">
             {gridCards.map(card => (
               <button
                 key={card.id}
-                className="relative aspect-square overflow-hidden block active:opacity-80 transition-opacity"
+                className="relative aspect-[3/4] rounded-2xl overflow-hidden block active:scale-[0.97] transition-transform text-left"
                 onClick={() => setBottomSheet(card)}
               >
                 <img
@@ -192,10 +192,13 @@ export default function Go() {
                   className="absolute inset-0 w-full h-full object-cover"
                   loading="lazy"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-2 space-y-1">
-                  <p className="text-white text-[13px] font-bold leading-tight line-clamp-2">{card.label}</p>
-                  <span className="inline-flex items-center bg-white/20 backdrop-blur-sm text-white text-[11px] font-bold px-2 py-0.5 rounded-full border border-white/30">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-3 space-y-2">
+                  <p className="text-white text-sm font-bold leading-snug">{card.label}</p>
+                  {card.subtitle && (
+                    <p className="text-white/60 text-[10px] leading-tight line-clamp-2">{card.subtitle}</p>
+                  )}
+                  <span className="inline-flex items-center bg-white text-black text-xs font-bold px-3 py-1 rounded-full">
                     Book Now →
                   </span>
                 </div>

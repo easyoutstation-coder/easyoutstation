@@ -159,7 +159,7 @@ export const routeLandmarks: Record<string, { image: string; landmark: string; o
     objectPosition: "center 40%",
   },
   lansdowne: {
-    image: "https://images.pexels.com/photos/10607034/pexels-photo-10607034.jpeg?auto=compress&cs=tinysrgb&w=1600&h=900&fit=crop",
+    image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1600&h=900&q=90&fit=crop&auto=format",
     landmark: "Tip'n'Top, Lansdowne",
     objectPosition: "center 40%",
   },

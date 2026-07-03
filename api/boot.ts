@@ -353,7 +353,7 @@ async function runStartupMigrations() {
           WHEN '/cab/delhi-to-vrindavan'      THEN 'https://images.unsplash.com/photo-1662376107358-21296a9234f1?w=800&h=500&q=90&fit=crop&auto=format'
           WHEN '/cab/delhi-to-spiti'          THEN 'https://images.unsplash.com/photo-1653844573020-71f77a0ccb8c?w=800&h=500&q=90&fit=crop&auto=format'
           WHEN '/cab/delhi-to-mount-abu'      THEN 'https://images.unsplash.com/photo-1652421027969-6df47aab314a?w=800&h=500&q=90&fit=crop&auto=format'
-          WHEN '/cab/delhi-to-lansdowne'      THEN 'https://images.pexels.com/photos/10607034/pexels-photo-10607034.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop'
+          WHEN '/cab/delhi-to-lansdowne'      THEN 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=500&q=90&fit=crop&auto=format'
           WHEN '/cab/chandigarh-to-manali'    THEN 'https://images.unsplash.com/photo-1677821374212-8c3e88292b1b?w=800&h=500&q=90&fit=crop&auto=format'
           WHEN '/cab/chandigarh-to-shimla'    THEN 'https://images.unsplash.com/photo-1648830802584-ec070946e591?w=800&h=500&q=90&fit=crop&auto=format'
           WHEN '/cab/chandigarh-to-dharamshala' THEN 'https://images.unsplash.com/photo-1581321863389-ef7d7bfe4b75?w=800&h=500&q=90&fit=crop&auto=format'
