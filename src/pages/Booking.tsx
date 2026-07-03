@@ -398,8 +398,10 @@ export default function BookingPage() {
     return totalKmForTrip;
   })();
 
+  const ONE_WAY_MULTIPLIER = 1.25;
+  const fareMultiplier = tripType === "one_way" ? ONE_WAY_MULTIPLIER : 1;
   const minKmApplies = billedKm > totalKmForTrip;
-  const basePrice = pricePerKm * billedKm;
+  const basePrice = pricePerKm * billedKm * fareMultiplier;
   const totalDriverCharges = driverChargePerDay * tripDays;
 
   const tollCharges = (() => {

@@ -15,7 +15,7 @@ const ROUTES: Record<string, {
 }> = {
   "delhi-to-manali": {
     from: "Delhi", to: "Manali", distance: 540, duration: "12-14 hours",
-    fare: { min: 6730, max: 12130 }, toll: 850,
+    fare: { min: 8350, max: 15100 }, toll: 850,
     description: "Book Delhi to Manali cab at fixed fares. Experienced mountain drivers, comfortable cars, no hidden charges. One way and round trip available.",
     highlights: ["Experienced mountain drivers", "AC cars with comfortable seats", "Available 24/7", "Fixed price — no surge"],
     faqs: [
@@ -26,7 +26,7 @@ const ROUTES: Record<string, {
   },
   "delhi-to-shimla": {
     from: "Delhi", to: "Shimla", distance: 350, duration: "7-8 hours",
-    fare: { min: 4450, max: 8000 }, toll: 650,
+    fare: { min: 5500, max: 9940 }, toll: 650,
     description: "Book Delhi to Shimla cab at fixed fares. Professional drivers, AC cars, door-to-door pickup. One way and round trip available.",
     highlights: ["Hill station specialists", "AC cars", "Available 24/7", "No hidden charges"],
     faqs: [
@@ -36,7 +36,7 @@ const ROUTES: Record<string, {
   },
   "delhi-to-chandigarh": {
     from: "Delhi", to: "Chandigarh", distance: 260, duration: "4-5 hours",
-    fare: { min: 3370, max: 6070 }, toll: 380,
+    fare: { min: 4150, max: 7530 }, toll: 380,
     description: "Book Delhi to Chandigarh cab at fixed fares. Fast, comfortable and reliable. One way and round trip available.",
     highlights: ["Fast highway route", "4-5 hours journey", "Fixed fares", "Verified drivers"],
     faqs: [
@@ -46,7 +46,7 @@ const ROUTES: Record<string, {
   },
   "delhi-to-jaipur": {
     from: "Delhi", to: "Jaipur", distance: 280, duration: "4-5 hours",
-    fare: { min: 3610, max: 6410 }, toll: 350,
+    fare: { min: 4450, max: 7950 }, toll: 350,
     description: "Book Delhi to Jaipur cab at fixed fares. Comfortable AC cabs, experienced drivers, on-time pickup guaranteed.",
     highlights: ["Express highway route", "4-5 hours", "Fixed fares", "AC cars"],
     faqs: [
@@ -56,7 +56,7 @@ const ROUTES: Record<string, {
   },
   "delhi-to-agra": {
     from: "Delhi", to: "Agra", distance: 230, duration: "3-4 hours",
-    fare: { min: 3010, max: 5310 }, toll: 290,
+    fare: { min: 3700, max: 6580 }, toll: 290,
     description: "Book Delhi to Agra cab at fixed fares. Visit the Taj Mahal comfortably. Same day return trips available.",
     highlights: ["Yamuna Expressway route", "3-4 hours", "Same day return available", "Taj Mahal specialists"],
     faqs: [
@@ -66,7 +66,7 @@ const ROUTES: Record<string, {
   },
   "delhi-to-rishikesh": {
     from: "Delhi", to: "Rishikesh", distance: 250, duration: "5-6 hours",
-    fare: { min: 3250, max: 5750 }, toll: 450,
+    fare: { min: 4000, max: 7130 }, toll: 450,
     description: "Book Delhi to Rishikesh cab at fixed fares. Adventure awaits! Comfortable journey to the yoga and rafting capital.",
     highlights: ["Scenic route", "5-6 hours", "Fixed fares", "Adventure ready"],
     faqs: [
@@ -76,7 +76,7 @@ const ROUTES: Record<string, {
   },
   "delhi-to-dehradun": {
     from: "Delhi", to: "Dehradun", distance: 300, duration: "5-6 hours",
-    fare: { min: 3850, max: 6850 }, toll: 420,
+    fare: { min: 4750, max: 8500 }, toll: 420,
     description: "Book Delhi to Dehradun cab at fixed fares. Gateway to Uttarakhand. Comfortable, reliable and affordable.",
     highlights: ["NH58 highway route", "5-6 hours", "Fixed fares", "Uttarakhand specialists"],
     faqs: [
@@ -86,7 +86,7 @@ const ROUTES: Record<string, {
   },
   "delhi-to-mussoorie": {
     from: "Delhi", to: "Mussoorie", distance: 310, duration: "6-7 hours",
-    fare: { min: 3970, max: 7070 }, toll: 430,
+    fare: { min: 4900, max: 8780 }, toll: 430,
     description: "Book Delhi to Mussoorie cab at fixed fares. The Queen of Hills awaits. Scenic mountain drive with experienced drivers.",
     highlights: ["Scenic mountain route", "6-7 hours", "Experienced hill drivers", "Fixed fares"],
     faqs: [
@@ -97,7 +97,7 @@ const ROUTES: Record<string, {
   },
   "delhi-to-nainital": {
     from: "Delhi", to: "Nainital", distance: 310, duration: "6-7 hours",
-    fare: { min: 3970, max: 7070 }, toll: 420,
+    fare: { min: 4900, max: 8780 }, toll: 420,
     description: "Book Delhi to Nainital cab at fixed fares. Discover the lake city of Uttarakhand. Safe mountain driving with verified drivers.",
     highlights: ["Kumaon hills specialists", "6-7 hours", "Fixed fares", "Lake city destination"],
     faqs: [
@@ -108,7 +108,7 @@ const ROUTES: Record<string, {
   },
   "delhi-to-mathura": {
     from: "Delhi", to: "Mathura", distance: 175, duration: "2-3 hours",
-    fare: { min: 2350, max: 4100 }, toll: 250,
+    fare: { min: 2880, max: 5060 }, toll: 250,
     description: "Book Delhi to Mathura cab at fixed fares. Visit the birthplace of Lord Krishna. Quick and comfortable same-day trip from Delhi.",
     highlights: ["Yamuna Expressway route", "2-3 hours", "Same day return popular", "Pilgrimage destination"],
     faqs: [
@@ -119,7 +119,7 @@ const ROUTES: Record<string, {
   },
   "delhi-to-amritsar": {
     from: "Delhi", to: "Amritsar", distance: 460, duration: "7-8 hours",
-    fare: { min: 5770, max: 10370 }, toll: 600,
+    fare: { min: 7150, max: 12900 }, toll: 600,
     description: "Book Delhi to Amritsar cab at fixed fares. Visit the Golden Temple and Wagah Border with comfort. Verified drivers, AC cars, no hidden charges. One way and round trip available.",
     highlights: ["NH44 highway route", "7-8 hours", "Golden Temple specialists", "Wagah Border visit"],
     faqs: [
@@ -131,7 +131,7 @@ const ROUTES: Record<string, {
   },
   "delhi-to-dharamshala": {
     from: "Delhi", to: "Dharamshala", distance: 475, duration: "10-11 hours",
-    fare: { min: 5950, max: 10700 }, toll: 700,
+    fare: { min: 7380, max: 13310 }, toll: 700,
     description: "Book Delhi to Dharamshala cab at fixed fares. Explore McLeod Ganj, the Dalai Lama's abode, Kangra Valley and the Dhauladhar ranges. AC cars, verified drivers.",
     highlights: ["Home of the Dalai Lama", "McLeod Ganj access", "Kangra Valley views", "Mountain specialist drivers"],
     faqs: [
@@ -143,7 +143,7 @@ const ROUTES: Record<string, {
   },
   "delhi-to-kashmir": {
     from: "Delhi", to: "Kashmir", distance: 820, duration: "14-16 hours",
-    fare: { min: 10090, max: 18290 }, toll: 1200,
+    fare: { min: 12550, max: 22800 }, toll: 1200,
     description: "Book Delhi to Kashmir cab at fixed fares. Experience Dal Lake, Mughal Gardens, Gulmarg and the paradise of India. Experienced drivers, AC cars, no hidden charges.",
     highlights: ["Dal Lake shikara rides", "Mughal Gardens visit", "Gulmarg day trip", "Pahalgam meadows"],
     faqs: [
@@ -155,7 +155,7 @@ const ROUTES: Record<string, {
   },
   "delhi-to-vaishno-devi": {
     from: "Delhi", to: "Vaishno Devi", distance: 650, duration: "12-13 hours",
-    fare: { min: 8050, max: 14550 }, toll: 900,
+    fare: { min: 10000, max: 18130 }, toll: 900,
     description: "Book Delhi to Vaishno Devi cab at fixed fares. We drop you at Katra, the base camp for the holy shrine. Comfortable AC cabs, verified drivers, pilgrimage specialists.",
     highlights: ["Drop at Katra base camp", "Trikuta Mountain access", "Pilgrimage specialists", "Ample luggage space"],
     faqs: [
@@ -167,7 +167,7 @@ const ROUTES: Record<string, {
   },
   "delhi-to-ludhiana": {
     from: "Delhi", to: "Ludhiana", distance: 310, duration: "5-6 hours",
-    fare: { min: 3970, max: 7070 }, toll: 450,
+    fare: { min: 4900, max: 8780 }, toll: 450,
     description: "Book Delhi to Ludhiana cab at fixed fares. Fast NH44 highway drive to the industrial capital of Punjab. AC cars, verified drivers, door-to-door service.",
     highlights: ["NH44 express highway", "5-6 hours journey", "Fixed price, no surge", "Verified drivers"],
     faqs: [
@@ -179,7 +179,7 @@ const ROUTES: Record<string, {
   },
   "delhi-to-ayodhya": {
     from: "Delhi", to: "Ayodhya", distance: 640, duration: "10-12 hours",
-    fare: { min: 7930, max: 14330 }, toll: 850,
+    fare: { min: 9850, max: 17850 }, toll: 850,
     description: "Book Delhi to Ayodhya cab at fixed fares. Visit Ram Mandir, Saryu Ghats and the sacred city of Lord Ram. Comfortable AC cabs, pilgrimage specialists.",
     highlights: ["Ram Mandir darshan", "Saryu river ghats", "Kanak Bhawan temple", "Hanuman Garhi"],
     faqs: [
@@ -191,7 +191,7 @@ const ROUTES: Record<string, {
   },
   "delhi-to-banaras": {
     from: "Delhi", to: "Banaras", distance: 820, duration: "12-14 hours",
-    fare: { min: 10090, max: 18290 }, toll: 1100,
+    fare: { min: 12550, max: 22800 }, toll: 1100,
     description: "Book Delhi to Banaras cab at fixed fares. Experience the Ganga Aarti, Kashi Vishwanath Temple and the ancient ghats of Varanasi. Experienced drivers, AC cars.",
     highlights: ["Ganga Aarti at Dashashwamedh Ghat", "Kashi Vishwanath Temple", "Sarnath Buddhist site", "Sunrise boat ride on Ganga"],
     faqs: [
@@ -205,7 +205,7 @@ const ROUTES: Record<string, {
   // ── Additional Delhi routes ──────────────────────────────────────────
   "delhi-to-haridwar": {
     from: "Delhi", to: "Haridwar", distance: 220, duration: "4-5 hours",
-    fare: { min: 2890, max: 5090 }, toll: 320,
+    fare: { min: 3550, max: 6300 }, toll: 320,
     description: "Book Delhi to Haridwar cab at fixed fares. Attend the iconic Ganga Aarti at Har Ki Pauri. AC cabs, verified drivers, door-to-door pickup.",
     highlights: ["Har Ki Pauri Ganga Aarti", "Chandi Devi & Mansa Devi temples", "Gateway to Rishikesh", "Pilgrimage specialists"],
     faqs: [
@@ -217,7 +217,7 @@ const ROUTES: Record<string, {
   },
   "delhi-to-jodhpur": {
     from: "Delhi", to: "Jodhpur", distance: 600, duration: "9-10 hours",
-    fare: { min: 7450, max: 13450 }, toll: 850,
+    fare: { min: 9250, max: 16750 }, toll: 850,
     description: "Book Delhi to Jodhpur cab at fixed fares. Explore the Blue City — Mehrangarh Fort, Jaswant Thada and vibrant bazaars. AC cabs, verified drivers, no hidden charges.",
     highlights: ["Mehrangarh Fort", "Blue City rooftops", "Jaswant Thada cenotaph", "Sardar Market bazaar"],
     faqs: [
@@ -229,7 +229,7 @@ const ROUTES: Record<string, {
   },
   "delhi-to-udaipur": {
     from: "Delhi", to: "Udaipur", distance: 665, duration: "10-11 hours",
-    fare: { min: 8230, max: 14880 }, toll: 950,
+    fare: { min: 10230, max: 18540 }, toll: 950,
     description: "Book Delhi to Udaipur cab at fixed fares. Explore the City of Lakes — Lake Pichola, City Palace and Fateh Sagar. AC cabs, experienced drivers, fixed fares.",
     highlights: ["Lake Pichola boat ride", "City Palace complex", "Jagdish Temple", "Saheliyon ki Bari"],
     faqs: [
@@ -241,7 +241,7 @@ const ROUTES: Record<string, {
   },
   "delhi-to-pushkar": {
     from: "Delhi", to: "Pushkar", distance: 395, duration: "6-7 hours",
-    fare: { min: 4990, max: 8940 }, toll: 550,
+    fare: { min: 6180, max: 11110 }, toll: 550,
     description: "Book Delhi to Pushkar cab at fixed fares. Visit the only Brahma Temple in the world and the sacred Pushkar Lake. AC cabs, fixed fares, no hidden charges.",
     highlights: ["Brahma Temple darshan", "Pushkar Lake ghats", "Camel Fair (November)", "Desert bazaar experience"],
     faqs: [
@@ -253,7 +253,7 @@ const ROUTES: Record<string, {
   },
   "delhi-to-corbett": {
     from: "Delhi", to: "Corbett", distance: 250, duration: "5-6 hours",
-    fare: { min: 3250, max: 5750 }, toll: 380,
+    fare: { min: 4000, max: 7130 }, toll: 380,
     description: "Book Delhi to Jim Corbett cab at fixed fares. India's oldest national park — tiger safaris, elephant rides and the Ramganga River. AC cabs, verified drivers.",
     highlights: ["Tiger safari zones", "Ramganga River views", "Elephant rides at Dhikala", "Birdwatching paradise"],
     faqs: [
@@ -265,7 +265,7 @@ const ROUTES: Record<string, {
   },
   "delhi-to-kasauli": {
     from: "Delhi", to: "Kasauli", distance: 315, duration: "5-6 hours",
-    fare: { min: 4030, max: 7180 }, toll: 480,
+    fare: { min: 4980, max: 8910 }, toll: 480,
     description: "Book Delhi to Kasauli cab at fixed fares. This quiet Himachal hill station is known for its colonial charm, pine forests and stunning valley views. AC cabs, verified drivers.",
     highlights: ["Gilbert Trail pine forests", "Monkey Point summit views", "Christ Church colonial heritage", "Himachal's quietest hill station"],
     faqs: [
@@ -277,7 +277,7 @@ const ROUTES: Record<string, {
   },
   "delhi-to-dalhousie": {
     from: "Delhi", to: "Dalhousie", distance: 555, duration: "10-11 hours",
-    fare: { min: 6910, max: 12460 }, toll: 800,
+    fare: { min: 8580, max: 15510 }, toll: 800,
     description: "Book Delhi to Dalhousie cab at fixed fares. This Victorian hill station in Himachal Pradesh offers pine-clad ridges, colonial churches and views of the Dhauladhar range. AC cabs, mountain-specialist drivers.",
     highlights: ["Khajjiar — 'Mini Switzerland'", "Dainkund Peak hike", "St. Francis Church colonial walk", "Kalatop Wildlife Sanctuary"],
     faqs: [
@@ -289,7 +289,7 @@ const ROUTES: Record<string, {
   },
   "delhi-to-lucknow": {
     from: "Delhi", to: "Lucknow", distance: 555, duration: "7-8 hours",
-    fare: { min: 6910, max: 12460 }, toll: 750,
+    fare: { min: 8580, max: 15510 }, toll: 750,
     description: "Book Delhi to Lucknow cab at fixed fares. Explore the City of Nawabs — Bara Imambara, Rumi Darwaza and iconic Tunday Kababi. AC cabs, verified drivers, door-to-door service.",
     highlights: ["Bara Imambara & Bhool Bhulaiya", "Rumi Darwaza", "Hazratganj market stroll", "Tunday Kababi kebabs"],
     faqs: [
@@ -301,7 +301,7 @@ const ROUTES: Record<string, {
   },
   "delhi-to-prayagraj": {
     from: "Delhi", to: "Prayagraj", distance: 645, duration: "9-10 hours",
-    fare: { min: 7990, max: 14440 }, toll: 900,
+    fare: { min: 9930, max: 17990 }, toll: 900,
     description: "Book Delhi to Prayagraj cab at fixed fares. Visit the Sangam — confluence of Ganga, Yamuna and the mythical Saraswati. Kumbh Mela, Anand Bhavan and Triveni Ghat. AC cabs, verified drivers.",
     highlights: ["Sangam — holy confluence", "Triveni Ghat sunrise", "Anand Bhavan (Nehru memorial)", "Hanuman Mandir — 20 ft reclining Hanuman"],
     faqs: [
@@ -313,7 +313,7 @@ const ROUTES: Record<string, {
   },
   "delhi-to-vrindavan": {
     from: "Delhi", to: "Vrindavan", distance: 155, duration: "2.5-3 hours",
-    fare: { min: 2110, max: 3660 }, toll: 220,
+    fare: { min: 2580, max: 4510 }, toll: 220,
     description: "Book Delhi to Vrindavan cab at fixed fares. Visit the sacred land of Lord Krishna — Prem Mandir, ISKCON, Banke Bihari Mandir and Yamuna Ghats. Same-day return popular.",
     highlights: ["Prem Mandir light show", "Banke Bihari Mandir", "ISKCON Vrindavan", "Yamuna Ghats aarti"],
     faqs: [
@@ -325,7 +325,7 @@ const ROUTES: Record<string, {
   },
   "delhi-to-spiti": {
     from: "Delhi", to: "Spiti", distance: 785, duration: "14-16 hours",
-    fare: { min: 9670, max: 17520 }, toll: 950,
+    fare: { min: 12030, max: 21840 }, toll: 950,
     description: "Book Delhi to Spiti Valley cab at fixed fares. The Cold Desert of Himachal Pradesh — Key Monastery, Pin Valley, Chandratal Lake and star-gazed nights at 4,000m. Mountain-specialist drivers essential.",
     highlights: ["Key Monastery at 4,166 m", "Chandratal Lake moonscape", "Pin Valley ibex trekking", "Kaza town base camp"],
     faqs: [
@@ -337,7 +337,7 @@ const ROUTES: Record<string, {
   },
   "delhi-to-mount-abu": {
     from: "Delhi", to: "Mount Abu", distance: 780, duration: "12-13 hours",
-    fare: { min: 9610, max: 17410 }, toll: 1100,
+    fare: { min: 11950, max: 21700 }, toll: 1100,
     description: "Book Delhi to Mount Abu cab at fixed fares. Rajasthan's only hill station — Dilwara Jain Temples, Nakki Lake and Guru Shikhar Peak. AC cabs, experienced drivers, no hidden charges.",
     highlights: ["Dilwara Jain Temples", "Nakki Lake boating", "Guru Shikhar — Aravalli summit", "Sunset Point views"],
     faqs: [
@@ -349,7 +349,7 @@ const ROUTES: Record<string, {
   },
   "delhi-to-lansdowne": {
     from: "Delhi", to: "Lansdowne", distance: 265, duration: "5-6 hours",
-    fare: { min: 3430, max: 6080 }, toll: 380,
+    fare: { min: 4230, max: 7540 }, toll: 380,
     description: "Book Delhi to Lansdowne cab at fixed fares. Uttarakhand's most peaceful hill station — dense oak forests, colonial era Garhwal Rifles regimental centre and panoramic Himalayan views. AC cabs, verified drivers.",
     highlights: ["Tip'n'Top panoramic viewpoint", "Bhim Pakora rock formation", "Tarkeshwar Mahadev temple", "War Memorial — Garhwal Rifles"],
     faqs: [
@@ -362,7 +362,7 @@ const ROUTES: Record<string, {
 
   "delhi-to-kedarnath": {
     from: "Delhi", to: "Kedarnath", distance: 470, duration: "10-11 hours",
-    fare: { min: 5890, max: 10590 }, toll: 680,
+    fare: { min: 7300, max: 13180 }, toll: 680,
     description: "Book Delhi to Kedarnath cab at fixed fares. We drop you at Gaurikund, the base camp for the Kedarnath Jyotirlinga shrine (22 km trek ahead). Pilgrimage specialists, AC cars, verified mountain drivers.",
     highlights: ["Highest Jyotirlinga at 3,583 m", "Drop at Gaurikund base camp", "Helicopter darshan from Phata/Sirsi", "Mandakini River valley route"],
     faqs: [
@@ -377,7 +377,7 @@ const ROUTES: Record<string, {
   // ── Himachal Pradesh — Intra-State Routes ───────────────────────────
   "chandigarh-to-manali": {
     from: "Chandigarh", to: "Manali", distance: 315, duration: "7-8 hours",
-    fare: { min: 4030, max: 7180 }, toll: 400,
+    fare: { min: 4980, max: 8910 }, toll: 400,
     description: "Book Chandigarh to Manali cab at fixed fares. The classic Himalayan highway — Beas gorge, Kullu valley and the snow-capped Rohtang in the distance. AC cabs, mountain-specialist drivers.",
     highlights: ["Pandoh Dam & Beas Gorge", "Kullu Valley apple orchards", "Solang Valley day trip", "Rohtang Pass access"],
     faqs: [
@@ -389,7 +389,7 @@ const ROUTES: Record<string, {
   },
   "chandigarh-to-shimla": {
     from: "Chandigarh", to: "Shimla", distance: 115, duration: "3-4 hours",
-    fare: { min: 1630, max: 2780 }, toll: 200,
+    fare: { min: 1980, max: 3410 }, toll: 200,
     description: "Book Chandigarh to Shimla cab at fixed fares. A scenic 3-hour drive through the Shivalik foothills to the colonial capital of Himachal Pradesh. AC cabs, verified drivers.",
     highlights: ["Himalayan Queen toy train view route", "Pinjore Gardens en route", "Mall Road & Ridge Maidan", "Kufri day trip from Shimla"],
     faqs: [
@@ -401,7 +401,7 @@ const ROUTES: Record<string, {
   },
   "chandigarh-to-dharamshala": {
     from: "Chandigarh", to: "Dharamshala", distance: 245, duration: "5-6 hours",
-    fare: { min: 3190, max: 5640 }, toll: 380,
+    fare: { min: 3930, max: 6990 }, toll: 380,
     description: "Book Chandigarh to Dharamshala cab at fixed fares. Drive through the Kangra Valley to McLeod Ganj, home of the Dalai Lama. AC cabs, verified mountain drivers.",
     highlights: ["Kangra Valley views", "McLeod Ganj Tibetan quarter", "Namgyal Monastery", "Triund Trek base"],
     faqs: [
@@ -413,7 +413,7 @@ const ROUTES: Record<string, {
   },
   "chandigarh-to-amritsar": {
     from: "Chandigarh", to: "Amritsar", distance: 230, duration: "3-4 hours",
-    fare: { min: 3010, max: 5310 }, toll: 350,
+    fare: { min: 3700, max: 6580 }, toll: 350,
     description: "Book Chandigarh to Amritsar cab at fixed fares. A smooth NH44 drive to the Golden Temple city. Perfect for pilgrimage trips, Wagah Border visits and Punjab cultural experiences.",
     highlights: ["Golden Temple darshan", "Wagah Border ceremony", "Jallianwala Bagh memorial", "Heritage Street food walk"],
     faqs: [
@@ -425,7 +425,7 @@ const ROUTES: Record<string, {
   },
   "shimla-to-manali": {
     from: "Shimla", to: "Manali", distance: 220, duration: "6-7 hours",
-    fare: { min: 2890, max: 5090 }, toll: 300,
+    fare: { min: 3550, max: 6300 }, toll: 300,
     description: "Book Shimla to Manali cab at fixed fares. One of Himachal's most scenic mountain drives — Rampur, Kullu valley and the towering Beas gorge. AC cabs, experienced hill drivers.",
     highlights: ["Rampur Bushahr riverside", "Pandoh Dam viewpoint", "Kullu Valley orchards", "Solang Valley en route"],
     faqs: [
@@ -437,7 +437,7 @@ const ROUTES: Record<string, {
   },
   "shimla-to-dharamshala": {
     from: "Shimla", to: "Dharamshala", distance: 275, duration: "6-7 hours",
-    fare: { min: 3550, max: 6300 }, toll: 350,
+    fare: { min: 4380, max: 7810 }, toll: 350,
     description: "Book Shimla to Dharamshala cab at fixed fares. A scenic cross-Himachal drive connecting two of the state's most beloved hill towns. AC cabs, verified mountain drivers.",
     highlights: ["Cross-Himachal mountain drive", "Mandi town stopover", "Kangra Valley descent", "McLeod Ganj destination"],
     faqs: [
@@ -449,7 +449,7 @@ const ROUTES: Record<string, {
   },
   "manali-to-leh": {
     from: "Manali", to: "Leh", distance: 480, duration: "12-14 hours",
-    fare: { min: 5810, max: 10810 }, toll: 450,
+    fare: { min: 7200, max: 13450 }, toll: 450,
     description: "Book Manali to Leh cab at fixed fares. The world's highest motorable road — crossing Rohtang Pass, Baralacha La, Nakee La and Tanglang La (5,328 m). An unforgettable Himalayan odyssey. Experienced high-altitude drivers only.",
     highlights: ["Rohtang Pass & Baralacha La", "Sarchu plains camping", "Tanglang La — 5,328 m", "Moray Plains — straight road at 4,800 m"],
     faqs: [
@@ -461,7 +461,7 @@ const ROUTES: Record<string, {
   },
   "manali-to-spiti": {
     from: "Manali", to: "Spiti", distance: 220, duration: "7-8 hours",
-    fare: { min: 2890, max: 5090 }, toll: 250,
+    fare: { min: 3550, max: 6300 }, toll: 250,
     description: "Book Manali to Spiti Valley cab at fixed fares. Cross Rohtang Pass and descend into the barren, otherworldly Spiti Valley — Key Monastery, Chandratal Lake and starlit skies at 4,000 m.",
     highlights: ["Rohtang Pass (3,978 m)", "Kunzum Pass (4,590 m)", "Chandratal Lake moonscape", "Key Monastery — 11th century"],
     faqs: [
@@ -473,7 +473,7 @@ const ROUTES: Record<string, {
   },
   "manali-to-kasol": {
     from: "Manali", to: "Kasol", distance: 80, duration: "2.5-3 hours",
-    fare: { min: 1210, max: 2010 }, toll: 100,
+    fare: { min: 1450, max: 2450 }, toll: 100,
     description: "Book Manali to Kasol cab at fixed fares. The short drive through the Kullu valley to the Parvati Valley backpacker haven — riverside cafes, pine forests and the gateway to Kheerganga trek.",
     highlights: ["Parvati Valley riverside", "Kheerganga Trek base", "Malana village day trip", "Chalal village walk"],
     faqs: [
@@ -487,7 +487,7 @@ const ROUTES: Record<string, {
   // ── Punjab – Amritsar Routes ─────────────────────────────────────────
   "amritsar-to-dharamshala": {
     from: "Amritsar", to: "Dharamshala", distance: 200, duration: "4-5 hours",
-    fare: { min: 2650, max: 4650 }, toll: 300,
+    fare: { min: 3250, max: 5750 }, toll: 300,
     description: "Book Amritsar to Dharamshala cab at fixed fares. Drive from the Golden Temple city to McLeod Ganj through Pathankot and the Kangra Valley. AC cabs, verified drivers.",
     highlights: ["Pathankot scenic transit", "Kangra Fort en route", "McLeod Ganj Tibetan quarter", "Dharamshala Cricket Stadium"],
     faqs: [
@@ -499,7 +499,7 @@ const ROUTES: Record<string, {
   },
   "ludhiana-to-amritsar": {
     from: "Ludhiana", to: "Amritsar", distance: 130, duration: "2-2.5 hours",
-    fare: { min: 1810, max: 3110 }, toll: 200,
+    fare: { min: 2200, max: 3830 }, toll: 200,
     description: "Book Ludhiana to Amritsar cab at fixed fares. A straight NH44 drive to the Golden Temple. Fast, comfortable, door-to-door. Perfect for Golden Temple darshan and Wagah Border ceremony.",
     highlights: ["Golden Temple darshan", "Wagah Border ceremony at sunset", "Jallianwala Bagh", "Heritage Street food walk"],
     faqs: [
