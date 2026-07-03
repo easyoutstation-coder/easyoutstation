@@ -8,10 +8,10 @@ function routeSlug(from: string, to: string) {
 }
 
 const fallbackRoutes = [
-  { id: 1, fromCity: "Delhi", toCity: "Manali", distanceKm: 540, durationHours: 12, basePrice: "6,730", imageUrl: "", description: "Scenic Himalayan drive via Chandigarh & Kullu Valley", highlights: ["Mountain road experts", "Crysta recommended", "Scenic stops included"] },
-  { id: 2, fromCity: "Delhi", toCity: "Dehradun", distanceKm: 250, durationHours: 5, basePrice: "3,250", imageUrl: "", description: "Gateway to Uttarakhand — connect to Mussoorie", highlights: ["Weekend favourite", "Smooth highway", "5-6 hrs journey"] },
-  { id: 3, fromCity: "Delhi", toCity: "Rishikesh", distanceKm: 240, durationHours: 5, basePrice: "3,130", imageUrl: "", description: "Yoga capital — also covers Haridwar on the way", highlights: ["Covers Haridwar", "Adventure hub", "Early morning slots"] },
-  { id: 4, fromCity: "Delhi", toCity: "Jaipur", distanceKm: 280, durationHours: 5, basePrice: "3,610", imageUrl: "", description: "The Pink City — palaces, food & heritage", highlights: ["Smooth expressway", "Day trip possible", "Heritage route"] },
+  { id: 1, fromCity: "Delhi", toCity: "Manali", distanceKm: 540, durationHours: 12, basePrice: "8,350", imageUrl: "", description: "Scenic Himalayan drive via Chandigarh & Kullu Valley", highlights: ["Mountain road experts", "Crysta recommended", "Scenic stops included"] },
+  { id: 2, fromCity: "Delhi", toCity: "Dehradun", distanceKm: 250, durationHours: 5, basePrice: "4,000", imageUrl: "", description: "Gateway to Uttarakhand — connect to Mussoorie", highlights: ["Weekend favourite", "Smooth highway", "5-6 hrs journey"] },
+  { id: 3, fromCity: "Delhi", toCity: "Rishikesh", distanceKm: 240, durationHours: 5, basePrice: "3,850", imageUrl: "", description: "Yoga capital — also covers Haridwar on the way", highlights: ["Covers Haridwar", "Adventure hub", "Early morning slots"] },
+  { id: 4, fromCity: "Delhi", toCity: "Jaipur", distanceKm: 280, durationHours: 5, basePrice: "4,450", imageUrl: "", description: "The Pink City — palaces, food & heritage", highlights: ["Smooth expressway", "Day trip possible", "Heritage route"] },
 ];
 
 export default function PopularRoutesSection() {

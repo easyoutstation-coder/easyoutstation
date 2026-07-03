@@ -234,8 +234,9 @@ export default function HeroSection() {
   const billedKm = tripDays > 1
     ? Math.max(rawBilledKm, tripDays * 250)
     : Math.max(rawBilledKm, 80);
-  const displayFareMin = distanceKm ? Math.round(billedKm * MIN_RATE + DRIVER_CHARGE * tripDays) : null;
-  const displayFareMax = distanceKm ? Math.round(billedKm * MAX_RATE + DRIVER_CHARGE * tripDays) : null;
+  const fareMultiplier = isRoundTrip ? 1 : 1.25;
+  const displayFareMin = distanceKm ? Math.round(billedKm * MIN_RATE * fareMultiplier + DRIVER_CHARGE * tripDays) : null;
+  const displayFareMax = distanceKm ? Math.round(billedKm * MAX_RATE * fareMultiplier + DRIVER_CHARGE * tripDays) : null;
 
   const handleSearch = () => {
     setFormError("");

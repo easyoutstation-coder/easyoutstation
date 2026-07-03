@@ -394,6 +394,46 @@ async function runStartupMigrations() {
         WHERE category IS NULL OR subtitle IS NULL
       `));
     } catch {}
+    // Force-update subtitle fares for all Delhi routes to post-multiplier amounts
+    try {
+      await db.execute(sql.raw(`
+        UPDATE linkHubCards SET subtitle = CASE linkUrl
+          WHEN '/cab/delhi-to-kedarnath'    THEN '470 km · 10-11 hrs · from ₹7,300'
+          WHEN '/cab/delhi-to-manali'       THEN '540 km · 12-14 hrs · from ₹8,350'
+          WHEN '/cab/delhi-to-shimla'       THEN '350 km · 7-8 hrs · from ₹5,500'
+          WHEN '/cab/delhi-to-rishikesh'    THEN '250 km · 5-6 hrs · from ₹4,000'
+          WHEN '/cab/delhi-to-haridwar'     THEN '220 km · 4-5 hrs · from ₹3,550'
+          WHEN '/cab/delhi-to-chandigarh'   THEN '260 km · 4-5 hrs · from ₹4,150'
+          WHEN '/cab/delhi-to-jaipur'       THEN '280 km · 4-5 hrs · from ₹4,450'
+          WHEN '/cab/delhi-to-agra'         THEN '230 km · 3-4 hrs · from ₹3,700'
+          WHEN '/cab/delhi-to-dharamshala'  THEN '475 km · 10-11 hrs · from ₹7,380'
+          WHEN '/cab/delhi-to-nainital'     THEN '310 km · 6-7 hrs · from ₹4,900'
+          WHEN '/cab/delhi-to-dehradun'     THEN '300 km · 5-6 hrs · from ₹4,750'
+          WHEN '/cab/delhi-to-mussoorie'    THEN '310 km · 6-7 hrs · from ₹4,900'
+          WHEN '/cab/delhi-to-mathura'      THEN '175 km · 2-3 hrs · from ₹2,880'
+          WHEN '/cab/delhi-to-amritsar'     THEN '460 km · 7-8 hrs · from ₹7,150'
+          WHEN '/cab/delhi-to-kashmir'      THEN '820 km · 14-16 hrs · from ₹12,550'
+          WHEN '/cab/delhi-to-vaishno-devi' THEN '650 km · 12-13 hrs · from ₹10,000'
+          WHEN '/cab/delhi-to-ludhiana'     THEN '310 km · 5-6 hrs · from ₹4,900'
+          WHEN '/cab/delhi-to-ayodhya'      THEN '640 km · 10-12 hrs · from ₹9,850'
+          WHEN '/cab/delhi-to-banaras'      THEN '820 km · 12-14 hrs · from ₹12,550'
+          WHEN '/cab/delhi-to-jodhpur'      THEN '600 km · 9-10 hrs · from ₹9,250'
+          WHEN '/cab/delhi-to-udaipur'      THEN '665 km · 10-11 hrs · from ₹10,230'
+          WHEN '/cab/delhi-to-pushkar'      THEN '395 km · 6-7 hrs · from ₹6,180'
+          WHEN '/cab/delhi-to-corbett'      THEN '250 km · 5-6 hrs · from ₹4,000'
+          WHEN '/cab/delhi-to-kasauli'      THEN '315 km · 5-6 hrs · from ₹4,980'
+          WHEN '/cab/delhi-to-dalhousie'    THEN '555 km · 10-11 hrs · from ₹8,580'
+          WHEN '/cab/delhi-to-lucknow'      THEN '555 km · 7-8 hrs · from ₹8,580'
+          WHEN '/cab/delhi-to-prayagraj'    THEN '645 km · 9-10 hrs · from ₹9,930'
+          WHEN '/cab/delhi-to-vrindavan'    THEN '155 km · 2.5-3 hrs · from ₹2,580'
+          WHEN '/cab/delhi-to-spiti'        THEN '785 km · 14-16 hrs · from ₹12,030'
+          WHEN '/cab/delhi-to-mount-abu'    THEN '780 km · 12-13 hrs · from ₹11,950'
+          WHEN '/cab/delhi-to-lansdowne'    THEN '265 km · 5-6 hrs · from ₹4,230'
+          ELSE subtitle END
+        WHERE linkUrl LIKE '/cab/delhi-to-%'
+      `));
+    } catch {}
+
     // Insert all 42 routes (skip if linkUrl already exists)
     try {
       const allRoutes = [
