@@ -433,10 +433,12 @@ async function runStartupMigrations() {
       for (const [label, imageUrl, linkUrl, category, subtitle, displayOrder] of allRoutes) {
         await db.execute(sql.raw(
           `INSERT INTO linkHubCards (label, imageUrl, linkUrl, category, subtitle, displayOrder, isActive)
-           SELECT '${(label as string).replace(/'/g,"\\'")}','${imageUrl}','${linkUrl}','${category}','${(subtitle as string).replace(/₹/g,"\\u20B9")}',${displayOrder},TRUE
+           SELECT '${(label as string).replace(/'/g,"\\'")}','${imageUrl}','${linkUrl}','${category}','${(subtitle as string).replace(/'/g,"\\'")}',${displayOrder},TRUE
            WHERE NOT EXISTS (SELECT 1 FROM linkHubCards WHERE linkUrl='${linkUrl}')`
         ));
       }
+      // Fix any rows that stored the literal escape ₹ instead of the ₹ symbol
+      await db.execute(sql.raw(`UPDATE linkHubCards SET subtitle = REPLACE(subtitle, '\\\\u20B9', '₹') WHERE subtitle LIKE '%\\\\u20B9%'`));
     } catch {}
 
     // Per-vehicle driver assignments for multi-vehicle offline bookings
