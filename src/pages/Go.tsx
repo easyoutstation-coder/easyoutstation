@@ -90,7 +90,7 @@ export default function Go() {
   const gridCards = filtered.filter(c => !c.isPinned);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] border-l-2 border-r-2 border-purple-600/40 max-w-2xl mx-auto pb-28">
+    <div className="min-h-screen bg-[#0a0a0a] pb-28">
       {/* Profile header */}
       <div className="px-5 pt-10 pb-5">
         <div className="flex items-center gap-5">
