@@ -80,7 +80,7 @@ const homeSchema = [
         "name": "What is the fare for Delhi to Manali cab?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Delhi to Manali fare starts from ₹8,350 for a sedan (Swift Dzire) to ₹13,750 for an SUV (Innova Crysta) one way. Fare includes driver charges. Toll and parking are charged at actuals."
+          "text": "Delhi to Manali fare starts from ₹9,030 for a sedan (Swift Dzire) to ₹14,430 for an SUV (Innova Crysta) one way. Fare includes driver charges. Toll and parking are charged at actuals."
         }
       },
       {
