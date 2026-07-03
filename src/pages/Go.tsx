@@ -90,27 +90,9 @@ export default function Go() {
   const gridCards = filtered.filter(c => !c.isPinned);
 
   return (
-    <div className="min-h-screen bg-black flex flex-col">
-      {/* Faux Instagram background — blurred gradient top strip */}
-      <div className="relative h-36 shrink-0 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-pink-900 to-orange-800 opacity-80" />
-        <div className="absolute inset-0 backdrop-blur-xl" />
-        {/* Instagram-style top bar */}
-        <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 pt-10 pb-2">
-          <span className="text-white/50 text-xs font-medium">easyoutstation.com/go</span>
-          <span className="text-white/40 text-xs">⋯</span>
-        </div>
-      </div>
-
-      {/* Bottom sheet card — slides up over the background */}
-      <div className="flex-1 bg-[#0f0f0f] rounded-t-3xl -mt-6 pb-28 overflow-y-auto">
-        {/* Drag handle */}
-        <div className="flex justify-center pt-3 pb-1">
-          <div className="w-10 h-1 rounded-full bg-zinc-700" />
-        </div>
-
+    <div className="min-h-screen bg-[#0a0a0a] border-l-2 border-r-2 border-purple-600/40 max-w-2xl mx-auto pb-28">
       {/* Profile header */}
-      <div className="px-5 pt-4 pb-5">
+      <div className="px-5 pt-10 pb-5">
         <div className="flex items-center gap-5">
           <div className="relative shrink-0">
             <div className="w-20 h-20 rounded-full bg-gradient-to-br from-orange-400 via-pink-500 to-purple-600 p-0.5">
@@ -237,8 +219,6 @@ export default function Go() {
         </a>
         <p className="text-zinc-800 text-[10px]">© EasyOutstation · easyoutstation.com</p>
       </div>
-
-      </div>{/* end bottom sheet card */}
 
       {/* Bottom sheet */}
       {bottomSheet && <BottomSheet card={bottomSheet} onClose={() => setBottomSheet(null)} />}
