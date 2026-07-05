@@ -176,11 +176,16 @@ export default function CarsPage() {
 
   const tripTypeParam = searchParams.get("tripType") || "one_way";
   const isRentalMode = tripTypeParam === "rental";
+  const isMultiDayMode = tripTypeParam === "multi_day";
   const rentalHours = parseInt(searchParams.get("hours") || "8");
   const dateParam = searchParams.get("date") || "";
   const returnDateParam = searchParams.get("returnDate") || "";
+  const stopsParam = searchParams.get("stops") || "";
+  const tourDaysParam = parseInt(searchParams.get("days") || "0");
+  const actualKmParam = parseInt(searchParams.get("actualKm") || "0");
 
   const tripDays = (() => {
+    if (isMultiDayMode && tourDaysParam > 0) return tourDaysParam;
     if (tripTypeParam === "round_trip" && dateParam && returnDateParam) {
       const d1 = new Date(dateParam);
       const d2 = new Date(returnDateParam);
@@ -190,8 +195,14 @@ export default function CarsPage() {
     }
     return 1;
   })();
+  // For multi_day the distance param IS already the billed circuit km — no multiplication
   const kmMultiplier = tripTypeParam === "round_trip" ? 2 : 1;
-  const effectiveKm = distanceKm * kmMultiplier;
+  const effectiveKm = isMultiDayMode ? distanceKm : distanceKm * kmMultiplier;
+
+  const tourStops = stopsParam ? stopsParam.split(",").filter(Boolean) : [];
+  const tourItinerary = tourStops.length > 0
+    ? ["Delhi", ...tourStops, "Delhi"].join(" → ")
+    : "";
 
   const passthroughParams = () => {
     const p = new URLSearchParams();
@@ -208,6 +219,9 @@ export default function CarsPage() {
     if (returnDateParam) p.set("returnDate", returnDateParam);
     if (tripTypeParam) p.set("tripType", tripTypeParam);
     if (isRentalMode) p.set("hours", String(rentalHours));
+    if (isMultiDayMode && stopsParam) p.set("stops", stopsParam);
+    if (isMultiDayMode && tourDaysParam) p.set("days", String(tourDaysParam));
+    if (isMultiDayMode && actualKmParam) p.set("actualKm", String(actualKmParam));
     const timeParam = searchParams.get("time");
     if (timeParam) p.set("time", timeParam);
     if (fromPincode) p.set("fromPincode", fromPincode);
@@ -223,9 +237,13 @@ export default function CarsPage() {
     if (!distanceKm) return null;
     const isHeavy = carSeats > 7;
     let billedKm = effectiveKm;
-    if (tripDays > 1) billedKm = Math.max(effectiveKm, tripDays * 250);
+    if (isMultiDayMode) {
+      // For tours, distanceKm is already the billed circuit km (pre-computed by HeroSection)
+      billedKm = effectiveKm;
+    } else if (tripDays > 1) billedKm = Math.max(effectiveKm, tripDays * 250);
     else if (isHeavy) billedKm = Math.max(effectiveKm, 250);
     else billedKm = Math.max(effectiveKm, 80);
+    // No 1.25× multiplier for multi-day tours or round trips
     const multiplier = tripTypeParam === "one_way" ? ONE_WAY_MULTIPLIER : 1;
     return Math.round(parseFloat(pricePerKm) * billedKm * multiplier + parseFloat(driverCharges || "250") * tripDays);
   };
@@ -241,6 +259,7 @@ export default function CarsPage() {
   const billedKmFor = (carSeats: number) => {
     if (!distanceKm) return effectiveKm;
     const isHeavy = carSeats > 7;
+    if (isMultiDayMode) return effectiveKm;
     if (tripDays > 1) return Math.max(effectiveKm, tripDays * 250);
     if (isHeavy) return Math.max(effectiveKm, 250);
     return Math.max(effectiveKm, 80);
@@ -362,8 +381,31 @@ export default function CarsPage() {
               </div>
             )}
 
+            {/* Multi-day tour banner */}
+            {isMultiDayMode && tourItinerary && (
+              <div className="mb-5 p-4 rounded-xl bg-violet-50 border border-violet-200">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="text-violet-800">
+                    <div className="flex items-center gap-2 font-semibold text-sm">
+                      <MapPin className="w-4 h-4 text-violet-500 shrink-0" />
+                      Multi-Stop Tour Circuit
+                    </div>
+                    <div className="text-xs text-violet-600 mt-1 leading-relaxed">{tourItinerary}</div>
+                  </div>
+                  <div className="text-sm text-violet-700 font-medium shrink-0">
+                    {tripDays} days · {actualKmParam > 0 ? `~${actualKmParam} km actual` : `~${distanceKm} km`}
+                    {distanceKm > actualKmParam && actualKmParam > 0 && (
+                      <span className="text-violet-500 text-xs ml-1">(min {distanceKm} km billed)</span>
+                    )}
+                    <div className="text-violet-500 text-xs mt-0.5">Fares from ₹{(distanceKm * 13 + 250 * tripDays).toLocaleString("en-IN")} to ₹{(distanceKm * 23 + 250 * tripDays).toLocaleString("en-IN")}</div>
+                    <div className="text-violet-400 text-[10px] mt-0.5">Indicative fare — any changes communicated before trip</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Route banner */}
-            {!isRentalMode && fromCity && toCity && distanceKm > 0 && (
+            {!isRentalMode && !isMultiDayMode && fromCity && toCity && distanceKm > 0 && (
               <div className="mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-blue-50 border border-blue-200">
                 <div className="flex items-center gap-3 text-blue-800">
                   <MapPin className="w-4 h-4 text-blue-500 shrink-0" />
@@ -395,12 +437,16 @@ export default function CarsPage() {
                 <h1 className="text-3xl font-bold text-slate-900 font-['DM_Serif_Display']">
                   {isRentalMode
                     ? `Rental Vehicles · ${rentalHours} hrs`
-                    : fromCity && toCity ? `Vehicles for ${fromCity} → ${toCity}` : "Vehicles"}
+                    : isMultiDayMode
+                      ? `Tour Vehicles · ${tripDays} Days`
+                      : fromCity && toCity ? `Vehicles for ${fromCity} → ${toCity}` : "Vehicles"}
                 </h1>
                 <p className="text-slate-500 mt-1">
                   {displayCars.length} vehicles available{isRentalMode
                     ? ` · ${rentalHours} hrs · ${rentalHours * 10} km included · Delhi NCR`
-                    : distanceKm > 0 ? ` · Prices for ${tripDays > 1 ? `${tripDays} days, min ${Math.max(effectiveKm, tripDays * 250)} km` : `${Math.max(effectiveKm, 80)} km · min 80 km / 8 hrs`}` : " for your journey"}
+                    : isMultiDayMode
+                      ? ` · ${tripDays} days · ${distanceKm} km circuit (min 250 km/day)`
+                      : distanceKm > 0 ? ` · Prices for ${tripDays > 1 ? `${tripDays} days, min ${Math.max(effectiveKm, tripDays * 250)} km` : `${Math.max(effectiveKm, 80)} km · min 80 km / 8 hrs`}` : " for your journey"}
                 </p>
               </div>
               <div className="flex flex-col gap-2 w-full md:w-auto">

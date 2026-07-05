@@ -200,7 +200,7 @@ const AI_TOOLS: Anthropic.Tool[] = [
   },
   {
     name: "create_booking",
-    description: "Create the booking once all details are confirmed. Returns a payment link.",
+    description: "Create the booking once all details are confirmed. Returns a payment link. For multi-stop tours, set trip_type=multi_day and pass stops as comma-separated city names (e.g. 'Nainital,Mussoorie,Rishikesh'). The to_city should be the last stop before returning to Delhi.",
     input_schema: {
       type: "object" as const,
       properties: {
@@ -209,7 +209,8 @@ const AI_TOOLS: Anthropic.Tool[] = [
         to_city: { type: "string" },
         pickup_date: { type: "string", description: "YYYY-MM-DD" },
         return_date: { type: "string", description: "YYYY-MM-DD return date for multi-day trips" },
-        trip_type: { type: "string", enum: ["one_way", "round_trip"] },
+        trip_type: { type: "string", enum: ["one_way", "round_trip", "multi_day"] },
+        stops: { type: "string", description: "For multi_day tours only: comma-separated stop cities in order, e.g. 'Nainital,Mussoorie,Rishikesh,Haridwar'" },
         car_name: { type: "string", description: "Car name exactly as shown in the CARS & RATES section, e.g. 'Innova Crysta', 'Swift Dzire', 'Maruti Ertiga'" },
         total_km: { type: "number" },
         total_price: { type: "number" },
@@ -306,6 +307,10 @@ async function executeTool(name: string, input: any, phone: string): Promise<str
       .from(users).where(eq(users.phone, localPhone)).limit(1);
     const userId = existingUser?.id ?? 0;
 
+    const tourNote = trip_type === "multi_day" && input.stops
+      ? `Multi-stop tour: Delhi → ${input.stops.split(",").join(" → ")} → Delhi`
+      : undefined;
+
     const [{ insertId }] = await db.insert(bookings).values({
       userId, carId: matched.id,
       fromCity: from_city, toCity: to_city,
@@ -318,6 +323,7 @@ async function executeTool(name: string, input: any, phone: string): Promise<str
       customerName: customer_name,
       customerPhone: localPhone,
       pickupAddress: pickup_address ?? null,
+      specialRequests: tourNote ?? undefined,
       paymentStatus: "pending", status: "pending",
     }) as any;
 
@@ -407,7 +413,7 @@ Premium tier: Tata Hexa (₹20) → Toyota Innova (₹20) → Innova Crysta (₹
 ━━ BOOKING CHECKLIST (all mandatory) ━━
 1. Customer name  2. Pickup city/area (Delhi NCR only)  3. Destination
 4. Pickup date → YYYY-MM-DD  5. Return date → YYYY-MM-DD (same as pickup for same-day round trip)
-6. Trip type: one_way or round_trip  7. Passenger count
+6. Trip type: one_way, round_trip, or multi_day (for multi-stop tours)  7. Passenger count
 8. Car choice (suggest by group size & route)
 9. Full pickup address — ALWAYS ask, NEVER skip
 
@@ -474,6 +480,40 @@ RULES for Disha (rentals):
 - Always quote exact prices from the rate card above — never estimate or make up numbers.
 - To book a rental, direct customer to easyoutstation.com (select "Rentals" tab on the home page).
 - Keep all existing outstation behaviour unchanged.
+
+━━ MULTI-STOP TOURS ━━
+EasyOutstation offers multi-stop tour circuits from Delhi. A customer might ask for trips like: "Delhi → Nainital → Mussoorie → Rishikesh → Haridwar → back to Delhi" or "I want to visit 3 hill stations in 7 days."
+
+Key rules for multi-stop tours:
+- ALWAYS a round-trip circuit starting and ending in Delhi (driver must return to Delhi)
+- Available ONLY as round trip — never as one-way
+- If customer says they won't return to Delhi personally, the fare still includes Delhi-return leg (driver cost)
+- Trip type for booking: multi_day (not round_trip)
+
+FARE CALCULATION for multi-stop tours:
+1. Sum all legs: Delhi→Stop1 + Stop1→Stop2 + ... + LastStop→Delhi = total circuit km
+2. Days = total calendar days (start to end, inclusive)
+3. Billed km = max(circuit km, days × 250)
+4. Fare = billed km × price per km + ₹250/day driver charge × days
+5. No 1.25× one-way multiplier applies
+6. Call get_fare_estimate with trip_type="round_trip", total_km=billed_km, pickup_date=start, return_date=end
+
+DISTANCES for common inter-city pairs (to calculate circuit km manually if needed):
+Uttarakhand: Rishikesh↔Haridwar=25km, Mussoorie↔Rishikesh=80km, Mussoorie↔Dehradun=35km, Nainital↔Corbett=85km, Nainital↔Rishikesh=250km, Dehradun↔Haridwar=55km, Rishikesh↔Kedarnath=220km
+Himachal: Shimla↔Manali=220km, Chandigarh↔Shimla=115km, Manali↔Kasol=80km, Dharamshala↔Amritsar=200km
+Rajasthan: Jaipur↔Agra=240km, Jaipur↔Jodhpur=335km, Jodhpur↔Udaipur=250km, Jodhpur↔MountAbu=165km
+UP: Agra↔Mathura=55km, Lucknow↔Ayodhya=135km, Varanasi↔Prayagraj=125km
+
+BOOKING CHECKLIST for multi-stop tours (in addition to standard):
+1. All stop cities in order
+2. Start date + End date
+3. Passenger count
+4. Pickup address in Delhi/NCR
+5. Car choice (recommend Innova Crysta/Hycross for hills; Ertiga/Carens for plains multi-stop)
+
+After confirming details: use get_fare_estimate (trip_type=round_trip, pass full circuit km as total_km override if possible), then create_booking with trip_type=multi_day and stops=comma-separated cities.
+
+IMPORTANT: Always add note: "⚠️ This is an indicative fare. If any route changes are needed, we'll communicate revised pricing before your trip."
 
 ━━ OTHER RULES ━━
 - NEVER calculate or estimate fares manually — ALWAYS use get_fare_estimate, even for rough quotes. If dates or car aren't confirmed yet, ask for them before calling the tool. Manual fare guesses will always be wrong.

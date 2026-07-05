@@ -77,6 +77,9 @@ export default function BookingPage() {
   const paramFromPincode = searchParams.get("fromPincode") || "";
   const paramToPincode = searchParams.get("toPincode") || "";
   const resumeBookingId = parseInt(searchParams.get("resume") || "0");
+  const paramStops = searchParams.get("stops") || "";
+  const paramTourDays = parseInt(searchParams.get("days") || "0");
+  const paramActualKm = parseInt(searchParams.get("actualKm") || "0");
 
   // ALL useState hooks
   const [currentStep, setCurrentStep] = useState(1);
@@ -472,27 +475,31 @@ export default function BookingPage() {
   const rentalAdvance = rentalFareData ? Math.round((rentalFareData.base + rentalFareData.gst) * 0.25) : 0;
   const pricePerKm = parseFloat(effectiveCar?.pricePerKm || "20");
   const driverChargePerDay = parseFloat(effectiveCar?.driverCharges || "250");
+  const isMultiDayTour = tripType === "multi_day";
 
-  const tripDays = tripType === "round_trip" && returnDate && pickupDate
-    ? Math.max(1, Math.ceil((returnDate.getTime() - pickupDate.getTime()) / (1000 * 60 * 60 * 24)) + 1)
-    : 1;
+  const tripDays = (() => {
+    if (isMultiDayTour && paramTourDays > 0) return paramTourDays;
+    if (tripType === "round_trip" && returnDate && pickupDate)
+      return Math.max(1, Math.ceil((returnDate.getTime() - pickupDate.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+    return 1;
+  })();
 
-  const totalKmForTrip = tripType === "round_trip" ? finalDistance * 2 : finalDistance;
+  // For multi_day tours, the distance param is already the full billed circuit km
+  const totalKmForTrip = isMultiDayTour ? finalDistance : tripType === "round_trip" ? finalDistance * 2 : finalDistance;
 
-  // Minimum km billing rules:
-  // • Any trip spanning multiple days: min 250 km/day (all vehicles)
-  // • Heavy vehicles (>7 seats): min 100 km even for same-day / local trips
   const MIN_KM_PER_DAY = 250;
   const MIN_KM_HEAVY = 100;
   const isHeavyVehicle = (effectiveCar?.seats ?? 0) > 7;
 
   const billedKm = (() => {
+    if (isMultiDayTour) return Math.max(totalKmForTrip, tripDays * MIN_KM_PER_DAY);
     if (tripDays > 1) return Math.max(totalKmForTrip, tripDays * MIN_KM_PER_DAY);
     if (isHeavyVehicle) return Math.max(totalKmForTrip, MIN_KM_HEAVY);
     return totalKmForTrip;
   })();
 
   const ONE_WAY_MULTIPLIER = 1.25;
+  // No 1.25× for multi-day tours — fare is billed on full circuit distance
   const fareMultiplier = tripType === "one_way" ? ONE_WAY_MULTIPLIER : 1;
   const minKmApplies = billedKm > totalKmForTrip;
   const basePrice = pricePerKm * billedKm * fareMultiplier;
@@ -614,7 +621,7 @@ export default function BookingPage() {
           pickupDate: pickupDate ? format(pickupDate, "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
           returnDate: returnDate ? format(returnDate, "yyyy-MM-dd") : undefined,
           returnTime: tripType === "round_trip" ? returnTime : undefined,
-          tripType: tripType as "one_way" | "round_trip",
+          tripType: tripType as "one_way" | "round_trip" | "multi_day",
           passengerCount: effectiveCar ? effectiveCar.seats - 1 : 4,
           totalKm: billedKm,
           totalPrice,
@@ -622,7 +629,16 @@ export default function BookingPage() {
           customerPhone,
           customerEmail,
           pickupAddress: `${pickupAddress}, Pincode: ${pickupPincode}, Time: ${pickupTime}${pickupLat ? `, GPS: ${pickupLat},${pickupLng}` : ""}`,
-          specialRequests: dropAddress ? `Drop: ${dropAddress}${dropPincode ? ` (${dropPincode})` : ""}${specialRequests ? `. Notes: ${specialRequests}` : ""}` : specialRequests || undefined,
+          specialRequests: (() => {
+            const tourNote = isMultiDayTour && paramStops
+              ? `Multi-stop tour: Delhi → ${paramStops.split(",").join(" → ")} → Delhi | ${tripDays} days | ~${paramActualKm || billedKm} km actual`
+              : "";
+            const dropNote = !isMultiDayTour && dropAddress
+              ? `Drop: ${dropAddress}${dropPincode ? ` (${dropPincode})` : ""}`
+              : "";
+            const userNotes = specialRequests ? `Notes: ${specialRequests}` : "";
+            return [tourNote, dropNote, userNotes].filter(Boolean).join(". ") || undefined;
+          })(),
         });
         bookingId = bookingResult.bookingId;
       }
@@ -1187,10 +1203,25 @@ export default function BookingPage() {
                           </>
                         ) : (
                           <>
+                            {isMultiDayTour && paramStops ? (
+                              <div className="space-y-1">
+                                <div className="flex justify-between text-sm"><span className="text-muted-foreground">Trip Type</span><span className="font-medium">Multi-Stop Tour</span></div>
+                                <div className="col-span-2 text-sm">
+                                  <span className="text-muted-foreground">Itinerary</span>
+                                  <div className="font-medium text-xs mt-1 text-slate-700 leading-relaxed bg-violet-50 border border-violet-100 rounded-lg px-3 py-2">
+                                    Delhi → {paramStops.split(",").join(" → ")} → Delhi
+                                  </div>
+                                </div>
+                                <div className="flex justify-between text-sm"><span className="text-muted-foreground">Duration</span><span className="font-medium">{tripDays} days</span></div>
+                              </div>
+                            ) : (
+                              <>
                             <div className="flex justify-between text-sm"><span className="text-muted-foreground">Route</span><span className="font-medium">{effectiveFromCity} → {effectiveToCity}</span></div>
                             <div className="flex justify-between text-sm"><span className="text-muted-foreground">Trip Type</span><span className="font-medium capitalize">{tripType.replace("_", " ")}</span></div>
+                              </>
+                            )}
                             <div className="flex justify-between text-sm"><span className="text-muted-foreground">Pickup Address</span><span className="font-medium text-right max-w-[200px]">{pickupAddress}</span></div>
-                            <div className="flex justify-between text-sm"><span className="text-muted-foreground">Drop Address</span><span className="font-medium text-right max-w-[200px]">{dropAddress}</span></div>
+                            {!isMultiDayTour && <div className="flex justify-between text-sm"><span className="text-muted-foreground">Drop Address</span><span className="font-medium text-right max-w-[200px]">{dropAddress}</span></div>}
                             <div className="flex justify-between text-sm"><span className="text-muted-foreground">Pickup Date &amp; Time</span><span className="font-medium">{pickupDate ? format(pickupDate, "dd MMM yyyy") : ""} at {pickupTime}</span></div>
                             {tripType === "round_trip" && (<div className="flex justify-between text-sm"><span className="text-muted-foreground">Return Date &amp; Time</span><span className="font-medium">{returnDate ? format(returnDate, "dd MMM yyyy") : "Same day"}{returnTime ? ` at ${fmtTime(returnTime)}` : ""}</span></div>)}
                             <div className="flex justify-between text-sm"><span className="text-muted-foreground">Passengers allowed</span><span className="font-medium">{effectiveCar ? effectiveCar.seats - 1 : "—"}</span></div>
@@ -1220,6 +1251,11 @@ export default function BookingPage() {
                             <p className="text-[10px] text-muted-foreground bg-slate-50 rounded-lg px-3 py-2">
                               ℹ️ Toll and parking collected at actuals — no markup. Any km beyond {billedKm} km on this trip charged at ₹{pricePerKm}/km.
                             </p>
+                            {isMultiDayTour && (
+                              <p className="text-[10px] text-violet-600 bg-violet-50 border border-violet-100 rounded-lg px-3 py-2">
+                                📍 This is an indicative fare for your multi-stop circuit. If any route changes are needed, our team will communicate revised pricing before the trip starts.
+                              </p>
+                            )}
                           </>
                         )}
                       </div>

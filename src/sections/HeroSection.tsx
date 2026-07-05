@@ -8,6 +8,7 @@ import { MapPin, CalendarDays, ArrowRight, Shield, Clock, CheckCircle, Loader2, 
 import { saveRecentSearch, getRecentSearches, type RecentSearch } from "@/hooks/useRecentSearches";
 import { trpc } from "@/providers/trpc";
 import { RENTAL_BANDS, RENTAL_MIN_HOURS, RENTAL_MAX_HOURS, RENTAL_KM_PER_HOUR } from "@/lib/rental";
+import { calcTourKm, APPROVED_DESTINATIONS } from "@/lib/tourDistance";
 
 // Delhi center — pickup restricted to 40km radius (covers full NCR: Gurgaon, Noida, Faridabad, Ghaziabad, Rohtak, Sonipat)
 const DELHI_CENTER = { lat: 28.6139, lng: 77.2090 };
@@ -190,6 +191,15 @@ export default function HeroSection() {
   const [isCalc, setIsCalc] = useState(false);
   const [formError, setFormError] = useState("");
 
+  // Tour tab state
+  const [tourStops, setTourStops] = useState<string[]>([]);
+  const [tourStopInput, setTourStopInput] = useState("");
+  const [tourInputFocused, setTourInputFocused] = useState(false);
+  const [tourStartDate, setTourStartDate] = useState<Date>();
+  const [tourEndDate, setTourEndDate] = useState<Date>();
+  const [tourStartOpen, setTourStartOpen] = useState(false);
+  const [tourEndOpen, setTourEndOpen] = useState(false);
+
   // Calculate distance whenever both locations are set
   useEffect(() => {
     if (!fromLat || !fromLng || !toLat || !toLng) { setDistanceKm(null); setFareMin(null); setFareMax(null); return; }
@@ -280,6 +290,44 @@ export default function HeroSection() {
   };
 
   const isRental = tripType === "rental";
+  const isTour = tripType === "tour";
+
+  // Tour fare derivations
+  const tourDays = tourStartDate && tourEndDate
+    ? Math.max(1, Math.ceil((tourEndDate.getTime() - tourStartDate.getTime()) / (1000 * 60 * 60 * 24)) + 1)
+    : 1;
+  const tourActualKm = calcTourKm(tourStops);
+  const tourBilledKm = Math.max(tourActualKm, tourDays * 250);
+  const tourFareMin = tourActualKm > 0 ? Math.round(tourBilledKm * MIN_RATE + DRIVER_CHARGE * tourDays) : null;
+  const tourFareMax = tourActualKm > 0 ? Math.round(tourBilledKm * MAX_RATE + DRIVER_CHARGE * tourDays) : null;
+
+  const filteredTourDestinations = APPROVED_DESTINATIONS.filter(d =>
+    !tourStops.includes(d) &&
+    d.toLowerCase().includes(tourStopInput.toLowerCase())
+  );
+
+  const addTourStop = (dest: string) => {
+    setTourStops(s => [...s, dest]);
+    setTourStopInput("");
+  };
+
+  const handleTourSearch = () => {
+    setFormError("");
+    if (tourStops.length < 1) { setFormError("Please add at least one destination."); return; }
+    if (!tourStartDate) { setFormError("Please select a start date."); return; }
+    if (!tourEndDate) { setFormError("Please select an end date."); return; }
+    const params = new URLSearchParams({
+      tripType: "multi_day",
+      from: "Delhi",
+      stops: tourStops.join(","),
+      days: String(tourDays),
+      startDate: format(tourStartDate, "yyyy-MM-dd"),
+      endDate: format(tourEndDate, "yyyy-MM-dd"),
+      distance: String(tourBilledKm),
+      actualKm: String(tourActualKm),
+    });
+    navigate(`/cars?${params.toString()}`);
+  };
 
   const handleRentalSearch = () => {
     setFormError("");
@@ -326,20 +374,22 @@ export default function HeroSection() {
               <div className="space-y-4">
                 {/* Trip type */}
                 <div className="space-y-2">
-                  <div className="grid grid-cols-3 gap-1 p-1 bg-slate-100 rounded-xl">
+                  <div className="grid grid-cols-4 gap-1 p-1 bg-slate-100 rounded-xl">
                     {[
                       { value: "one_way", label: "One Way" },
                       { value: "round_trip", label: "Round Trip" },
                       { value: "rental", label: "Rentals" },
+                      { value: "tour", label: "Tour" },
                     ].map((type) => (
                       <button key={type.value} onClick={() => {
                         setTripType(type.value);
                         if (type.value === "one_way") { setReturnDate(undefined); setSameDayReturn(false); }
                         if (type.value === "rental") { setReturnDate(undefined); setSameDayReturn(false); }
+                        if (type.value === "tour") { setReturnDate(undefined); setSameDayReturn(false); }
                       }}
-                        className={`py-2 px-2 rounded-lg text-xs font-semibold transition-all ${
+                        className={`py-2 px-1 rounded-lg text-[10px] font-semibold transition-all ${
                           tripType === type.value
-                            ? "bg-white text-blue-700 shadow-sm"
+                            ? type.value === "tour" ? "bg-white text-violet-700 shadow-sm" : "bg-white text-blue-700 shadow-sm"
                             : "text-slate-500 hover:text-slate-700"
                         }`}>
                         {type.label}
@@ -367,7 +417,13 @@ export default function HeroSection() {
 
                   {/* Use case chips */}
                   <div className="flex flex-wrap gap-1.5 px-0.5">
-                    {isRental ? (
+                    {isTour ? (
+                      <>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-violet-50 border border-violet-100 text-[11px] text-violet-600 font-medium">🗺️ Custom Route</span>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-violet-50 border border-violet-100 text-[11px] text-violet-600 font-medium">🏔️ Multi-City</span>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-violet-50 border border-violet-100 text-[11px] text-violet-600 font-medium">🔄 Circuit from Delhi</span>
+                      </>
+                    ) : isRental ? (
                       <>
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-100 text-[11px] text-amber-700 font-medium">🏥 Hospital Visits</span>
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-100 text-[11px] text-amber-700 font-medium">🛍️ Shopping Trips</span>
@@ -391,6 +447,121 @@ export default function HeroSection() {
                   </div>
                 </div>
 
+                {/* Tour form */}
+                {isTour ? (
+                  <div className="space-y-3">
+                    <div className="p-3 rounded-xl bg-violet-50 border border-violet-200 text-sm text-violet-800">
+                      <span className="font-semibold">Multi-stop circuit from Delhi</span>
+                      <span className="text-violet-600 text-xs block mt-0.5">Driver departs Delhi, covers all your stops, returns to Delhi. Fare covers the full circuit.</span>
+                    </div>
+
+                    {/* Date range */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">START DATE</label>
+                        <Popover open={tourStartOpen} onOpenChange={setTourStartOpen}>
+                          <PopoverTrigger asChild>
+                            <button className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-white text-sm flex items-center gap-2 hover:border-violet-400 transition-colors">
+                              <CalendarDays className="w-3.5 h-3.5 text-violet-600 shrink-0" />
+                              <span className={tourStartDate ? "text-slate-900" : "text-slate-400"}>
+                                {tourStartDate ? format(tourStartDate, "dd MMM") : "Start date"}
+                              </span>
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-3 bg-white border-slate-200 shadow-lg" align="start">
+                            <Calendar mode="single" selected={tourStartDate} onSelect={(d) => {
+                              setTourStartDate(d);
+                              setTourStartOpen(false);
+                              if (tourEndDate && d && tourEndDate <= d) setTourEndDate(undefined);
+                            }} disabled={(date) => date < new Date()} initialFocus />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">END DATE</label>
+                        <Popover open={tourEndOpen} onOpenChange={setTourEndOpen}>
+                          <PopoverTrigger asChild>
+                            <button className={`w-full h-11 px-3 rounded-xl border bg-white text-sm flex items-center gap-2 hover:border-violet-400 transition-colors ${tourEndDate ? "border-slate-200" : "border-violet-300 border-dashed"}`}>
+                              <CalendarDays className="w-3.5 h-3.5 text-violet-600 shrink-0" />
+                              <span className={tourEndDate ? "text-slate-900" : "text-violet-400"}>
+                                {tourEndDate ? format(tourEndDate, "dd MMM") : "End date"}
+                              </span>
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-3 bg-white border-slate-200 shadow-lg" align="start">
+                            <Calendar mode="single" selected={tourEndDate} onSelect={(d) => {
+                              setTourEndDate(d);
+                              setTourEndOpen(false);
+                            }} disabled={(date) => date <= (tourStartDate || new Date())} initialFocus />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                    </div>
+
+                    {/* Stop builder */}
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">DESTINATIONS (ADD STOPS)</label>
+                      {tourStops.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 p-2 rounded-xl bg-violet-50 border border-violet-100">
+                          {tourStops.map((stop, i) => (
+                            <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-violet-200 rounded-full text-xs text-violet-800 font-medium">
+                              {stop}
+                              <button onClick={() => setTourStops(s => s.filter((_, idx) => idx !== i))} className="text-violet-300 hover:text-violet-600 ml-0.5 leading-none">×</button>
+                            </span>
+                          ))}
+                          <span className="text-[10px] text-violet-400 self-center">→ Delhi</span>
+                        </div>
+                      )}
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={tourStopInput}
+                          onChange={(e) => setTourStopInput(e.target.value)}
+                          onFocus={() => setTourInputFocused(true)}
+                          onBlur={() => setTimeout(() => setTourInputFocused(false), 150)}
+                          placeholder={tourStops.length >= 8 ? "Max 8 stops reached" : "Type to search destinations…"}
+                          disabled={tourStops.length >= 8}
+                          className="w-full h-10 px-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 outline-none disabled:bg-slate-50 disabled:text-slate-400"
+                        />
+                        {tourInputFocused && filteredTourDestinations.length > 0 && (
+                          <div className="absolute top-full left-0 right-0 z-50 bg-white border border-slate-200 rounded-xl shadow-lg mt-1 max-h-44 overflow-y-auto">
+                            {filteredTourDestinations.map(dest => (
+                              <button
+                                key={dest}
+                                onMouseDown={() => addTourStop(dest)}
+                                className="w-full text-left px-3 py-2 text-sm hover:bg-violet-50 hover:text-violet-800 transition-colors flex items-center gap-2"
+                              >
+                                <MapPin className="w-3 h-3 text-violet-400 shrink-0" />{dest}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Live fare estimate */}
+                    {tourStops.length > 0 && tourStartDate && tourEndDate && tourFareMin && (
+                      <div className="p-3 rounded-xl bg-violet-50 border border-violet-200">
+                        <div className="flex items-center justify-between">
+                          <div className="text-sm text-violet-800">
+                            <Route className="w-3.5 h-3.5 inline mr-1 text-violet-500" />
+                            <span className="font-medium">{tourDays} days · ~{tourActualKm} km</span>
+                            {tourBilledKm > tourActualKm && (
+                              <span className="text-violet-500 text-xs ml-1">(min {tourBilledKm} billed)</span>
+                            )}
+                          </div>
+                          <div className="text-right">
+                            <div className="font-bold text-violet-800 text-sm">
+                              ₹{tourFareMin.toLocaleString("en-IN")} – ₹{tourFareMax?.toLocaleString("en-IN")}
+                            </div>
+                            <div className="text-[10px] text-violet-500">indicative · all vehicles</div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <>
                 {/* From location — Delhi NCR only */}
                 <PlaceInput
                   label="PICKUP LOCATION"
@@ -465,9 +636,11 @@ export default function HeroSection() {
                     )}
                   </div>
                 )}
+                  </>
+                )}
 
-                {/* Date row */}
-                <div className={`grid gap-3 ${isRoundTrip && !isRental ? "grid-cols-2" : "grid-cols-1"}`}>
+                {/* Date row — hidden on Tour tab (Tour has its own date pickers) */}
+                {!isTour && <div className={`grid gap-3 ${isRoundTrip && !isRental ? "grid-cols-2" : "grid-cols-1"}`}>
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                       {isRoundTrip ? "DEPARTURE" : "DATE"}
@@ -523,10 +696,10 @@ export default function HeroSection() {
                       </Popover>
                     </div>
                   ))}
-                </div>
+                </div>}
 
-                {/* Time row — 2 cols for round trip */}
-                <div className={`grid gap-3 ${isRoundTrip && !isRental ? "grid-cols-2" : "grid-cols-1"}`}>
+                {/* Time row — 2 cols for round trip, hidden for Tour */}
+                {!isTour && <div className={`grid gap-3 ${isRoundTrip && !isRental ? "grid-cols-2" : "grid-cols-1"}`}>
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">PICKUP TIME</label>
                     <div className="relative">
@@ -563,7 +736,7 @@ export default function HeroSection() {
                       </div>
                     </div>
                   )}
-                </div>
+                </div>}
 
                 {formError && (
                   <p className="text-xs text-red-500 flex items-center gap-1.5 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
@@ -572,13 +745,17 @@ export default function HeroSection() {
                   </p>
                 )}
 
-                <Button onClick={isRental ? handleRentalSearch : handleSearch}
-                  className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm gap-2 shadow-sm transition-all">
-                  {isRental
-                    ? `See Rental Vehicles · from ₹${(RENTAL_BANDS[0].hourly * rentalHours).toLocaleString("en-IN")}`
-                    : displayFareMin
-                      ? `See Vehicles · ₹${displayFareMin.toLocaleString("en-IN")}–₹${displayFareMax?.toLocaleString("en-IN")}${tripDays > 1 ? ` (${tripDays}d)` : ""}`
-                      : "See Available Vehicles & Fares"}
+                <Button onClick={isTour ? handleTourSearch : isRental ? handleRentalSearch : handleSearch}
+                  className={`w-full h-12 text-white font-semibold text-sm gap-2 shadow-sm transition-all ${isTour ? "bg-violet-600 hover:bg-violet-700" : "bg-blue-600 hover:bg-blue-700"}`}>
+                  {isTour
+                    ? tourFareMin
+                      ? `See Tour Vehicles · ₹${tourFareMin.toLocaleString("en-IN")}–₹${tourFareMax?.toLocaleString("en-IN")} (${tourDays}d)`
+                      : "See Tour Vehicles & Fares"
+                    : isRental
+                      ? `See Rental Vehicles · from ₹${(RENTAL_BANDS[0].hourly * rentalHours).toLocaleString("en-IN")}`
+                      : displayFareMin
+                        ? `See Vehicles · ₹${displayFareMin.toLocaleString("en-IN")}–₹${displayFareMax?.toLocaleString("en-IN")}${tripDays > 1 ? ` (${tripDays}d)` : ""}`
+                        : "See Available Vehicles & Fares"}
                   <ArrowRight className="w-4 h-4" />
                 </Button>
 
