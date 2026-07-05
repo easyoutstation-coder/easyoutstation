@@ -425,10 +425,6 @@ export default function HeroSection() {
                             </button>
                           );
                         })}
-                        <span className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-[11px] text-blue-600 font-medium cursor-default">🏖️ Weekend Getaway</span>
-                        <span className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-[11px] text-blue-600 font-medium cursor-default">🛕 Pilgrimage</span>
-                        <span className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-[11px] text-blue-600 font-medium cursor-default">💒 Wedding & Events</span>
-                        <span className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-violet-50 border border-violet-100 text-[11px] text-violet-600 font-medium cursor-default">📅 Multi-Day Trips</span>
                       </>
                     ) : isRental ? (
                       <>
