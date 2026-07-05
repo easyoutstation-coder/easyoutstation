@@ -373,90 +373,88 @@ export default function HeroSection() {
               </div>
 
               <div className="space-y-4">
-                {/* Trip type */}
-                <div className="space-y-2">
-                  <div className="grid grid-cols-3 gap-1 p-1 bg-slate-100 rounded-xl">
-                    {[
-                      { value: "one_way", label: "One Way" },
-                      { value: "round_trip", label: "Round Trip" },
-                      { value: "rental", label: "Rentals" },
-                    ].map((type) => (
-                      <button key={type.value} onClick={() => {
-                        setTripType(type.value);
-                        if (type.value === "one_way") { setReturnDate(undefined); setSameDayReturn(false); setTourSubMode(false); }
-                        if (type.value === "rental") { setReturnDate(undefined); setSameDayReturn(false); setTourSubMode(false); }
-                      }}
-                        className={`py-2 px-2 rounded-lg text-xs font-semibold transition-all ${
-                          tripType === type.value
-                            ? "bg-white text-blue-700 shadow-sm"
-                            : "text-slate-500 hover:text-slate-700"
-                        }`}>
-                        {type.label}
-                      </button>
-                    ))}
-                  </div>
-                  {/* Round-trip sub-toggle: Same day / Overnight / Multi-stop */}
-                  {isRoundTrip && !isRental && (
-                    <div className="flex gap-1.5 px-0.5">
-                      {[
-                        { id: "same_day", label: "Same day" },
-                        { id: "overnight", label: "Overnight" },
-                        { id: "multi_stop", label: "Multi-stop" },
-                      ].map(({ id, label }) => {
-                        const isActive = id === "same_day" ? (sameDayReturn && !tourSubMode)
-                                       : id === "overnight" ? (!sameDayReturn && !tourSubMode)
-                                       : tourSubMode;
-                        return (
-                          <button key={id} onClick={() => {
-                            if (id === "same_day") { setSameDayReturn(true); setTourSubMode(false); setReturnDate(undefined); }
-                            else if (id === "overnight") { setSameDayReturn(false); setTourSubMode(false); }
-                            else { setTourSubMode(true); setSameDayReturn(false); setReturnDate(undefined); }
-                          }}
-                            className={`flex-1 py-1.5 rounded-lg text-[11px] font-medium border transition-all ${
-                              isActive
-                                ? id === "multi_stop"
-                                  ? "bg-violet-50 border-violet-400 text-violet-700"
-                                  : "bg-blue-50 border-blue-400 text-blue-700"
-                                : "bg-white border-slate-200 text-slate-500 hover:border-slate-300"
-                            }`}>
-                            {label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
+                {/* Tier 1: Trip type tabs */}
+                <div className="grid grid-cols-3 gap-1 p-1 bg-slate-100 rounded-xl">
+                  {[
+                    { value: "one_way", label: "One Way" },
+                    { value: "round_trip", label: "Round Trip" },
+                    { value: "rental", label: "Rentals" },
+                  ].map((type) => (
+                    <button key={type.value} onClick={() => {
+                      setTripType(type.value);
+                      if (type.value === "one_way") { setReturnDate(undefined); setSameDayReturn(false); setTourSubMode(false); }
+                      if (type.value === "rental") { setReturnDate(undefined); setSameDayReturn(false); setTourSubMode(false); }
+                    }}
+                      className={`py-2 px-2 rounded-lg text-xs font-semibold transition-all ${
+                        tripType === type.value
+                          ? "bg-white text-blue-700 shadow-sm"
+                          : "text-slate-500 hover:text-slate-700"
+                      }`}>
+                      {type.label}
+                    </button>
+                  ))}
+                </div>
 
-                  {/* Use case chips */}
-                  <div className="flex flex-wrap gap-1.5 px-0.5">
-                    {isTour ? (
+                {/* Tier 2: Single scrollable pill row — functional pills + decorative chips */}
+                <div className="overflow-x-auto -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
+                  <div className="flex gap-1.5 flex-nowrap">
+                    {isRoundTrip ? (
                       <>
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-violet-50 border border-violet-100 text-[11px] text-violet-600 font-medium">🗺️ Custom Route</span>
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-violet-50 border border-violet-100 text-[11px] text-violet-600 font-medium">🏔️ Multi-City</span>
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-violet-50 border border-violet-100 text-[11px] text-violet-600 font-medium">🔄 Circuit from Delhi</span>
+                        {[
+                          { id: "same_day", label: "Same day" },
+                          { id: "overnight", label: "Overnight" },
+                          { id: "multi_stop", label: "Multi-stop" },
+                        ].map(({ id, label }) => {
+                          const isActive = id === "same_day" ? (sameDayReturn && !tourSubMode)
+                                         : id === "overnight" ? (!sameDayReturn && !tourSubMode)
+                                         : tourSubMode;
+                          return (
+                            <button key={id} onClick={() => {
+                              if (id === "same_day") { setSameDayReturn(true); setTourSubMode(false); setReturnDate(undefined); }
+                              else if (id === "overnight") { setSameDayReturn(false); setTourSubMode(false); }
+                              else { setTourSubMode(true); setSameDayReturn(false); setReturnDate(undefined); }
+                            }}
+                              className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-semibold border transition-all ${
+                                isActive
+                                  ? id === "multi_stop"
+                                    ? "bg-violet-50 border-violet-400 text-violet-700"
+                                    : "bg-blue-50 border-blue-400 text-blue-700"
+                                  : "bg-white border-slate-200 text-slate-500 hover:border-slate-300"
+                              }`}>
+                              {label}
+                            </button>
+                          );
+                        })}
+                        <span className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-[11px] text-blue-600 font-medium cursor-default">🏖️ Weekend Getaway</span>
+                        <span className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-[11px] text-blue-600 font-medium cursor-default">🛕 Pilgrimage</span>
+                        <span className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-[11px] text-blue-600 font-medium cursor-default">💒 Wedding & Events</span>
+                        <span className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-violet-50 border border-violet-100 text-[11px] text-violet-600 font-medium cursor-default">📅 Multi-Day Trips</span>
                       </>
                     ) : isRental ? (
                       <>
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-100 text-[11px] text-amber-700 font-medium">🏥 Hospital Visits</span>
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-100 text-[11px] text-amber-700 font-medium">🛍️ Shopping Trips</span>
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-100 text-[11px] text-amber-700 font-medium">✈️ Airport Loops</span>
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-100 text-[11px] text-amber-700 font-medium">📍 Multiple Stops</span>
-                      </>
-                    ) : isRoundTrip ? (
-                      <>
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-100 text-[11px] text-blue-600 font-medium">🏖️ Weekend Getaway</span>
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-100 text-[11px] text-blue-600 font-medium">🛕 Pilgrimage</span>
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-100 text-[11px] text-blue-600 font-medium">💒 Wedding & Events</span>
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-violet-50 border border-violet-100 text-[11px] text-violet-600 font-medium">📅 Multi-Day Trips</span>
+                        <span className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-100 text-[11px] text-amber-700 font-medium cursor-default">🏥 Hospital Visits</span>
+                        <span className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-100 text-[11px] text-amber-700 font-medium cursor-default">🛍️ Shopping Trips</span>
+                        <span className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-100 text-[11px] text-amber-700 font-medium cursor-default">✈️ Airport Loops</span>
+                        <span className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-100 text-[11px] text-amber-700 font-medium cursor-default">📍 Multiple Stops</span>
                       </>
                     ) : (
                       <>
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-100 text-[11px] text-blue-600 font-medium">✈️ Airport Transfer</span>
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-100 text-[11px] text-blue-600 font-medium">💼 Corporate Drop</span>
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-100 text-[11px] text-blue-600 font-medium">🏔️ Hill Getaway</span>
+                        <span className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-[11px] text-blue-600 font-medium cursor-default">✈️ Airport Transfer</span>
+                        <span className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-[11px] text-blue-600 font-medium cursor-default">💼 Corporate Drop</span>
+                        <span className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-[11px] text-blue-600 font-medium cursor-default">🏔️ Hill Getaway</span>
                       </>
                     )}
                   </div>
                 </div>
+
+                {/* Multi-stop sub-row — visible only when Multi-stop is active */}
+                {isTour && (
+                  <div className="flex flex-wrap gap-1.5">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-violet-50 border border-violet-100 text-[11px] text-violet-600 font-medium">🗺️ Custom Route</span>
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-violet-50 border border-violet-100 text-[11px] text-violet-600 font-medium">🏔️ Multi-City</span>
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-violet-50 border border-violet-100 text-[11px] text-violet-600 font-medium">🔄 Circuit from Delhi</span>
+                  </div>
+                )}
 
                 {/* Tour form */}
                 {isTour ? (
@@ -778,16 +776,16 @@ export default function HeroSection() {
                 </Link>
 
                 {/* Guarantees */}
-                <div className="grid grid-cols-3 gap-2">
+                <div className="flex items-center justify-center divide-x divide-slate-200">
                   {[
                     { icon: "🔒", text: "No Hidden Fees" },
                     { icon: "⏰", text: "On-Time Pickup" },
                     { icon: "✅", text: "Free Cancel 24hr" },
                   ].map((g, i) => (
-                    <div key={i} className="text-center p-2 rounded-lg bg-slate-50 border border-slate-100">
-                      <div className="text-sm mb-0.5">{g.icon}</div>
-                      <div className="text-[10px] text-slate-500 leading-tight font-medium">{g.text}</div>
-                    </div>
+                    <span key={i} className="flex items-center gap-1 px-3 text-[11px] text-slate-400 font-medium">
+                      <span>{g.icon}</span>
+                      <span>{g.text}</span>
+                    </span>
                   ))}
                 </div>
                 {/* Recent Searches */}
