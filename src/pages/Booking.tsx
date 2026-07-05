@@ -250,7 +250,7 @@ export default function BookingPage() {
 
   // Auth gate - AFTER all hooks
   // Only show spinner on FIRST load (no cached data), max 2 seconds
-  if (authLoading && !user && !authTimedOut) {
+  if (authLoading && !user && !authTimedOut && resumeBookingId === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center">
@@ -261,7 +261,21 @@ export default function BookingPage() {
     );
   }
 
-  if (!isAuthenticated) {
+  // Resume link: show spinner while booking loads from DB before showing step 3
+  if (resumeBookingId > 0 && !resumeBooking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-2" />
+          <p className="text-sm text-slate-400">Loading your booking…</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Resume-link customers (from Disha's payment URL) skip auth — booking is already created,
+  // payment endpoints are public, and re-entering details defeats the purpose of the pre-filled link.
+  if (!isAuthenticated && resumeBookingId === 0) {
     return (
       <div className="min-h-screen bg-slate-50">
         <Navbar />

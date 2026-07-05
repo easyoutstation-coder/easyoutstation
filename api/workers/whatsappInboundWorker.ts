@@ -262,7 +262,8 @@ async function executeTool(name: string, input: any, phone: string): Promise<str
     else if (isHeavy) km = Math.max(rawKm, 250);
     else km = Math.max(rawKm, 80);
     const driverCharge = (driver_charge_per_day ?? 250) * days;
-    const fare = Math.round(km * price_per_km + driverCharge);
+    const oneWayMultiplier = trip_type === "one_way" && !isHeavy ? 1.25 : 1;
+    const fare = Math.round(km * price_per_km * oneWayMultiplier + driverCharge);
     return JSON.stringify({ distance_km: dist, km_billed: km, days, driver_charge: driverCharge, fare_inr: fare, toll_note: "Toll, parking & state taxes: additional at actuals (paid on road, no markup)" });
   }
 
@@ -358,10 +359,10 @@ Custom routes also available — use get_fare_estimate with a reasonable distanc
 
 ━━ CARS & RATES ━━
 CARS (driver ₹250/day):
-Swift Dzire ₹12/km 4 seats | Toyota Etios ₹13/km 4 seats
-Maruti Ertiga ₹15/km 6 seats | Kia Carens ₹17/km 6 seats
-Toyota Innova ₹19/km 6 seats | Innova Crysta ₹20/km 6 seats (best for hills)
-Innova Hycross ₹22/km 6 seats (luxury)
+Swift Dzire ₹13/km 4 seats | Honda Amaze ₹13/km 4 seats | Toyota Etios ₹14/km 4 seats
+Maruti Ertiga ₹16/km 6 seats | Kia Carens ₹18/km 6 seats
+Tata Hexa ₹20/km 7 seats | Toyota Innova ₹20/km 6 seats | Innova Crysta ₹21/km 6 seats (best for hills)
+Innova Hycross ₹23/km 6 seats (luxury)
 
 TEMPO TRAVELLERS & BUSES (driver ₹500/day — pass driver_charge_per_day=500 to get_fare_estimate):
 Tempo Traveller Maharaja ₹28/km 12 seats | Tempo Traveller 16-19 ₹30/km 19 seats
@@ -373,7 +374,7 @@ When calling create_booking, pass car_name exactly as written above. No numeric 
 
 ━━ CUSTOMER PREFERENCE ━━
 Always gauge budget preference before recommending a car:
-- Keywords like "budget", "cheap", "affordable", "economical", "sasta" → start with Swift Dzire (₹12/km)
+- Keywords like "budget", "cheap", "affordable", "economical", "sasta" → start with Swift Dzire (₹13/km)
 - Keywords like "luxury", "premium", "comfortable", "VIP", "achha", "best" → recommend Innova Crysta or Hycross
 - If preference is unclear, ask: "Would you prefer a budget-friendly option or something more spacious and comfortable?"
 - For hill routes (Manali, Shimla, Mussoorie, Nainital, Kasauli), always recommend Crysta or Hycross regardless of economy preference — hills need power & ground clearance
@@ -381,9 +382,9 @@ Always gauge budget preference before recommending a car:
 
 ━━ QUOTING OPTIONS — CHEAPEST FIRST ━━
 When presenting car choices, ALWAYS list cheapest option first:
-Economy tier: Swift Dzire (₹12) → Toyota Etios (₹13)
-Mid tier: Maruti Ertiga (₹15) → Kia Carens (₹17)
-Premium tier: Toyota Innova (₹19) → Innova Crysta (₹20) → Innova Hycross (₹22)
+Economy tier: Swift Dzire (₹13) → Honda Amaze (₹13) → Toyota Etios (₹14)
+Mid tier: Maruti Ertiga (₹16) → Kia Carens (₹18)
+Premium tier: Tata Hexa (₹20) → Toyota Innova (₹20) → Innova Crysta (₹21) → Innova Hycross (₹23)
 - Call get_fare_estimate for at least 2 options (cheapest applicable + one upgrade) so customer can compare prices
 - Format: "Economy: ₹X (Swift Dzire) · Comfortable: ₹Y (Innova Crysta)"
 
