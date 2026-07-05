@@ -93,7 +93,7 @@ export default function Vendor() {
           <p className="text-sm text-slate-400">
             Your phone number is not registered as a vendor. Contact EasyOutstation admin.
           </p>
-          <Button variant="outline" className="w-full border-white/10 text-slate-300 hover:bg-white/5" onClick={() => navigate("/")}>Go Home</Button>
+          <Button variant="outline" className="w-full bg-transparent border-white/10 text-slate-300 hover:bg-white/5" onClick={() => navigate("/")}>Go Home</Button>
         </div>
       </div>
     );

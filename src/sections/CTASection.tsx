@@ -24,7 +24,7 @@ export default function CTASection() {
           </Button>
           <a href="https://wa.me/918796564111?text=Hi%2C%20I%20want%20to%20book%20a%20cab%20from%20Delhi" target="_blank" rel="noopener noreferrer">
             <Button size="lg" variant="outline"
-              className="border-white/20 text-white hover:bg-white/10 h-12 px-6 gap-2 transition-all">
+              className="bg-transparent border-white/20 text-white hover:bg-white/10 h-12 px-6 gap-2 transition-all">
               <MessageCircle className="w-4 h-4 text-green-400" />
               WhatsApp Us
             </Button>
