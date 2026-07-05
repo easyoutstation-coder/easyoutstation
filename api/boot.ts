@@ -286,6 +286,11 @@ async function runStartupMigrations() {
          WHERE NOT EXISTS (SELECT 1 FROM cars WHERE name = 'Honda Amaze')`
       ));
     } catch { /* already exists */ }
+    try {
+      await db.execute(sql.raw(
+        `UPDATE cars SET imageUrl = '/cars/honda-amaze.jpg' WHERE name = 'Honda Amaze' AND (imageUrl IS NULL OR imageUrl = '' OR imageUrl != '/cars/honda-amaze.jpg')`
+      ));
+    } catch { /* ignore */ }
 
     // Tata Hexa
     try {
