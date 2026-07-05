@@ -191,7 +191,8 @@ export default function HeroSection() {
   const [isCalc, setIsCalc] = useState(false);
   const [formError, setFormError] = useState("");
 
-  // Tour tab state
+  // Tour (multi-stop sub-mode under Round Trip)
+  const [tourSubMode, setTourSubMode] = useState(false);
   const [tourStops, setTourStops] = useState<string[]>([]);
   const [tourStopInput, setTourStopInput] = useState("");
   const [tourInputFocused, setTourInputFocused] = useState(false);
@@ -290,7 +291,7 @@ export default function HeroSection() {
   };
 
   const isRental = tripType === "rental";
-  const isTour = tripType === "tour";
+  const isTour = isRoundTrip && tourSubMode;
 
   // Tour fare derivations
   const tourDays = tourStartDate && tourEndDate
@@ -374,44 +375,54 @@ export default function HeroSection() {
               <div className="space-y-4">
                 {/* Trip type */}
                 <div className="space-y-2">
-                  <div className="grid grid-cols-4 gap-1 p-1 bg-slate-100 rounded-xl">
+                  <div className="grid grid-cols-3 gap-1 p-1 bg-slate-100 rounded-xl">
                     {[
                       { value: "one_way", label: "One Way" },
                       { value: "round_trip", label: "Round Trip" },
                       { value: "rental", label: "Rentals" },
-                      { value: "tour", label: "Tour" },
                     ].map((type) => (
                       <button key={type.value} onClick={() => {
                         setTripType(type.value);
-                        if (type.value === "one_way") { setReturnDate(undefined); setSameDayReturn(false); }
-                        if (type.value === "rental") { setReturnDate(undefined); setSameDayReturn(false); }
-                        if (type.value === "tour") { setReturnDate(undefined); setSameDayReturn(false); }
+                        if (type.value === "one_way") { setReturnDate(undefined); setSameDayReturn(false); setTourSubMode(false); }
+                        if (type.value === "rental") { setReturnDate(undefined); setSameDayReturn(false); setTourSubMode(false); }
                       }}
-                        className={`py-2 px-1 rounded-lg text-[10px] font-semibold transition-all ${
+                        className={`py-2 px-2 rounded-lg text-xs font-semibold transition-all ${
                           tripType === type.value
-                            ? type.value === "tour" ? "bg-white text-violet-700 shadow-sm" : "bg-white text-blue-700 shadow-sm"
+                            ? "bg-white text-blue-700 shadow-sm"
                             : "text-slate-500 hover:text-slate-700"
                         }`}>
                         {type.label}
                       </button>
                     ))}
                   </div>
-                  {/* Same day return sub-toggle */}
+                  {/* Round-trip sub-toggle: Same day / Overnight / Multi-stop */}
                   {isRoundTrip && !isRental && (
                     <div className="flex gap-1.5 px-0.5">
                       {[
-                        { sd: true,  label: "Same day return" },
-                        { sd: false, label: "Overnight stay" },
-                      ].map(({ sd, label }) => (
-                        <button key={label} onClick={() => { setSameDayReturn(sd); if (sd) setReturnDate(undefined); }}
-                          className={`flex-1 py-1.5 rounded-lg text-[11px] font-medium border transition-all ${
-                            sameDayReturn === sd
-                              ? "bg-blue-50 border-blue-400 text-blue-700"
-                              : "bg-white border-slate-200 text-slate-500 hover:border-slate-300"
-                          }`}>
-                          {label}
-                        </button>
-                      ))}
+                        { id: "same_day", label: "Same day" },
+                        { id: "overnight", label: "Overnight" },
+                        { id: "multi_stop", label: "Multi-stop" },
+                      ].map(({ id, label }) => {
+                        const isActive = id === "same_day" ? (sameDayReturn && !tourSubMode)
+                                       : id === "overnight" ? (!sameDayReturn && !tourSubMode)
+                                       : tourSubMode;
+                        return (
+                          <button key={id} onClick={() => {
+                            if (id === "same_day") { setSameDayReturn(true); setTourSubMode(false); setReturnDate(undefined); }
+                            else if (id === "overnight") { setSameDayReturn(false); setTourSubMode(false); }
+                            else { setTourSubMode(true); setSameDayReturn(false); setReturnDate(undefined); }
+                          }}
+                            className={`flex-1 py-1.5 rounded-lg text-[11px] font-medium border transition-all ${
+                              isActive
+                                ? id === "multi_stop"
+                                  ? "bg-violet-50 border-violet-400 text-violet-700"
+                                  : "bg-blue-50 border-blue-400 text-blue-700"
+                                : "bg-white border-slate-200 text-slate-500 hover:border-slate-300"
+                            }`}>
+                            {label}
+                          </button>
+                        );
+                      })}
                     </div>
                   )}
 
