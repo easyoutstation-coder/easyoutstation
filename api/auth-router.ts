@@ -4,8 +4,8 @@ import { Session } from "@contracts/constants";
 import { getSessionCookieOptions } from "./lib/cookies";
 import { createRouter, authedQuery, publicQuery } from "./middleware";
 import { getDb } from "./queries/connection";
-import { users } from "@db/schema";
-import { eq } from "drizzle-orm";
+import { users, bookings } from "@db/schema";
+import { eq, and, gt } from "drizzle-orm";
 import { signSessionToken } from "./kimi/session";
 import { nanoid } from "nanoid";
 
@@ -94,6 +94,60 @@ export const authRouter = createRouter({
         const unionId = nanoid();
         await db.insert(users).values({ unionId, phone: input.phone, name: input.name ?? null, role: "user", lastSignInAt: new Date() });
         userRows = await db.select().from(users).where(eq(users.phone, input.phone)).limit(1);
+        user = userRows[0];
+      } else {
+        const updates: Record<string, any> = { lastSignInAt: new Date() };
+        if (input.name && !user.name) updates.name = input.name;
+        await db.update(users).set(updates).where(eq(users.id, user.id));
+      }
+
+      const token = await signSessionToken({ unionId: user.unionId, clientId: "easyoutstation" });
+      const cookieOpts = getSessionCookieOptions(ctx.req.headers);
+      ctx.resHeaders.append("set-cookie", cookie.serialize(Session.cookieName, token, {
+        httpOnly: cookieOpts.httpOnly,
+        path: cookieOpts.path,
+        sameSite: (cookieOpts.sameSite?.toLowerCase() as "lax" | "none") ?? "lax",
+        secure: cookieOpts.secure,
+        maxAge: Session.maxAgeMs / 1000,
+      }));
+      return { success: true, token };
+    }),
+
+  loginWithEmail: publicQuery
+    .input(z.object({ email: z.string().email(), name: z.string().optional() }))
+    .mutation(async ({ input, ctx }) => {
+      // Email OTP is verified server-side before this is called
+      const db = getDb();
+      const normalizedEmail = input.email.toLowerCase().trim();
+
+      // Step 1: find existing account by email
+      let userRows = await db.select().from(users).where(eq(users.email, normalizedEmail)).limit(1);
+      let user = userRows[0];
+
+      // Step 2: no email match — check if any booking was placed with this email
+      // while linked to a user (e.g. phone-only account that gave email at checkout).
+      // If found, attach the email to that account instead of creating a duplicate.
+      if (!user) {
+        const [linked] = await db
+          .select({ userId: bookings.userId })
+          .from(bookings)
+          .where(and(eq(bookings.customerEmail, normalizedEmail), gt(bookings.userId, 0)))
+          .orderBy(bookings.id)
+          .limit(1);
+        if (linked?.userId) {
+          const [existing] = await db.select().from(users).where(eq(users.id, linked.userId)).limit(1);
+          if (existing) {
+            await db.update(users).set({ email: normalizedEmail, lastSignInAt: new Date() }).where(eq(users.id, existing.id));
+            user = { ...existing, email: normalizedEmail };
+          }
+        }
+      }
+
+      // Step 3: still nothing — create a fresh email-only account
+      if (!user) {
+        const unionId = nanoid();
+        await db.insert(users).values({ unionId, email: normalizedEmail, name: input.name ?? null, role: "user", lastSignInAt: new Date() });
+        userRows = await db.select().from(users).where(eq(users.email, normalizedEmail)).limit(1);
         user = userRows[0];
       } else {
         const updates: Record<string, any> = { lastSignInAt: new Date() };

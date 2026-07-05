@@ -24,7 +24,7 @@ import { format } from "date-fns";
 import {
   User, CreditCard, Check, ArrowRight, ArrowLeft,
   MapPin, CalendarDays, Mail, Users, Shield, Clock,
-  Route, Loader2, AlertCircle, LogIn, MessageCircle, ShieldCheck,
+  Route, Loader2, AlertCircle, LogIn, MessageCircle, ShieldCheck, Phone,
 } from "lucide-react";
 
 function fmtTime(t: string) {
@@ -230,15 +230,39 @@ export default function BookingPage() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Inline quick auth state — must be before any conditional returns
+  const [quickAuthTab, setQuickAuthTab] = useState<"phone" | "email">("phone");
   const [quickName, setQuickName] = useState("");
   const [quickPhone, setQuickPhone] = useState("");
   const [quickOtpVerified, setQuickOtpVerified] = useState(false);
+  const [quickEmail, setQuickEmail] = useState("");
+  const [quickEmailOtpSent, setQuickEmailOtpSent] = useState(false);
+  const [quickEmailOtp, setQuickEmailOtp] = useState("");
   const [quickError, setQuickError] = useState("");
 
   const quickLoginWithPhoneMutation = trpc.auth.loginWithPhone.useMutation({
     onSuccess: (data) => {
       if (data.token) localStorage.setItem("authToken", data.token);
       refresh();
+    },
+    onError: (e) => setQuickError(e.message),
+  });
+
+  const quickLoginWithEmailMutation = trpc.auth.loginWithEmail.useMutation({
+    onSuccess: (data) => {
+      if (data.token) localStorage.setItem("authToken", data.token);
+      refresh();
+    },
+    onError: (e) => setQuickError(e.message),
+  });
+
+  const quickSendEmailOtpMutation = trpc.sms.sendEmailOtp.useMutation({
+    onSuccess: () => { setQuickEmailOtpSent(true); setQuickError(""); },
+    onError: (e) => setQuickError(e.message),
+  });
+
+  const quickVerifyEmailOtpMutation = trpc.sms.verifyEmailOtp.useMutation({
+    onSuccess: () => {
+      quickLoginWithEmailMutation.mutate({ email: quickEmail.trim().toLowerCase(), name: quickName.trim() || undefined });
     },
     onError: (e) => setQuickError(e.message),
   });
@@ -294,78 +318,134 @@ export default function BookingPage() {
             )}
 
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-              <div className="text-center mb-6">
+              <div className="text-center mb-5">
                 <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
                   <LogIn className="w-7 h-7 text-blue-600" />
                 </div>
                 <h2 className="text-2xl font-bold font-['DM_Serif_Display'] text-slate-900">Quick Sign Up to Book</h2>
-                <p className="text-slate-500 text-sm mt-1">Takes 30 seconds. Verify your number and you're in!</p>
+                <p className="text-slate-500 text-sm mt-1">Verify your identity — takes 30 seconds</p>
+              </div>
+
+              {/* Tab switcher */}
+              <div className="flex rounded-xl bg-slate-100 p-1 mb-5">
+                <button onClick={() => { setQuickAuthTab("phone"); setQuickError(""); }}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-all ${quickAuthTab === "phone" ? "bg-white shadow-sm text-slate-900" : "text-slate-500 hover:text-slate-700"}`}>
+                  <Phone className="w-4 h-4" /> Phone OTP
+                </button>
+                <button onClick={() => { setQuickAuthTab("email"); setQuickError(""); }}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-all ${quickAuthTab === "email" ? "bg-white shadow-sm text-slate-900" : "text-slate-500 hover:text-slate-700"}`}>
+                  <Mail className="w-4 h-4" /> Email OTP
+                </button>
               </div>
 
               <div className="space-y-4">
-
-                {/* Name */}
+                {/* Name field — shared */}
                 <div className="space-y-1.5">
                   <Label className="text-sm font-medium text-slate-700">Full Name *</Label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <Input value={quickName} onChange={e => setQuickName(e.target.value)}
-                      placeholder="Your full name" className="pl-10" disabled={quickOtpVerified}
+                      placeholder="Your full name" className="pl-10"
+                      disabled={quickOtpVerified || quickVerifyEmailOtpMutation.isSuccess}
                       autoComplete="name" />
                   </div>
                 </div>
 
-                {/* Phone + OTP */}
-                <div className="space-y-1.5">
-                  <Label className="text-sm font-medium text-slate-700">Mobile Number *</Label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-500 font-medium">+91</span>
-                    <Input value={quickPhone}
-                      onChange={e => { setQuickPhone(e.target.value.replace(/\D/g, "").slice(0, 10)); setQuickOtpVerified(false); }}
-                      placeholder="10-digit mobile number" className="pl-12"
-                      disabled={quickOtpVerified} maxLength={10}
-                      type="tel" inputMode="numeric" autoComplete="tel-national" />
-                    {quickOtpVerified && (
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-green-600 text-xs font-medium">
-                        <Check className="w-3.5 h-3.5" /> Verified
-                      </span>
-                    )}
-                  </div>
-                  {!quickOtpVerified && quickPhone.length === 10 && (
-                    <div className="pt-1">
-                      <FirebaseOTP
-                        phone={quickPhone}
-                        onVerified={() => { setQuickOtpVerified(true); setQuickError(""); }}
-                        onError={msg => setQuickError(msg)}
-                      />
+                {quickAuthTab === "phone" ? (
+                  <>
+                    <div className="space-y-1.5">
+                      <Label className="text-sm font-medium text-slate-700">Mobile Number *</Label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-500 font-medium">+91</span>
+                        <Input value={quickPhone}
+                          onChange={e => { setQuickPhone(e.target.value.replace(/\D/g, "").slice(0, 10)); setQuickOtpVerified(false); }}
+                          placeholder="10-digit mobile number" className="pl-12"
+                          disabled={quickOtpVerified} maxLength={10}
+                          type="tel" inputMode="numeric" autoComplete="tel-national" />
+                        {quickOtpVerified && (
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-green-600 text-xs font-medium">
+                            <Check className="w-3.5 h-3.5" /> Verified
+                          </span>
+                        )}
+                      </div>
+                      {!quickOtpVerified && quickPhone.length === 10 && (
+                        <div className="pt-1">
+                          <FirebaseOTP phone={quickPhone}
+                            onVerified={() => { setQuickOtpVerified(true); setQuickError(""); }}
+                            onError={msg => setQuickError(msg)} />
+                        </div>
+                      )}
+                      {!quickOtpVerified && quickPhone.length < 10 && (
+                        <p className="text-xs text-slate-400">Enter 10 digits to receive OTP</p>
+                      )}
                     </div>
-                  )}
-                  {!quickOtpVerified && quickPhone.length < 10 && (
-                    <p className="text-xs text-slate-400">Enter 10 digits to receive OTP</p>
-                  )}
-                </div>
 
-                {quickError && (
-                  <p className="text-sm text-red-500 flex items-center gap-1.5 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
-                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />{quickError}
-                  </p>
+                    {quickError && (
+                      <p className="text-sm text-red-500 flex items-center gap-1.5 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />{quickError}
+                      </p>
+                    )}
+
+                    <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white h-12 text-base font-semibold gap-2"
+                      disabled={!quickOtpVerified || quickLoginWithPhoneMutation.isPending}
+                      onClick={() => {
+                        setQuickError("");
+                        if (!quickName.trim()) { setQuickError("Please enter your name."); return; }
+                        quickLoginWithPhoneMutation.mutate({ phone: quickPhone, name: quickName.trim() });
+                      }}>
+                      {quickLoginWithPhoneMutation.isPending
+                        ? <><Loader2 className="w-4 h-4 animate-spin" /> Setting up your account...</>
+                        : <>Continue to Booking <ArrowRight className="w-4 h-4" /></>}
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <div className="space-y-1.5">
+                      <Label className="text-sm font-medium text-slate-700">Email Address *</Label>
+                      <Input type="email" value={quickEmail}
+                        onChange={e => { setQuickEmail(e.target.value); setQuickEmailOtpSent(false); setQuickEmailOtp(""); }}
+                        placeholder="your@email.com"
+                        disabled={quickEmailOtpSent} />
+                    </div>
+                    {!quickEmailOtpSent ? (
+                      <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white h-12 text-base font-semibold"
+                        disabled={!quickEmail.includes("@") || quickSendEmailOtpMutation.isPending}
+                        onClick={() => { setQuickError(""); quickSendEmailOtpMutation.mutate({ email: quickEmail.trim() }); }}>
+                        {quickSendEmailOtpMutation.isPending ? <><Loader2 className="w-4 h-4 animate-spin" /> Sending…</> : "Send OTP to Email"}
+                      </Button>
+                    ) : (
+                      <>
+                        <div className="space-y-1.5">
+                          <Label className="text-sm font-medium text-slate-700">6-Digit OTP</Label>
+                          <Input inputMode="numeric" maxLength={6} value={quickEmailOtp}
+                            onChange={e => setQuickEmailOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                            placeholder="Enter the code from your email"
+                            disabled={quickVerifyEmailOtpMutation.isSuccess} autoFocus />
+                          <p className="text-xs text-slate-400">
+                            Sent to {quickEmail}.{" "}
+                            <button onClick={() => { setQuickEmailOtpSent(false); setQuickEmailOtp(""); setQuickError(""); }} className="text-blue-600 hover:underline">Resend</button>
+                          </p>
+                        </div>
+                        <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white h-12 text-base font-semibold gap-2"
+                          disabled={quickEmailOtp.length !== 6 || quickVerifyEmailOtpMutation.isPending || quickLoginWithEmailMutation.isPending}
+                          onClick={() => {
+                            setQuickError("");
+                            if (!quickName.trim()) { setQuickError("Please enter your name."); return; }
+                            quickVerifyEmailOtpMutation.mutate({ email: quickEmail.trim().toLowerCase(), otp: quickEmailOtp });
+                          }}>
+                          {(quickVerifyEmailOtpMutation.isPending || quickLoginWithEmailMutation.isPending)
+                            ? <><Loader2 className="w-4 h-4 animate-spin" /> Verifying…</>
+                            : <>Continue to Booking <ArrowRight className="w-4 h-4" /></>}
+                        </Button>
+                      </>
+                    )}
+                    {quickError && (
+                      <p className="text-sm text-red-500 flex items-center gap-1.5 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />{quickError}
+                      </p>
+                    )}
+                  </>
                 )}
-
-                <Button
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white h-12 text-base font-semibold gap-2"
-                  disabled={!quickOtpVerified || quickLoginWithPhoneMutation.isPending}
-                  onClick={() => {
-                    setQuickError("");
-                    if (!quickName.trim()) { setQuickError("Please enter your name."); return; }
-                    if (!quickOtpVerified) { setQuickError("Please verify your mobile number first."); return; }
-                    quickLoginWithPhoneMutation.mutate({ phone: quickPhone, name: quickName.trim() });
-                  }}
-                >
-                  {quickLoginWithPhoneMutation.isPending
-                    ? <><Loader2 className="w-4 h-4 animate-spin" /> Setting up your account...</>
-                    : <>Continue to Booking <ArrowRight className="w-4 h-4" /></>
-                  }
-                </Button>
 
                 <p className="text-center text-xs text-slate-400">
                   Already have an account?{" "}
