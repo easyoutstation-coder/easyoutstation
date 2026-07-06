@@ -1,27 +1,71 @@
 import { X } from "lucide-react";
 import { useState, useEffect } from "react";
 
+const SESSION_KEY = "eo-wa-tooltip-dismissed";
+
 export default function WhatsAppFloat() {
   const [showTooltip, setShowTooltip] = useState(false);
   const [pulsing, setPulsing] = useState(true);
+  const [floatVisible, setFloatVisible] = useState(true);
+
+  const dismiss = () => {
+    setShowTooltip(false);
+    try { sessionStorage.setItem(SESSION_KEY, "1"); } catch {}
+  };
 
   useEffect(() => {
+    // Don't show tooltip if already dismissed this session
+    try { if (sessionStorage.getItem(SESSION_KEY)) return; } catch {}
+
     const showTimer = setTimeout(() => setShowTooltip(true), 3000);
     const pulseTimer = setTimeout(() => setPulsing(false), 6000);
-    return () => { clearTimeout(showTimer); clearTimeout(pulseTimer); };
+    // Auto-dismiss after 8 s total (5 s visible)
+    const autoHide = setTimeout(dismiss, 8000);
+
+    // Dismiss on first scroll
+    const onScroll = () => {
+      dismiss();
+      window.removeEventListener("scroll", onScroll);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    return () => {
+      clearTimeout(showTimer);
+      clearTimeout(pulseTimer);
+      clearTimeout(autoHide);
+      window.removeEventListener("scroll", onScroll);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Hide float while the page's own WhatsApp CTA button is in the viewport
+  useEffect(() => {
+    const ctaEl = document.querySelector("[data-wa-cta-section]");
+    if (!ctaEl) return;
+    const io = new IntersectionObserver(
+      ([entry]) => setFloatVisible(!entry.isIntersecting),
+      { threshold: 0.15 }
+    );
+    io.observe(ctaEl);
+    return () => io.disconnect();
+  }, []);
+
+  if (!floatVisible) return null;
+
   return (
-    <div className="fixed bottom-20 right-5 z-40 flex flex-col items-end gap-2 md:bottom-6 md:right-20">
+    <div className="fixed bottom-20 right-5 z-40 flex flex-col items-end gap-2 md:bottom-8 md:right-8">
       {/* Tooltip */}
       {showTooltip && (
-        <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-xl animate-slide-up">
-          <div className="flex flex-col">
+        <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-xl animate-slide-up max-w-[220px]">
+          <div className="flex flex-col min-w-0">
             <span className="text-sm font-semibold text-slate-800">Book in 30 seconds!</span>
             <span className="text-xs text-slate-500">Chat with us on WhatsApp</span>
           </div>
-          <button onClick={() => setShowTooltip(false)}
-            className="text-slate-400 hover:text-slate-600 ml-1 shrink-0">
+          <button
+            onClick={dismiss}
+            className="text-slate-400 hover:text-slate-600 ml-1 shrink-0"
+            aria-label="Dismiss"
+          >
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -36,7 +80,7 @@ export default function WhatsAppFloat() {
           href="https://wa.me/918796564111?text=Hi%2C%20I%20want%20to%20book%20a%20cab%20from%20Delhi.%20Can%20you%20help%20me%3F"
           target="_blank"
           rel="noopener noreferrer"
-          onClick={() => setShowTooltip(false)}
+          onClick={dismiss}
           className="eo-wa-pulse relative w-14 h-14 rounded-full bg-[#25D366] flex items-center justify-center shadow-lg shadow-green-500/40 hover:scale-110 hover:shadow-green-500/60 transition-all"
           aria-label="Book on WhatsApp"
         >
