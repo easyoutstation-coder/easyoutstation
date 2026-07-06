@@ -34,11 +34,13 @@
 @keyframes eo-rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
 
 /* ---------- Scroll reveal (paired with <Reveal/> or useReveal) ---------- */
-.eo-reveal{opacity:0;transform:translateY(26px);
+/* Default: visible. JS adds .eo-will-animate only for below-fold elements. */
+.eo-reveal{
   transition:opacity var(--eo-dur) var(--eo-ease-out),transform var(--eo-dur) var(--eo-ease-out)}
+.eo-reveal.eo-will-animate{opacity:0;transform:translateY(26px)}
 .eo-reveal.is-in{opacity:1;transform:none}
-.eo-reveal[data-eo="left"]{transform:translateX(-26px)}
-.eo-reveal[data-eo="scale"]{transform:scale(.96)}
+.eo-reveal.eo-will-animate[data-eo="left"]{transform:translateX(-26px)}
+.eo-reveal.eo-will-animate[data-eo="scale"]{transform:scale(.96)}
 .eo-reveal.is-in[data-eo]{transform:none}
 
 /* ---------- Card lift (hover) ---------- */
@@ -98,7 +100,7 @@
 
 /* ---------- Accessibility floor ---------- */
 @media (prefers-reduced-motion:reduce){
-  .eo-enter,.eo-reveal{opacity:1!important;transform:none!important;animation:none!important;transition:none!important}
+  .eo-enter,.eo-reveal,.eo-reveal.eo-will-animate{opacity:1!important;transform:none!important;animation:none!important;transition:none!important}
   .eo-glow,.eo-aura,.eo-star,.eo-shine::after,.eo-ping,.eo-route-dash{animation:none!important}
   .eo-nav-link::after{transition:none!important}
   .eo-wa-pulse{animation:none!important}
