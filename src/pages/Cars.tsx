@@ -44,6 +44,21 @@ const seatOptions = [
   { value: "7", label: "7+" },
 ];
 
+function VehicleImage({ src, alt }: { src: string; alt: string }) {
+  const [errored, setErrored] = useState(false);
+  return (
+    <img
+      src={errored ? "/car-placeholder.svg" : src}
+      alt={alt}
+      className={`w-full h-full transition-transform duration-500 group-hover:scale-110 ${
+        errored ? "object-contain p-8 bg-slate-50" : "object-cover"
+      }`}
+      loading="lazy"
+      onError={() => setErrored(true)}
+    />
+  );
+}
+
 function getBaggage(seats: number, category: string): string {
   if (category === "bus") return "Ample luggage";
   if (category === "tempo") return seats >= 16 ? "10+ bags" : "6–8 bags";
@@ -630,11 +645,9 @@ export default function CarsPage() {
                         onClick={() => navigate(`/booking?carId=${car.id}&${passthroughParams()}`)}
                       >
                         <div className="relative aspect-[4/3] overflow-hidden">
-                          <img
+                          <VehicleImage
                             src={car.imageUrl || "/cars/swift-dzire.jpg"}
                             alt={car.name}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                            loading="lazy"
                           />
                           <div className="absolute top-3 left-3 flex items-center gap-1.5">
                             <Badge className="bg-primary text-white border-0 text-xs">
