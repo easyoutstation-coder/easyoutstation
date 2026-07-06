@@ -145,10 +145,20 @@ export default function CarsPage() {
   const [sortBy, setSortBy] = useState<"price_asc" | "price_desc" | "rating" | "popular">("price_asc");
   const [searchQuery, setSearchQuery] = useState("");
   const [category, setCategory] = useState(searchParams.get("category") || "all");
+  // By default hide tempo/bus — only show when user explicitly selects them or URL requests them
+  const [showGroupVehicles, setShowGroupVehicles] = useState(
+    () => ["tempo", "bus", "all"].includes(searchParams.get("category") || "") && searchParams.get("category") !== null
+  );
   const MAX_PRICE_KM = 70;
   const [priceRange, setPriceRange] = useState([0, MAX_PRICE_KM]);
   const [seats, setSeats] = useState("all");
   const [isListening, setIsListening] = useState(false);
+
+  const handleCategoryChange = (v: string) => {
+    setCategory(v);
+    // Reveal tempos and buses when user explicitly picks All, Tempo, or Bus
+    setShowGroupVehicles(v === "all" || v === "tempo" || v === "bus");
+  };
 
   const { data: cars, isLoading } = trpc.car.list.useQuery({
     category: category === "all" ? undefined : category,
@@ -284,6 +294,7 @@ export default function CarsPage() {
 
   const clearFilters = () => {
     setCategory("all");
+    setShowGroupVehicles(false); // reset to default cars-only view
     setPriceRange([0, MAX_PRICE_KM]);
     setSeats("all");
     setSearchQuery("");
@@ -319,6 +330,8 @@ export default function CarsPage() {
 
   const displayCars = (cars ?? fallbackCars)
     .filter(c => !isRentalMode || c.seats <= 7)
+    // Default view hides tempo/bus; user can reveal them via the filter sidebar
+    .filter(c => showGroupVehicles || !["tempo", "bus"].includes(c.category))
     .slice()
     .sort((a, b) => {
       if (sortBy === "price_asc") return parseFloat(a.pricePerKm) - parseFloat(b.pricePerKm);
@@ -328,7 +341,7 @@ export default function CarsPage() {
       return 0;
     });
 
-  const filterProps = { category, setCategory, seats, setSeats, priceRange, setPriceRange, hasActiveFilters, clearFilters, maxPrice: MAX_PRICE_KM };
+  const filterProps = { category, setCategory: handleCategoryChange, seats, setSeats, priceRange, setPriceRange, hasActiveFilters, clearFilters, maxPrice: MAX_PRICE_KM };
 
   const quoteViewedRef = useRef(false);
   useEffect(() => {
@@ -596,9 +609,7 @@ export default function CarsPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                   {displayCars.map((car, carIndex) => {
                     const urgencyMessages = [
-                      "🔥 3 bookings this week",
                       "⚡ Popular choice",
-                      "👥 2 people viewing now",
                       "✅ Available today",
                       "🏆 Top rated",
                     ];
