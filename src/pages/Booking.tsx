@@ -1021,7 +1021,7 @@ export default function BookingPage() {
                         )}
                         {!pickupPincode && pickupAddress && (
                           <div className="space-y-1">
-                            <Label className="text-xs">Pickup Pincode *</Label>
+                            <Label className="text-xs">Pickup Pincode <span className="text-muted-foreground">(optional)</span></Label>
                             <Input value={pickupPincode} onChange={(e) => setPickupPincode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                               placeholder="Enter 6-digit pincode" maxLength={6} />
                           </div>
@@ -1053,7 +1053,7 @@ export default function BookingPage() {
                           )}
                           {!dropPincode && dropAddress && (
                             <div className="space-y-1">
-                              <Label className="text-xs">Drop Pincode *</Label>
+                              <Label className="text-xs">Drop Pincode <span className="text-muted-foreground">(optional)</span></Label>
                               <Input value={dropPincode} onChange={(e) => setDropPincode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                                 placeholder="Enter 6-digit pincode" maxLength={6} />
                             </div>
