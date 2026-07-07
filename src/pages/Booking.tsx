@@ -1412,7 +1412,7 @@ export default function BookingPage() {
                   )}
                   <div className="space-y-2 text-xs text-muted-foreground">
                     <div className="flex items-center gap-2"><Shield className="w-3 h-3 text-green-500" /> Verified professional driver</div>
-                    <div className="flex items-center gap-2"><Clock className="w-3 h-3 text-green-500" /> Confirmation within 60 minutes</div>
+                    <div className="flex items-center gap-2"><Clock className="w-3 h-3 text-green-500" /> Booking confirmed instantly · Driver details in 60 min</div>
                     <div className="flex items-center gap-2"><Users className="w-3 h-3 text-green-500" /> 24/7 customer support</div>
                   </div>
                 </CardContent>

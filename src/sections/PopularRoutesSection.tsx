@@ -3,6 +3,7 @@ import { trpc } from "@/providers/trpc";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Clock, Route, TrendingUp, CheckCircle, MapPin } from "lucide-react";
 import { getLandmark } from "@/data/routeImages";
+import { PRICING_INCLUSION_LINE } from "@/lib/copy";
 function routeSlug(from: string, to: string) {
   return `${from.toLowerCase()}-to-${to.toLowerCase()}`;
 }
@@ -30,9 +31,7 @@ export default function PopularRoutesSection() {
             <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 font-['DM_Serif_Display']">
               Fixed Fares. No Surprises.
             </h2>
-            <p className="text-slate-500 max-w-lg text-sm">
-              Driver charges included in fare. Toll & parking charged at actuals.
-            </p>
+            <p className="text-slate-500 max-w-lg text-sm">{PRICING_INCLUSION_LINE}</p>
           </div>
           <Button variant="outline" onClick={() => navigate("/routes")}
             className="shrink-0 border-slate-200 text-slate-600 hover:text-blue-700 hover:border-blue-200 hidden md:flex items-center gap-2">
@@ -98,7 +97,7 @@ export default function PopularRoutesSection() {
                   )}
 
                   <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                    <span className="text-[10px] text-slate-400">Driver charge included · Toll at actuals</span>
+                    <span className="text-[10px] text-slate-400">Fare includes driver charge · Toll & taxes at actuals</span>
                     <span className="text-xs font-semibold text-blue-600 group-hover:underline flex items-center gap-1">
                       Book Now <ArrowRight className="w-3 h-3" />
                     </span>
