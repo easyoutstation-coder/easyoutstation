@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { MapPin, Clock, Shield, Star, Check, ArrowRight } from "lucide-react";
 import { getLandmark } from "@/data/routeImages";
+import { blogPosts } from "@/data/blogPosts";
 import { trpc } from "@/providers/trpc";
 
 const ROUTES: Record<string, {
@@ -32,6 +33,9 @@ const ROUTES: Record<string, {
     faqs: [
       { q: "How far is Delhi to Shimla by cab?", a: "Delhi to Shimla is approximately 350 km and takes 7-8 hours by cab via NH44 and NH5." },
       { q: "Which is the best route from Delhi to Shimla?", a: "The best route is via Chandigarh on NH44, then NH5 to Shimla. Our drivers take the safest and fastest route." },
+      { q: "What is the cab fare from Delhi to Shimla?", a: "Delhi to Shimla cab starts from ₹5,940 for a sedan to ₹10,310 for an Innova. Price includes driver charges. Himachal Pradesh state tax (~₹350–500) and toll (~₹650 one way) are at actuals." },
+      { q: "What is the cheapest cab from Delhi to Shimla?", a: "The cheapest option is a Swift Dzire sedan at ₹5,940 one way. All fares include driver charges. Toll and HP state entry tax are charged at actuals." },
+      { q: "How long is the cab ride from Delhi to Shimla?", a: "Delhi to Shimla is 350 km and takes 7–8 hours via NH44 through Chandigarh and Kalka, then the winding mountain road to Shimla." },
     ]
   },
   "delhi-to-chandigarh": {
@@ -273,6 +277,8 @@ const ROUTES: Record<string, {
       { q: "What is the fare for Delhi to Kasauli cab?", a: "Fares start from ₹5,370 for a sedan to ₹9,310 for an Innova Hycross. Price includes driver charges. Toll & Himachal state tax charged at actuals." },
       { q: "What is Kasauli known for?", a: "Kasauli is a British-era cantonment hill station in Himachal Pradesh with well-preserved colonial architecture, pine-lined walks (Gilbert Trail), and spectacular views of the Shivalik Hills." },
       { q: "Is Kasauli better than Shimla for a weekend trip?", a: "Kasauli is much quieter and less commercialised than Shimla — ideal for a peaceful weekend. Shimla has more attractions and activities. The right choice depends on whether you prefer crowds or calm." },
+      { q: "How to book a cab from Delhi to Kasauli?", a: "Book online at easyoutstation.com — choose your travel date, select Delhi to Kasauli, pick a car type and pay 10% advance to confirm. Driver details are shared within 60 minutes of booking." },
+      { q: "What is the cab fare from Delhi to Kasauli?", a: "Delhi to Kasauli cab starts from ₹4,030 for a sedan (Swift Dzire) to ₹8,560 for an Innova Crysta. Price includes driver charges. Himachal Pradesh state tax (~₹350–500) and toll (~₹380 one way) are at actuals." },
     ]
   },
   "delhi-to-dalhousie": {
@@ -524,10 +530,11 @@ export default function RouteLanding() {
     : null;
 
   const lm = getLandmark(data?.to ?? "");
+  const guidePost = blogPosts.find((p) => p.route.routeSlug === route);
 
   const canonicalUrl = `https://www.easyoutstation.com/cab/${route ?? ""}`;
   const pageTitle = data
-    ? `${data.from} to ${data.to} Cab | ₹${data.fare.min.toLocaleString("en-IN")} Fixed Fare | EasyOutstation`
+    ? `${data.from} to ${data.to} Cab | ₹${data.fare.min.toLocaleString("en-IN")} · Verified Drivers | EasyOutstation`
     : "Cab Routes | EasyOutstation";
 
   const schema = data ? [
@@ -751,6 +758,24 @@ export default function RouteLanding() {
               ))}
           </div>
         </div>
+
+        {/* Travel guide link */}
+        {guidePost && (
+          <div className="max-w-4xl mx-auto px-4 pb-8">
+            <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-xl border border-blue-100">
+              <span className="text-blue-500 text-lg">📖</span>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs text-slate-500 mb-0.5">Travel Guide</div>
+                <Link to={`/blog/${guidePost.slug}`} className="text-sm font-semibold text-blue-700 hover:underline line-clamp-1">
+                  {guidePost.title}
+                </Link>
+              </div>
+              <Link to={`/blog/${guidePost.slug}`} className="shrink-0 text-xs text-blue-600 font-medium hover:underline whitespace-nowrap">
+                Read guide →
+              </Link>
+            </div>
+          </div>
+        )}
 
         {/* CTA */}
         <div className="bg-blue-600 py-12 px-4 text-center text-white">
