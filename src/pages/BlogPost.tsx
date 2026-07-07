@@ -180,6 +180,43 @@ export default function BlogPost() {
             </div>
           </section>
 
+          {/* Mid-article fare table */}
+          <section className="mb-10">
+            <h2 className="text-xl font-bold text-slate-900 font-['DM_Serif_Display'] mb-4">
+              {post.route.from} to {post.route.to} Cab Fare
+            </h2>
+            <div className="overflow-x-auto rounded-xl border border-slate-200">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 border-b border-slate-200">
+                  <tr>
+                    <th className="text-left px-4 py-3 font-semibold text-slate-700">Car Type</th>
+                    <th className="text-left px-4 py-3 font-semibold text-slate-700">One Way</th>
+                    <th className="text-left px-4 py-3 font-semibold text-slate-700">Round Trip</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {[
+                    { label: "Sedan (Swift Dzire)", fare: post.route.sedan },
+                    { label: "SUV / Innova", fare: post.route.innova },
+                  ].map(({ label, fare }) => {
+                    const oneway = parseInt(fare.replace(/,/g, ""), 10);
+                    return (
+                      <tr key={label}>
+                        <td className="px-4 py-3 text-slate-800 font-medium">{label}</td>
+                        <td className="px-4 py-3 font-semibold text-blue-700">₹{fare}</td>
+                        <td className="px-4 py-3 text-slate-600">₹{(oneway * 2).toLocaleString("en-IN")}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <p className="text-xs text-slate-400 mt-2">Driver charges included · Toll & state taxes at actuals</p>
+            <Link to={`/cab/${post.route.routeSlug}`} className="inline-block mt-3 text-sm text-blue-600 hover:underline font-medium">
+              View full {post.route.from} to {post.route.to} fare breakdown →
+            </Link>
+          </section>
+
           {/* Itinerary */}
           <section className="mb-10">
             <h2 className="text-xl font-bold text-slate-900 font-['DM_Serif_Display'] mb-5">
@@ -242,6 +279,14 @@ export default function BlogPost() {
               ))}
             </div>
           </section>
+
+          {/* SEO sections (striking-distance content) */}
+          {post.seoSections?.map((sec, i) => (
+            <section key={i} className="mb-10">
+              <h2 className="text-xl font-bold text-slate-900 font-['DM_Serif_Display'] mb-3">{sec.h2}</h2>
+              <p className="text-sm text-slate-700 leading-relaxed">{sec.body}</p>
+            </section>
+          ))}
 
           {/* FAQs */}
           <section className="mb-10">
