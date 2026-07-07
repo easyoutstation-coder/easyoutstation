@@ -62,7 +62,7 @@ function VehicleImage({ src, alt }: { src: string; alt: string }) {
 function getBaggage(seats: number, category: string): string {
   if (category === "bus") return "Ample luggage";
   if (category === "tempo") return seats >= 16 ? "10+ bags" : "6–8 bags";
-  if (seats <= 4) return "2 large bags";
+  if (seats <= 5) return "2 large bags";
   if (seats <= 6) return "3–4 bags";
   return "4–5 bags";
 }
@@ -323,9 +323,9 @@ export default function CarsPage() {
     searchQuery;
 
   const fallbackCars = [
-    { id: 1, name: "Swift Dzire", brand: "Maruti Suzuki", category: "sedan", seats: 4, pricePerKm: "12.00", rating: "4.50", reviewCount: 128, imageUrl: "/cars/swift-dzire.jpg", isAvailable: true, description: "Budget-friendly sedan ideal for couples and small families", fuelType: "diesel", transmission: "manual" },
-    { id: 3, name: "Honda Amaze", brand: "Honda", category: "sedan", seats: 4, pricePerKm: "13.00", rating: "4.50", reviewCount: 72, imageUrl: "/cars/honda-amaze.jpg", isAvailable: true, description: "Compact sedan with comfortable interiors. Toll, parking & state taxes at actuals.", fuelType: "petrol", transmission: "manual" },
-    { id: 2, name: "Toyota Etios", brand: "Toyota", category: "sedan", seats: 4, pricePerKm: "13.00", rating: "4.60", reviewCount: 96, imageUrl: "/cars/toyota-etios.jpg", isAvailable: true, description: "Reliable sedan with Toyota's legendary durability", fuelType: "diesel", transmission: "manual" },
+    { id: 1, name: "Swift Dzire", brand: "Maruti Suzuki", category: "sedan", seats: 5, pricePerKm: "12.00", rating: "4.50", reviewCount: 128, imageUrl: "/cars/swift-dzire.jpg", isAvailable: true, description: "Budget-friendly sedan ideal for couples and small families", fuelType: "diesel", transmission: "manual" },
+    { id: 3, name: "Honda Amaze", brand: "Honda", category: "sedan", seats: 5, pricePerKm: "13.00", rating: "4.50", reviewCount: 72, imageUrl: "/cars/honda-amaze.jpg", isAvailable: true, description: "Compact sedan with comfortable interiors. Toll, parking & state taxes at actuals.", fuelType: "petrol", transmission: "manual" },
+    { id: 2, name: "Toyota Etios", brand: "Toyota", category: "sedan", seats: 5, pricePerKm: "13.00", rating: "4.60", reviewCount: 96, imageUrl: "/cars/toyota-etios.jpg", isAvailable: true, description: "Reliable sedan with Toyota's legendary durability", fuelType: "diesel", transmission: "manual" },
     { id: 4, name: "Maruti Ertiga", brand: "Maruti Suzuki", category: "muv", seats: 6, pricePerKm: "15.00", rating: "4.70", reviewCount: 215, imageUrl: "/cars/maruti-ertiga.jpg", isAvailable: true, description: "Spacious MUV perfect for family trips", fuelType: "petrol", transmission: "manual" },
     { id: 5, name: "Toyota Innova", brand: "Toyota", category: "muv", seats: 6, pricePerKm: "19.00", rating: "4.80", reviewCount: 342, imageUrl: "/cars/toyota-innova.jpg", isAvailable: true, description: "The iconic Indian family vehicle", fuelType: "diesel", transmission: "manual" },
     { id: 18, name: "Tata Hexa", brand: "Tata", category: "muv", seats: 7, pricePerKm: "19.00", rating: "4.65", reviewCount: 28, imageUrl: "/cars/tata-hexa.jpg", isAvailable: true, description: "Powerful 6+1 seater MUV with bold design and VARICOR diesel engine. Ideal for family outstation trips.", fuelType: "diesel", transmission: "manual" },

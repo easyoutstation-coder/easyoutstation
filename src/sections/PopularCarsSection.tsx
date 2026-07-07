@@ -6,7 +6,7 @@ const fallbackCars = [
   { id: 6, name: "Toyota Innova Crysta", brand: "Toyota", category: "premium", seats: 6, pricePerKm: "20.00", rating: "4.90", imageUrl: "/cars/toyota-innova-crysta.jpg", description: "India's most trusted outstation cab. Powerful, spacious, built for long journeys.", fuelType: "Diesel" },
   { id: 8, name: "Toyota Innova Hycross", brand: "Toyota", category: "luxury", seats: 6, pricePerKm: "22.00", rating: "4.95", imageUrl: "/cars/toyota-innova-hycross.jpg", description: "Flagship hybrid luxury — the smoothest ride for premium corporate travel.", fuelType: "Hybrid" },
   { id: 5, name: "Toyota Innova", brand: "Toyota", category: "muv", seats: 6, pricePerKm: "19.00", rating: "4.80", imageUrl: "/cars/toyota-innova.jpg", description: "Reliable family workhorse. Comfortable on highways and mountain roads alike.", fuelType: "Diesel" },
-  { id: 1, name: "Swift Dzire", brand: "Maruti", category: "sedan", seats: 4, pricePerKm: "12.00", rating: "4.70", imageUrl: "/cars/swift-dzire.jpg", description: "Best value for solo travelers and couples. Fuel-efficient and highway comfortable.", fuelType: "Petrol/CNG" },
+  { id: 1, name: "Swift Dzire", brand: "Maruti", category: "sedan", seats: 5, pricePerKm: "12.00", rating: "4.70", imageUrl: "/cars/swift-dzire.jpg", description: "Best value for solo travelers and couples. Fuel-efficient and highway comfortable.", fuelType: "Petrol/CNG" },
 ];
 
 const categoryLabel: Record<string, { label: string; color: string }> = {
