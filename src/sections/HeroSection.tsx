@@ -61,13 +61,14 @@ interface PlaceInputProps {
   onSelect: (address: string, lat: number, lng: number, pincode: string) => void;
   error?: string;
   delhiNcrOnly?: boolean;
+  initialValue?: string;
 }
 
-function PlaceInput({ label, placeholder, onSelect, error, delhiNcrOnly = false }: PlaceInputProps) {
+function PlaceInput({ label, placeholder, onSelect, error, delhiNcrOnly = false, initialValue = "" }: PlaceInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<any>(null);
   const [ready, setReady] = useState(false);
-  const [value, setValue] = useState("");
+  const [value, setValue] = useState(initialValue);
   const [validating, setValidating] = useState(false);
   const [localError, setLocalError] = useState("");
 
@@ -163,7 +164,7 @@ export default function HeroSection() {
     setRecentSearches(getRecentSearches());
   }, []);
 
-  const [fromAddress, setFromAddress] = useState("");
+  const [fromAddress, setFromAddress] = useState("Delhi NCR");
   const [fromLat, setFromLat] = useState<number>();
   const [fromLng, setFromLng] = useState<number>();
   const [fromPincode, setFromPincode] = useState("");
@@ -572,6 +573,7 @@ export default function HeroSection() {
                   label="PICKUP LOCATION"
                   placeholder="Enter Delhi NCR address or area"
                   delhiNcrOnly
+                  initialValue="Delhi NCR"
                   onSelect={(addr, lat, lng, pincode) => { setFromAddress(addr); setFromLat(lat); setFromLng(lng); setFromPincode(pincode); }}
                 />
 
