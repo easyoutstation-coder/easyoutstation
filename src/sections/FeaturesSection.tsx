@@ -47,7 +47,7 @@ export default function FeaturesSection() {
         {/* Trust bar */}
           <div className="mt-14 grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { emoji: "🏆", text: "Best Outstation Cab", sub: "Delhi 2024" },
+              { emoji: "⭐", text: "4.9★ Rated Service", sub: "500+ trips completed" },
               { emoji: "🛡️", text: "Fully Insured", sub: "Every trip, every time" },
               { emoji: "📱", text: "Book in 30 Seconds", sub: "Instant confirmation" },
               { emoji: "🔄", text: "Free Cancellation", sub: "Up to 24hrs before trip" },
