@@ -13,6 +13,7 @@ export interface BlogPost {
   placesToVisit: { name: string; description: string }[];
   roadTips: string[];
   faqs: { q: string; a: string }[];
+  seoSections?: { h2: string; body: string }[];
 }
 
 export const blogPosts: BlogPost[] = [
@@ -232,8 +233,8 @@ export const blogPosts: BlogPost[] = [
   },
   {
     slug: "delhi-to-kashmir-road-trip-guide",
-    title: "Delhi to Kashmir Road Trip: 7-Day Srinagar Itinerary & Complete Guide",
-    metaDescription: "Plan your Delhi to Kashmir road trip with our 7-day Srinagar itinerary. Dal Lake, Pahalgam, Gulmarg, best time to visit, cab fares and road tips.",
+    title: "Delhi to Kashmir by Road (2026): Distance, Route, Time & Cab Fare",
+    metaDescription: "Delhi to Kashmir by road: 820 km, 14–16 hrs via Banihal Tunnel. Cab from ₹10,090 (sedan). Complete guide — distance, time, route & cab price to Srinagar.",
     category: "Hill Stations",
     readTime: 10,
     publishDate: "2026-06-10",
@@ -329,6 +330,13 @@ export const blogPosts: BlogPost[] = [
       { q: "Is the Delhi to Kashmir road trip safe?", a: "Yes, for most of the year. The Jammu–Srinagar highway has regular Army and police patrols. Avoid travelling during heavy snowfall (December–February) or when NHIDCL issues landslide advisories." },
       { q: "Should I drive both ways or fly back from Kashmir?", a: "Most travellers drive one way and fly back from Srinagar airport (1 hour to Delhi). This saves a full day and costs around ₹3,000–5,000 for a one-way ticket." },
       { q: "What is the best month to visit Kashmir?", a: "April for tulips, May–June for perfect weather, September–October for Chinar foliage. Each season has its own magic." },
+      { q: "What is the cab fare from Delhi to Kashmir (Srinagar)?", a: "Cab fares from Delhi to Kashmir start from ₹10,090 for a sedan (Swift Dzire) to ₹15,830 for an Innova. Price includes driver charges. Toll, Jammu & Kashmir state taxes and other road charges are at actuals." },
+      { q: "What is the distance from Delhi to Srinagar by road?", a: "Delhi to Srinagar is approximately 820 km by road via the Banihal Tunnel (Jawaharlal Nehru Tunnel). The journey takes 14–16 hours. Most travellers break the journey overnight in Jammu or Udhampur." },
+      { q: "How long does it take to go from Delhi to Kashmir by car?", a: "The drive from Delhi to Kashmir takes 14–16 hours covering 820 km via NH44 and the Banihal Tunnel. Night driving beyond Banihal is not recommended — plan an overnight halt at Jammu or Udhampur." },
+    ],
+    seoSections: [
+      { h2: "How to Reach Kashmir from Delhi by Road", body: "Delhi to Srinagar is 820 km via NH44 through Jammu and the Banihal Tunnel (Jawaharlal Nehru Tunnel, 9 km). Most travellers split it into two days — Day 1: Delhi to Jammu (590 km, 9–10 hrs) or Udhampur (640 km, 10–11 hrs); Day 2: through the tunnel into the Kashmir valley, arriving Srinagar by afternoon. The highway is well-maintained but prone to landslides in July–August." },
+      { h2: "Delhi to Kashmir Cab Fare — What to Expect", body: "Cab from Delhi to Srinagar starts from ₹10,090 for a sedan (Swift Dzire) to ₹15,830 for an Innova Crysta. Fares include driver charges. Toll (~₹1,200 one way) and Jammu & Kashmir state taxes are at actuals." },
     ],
   },
   {
@@ -437,8 +445,8 @@ export const blogPosts: BlogPost[] = [
   },
   {
     slug: "delhi-to-amritsar-golden-temple-guide",
-    title: "Delhi to Amritsar: Golden Temple Pilgrimage & Travel Guide",
-    metaDescription: "Delhi to Amritsar road trip guide — Golden Temple darshan, Jallianwala Bagh, Wagah Border ceremony, langar experience. Cab fare from ₹5,650.",
+    title: "Delhi to Amritsar Itinerary: Golden Temple Trip Plan & Distance",
+    metaDescription: "Delhi to Amritsar: 450 km, 8–9 hrs. Tour itinerary for Golden Temple, Wagah Border & Jallianwala Bagh. Distance, route & cab fare from ₹5,650.",
     category: "Pilgrimage",
     readTime: 7,
     publishDate: "2026-06-10",
@@ -488,6 +496,12 @@ export const blogPosts: BlogPost[] = [
       { q: "What is the cab fare from Delhi to Amritsar?", a: "Sedan from ₹5,650, Innova from ₹8,800 one way. Driver charges included. Toll at actuals." },
       { q: "What time is the Wagah Border ceremony?", a: "The flag-lowering ceremony is at sunset — approximately 4:30 PM in winter and 6:00 PM in summer. Arrive 1.5–2 hours early for a good seat." },
       { q: "Is langar free at Golden Temple?", a: "Yes. The Golden Temple's langar (community kitchen) is entirely free for everyone, regardless of faith, and serves around 100,000 people every day." },
+      { q: "What is the distance from Delhi to Amritsar by road?", a: "Delhi to Amritsar is 450 km by road via NH44 (Delhi–Amritsar national highway). The cab journey takes 8–9 hours." },
+      { q: "How do I reach the Golden Temple from Delhi by cab?", a: "Take a cab from Delhi to Amritsar (450 km, 8–9 hrs). From Amritsar city, the Golden Temple (Harmandir Sahib) is 6–8 km from the bus stand — a 10-minute e-rickshaw or auto ride (₹50–100)." },
+      { q: "What is a good Delhi to Amritsar tour itinerary?", a: "Day 1: Drive Delhi to Amritsar (8–9 hrs). Evening — Golden Temple & langar. Day 2: Morning — Jallianwala Bagh, Partition Museum. Afternoon — Wagah Border flag-lowering ceremony (4:30 PM). Night drive back to Delhi or overnight stay." },
+    ],
+    seoSections: [
+      { h2: "Delhi to Amritsar Tour Itinerary", body: "Delhi to Amritsar is 450 km via NH44, 8–9 hours by cab. A well-paced 2-day plan: Day 1 — depart Delhi by 6 AM, arrive Amritsar by 3 PM. Evening: Golden Temple and langar (free community kitchen serving up to 100,000 meals daily). Day 2 — morning: Jallianwala Bagh, then the Partition Museum on Town Hall Chowk. Afternoon: Wagah Border flag-lowering ceremony (starts 4:30 PM, 30 km from Amritsar — take a local taxi). Return to Delhi after, or stay another night." },
     ],
   },
   {
@@ -792,8 +806,8 @@ export const blogPosts: BlogPost[] = [
   },
   {
     slug: "delhi-to-dehradun-travel-guide",
-    title: "Delhi to Dehradun: Weekend Gateway to Uttarakhand — Guide & Itinerary",
-    metaDescription: "Delhi to Dehradun travel guide — Robber's Cave, Sahastradhara, Forest Research Institute, Tapkeshwar Temple. 250 km, 5 hours. Cab fare from ₹3,250.",
+    title: "Delhi to Dehradun (2026): Distance, Route & Cab Fare",
+    metaDescription: "Delhi to Dehradun: 250 km, 5–6 hrs via NH44 and NH307. Robber's Cave, FRI, Sahastradhara. Route, distance & cab fare from ₹3,250.",
     category: "Hill Stations",
     readTime: 6,
     publishDate: "2026-06-10",
@@ -1428,8 +1442,8 @@ export const blogPosts: BlogPost[] = [
 
   {
     slug: "delhi-to-dalhousie-travel-guide",
-    title: "Delhi to Dalhousie & Khajjiar: Hill Station Guide & Cab Fare 2026",
-    metaDescription: "Delhi to Dalhousie cab guide 2026. Khajjiar Mini Switzerland, Dainkund Peak, colonial heritage, 2-day itinerary and cab fares from ₹6,910. Complete HP hill station guide.",
+    title: "Delhi to Dalhousie: Distance, How to Reach & Cab Fare (2026)",
+    metaDescription: "Delhi to Dalhousie: 555 km by road via Pathankot, 10–11 hrs. How to reach, best route, Khajjiar day trip & cab fare from ₹6,910. Complete 2026 guide.",
     category: "Hill Stations",
     readTime: 7,
     publishDate: "2026-06-21",
@@ -1480,6 +1494,13 @@ export const blogPosts: BlogPost[] = [
       { q: "What is Khajjiar and why is it called Mini Switzerland?", a: "Khajjiar is a circular high-altitude meadow 24 km from Dalhousie at 1,920 m. The Swiss Embassy declared Khajjiar the Switzerland of India in 1992 — its green meadow, central lake, and surrounding deodar forest are visually similar to Swiss mountain valleys." },
       { q: "Is Dalhousie better than Shimla for a weekend trip?", a: "Dalhousie is much quieter and more genuinely peaceful than Shimla — no traffic jams, no commercial crowds. The colonial character is better preserved. For a relaxed, scenic hill station break, Dalhousie is superior. Shimla has more activities and connectivity." },
       { q: "Does it snow in Dalhousie?", a: "Yes. Dalhousie gets 2–4 feet of snow in December–February. Khajjiar gets more. Snow is beautiful but check road conditions — the Pathankot–Dalhousie road can get icy. Most resorts remain open; the town is accessible year-round." },
+      { q: "How to reach Dalhousie from Delhi?", a: "The most convenient way is by cab — Dalhousie is 555 km from Delhi via NH44 through Pathankot, taking 10–11 hours. From Pathankot (last railway station), Dalhousie is 80 km by mountain road (1.5–2 hours)." },
+      { q: "What is the distance from Delhi to Dalhousie?", a: "Delhi to Dalhousie is 555 km by road via NH44 and the Pathankot–Dalhousie hill road. The journey takes 10–11 hours by cab." },
+      { q: "What is the distance from Delhi to Khajjiar?", a: "Delhi to Khajjiar is approximately 560 km by road — Khajjiar is just 24 km beyond Dalhousie. From Delhi, the total cab journey takes around 11–12 hours. Khajjiar is called India's Switzerland and is a must-visit from Dalhousie." },
+    ],
+    seoSections: [
+      { h2: "How to Reach Dalhousie from Delhi", body: "The best way to reach Dalhousie from Delhi is by cab — 555 km via NH44 through Pathankot, taking 10–11 hours. The route goes Delhi → Panipat → Ambala → Jalandhar → Pathankot (NH44) → Dalhousie (80 km mountain road via Banikhet). The last 80 km from Pathankot is winding hill road taking 1.5–2 hours." },
+      { h2: "Dalhousie to Khajjiar — India's Switzerland", body: "Khajjiar is 24 km from Dalhousie — a 45-minute drive. Called India's Switzerland, it is a high-altitude meadow (2,000 m) ringed by Deodar cedar forests with a small lake at its centre. Swiss diplomat Marc Surchat officially declared it a mini-Switzerland in 1992. From Delhi, Khajjiar is 560 km (11–12 hours). Almost every Dalhousie trip includes a Khajjiar half-day." },
     ],
   },
 
@@ -1601,8 +1622,8 @@ export const blogPosts: BlogPost[] = [
 
   {
     slug: "delhi-to-mount-abu-travel-guide",
-    title: "Delhi to Mount Abu: Dilwara Temples, Nakki Lake & Travel Guide 2026",
-    metaDescription: "Delhi to Mount Abu cab guide 2026. Dilwara Jain Temples, Nakki Lake, Guru Shikhar, 2-day itinerary and cab fares from ₹9,610. Rajasthan's only hill station guide.",
+    title: "Delhi to Mount Abu (2026): Distance, Route & How to Reach",
+    metaDescription: "Delhi to Mount Abu: 780 km, 12–13 hrs by cab. Dilwara Jain Temples, Nakki Lake, Guru Shikhar. How to reach, best route & cab fare from ₹9,610.",
     category: "Rajasthan",
     readTime: 7,
     publishDate: "2026-06-21",
@@ -1650,6 +1671,11 @@ export const blogPosts: BlogPost[] = [
       { q: "What are the Dilwara Jain Temples known for?", a: "The Dilwara Temples are 11th–13th century Jain temples with the most intricate marble carvings in India — some panels have been carved to near-translucency over 800 years ago. Photography is not permitted. They are free to enter and open 12–6 PM for non-Jain visitors." },
       { q: "Is Mount Abu worth visiting from Delhi?", a: "Yes, especially if combining with Udaipur (185 km away) or Jodhpur. Mount Abu offers a cooler, greener contrast to the desert plains and the Dilwara Temples alone justify the journey — they are truly world-class in architectural terms." },
       { q: "What is the best time to visit Mount Abu?", a: "November to March is ideal — cool weather, clear skies, and the temples are at their best in winter light. Avoid May–June when the hill station gets overwhelmed with domestic tourists escaping the Rajasthan heat." },
+      { q: "How to reach Mount Abu from Delhi by cab?", a: "Delhi to Mount Abu is 780 km by road via NH48 and NH27 through Ajmer and Abu Road. A cab takes 12–13 hours. Abu Road is the nearest railway station (28 km from Mount Abu town); from there a taxi up the mountain takes 45 minutes." },
+      { q: "What is the distance from Delhi to Mount Abu?", a: "Delhi to Mount Abu is approximately 780 km by road via NH48 (Delhi–Mumbai Expressway) through Jaipur and Ajmer, then NH27. The journey takes 12–13 hours by cab." },
+    ],
+    seoSections: [
+      { h2: "How to Reach Mount Abu from Delhi", body: "Delhi to Mount Abu is 780 km by road via NH48 (Delhi–Mumbai Expressway) through Jaipur, Ajmer, and Abu Road — 12–13 hours by cab. Most travellers drive straight through or overnight at Ajmer. Abu Road is the nearest railway station, 28 km from Mount Abu hill station; from there, a local taxi takes 45 minutes up the Aravalli. Mount Abu is Rajasthan's only hill station, sitting at 1,220 m." },
     ],
   },
 
