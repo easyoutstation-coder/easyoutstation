@@ -724,7 +724,7 @@ export default function CarsPage() {
                                 <span className="text-amber-700">
                                   ₹{band.hourly}/hr × {rentalHours} hrs + GST 5% · extra ₹{band.extraKm}/km after
                                 </span>
-                                <span className="text-amber-800 font-semibold">₹{advance.toLocaleString("en-IN")} advance (25%)</span>
+                                <span className="text-amber-800 font-semibold">Pay ₹{advance.toLocaleString("en-IN")} now · extras at actuals</span>
                               </div>
                             );
                           })() : calcFare(car.pricePerKm, car.seats, car.driverCharges ?? "250") && (() => {
@@ -741,7 +741,7 @@ export default function CarsPage() {
                                   {tripTypeParam === "one_way" && <span className="text-slate-300"> · one-way, driver returns empty</span>}
                                   {rtSaving && <span className="text-green-600 font-medium"> · save ₹{rtSaving.toLocaleString("en-IN")} vs two one-ways</span>}
                                 </span>
-                                <span className="text-green-700 font-semibold">₹{Math.max(100, Math.round(applyDiscount(calcFare(car.pricePerKm, car.seats, car.driverCharges ?? "250")!) * 0.1)).toLocaleString("en-IN")} advance</span>
+                                <span className="text-green-700 font-semibold">Pay ₹{Math.max(100, Math.round(applyDiscount(calcFare(car.pricePerKm, car.seats, car.driverCharges ?? "250")!) * 0.1)).toLocaleString("en-IN")} now · balance to driver</span>
                               </div>
                             );
                           })()}
