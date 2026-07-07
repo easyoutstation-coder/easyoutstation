@@ -330,7 +330,25 @@ async function executeTool(name: string, input: any, phone: string): Promise<str
     const bookingId = Number(insertId);
     if (!bookingId) throw new Error("DB insert succeeded but returned no booking ID — please try again.");
     logBookingEvent(bookingId, "booking_created", { fromCity: from_city, toCity: to_city }).catch(() => {});
-    return JSON.stringify({ success: true, bookingId, carId: matched.id, paymentUrl: `https://easyoutstation.com/booking?resume=${bookingId}&carId=${matched.id}` });
+
+    // Try to create a direct Razorpay payment link (10% advance) — fall back to resume URL if it fails
+    let paymentUrl = `https://easyoutstation.com/booking?resume=${bookingId}&carId=${matched.id}`;
+    try {
+      const { createRazorpayPaymentLink } = await import("../lib/razorpay");
+      const advance = Math.max(100, Math.round(Number(total_price) * 0.1));
+      const shortUrl = await createRazorpayPaymentLink({
+        bookingId,
+        customerName: customer_name,
+        customerPhone: localPhone,
+        amountRupees: advance,
+        description: `Booking #${bookingId} — ${from_city} to ${to_city} (10% advance)`,
+      });
+      paymentUrl = shortUrl;
+    } catch (e: any) {
+      console.error(`[WA AI] Payment link creation failed for Booking #${bookingId}:`, e?.message);
+    }
+
+    return JSON.stringify({ success: true, bookingId, carId: matched.id, paymentUrl });
   }
 
   return JSON.stringify({ error: "Unknown tool" });

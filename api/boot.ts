@@ -637,6 +637,77 @@ app.post("/api/webhooks/razorpay", async (c) => {
 
       console.log(`[RZP Webhook] Booking #${bookingId} confirmed via webhook — payment ${paymentId}`);
     }
+
+    if (event === "payment_link.paid") {
+      const pl = payload.payload?.payment_link?.entity;
+      const payment = payload.payload?.payment?.entity;
+      if (!pl || !payment) return c.json({ status: "ok" });
+
+      const bookingId = parseInt(pl.notes?.bookingId ?? "", 10);
+      if (!bookingId || isNaN(bookingId)) return c.json({ status: "ok" });
+
+      const paymentId = payment.id as string;
+
+      const { getDb } = await import("./queries/connection");
+      const { bookings, users, cars } = await import("@db/schema");
+      const { eq } = await import("drizzle-orm");
+      const { sendBookingEmails, sendBookingSms } = await import("./lib/notifications");
+      const { logBookingEvent } = await import("./lib/bookingEvents");
+      const { sendWhatsAppTextRaw } = await import("./lib/whatsapp");
+
+      const db = getDb();
+      const [booking] = await db.select().from(bookings).where(eq(bookings.id, bookingId)).limit(1);
+      if (!booking || booking.paymentStatus === "paid") return c.json({ status: "ok" });
+
+      await db.update(bookings)
+        .set({ paymentStatus: "paid", status: "confirmed", razorpayPaymentId: paymentId })
+        .where(eq(bookings.id, bookingId));
+      logBookingEvent(bookingId, "payment_received", { paymentId, source: "payment_link" }).catch(() => {});
+
+      let bk = { ...booking } as any;
+      if ((!bk.customerPhone || !bk.customerEmail) && bk.userId) {
+        const [u] = await db.select({ phone: users.phone, email: users.email }).from(users).where(eq(users.id, bk.userId)).limit(1);
+        if (!bk.customerPhone) bk.customerPhone = u?.phone ?? null;
+        if (!bk.customerEmail) bk.customerEmail = u?.email ?? null;
+      }
+
+      const fmt = (d: Date | string | null) => d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : undefined;
+      const pickupDateStr = fmt(bk.pickupDate) ?? String(bk.pickupDate);
+      const returnDateStr = bk.returnDate ? fmt(bk.returnDate) : undefined;
+      const price = parseFloat(bk.totalPrice);
+
+      try {
+        await sendBookingEmails({
+          bookingId: bk.id, customerName: bk.customerName, customerEmail: bk.customerEmail ?? undefined,
+          customerPhone: bk.customerPhone ?? undefined, fromCity: bk.fromCity, toCity: bk.toCity,
+          pickupDate: pickupDateStr, returnDate: returnDateStr, returnTime: bk.returnTime ?? undefined,
+          totalKm: bk.totalKm, totalPrice: price, tripType: bk.tripType,
+          passengerCount: bk.passengerCount ?? 1, pickupAddress: bk.pickupAddress ?? undefined,
+          specialRequests: bk.specialRequests ?? undefined,
+        });
+      } catch (e) { console.error("[RZP Webhook] payment_link email failed:", e); }
+
+      if (bk.customerPhone) {
+        try {
+          let carName = "Car";
+          if (bk.carId) {
+            const [car] = await db.select({ name: cars.name }).from(cars).where(eq(cars.id, bk.carId)).limit(1);
+            if (car) carName = car.name;
+          }
+          await sendBookingSms(bk.customerPhone, bk.id, bk.fromCity, bk.toCity, pickupDateStr, price, "confirmation", returnDateStr, bk.returnTime ?? undefined, bk.carId ?? undefined, bk.totalKm ?? undefined, bk.customerName, carName);
+        } catch (e) { console.error("[RZP Webhook] payment_link SMS failed:", e); }
+
+        // WhatsApp confirmation back to the customer
+        try {
+          const waPhone = `91${bk.customerPhone.slice(-10)}`;
+          await sendWhatsAppTextRaw(waPhone,
+            `✅ Payment received! Booking *#${bk.id}* is confirmed.\n\n🚗 *${bk.fromCity} → ${bk.toCity}*\n📅 ${pickupDateStr}\n\nYour driver details will be shared within *60 minutes*. Have a great trip! 🙏`
+          );
+        } catch (e) { console.error("[RZP Webhook] payment_link WA confirmation failed:", e); }
+      }
+
+      console.log(`[RZP Webhook] Booking #${bookingId} confirmed via payment_link — payment ${paymentId}`);
+    }
   } catch (e) {
     console.error("[RZP Webhook] Processing error:", e);
   }
