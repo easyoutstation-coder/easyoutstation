@@ -26,6 +26,7 @@ const sections: { label: string; routes: RouteEntry[] }[] = [
       { to: "Mussoorie", km: 295, hrs: "6", sedan: "5,040", innova: "7,990", slug: "delhi-to-mussoorie", highlights: ["Kempty Falls", "Gun Hill", "Mall Road", "Lal Tibba"] },
       { to: "Rishikesh", km: 240, hrs: "5", sedan: "4,150", innova: "6,550", slug: "delhi-to-rishikesh", highlights: ["River Rafting", "Laxman Jhula", "Triveni Ghat", "Yoga Capital"] },
       { to: "Haridwar", km: 220, hrs: "4-5", sedan: "3,830", innova: "6,030", slug: "delhi-to-haridwar", highlights: ["Har Ki Pauri Ganga Aarti", "Chandi Devi Temple"] },
+      { to: "Kedarnath", km: 470, hrs: "10-11", sedan: "7,890", innova: "12,000", slug: "delhi-to-kedarnath", highlights: ["Kedarnath Jyotirlinga", "Gaurikund Base Camp", "Mandakini Valley", "Helicopter from Phata"] },
       { to: "Nainital", km: 320, hrs: "7", sedan: "5,450", innova: "8,650", slug: "delhi-to-nainital", highlights: ["Naini Lake", "Snow View Point", "Naina Devi Temple"] },
       { to: "Kasauli", km: 315, hrs: "5-6", sedan: "5,370", innova: "8,520", slug: "delhi-to-kasauli", highlights: ["Gilbert Trail", "Monkey Point", "Colonial Cantonment"] },
       { to: "Lansdowne", km: 265, hrs: "5-6", sedan: "4,560", innova: "7,210", slug: "delhi-to-lansdowne", highlights: ["Tip'n'Top Viewpoint", "Bhim Pakora", "War Memorial"] },
