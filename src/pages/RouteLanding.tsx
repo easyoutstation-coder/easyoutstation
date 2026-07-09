@@ -621,7 +621,7 @@ export default function RouteLanding() {
                 <MapPin className="w-4 h-4" />
                 {lm ? lm.landmark : "Outstation Cab Service"}
               </div>
-              <h1 className="text-4xl md:text-5xl font-bold font-['DM_Serif_Display'] mb-4" style={{ textShadow: "0 2px 16px rgba(0,0,0,1), 0 1px 4px rgba(0,0,0,1)" }}>
+              <h1 className="text-4xl md:text-5xl font-bold font-['DM_Serif_Display'] mb-4" style={{ color: "white", textShadow: "0 2px 16px rgba(0,0,0,1), 0 1px 4px rgba(0,0,0,1)" }}>
                 {data.from} to {data.to} Cab
               </h1>
               <p className="text-slate-200 text-lg mb-6 max-w-2xl mx-auto" style={{ textShadow: "0 1px 8px rgba(0,0,0,0.7)" }}>{data.description}</p>
