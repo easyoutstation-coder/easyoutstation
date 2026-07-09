@@ -1,7 +1,8 @@
+import { useState } from "react";
 import { useNavigate, Link } from "react-router";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { ArrowRight, Clock, Route, CheckCircle, MapPin } from "lucide-react";
+import { ArrowRight, Clock, Route, CheckCircle, MapPin, Search } from "lucide-react";
 import { useSeo } from "@/hooks/useSeo";
 import { getLandmark } from "@/data/routeImages";
 
@@ -159,11 +160,23 @@ function RouteCard({ route }: { route: RouteEntry & { from: string } }) {
 }
 
 export default function RoutesPage() {
+  const [search, setSearch] = useState("");
+
   useSeo({
     title: "Outstation Cab Routes from Delhi — Prices, Distance & Route Guides | EasyOutstation",
     description: "All outstation cab routes from Delhi at fixed fares. Manali, Shimla, Jaipur, Agra, Rishikesh, Haridwar, Nainital, Chandigarh, Amritsar, Jodhpur, Udaipur, Corbett, Lucknow, Varanasi and 30+ more routes. Driver included, toll at actuals.",
     canonical: "https://www.easyoutstation.com/routes",
   });
+
+  const q = search.trim().toLowerCase();
+  const filteredSections = sections
+    .map((section) => ({
+      ...section,
+      routes: section.routes.filter((r) => r.to.toLowerCase().includes(q)),
+    }))
+    .filter((section) => section.routes.length > 0);
+
+  const totalResults = filteredSections.reduce((acc, s) => acc + s.routes.length, 0);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -173,11 +186,30 @@ export default function RoutesPage() {
           <p className="text-xs font-bold uppercase tracking-widest text-blue-600 mb-2">All Routes</p>
           <h1 className="text-3xl font-bold text-slate-900 font-['DM_Serif_Display']">Outstation Routes from Delhi</h1>
           <p className="text-slate-500 mt-2 max-w-xl mx-auto">Fixed fares, no hidden charges. Driver charges included. Toll & parking charged at actuals — whatever is paid on the road, no markup.</p>
+
+          {/* Search */}
+          <div className="mt-6 max-w-sm mx-auto relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search destination (e.g. Manali, Jaipur…)"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
         </div>
 
         <div className="max-w-6xl mx-auto px-4 py-12 space-y-14">
-          {sections.map((section) => (
-            <div key={section.label}>
+          {q && totalResults === 0 ? (
+            <div className="text-center py-20 text-slate-400">
+              <Search className="w-10 h-10 mx-auto mb-3 opacity-30" />
+              <p className="text-lg font-medium">No routes found for "{search}"</p>
+              <p className="text-sm mt-1">Try searching for a city like "Manali" or "Jaipur"</p>
+            </div>
+          ) : (
+            filteredSections.map((section) => (
+              <div key={section.label}>
                 <h2 className="text-xl font-bold text-slate-800 font-['DM_Serif_Display'] mb-6 pb-3 border-b border-slate-200">
                   {section.label}
                 </h2>
@@ -186,8 +218,9 @@ export default function RoutesPage() {
                     <RouteCard key={route.slug} route={{ ...route, from: "Delhi" }} />
                   ))}
                 </div>
-            </div>
-          ))}
+              </div>
+            ))
+          )}
         </div>
       </main>
       <Footer />
