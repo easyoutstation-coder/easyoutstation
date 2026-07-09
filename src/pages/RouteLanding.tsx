@@ -666,7 +666,7 @@ export default function RouteLanding() {
                 ] as any[]).map((car) => {
                   const rate = parseFloat(car.pricePerKm);
                   const driverCharge = parseFloat(car.driverCharges ?? "250");
-                  const oneway = Math.round(rate * data.distance + driverCharge);
+                  const oneway = Math.round(rate * data.distance * 1.25 + driverCharge);
                   const roundtrip = Math.round(rate * data.distance * 2 + driverCharge * 2);
                   return (
                     <tr key={car.id} className="hover:bg-slate-50 transition-colors">
