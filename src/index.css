@@ -482,13 +482,15 @@ button, [role="button"], label {
 
 /* ── Global layout fixes (sitewide) ─────────────────────────────────────── */
 
-/* 1. Root flex column — footer always flush, no blank space below it */
+/* 1. Root flex column — footer always flush, no blank space below it.
+      Targets only standard page wrappers (min-h-screen), not admin loading
+      states that use flex items-center justify-center on the same element. */
 #root {
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
 }
-#root > div {
+#root > div.min-h-screen:not([class*="items-center"]) {
   flex: 1;
   display: flex;
   flex-direction: column;

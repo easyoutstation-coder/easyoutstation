@@ -633,7 +633,7 @@ export default function RouteLanding() {
           )}
           {!lm && <div style={{ height: "clamp(260px, 55vw, 480px)" }} />}
           {/* Dark overlay */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/78 to-black/90" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/55 to-black/78" />
           {/* Text centered over image */}
           <div className="absolute inset-0 flex items-center justify-center px-4 py-10">
             <div className="text-white text-center max-w-4xl w-full">
