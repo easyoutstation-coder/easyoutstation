@@ -599,20 +599,26 @@ export default function RouteLanding() {
     <div className="min-h-screen bg-white">
       <Navbar />
       {/* Sticky bottom CTA — mobile only */}
-      <div className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-slate-200 px-4 py-3 flex items-center gap-3 shadow-[0_-4px_16px_rgba(0,0,0,0.08)]" style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}>
-        <div className="flex-1 min-w-0">
-          <div className="text-xs text-slate-500 leading-tight">One way from</div>
-          <div className="font-bold text-slate-900 text-base leading-tight">₹{data.fare.min.toLocaleString("en-IN")}</div>
+      <div
+        className="md:hidden bg-white border-t border-slate-200 shadow-[0_-4px_20px_rgba(0,0,0,0.10)]"
+        style={{ position: "fixed", bottom: 0, left: 0, width: "100%", zIndex: 999, paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+      >
+        <div className="flex items-center gap-3 px-4 py-3">
+          <div className="flex-1 min-w-0">
+            <div className="text-xs text-slate-500 leading-tight">One way from</div>
+            <div className="font-bold text-slate-900 text-base leading-tight">₹{data.fare.min.toLocaleString("en-IN")}</div>
+          </div>
+          <button
+            onClick={() => navigate(`/cars?from=${data.from}&to=${data.to}&distance=${data.distance}`)}
+            className="shrink-0 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-sm rounded-xl px-5 transition-colors"
+            style={{ minHeight: 48, whiteSpace: "nowrap" }}
+          >
+            Book Now <ArrowRight className="w-4 h-4 shrink-0" />
+          </button>
         </div>
-        <Button
-          onClick={() => navigate(`/cars?from=${data.from}&to=${data.to}&distance=${data.distance}`)}
-          className="shrink-0 bg-blue-600 hover:bg-blue-700 text-white h-12 px-6 text-sm font-semibold gap-1.5"
-        >
-          Book Now <ArrowRight className="w-4 h-4" />
-        </Button>
       </div>
 
-      <main className="pt-20 pb-20 md:pb-0">
+      <main className="pt-20">
         {/* Hero — landmark photo background */}
         <div className="relative overflow-hidden bg-slate-900">
           {/* Image in normal flow — same pattern as homepage cards (works with Unsplash CDN) */}
@@ -839,6 +845,8 @@ export default function RouteLanding() {
             Book Now — From ₹{data.fare.min.toLocaleString("en-IN")} <ArrowRight className="w-4 h-4" />
           </Button>
         </div>
+        {/* Mobile spacer — prevents footer being hidden behind sticky CTA bar */}
+        <div className="md:hidden" style={{ height: "calc(4rem + env(safe-area-inset-bottom, 0px))" }} />
       </main>
       <Footer />
     </div>
