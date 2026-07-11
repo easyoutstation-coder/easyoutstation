@@ -802,17 +802,17 @@ export default function RouteLanding() {
         {/* Other Popular Routes — internal links for SEO */}
         <div className="max-w-4xl mx-auto px-4 pb-12">
           <h2 className="text-xl font-bold font-['DM_Serif_Display'] mb-5 text-slate-900">Other Popular Routes from Delhi</h2>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-2 gap-2 md:flex md:flex-wrap">
             {Object.entries(ROUTES)
               .filter(([slug]) => slug !== route)
               .map(([slug, r]) => (
                 <Link
                   key={slug}
                   to={`/cab/${slug}`}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-slate-200 text-sm text-slate-700 hover:border-blue-400 hover:text-blue-700 hover:bg-blue-50 transition-colors no-underline"
+                  className="flex items-center justify-between gap-1 px-3 py-2.5 min-h-[44px] rounded-xl border border-slate-200 text-slate-700 hover:border-blue-400 hover:text-blue-700 hover:bg-blue-50 transition-colors no-underline"
                 >
-                  {r.from} → {r.to}
-                  <span className="text-slate-400 text-xs">₹{r.fare.min.toLocaleString("en-IN")}</span>
+                  <span className="text-xs truncate">{r.from} → {r.to}</span>
+                  <span className="shrink-0 text-slate-400 text-xs ml-1">₹{r.fare.min.toLocaleString("en-IN")}</span>
                 </Link>
               ))}
           </div>
@@ -837,7 +837,7 @@ export default function RouteLanding() {
         )}
 
         {/* CTA */}
-        <div className="bg-blue-600 py-12 px-4 text-center text-white">
+        <div className="bg-blue-600 pt-12 pb-12 md:pb-12 px-4 text-center text-white" style={{ paddingBottom: 'calc(3rem + env(safe-area-inset-bottom, 0px))' }}>
           <h2 className="text-2xl font-bold font-['DM_Serif_Display'] mb-3">Ready to Book Your {data.from} to {data.to} Cab?</h2>
           <p className="text-blue-100 mb-6">Confirm with just 10% advance. Driver details within 60 minutes.</p>
           <Button size="lg" onClick={() => navigate(`/cars?from=${data.from}&to=${data.to}&distance=${data.distance}`)}
@@ -845,8 +845,6 @@ export default function RouteLanding() {
             Book Now — From ₹{data.fare.min.toLocaleString("en-IN")} <ArrowRight className="w-4 h-4" />
           </Button>
         </div>
-        {/* Mobile spacer — prevents footer being hidden behind sticky CTA bar */}
-        <div className="md:hidden" style={{ height: "calc(4rem + env(safe-area-inset-bottom, 0px))" }} />
       </main>
       <Footer />
     </div>

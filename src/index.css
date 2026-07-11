@@ -479,3 +479,26 @@ button, [role="button"], label {
 
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ── Global layout fixes (sitewide) ─────────────────────────────────────── */
+
+/* 1. Root flex column — footer always flush, no blank space below it */
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+#root > div {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 2. Navbar clearance — accounts for safe-area-inset-top on notch phones.
+      Specificity 1-0-1 beats Tailwind pt-20 (0-1-0) so applies sitewide.
+      On non-notch: max(5rem, 56px) = 80px (same as pt-20).
+      On iPhone 14 Pro (59px notch): max(80px, 115px) = 115px — clears nav. */
+#root main {
+  padding-top: max(5rem, calc(env(safe-area-inset-top, 0px) + 3.5rem));
+  flex: 1;
+}
