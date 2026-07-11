@@ -598,7 +598,21 @@ export default function RouteLanding() {
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
-      <main className="pt-20">
+      {/* Sticky bottom CTA — mobile only */}
+      <div className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-slate-200 px-4 py-3 flex items-center gap-3 shadow-[0_-4px_16px_rgba(0,0,0,0.08)]" style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}>
+        <div className="flex-1 min-w-0">
+          <div className="text-xs text-slate-500 leading-tight">One way from</div>
+          <div className="font-bold text-slate-900 text-base leading-tight">₹{data.fare.min.toLocaleString("en-IN")}</div>
+        </div>
+        <Button
+          onClick={() => navigate(`/cars?from=${data.from}&to=${data.to}&distance=${data.distance}`)}
+          className="shrink-0 bg-blue-600 hover:bg-blue-700 text-white h-12 px-6 text-sm font-semibold gap-1.5"
+        >
+          Book Now <ArrowRight className="w-4 h-4" />
+        </Button>
+      </div>
+
+      <main className="pt-20 pb-20 md:pb-0">
         {/* Hero — landmark photo background */}
         <div className="relative overflow-hidden bg-slate-900">
           {/* Image in normal flow — same pattern as homepage cards (works with Unsplash CDN) */}
@@ -645,7 +659,45 @@ export default function RouteLanding() {
           <h2 className="text-2xl font-bold text-slate-900 font-['DM_Serif_Display'] mb-6 text-center">
             {data.from} to {data.to} Cab Fare
           </h2>
-          <div className="overflow-x-auto rounded-2xl border border-slate-200 shadow-sm">
+
+          {/* Mobile: card stack */}
+          <div className="md:hidden space-y-3">
+            {(fareTableCars ?? [
+              { id: 0, name: "Swift Dzire", seats: 4, pricePerKm: "13.00", driverCharges: "250.00" },
+              { id: 1, name: "Maruti Ertiga", seats: 6, pricePerKm: "16.00", driverCharges: "250.00" },
+              { id: 2, name: "Toyota Innova", seats: 6, pricePerKm: "20.00", driverCharges: "250.00" },
+              { id: 3, name: "Innova Crysta", seats: 6, pricePerKm: "21.00", driverCharges: "250.00" },
+              { id: 4, name: "Innova Hycross", seats: 6, pricePerKm: "23.00", driverCharges: "250.00" },
+            ] as any[]).map((car) => {
+              const rate = parseFloat(car.pricePerKm);
+              const driverCharge = parseFloat(car.driverCharges ?? "250");
+              const oneway = Math.round(rate * data.distance * 1.25 + driverCharge);
+              const roundtrip = Math.round(rate * data.distance * 2 + driverCharge * 2);
+              return (
+                <div key={car.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <div className="font-semibold text-slate-900 text-sm">{car.name}</div>
+                      <div className="text-xs text-slate-500 mt-0.5">{car.seats} seater · ₹{rate}/km</div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-blue-50 rounded-lg p-3 text-center">
+                      <div className="text-xs text-slate-500 mb-1">One Way</div>
+                      <div className="font-bold text-blue-700 text-base">₹{oneway.toLocaleString("en-IN")}</div>
+                    </div>
+                    <div className="bg-slate-50 rounded-lg p-3 text-center">
+                      <div className="text-xs text-slate-500 mb-1">Round Trip</div>
+                      <div className="font-semibold text-slate-700 text-base">₹{roundtrip.toLocaleString("en-IN")}</div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Desktop: table */}
+          <div className="hidden md:block overflow-x-auto rounded-2xl border border-slate-200 shadow-sm">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
@@ -658,11 +710,11 @@ export default function RouteLanding() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {(fareTableCars ?? [
-                  { id: 0, name: "Swift Dzire", seats: 4, pricePerKm: "12.00", driverCharges: "250.00" },
-                  { id: 1, name: "Maruti Ertiga", seats: 6, pricePerKm: "15.00", driverCharges: "250.00" },
-                  { id: 2, name: "Toyota Innova", seats: 6, pricePerKm: "19.00", driverCharges: "250.00" },
-                  { id: 3, name: "Innova Crysta", seats: 6, pricePerKm: "20.00", driverCharges: "250.00" },
-                  { id: 4, name: "Innova Hycross", seats: 6, pricePerKm: "22.00", driverCharges: "250.00" },
+                  { id: 0, name: "Swift Dzire", seats: 4, pricePerKm: "13.00", driverCharges: "250.00" },
+                  { id: 1, name: "Maruti Ertiga", seats: 6, pricePerKm: "16.00", driverCharges: "250.00" },
+                  { id: 2, name: "Toyota Innova", seats: 6, pricePerKm: "20.00", driverCharges: "250.00" },
+                  { id: 3, name: "Innova Crysta", seats: 6, pricePerKm: "21.00", driverCharges: "250.00" },
+                  { id: 4, name: "Innova Hycross", seats: 6, pricePerKm: "23.00", driverCharges: "250.00" },
                 ] as any[]).map((car) => {
                   const rate = parseFloat(car.pricePerKm);
                   const driverCharge = parseFloat(car.driverCharges ?? "250");
@@ -681,6 +733,7 @@ export default function RouteLanding() {
               </tbody>
             </table>
           </div>
+
           <p className="text-xs text-slate-400 mt-3 text-center">* Fares include driver charges (₹250). Toll & parking charged at actuals — whatever is paid on the road, no markup.</p>
 
           {/* Additional charges guide */}
