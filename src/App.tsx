@@ -1,30 +1,31 @@
 import { Routes, Route, useLocation } from 'react-router'
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import Home from './pages/Home'
-import Cars from './pages/Cars'
-import CarDetail from './pages/CarDetail'
-import Booking from './pages/Booking'
-import BookingDetail from './pages/BookingDetail'
-import Dashboard from './pages/Dashboard'
-import Login from './pages/Login'
-import About from './pages/About'
-import FAQ from './pages/FAQ'
-import CancellationPolicy from './pages/CancellationPolicy'
-import Terms from './pages/Terms'
-import Privacy from './pages/Privacy'
-import RoutesPage from './pages/Routes'
-import RouteLanding from './pages/RouteLanding'
-import Blog from './pages/Blog'
-import BlogPost from './pages/BlogPost'
-import NotFound from './pages/NotFound'
-import Admin from './pages/Admin'
-import ExecutiveTeam from './pages/ExecutiveTeam'
-import ReferralProgram from './pages/ReferralProgram'
-import Corporate from './pages/Corporate'
-import CorporatePortal from './pages/CorporatePortal'
-import Driver from './pages/Driver'
-import Vendor from './pages/Vendor'
-import Go from './pages/Go'
+
+const Cars = lazy(() => import('./pages/Cars'))
+const CarDetail = lazy(() => import('./pages/CarDetail'))
+const Booking = lazy(() => import('./pages/Booking'))
+const BookingDetail = lazy(() => import('./pages/BookingDetail'))
+const Dashboard = lazy(() => import('./pages/Dashboard'))
+const Login = lazy(() => import('./pages/Login'))
+const About = lazy(() => import('./pages/About'))
+const FAQ = lazy(() => import('./pages/FAQ'))
+const CancellationPolicy = lazy(() => import('./pages/CancellationPolicy'))
+const Terms = lazy(() => import('./pages/Terms'))
+const Privacy = lazy(() => import('./pages/Privacy'))
+const RoutesPage = lazy(() => import('./pages/Routes'))
+const RouteLanding = lazy(() => import('./pages/RouteLanding'))
+const Blog = lazy(() => import('./pages/Blog'))
+const BlogPost = lazy(() => import('./pages/BlogPost'))
+const NotFound = lazy(() => import('./pages/NotFound'))
+const Admin = lazy(() => import('./pages/Admin'))
+const ExecutiveTeam = lazy(() => import('./pages/ExecutiveTeam'))
+const ReferralProgram = lazy(() => import('./pages/ReferralProgram'))
+const Corporate = lazy(() => import('./pages/Corporate'))
+const CorporatePortal = lazy(() => import('./pages/CorporatePortal'))
+const Driver = lazy(() => import('./pages/Driver'))
+const Vendor = lazy(() => import('./pages/Vendor'))
+const Go = lazy(() => import('./pages/Go'))
 import { trpc } from './providers/trpc'
 import { useAuth } from './hooks/useAuth'
 import { usePushNotifications } from './hooks/usePushNotifications'
@@ -123,33 +124,35 @@ function SiteGate({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <SiteGate>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/cars" element={<Cars />} />
-        <Route path="/cars/:id" element={<CarDetail />} />
-        <Route path="/booking" element={<Booking />} />
-        <Route path="/booking/:id" element={<BookingDetail />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/faq" element={<FAQ />} />
-        <Route path="/cancellation" element={<CancellationPolicy />} />
-        <Route path="/terms" element={<Terms />} />
-        <Route path="/privacy" element={<Privacy />} />
-        <Route path="/routes" element={<RoutesPage />} />
-        <Route path="/cab/:route" element={<RouteLanding />} />
-        <Route path="/blog" element={<Blog />} />
-        <Route path="/blog/:slug" element={<BlogPost />} />
-        <Route path="/admin" element={<Admin />} />
-        <Route path="/executive-team" element={<ExecutiveTeam />} />
-        <Route path="/referral" element={<ReferralProgram />} />
-        <Route path="/corporate" element={<Corporate />} />
-        <Route path="/corporate-portal" element={<CorporatePortal />} />
-        <Route path="/driver" element={<Driver />} />
-        <Route path="/vendor" element={<Vendor />} />
-        <Route path="/go" element={<Go />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      <Suspense fallback={null}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/cars" element={<Cars />} />
+          <Route path="/cars/:id" element={<CarDetail />} />
+          <Route path="/booking" element={<Booking />} />
+          <Route path="/booking/:id" element={<BookingDetail />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/faq" element={<FAQ />} />
+          <Route path="/cancellation" element={<CancellationPolicy />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/routes" element={<RoutesPage />} />
+          <Route path="/cab/:route" element={<RouteLanding />} />
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/:slug" element={<BlogPost />} />
+          <Route path="/admin" element={<Admin />} />
+          <Route path="/executive-team" element={<ExecutiveTeam />} />
+          <Route path="/referral" element={<ReferralProgram />} />
+          <Route path="/corporate" element={<Corporate />} />
+          <Route path="/corporate-portal" element={<CorporatePortal />} />
+          <Route path="/driver" element={<Driver />} />
+          <Route path="/vendor" element={<Vendor />} />
+          <Route path="/go" element={<Go />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
     </SiteGate>
   )
 }

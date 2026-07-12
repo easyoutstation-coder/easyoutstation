@@ -27,11 +27,14 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
-        manualChunks: {
-          "react-vendor": ["react", "react-dom"],
-          "router": ["react-router"],
-          "firebase": ["firebase/app", "firebase/auth"],
-          "query": ["@tanstack/react-query", "@trpc/react-query", "@trpc/client"],
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return;
+          if (id.includes("lucide-react")) return "icons";
+          if (id.includes("@radix-ui") || id.includes("cmdk") || id.includes("vaul")) return "ui";
+          if (id.includes("date-fns")) return "date-fns";
+          if (id.includes("firebase")) return "firebase";
+          if (id.includes("@tanstack") || id.includes("@trpc")) return "query";
+          if (id.includes("react-router") || id.includes("react-dom") || id.includes("/react/")) return "react-vendor";
         },
       },
     },
