@@ -91,8 +91,12 @@ function SiteGate({ children }: { children: React.ReactNode }) {
   // Scroll to top on page navigation, but skip if navigating to a hash anchor
   useEffect(() => { if (!hash) window.scrollTo(0, 0); }, [pathname, hash])
 
-
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin'
+
+  // Prefetch admin chunk silently as soon as we know the user is an admin
+  useEffect(() => {
+    if (isAdmin) import('./pages/Admin');
+  }, [isAdmin])
   const isOffline = data?.online === false
   // Always let /login and /admin through so admins can log in and toggle the switch
   const isAdminPath = pathname === '/login' || pathname.startsWith('/admin')
