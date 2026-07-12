@@ -176,8 +176,9 @@ export default function RouteLanding() {
             ] as any[]).map((car) => {
               const rate = parseFloat(car.pricePerKm);
               const driverCharge = parseFloat(car.driverCharges ?? "250");
-              const oneway = Math.round(rate * data.distance * 1.25 + driverCharge);
-              const roundtrip = Math.round(rate * data.distance * 2 + driverCharge * 2);
+              const billedKm = Math.max(data.distance, 80);
+              const oneway = Math.round(rate * billedKm * 1.25 + driverCharge);
+              const roundtrip = Math.round(rate * billedKm * 2 + driverCharge * 2);
               return (
                 <div key={car.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
                   <div className="flex items-center justify-between mb-3">
@@ -223,8 +224,9 @@ export default function RouteLanding() {
                 ] as any[]).map((car) => {
                   const rate = parseFloat(car.pricePerKm);
                   const driverCharge = parseFloat(car.driverCharges ?? "250");
-                  const oneway = Math.round(rate * data.distance * 1.25 + driverCharge);
-                  const roundtrip = Math.round(rate * data.distance * 2 + driverCharge * 2);
+                  const billedKm = Math.max(data.distance, 80);
+                  const oneway = Math.round(rate * billedKm * 1.25 + driverCharge);
+                  const roundtrip = Math.round(rate * billedKm * 2 + driverCharge * 2);
                   return (
                     <tr key={car.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-6 py-4 font-medium text-slate-900">{car.name}</td>

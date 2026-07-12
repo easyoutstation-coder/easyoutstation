@@ -20,10 +20,10 @@ type Car = {
 const FALLBACK_CARS: Car[] = [
   { id: 1, name: "Swift Dzire", category: "sedan", seats: 4, pricePerKm: "13.00", driverCharges: "250.00", imageUrl: "/cars/swift-dzire.jpg", rating: "4.5" },
   { id: 3, name: "Honda Amaze", category: "sedan", seats: 4, pricePerKm: "13.00", driverCharges: "250.00", imageUrl: "/cars/honda-amaze.jpg", rating: "4.5" },
-  { id: 4, name: "Maruti Ertiga", category: "muv", seats: 6, pricePerKm: "15.00", driverCharges: "250.00", imageUrl: "/cars/maruti-ertiga.jpg", rating: "4.7" },
-  { id: 5, name: "Toyota Innova", category: "muv", seats: 6, pricePerKm: "19.00", driverCharges: "250.00", imageUrl: "/cars/toyota-innova.jpg", rating: "4.8" },
-  { id: 6, name: "Toyota Innova Crysta", category: "premium", seats: 6, pricePerKm: "20.00", driverCharges: "250.00", imageUrl: "/cars/toyota-innova-crysta.jpg", rating: "4.9" },
-  { id: 8, name: "Toyota Innova Hycross", category: "luxury", seats: 6, pricePerKm: "22.00", driverCharges: "250.00", imageUrl: "/cars/toyota-innova-hycross.jpg", rating: "4.95" },
+  { id: 4, name: "Maruti Ertiga", category: "muv", seats: 6, pricePerKm: "16.00", driverCharges: "250.00", imageUrl: "/cars/maruti-ertiga.jpg", rating: "4.7" },
+  { id: 5, name: "Toyota Innova", category: "muv", seats: 6, pricePerKm: "20.00", driverCharges: "250.00", imageUrl: "/cars/toyota-innova.jpg", rating: "4.8" },
+  { id: 6, name: "Toyota Innova Crysta", category: "premium", seats: 6, pricePerKm: "21.00", driverCharges: "250.00", imageUrl: "/cars/toyota-innova-crysta.jpg", rating: "4.9" },
+  { id: 8, name: "Toyota Innova Hycross", category: "luxury", seats: 6, pricePerKm: "23.00", driverCharges: "250.00", imageUrl: "/cars/toyota-innova-hycross.jpg", rating: "4.95" },
 ]
 
 const WA_NUMBER = "918796564111"
@@ -107,9 +107,11 @@ export default function GoLanding() {
     .sort((a, b) => parseFloat(a.pricePerKm) - parseFloat(b.pricePerKm))
 
   const cheapestCar = displayCars[0]
-  const cheapestFare = cheapestCar
+  const cheapestFareRaw = cheapestCar
     ? calcFare(cheapestCar.pricePerKm, data.distance, isRoundTrip, cheapestCar.driverCharges ?? '250')
     : data.fare.min
+  // Guard against corrupted DB pricePerKm — minimum possible fare is ₹1,550 (80km × ₹13 × 1.25 + ₹250)
+  const cheapestFare = cheapestFareRaw >= 500 ? cheapestFareRaw : data.fare.min
 
   const waText = encodeURIComponent(`Hi, I want to book a ${data.from} to ${data.to} cab. Can you help me?`)
   const waUrl = `https://wa.me/${WA_NUMBER}?text=${waText}`

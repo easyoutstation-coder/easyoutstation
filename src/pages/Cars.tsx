@@ -323,15 +323,15 @@ export default function CarsPage() {
     searchQuery;
 
   const fallbackCars = [
-    { id: 1, name: "Swift Dzire", brand: "Maruti Suzuki", category: "sedan", seats: 5, pricePerKm: "12.00", rating: "4.50", reviewCount: 128, imageUrl: "/cars/swift-dzire.jpg", isAvailable: true, description: "Budget-friendly sedan ideal for couples and small families", fuelType: "diesel", transmission: "manual" },
+    { id: 1, name: "Swift Dzire", brand: "Maruti Suzuki", category: "sedan", seats: 5, pricePerKm: "13.00", rating: "4.50", reviewCount: 128, imageUrl: "/cars/swift-dzire.jpg", isAvailable: true, description: "Budget-friendly sedan ideal for couples and small families", fuelType: "diesel", transmission: "manual" },
     { id: 3, name: "Honda Amaze", brand: "Honda", category: "sedan", seats: 5, pricePerKm: "13.00", rating: "4.50", reviewCount: 72, imageUrl: "/cars/honda-amaze.jpg", isAvailable: true, description: "Compact sedan with comfortable interiors. Toll, parking & state taxes at actuals.", fuelType: "petrol", transmission: "manual" },
     { id: 2, name: "Toyota Etios", brand: "Toyota", category: "sedan", seats: 5, pricePerKm: "13.00", rating: "4.60", reviewCount: 96, imageUrl: "/cars/toyota-etios.jpg", isAvailable: true, description: "Reliable sedan with Toyota's legendary durability", fuelType: "diesel", transmission: "manual" },
-    { id: 4, name: "Maruti Ertiga", brand: "Maruti Suzuki", category: "muv", seats: 6, pricePerKm: "15.00", rating: "4.70", reviewCount: 215, imageUrl: "/cars/maruti-ertiga.jpg", isAvailable: true, description: "Spacious MUV perfect for family trips", fuelType: "petrol", transmission: "manual" },
-    { id: 5, name: "Toyota Innova", brand: "Toyota", category: "muv", seats: 6, pricePerKm: "19.00", rating: "4.80", reviewCount: 342, imageUrl: "/cars/toyota-innova.jpg", isAvailable: true, description: "The iconic Indian family vehicle", fuelType: "diesel", transmission: "manual" },
-    { id: 18, name: "Tata Hexa", brand: "Tata", category: "muv", seats: 7, pricePerKm: "19.00", rating: "4.65", reviewCount: 28, imageUrl: "/cars/tata-hexa.jpg", isAvailable: true, description: "Powerful 6+1 seater MUV with bold design and VARICOR diesel engine. Ideal for family outstation trips.", fuelType: "diesel", transmission: "manual" },
-    { id: 6, name: "Toyota Innova Crysta", brand: "Toyota", category: "premium", seats: 6, pricePerKm: "20.00", rating: "4.90", reviewCount: 456, imageUrl: "/cars/toyota-innova-crysta.jpg", isAvailable: true, description: "Premium MPV with luxurious interiors", fuelType: "diesel", transmission: "automatic" },
+    { id: 4, name: "Maruti Ertiga", brand: "Maruti Suzuki", category: "muv", seats: 6, pricePerKm: "16.00", rating: "4.70", reviewCount: 215, imageUrl: "/cars/maruti-ertiga.jpg", isAvailable: true, description: "Spacious MUV perfect for family trips", fuelType: "petrol", transmission: "manual" },
+    { id: 5, name: "Toyota Innova", brand: "Toyota", category: "muv", seats: 6, pricePerKm: "20.00", rating: "4.80", reviewCount: 342, imageUrl: "/cars/toyota-innova.jpg", isAvailable: true, description: "The iconic Indian family vehicle", fuelType: "diesel", transmission: "manual" },
+    { id: 18, name: "Tata Hexa", brand: "Tata", category: "muv", seats: 7, pricePerKm: "20.00", rating: "4.65", reviewCount: 28, imageUrl: "/cars/tata-hexa.jpg", isAvailable: true, description: "Powerful 6+1 seater MUV with bold design and VARICOR diesel engine. Ideal for family outstation trips.", fuelType: "diesel", transmission: "manual" },
+    { id: 6, name: "Toyota Innova Crysta", brand: "Toyota", category: "premium", seats: 6, pricePerKm: "21.00", rating: "4.90", reviewCount: 456, imageUrl: "/cars/toyota-innova-crysta.jpg", isAvailable: true, description: "Premium MPV with luxurious interiors", fuelType: "diesel", transmission: "automatic" },
     { id: 7, name: "Kia Carens", brand: "Kia", category: "premium", seats: 6, pricePerKm: "17.00", rating: "4.75", reviewCount: 89, imageUrl: "/cars/kia-carens.jpg", isAvailable: true, description: "Modern premium MPV with advanced features", fuelType: "petrol", transmission: "automatic" },
-    { id: 8, name: "Toyota Innova Hycross", brand: "Toyota", category: "luxury", seats: 6, pricePerKm: "22.00", rating: "4.95", reviewCount: 67, imageUrl: "/cars/toyota-innova-hycross.jpg", isAvailable: true, description: "Flagship luxury hybrid MPV", fuelType: "hybrid", transmission: "automatic" },
+    { id: 8, name: "Toyota Innova Hycross", brand: "Toyota", category: "luxury", seats: 6, pricePerKm: "23.00", rating: "4.95", reviewCount: 67, imageUrl: "/cars/toyota-innova-hycross.jpg", isAvailable: true, description: "Flagship luxury hybrid MPV", fuelType: "hybrid", transmission: "automatic" },
     { id: 9, name: "Tempo Traveller Maharaja (12 Seater)", brand: "Force Motors", category: "tempo", seats: 12, pricePerKm: "28.00", driverCharges: "500.00", rating: "4.70", reviewCount: 45, imageUrl: "/cars/tempo-traveller-maharaja.jpg", isAvailable: true, description: "Luxury 1x1 Maharaja recliner seats. Perfect for group outstation travel. Toll, parking & state taxes charged at actuals.", fuelType: "diesel", transmission: "manual" },
     { id: 10, name: "Tempo Traveller (16-19 Seater)", brand: "Force Motors", category: "tempo", seats: 19, pricePerKm: "30.00", driverCharges: "500.00", rating: "4.65", reviewCount: 38, imageUrl: "/cars/tempo-traveller-pushback.jpg", isAvailable: true, description: "Seats up to 19 passengers with 2x1 pushback recliner seats. Toll, parking & state taxes charged at actuals.", fuelType: "diesel", transmission: "manual" },
     { id: 11, name: "Force Urbania", brand: "Force Motors", category: "tempo", seats: 17, pricePerKm: "35.00", driverCharges: "500.00", rating: "4.80", reviewCount: 29, imageUrl: "/cars/force-urbania.jpg", isAvailable: true, description: "Premium Force Urbania luxury van with plush seating. Toll, parking & state taxes charged at actuals.", fuelType: "diesel", transmission: "manual" },
@@ -454,9 +454,9 @@ export default function CarsPage() {
                     return (
                       <>
                         Fares from{" "}
-                        <span className="font-bold">₹{(minBilledKm * 12 * (tripTypeParam === "one_way" ? ONE_WAY_MULTIPLIER : 1) + DRIVER_CHARGE * tripDays).toLocaleString("en-IN")}</span>
+                        <span className="font-bold">₹{(minBilledKm * 13 * (tripTypeParam === "one_way" ? ONE_WAY_MULTIPLIER : 1) + DRIVER_CHARGE * tripDays).toLocaleString("en-IN")}</span>
                         {" "}to{" "}
-                        <span className="font-bold">₹{(minBilledKm * 22 * (tripTypeParam === "one_way" ? ONE_WAY_MULTIPLIER : 1) + DRIVER_CHARGE * tripDays).toLocaleString("en-IN")}</span>
+                        <span className="font-bold">₹{(minBilledKm * 23 * (tripTypeParam === "one_way" ? ONE_WAY_MULTIPLIER : 1) + DRIVER_CHARGE * tripDays).toLocaleString("en-IN")}</span>
                         {tripDays > 1
                           ? <span className="text-blue-500 text-xs ml-1">({tripDays} days · {minBilledKm} km min{minApplies ? " applies" : ""})</span>
                           : <span className="text-blue-500 text-xs ml-1">(min 80 km / 8 hrs for cars · min 250 km for tempo/bus)</span>}
@@ -613,9 +613,9 @@ export default function CarsPage() {
               <div className="flex gap-3 px-4 py-2.5 flex-nowrap items-center">
                 {[
                   { label: "Sedan", rate: "13.00", seats: 5 },
-                  { label: "MUV", rate: "15.00", seats: 6 },
+                  { label: "MUV", rate: "16.00", seats: 6 },
                   { label: "Innova", rate: "20.00", seats: 6 },
-                  { label: "Premium", rate: "20.00", seats: 6 },
+                  { label: "Premium", rate: "21.00", seats: 6 },
                 ].map(({ label, rate, seats }) => {
                   const isHeavy = seats > 7;
                   const bkm = tripDays > 1 ? Math.max(effectiveKm, tripDays * 250) : isHeavy ? Math.max(effectiveKm, 250) : Math.max(effectiveKm, 80);
@@ -763,8 +763,8 @@ export default function CarsPage() {
                                 );
                               })() : (
                                 <>
-                                  <div className="text-lg font-bold text-blue-700">₹{car.pricePerKm}</div>
-                                  <div className="text-xs text-slate-400">/km</div>
+                                  <div className="text-lg font-bold text-slate-300">—</div>
+                                  <div className="text-xs text-slate-400">Add route for fare</div>
                                 </>
                               )}
                             </div>
