@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import { useSeo } from '@/hooks/useSeo'
 import { trpc } from '@/providers/trpc'
-import { Phone, MessageCircle, Check, ChevronDown, ArrowRight, Star } from 'lucide-react'
+import { Phone, MessageCircle, Check, ChevronDown, ArrowRight, Star, Shield, Clock, MapPin } from 'lucide-react'
 import { ROUTES } from '@/data/routes'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -66,7 +66,7 @@ export default function GoLanding() {
   const navigate = useNavigate()
   const data = ROUTES[route ?? '']
 
-  // gclid + UTM capture on mount
+  // gclid + UTM capture
   useEffect(() => {
     try {
       const p = new URLSearchParams(window.location.search)
@@ -78,7 +78,6 @@ export default function GoLanding() {
     } catch {}
   }, [])
 
-  // Trip type from ?tt= URL param (roundtrip | oneway)
   const [isRoundTrip, setIsRoundTrip] = useState(() => {
     try { return new URLSearchParams(window.location.search).get('tt') === 'roundtrip' }
     catch { return false }
@@ -101,7 +100,6 @@ export default function GoLanding() {
     noindex: true,
   })
 
-  // lp_view on mount
   useEffect(() => {
     if (data) track('lp_view', { route, from: data.from, to: data.to })
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -138,36 +136,27 @@ export default function GoLanding() {
   function handleBookingSubmit(car: Car) {
     if (!formDate || formPhone.length < 10) return
     const fare = calcFare(car.pricePerKm, data.distance, isRoundTrip, car.driverCharges ?? '250')
-    track('lp_booking_submit', {
-      car_id: car.id, car_name: car.name, route,
-      trip_type: isRoundTrip ? 'round_trip' : 'one_way',
-      fare,
-    })
+    track('lp_booking_submit', { car_id: car.id, car_name: car.name, route, trip_type: isRoundTrip ? 'round_trip' : 'one_way', fare })
     const params = new URLSearchParams({
-      carId: String(car.id),
-      from: data.from,
-      to: data.to,
-      distance: String(data.distance),
-      tripType: isRoundTrip ? 'round_trip' : 'one_way',
-      date: formDate,
+      carId: String(car.id), from: data.from, to: data.to,
+      distance: String(data.distance), tripType: isRoundTrip ? 'round_trip' : 'one_way', date: formDate,
     })
     navigate(`/booking?${params}`)
   }
 
-  const microFaqs = data.faqs.slice(0, 3)
-
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-slate-50">
+
       {/* ── Slim header ────────────────────────────────────────────────────── */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-slate-100 h-12 flex items-center justify-between px-4">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-slate-100 h-12 flex items-center justify-between px-4">
         <a href="/" className="flex items-center gap-2" aria-label="EasyOutstation home">
           <img src="/logo-icon.png" alt="EasyOutstation" className="h-7 w-auto" />
-          <span className="font-bold text-slate-900 text-sm hidden sm:inline">EasyOutstation</span>
+          <span className="font-bold text-slate-900 text-sm">EasyOutstation</span>
         </a>
         <a
           href="tel:+918796564111"
           onClick={() => track('lp_call_click', { route })}
-          className="flex items-center gap-1.5 bg-blue-600 text-white text-xs font-semibold px-3 py-1.5 rounded-full"
+          className="flex items-center gap-1.5 bg-blue-600 text-white text-xs font-bold px-3.5 py-2 rounded-full shadow-sm shadow-blue-200"
         >
           <Phone className="w-3 h-3" />
           Call to Book
@@ -175,40 +164,66 @@ export default function GoLanding() {
       </header>
 
       <main className="pt-12">
+
         {/* ── Hero ────────────────────────────────────────────────────────── */}
-        <section className="bg-slate-900 px-4 pt-8 pb-6">
-          <p className="text-slate-400 text-xs mb-2 font-medium">
-            {data.from} → {data.to} · {data.distance} km · {data.duration}
-          </p>
-          <h1 className="font-['DM_Serif_Display'] text-2xl sm:text-3xl mb-2 leading-tight" style={{ color: 'white' }}>
+        <section style={{ background: 'linear-gradient(145deg, #0f172a 0%, #1e3a5f 60%, #0f172a 100%)' }} className="px-4 pt-7 pb-6">
+
+          {/* Route breadcrumb */}
+          <div className="flex items-center gap-1.5 mb-4">
+            <div className="flex items-center gap-1 bg-white/10 rounded-full px-2.5 py-1">
+              <MapPin className="w-3 h-3 text-blue-300" />
+              <span className="text-[11px] text-blue-200 font-medium">{data.from}</span>
+            </div>
+            <ArrowRight className="w-3 h-3 text-slate-500" />
+            <div className="flex items-center gap-1 bg-white/10 rounded-full px-2.5 py-1">
+              <MapPin className="w-3 h-3 text-blue-300" />
+              <span className="text-[11px] text-blue-200 font-medium">{data.to}</span>
+            </div>
+          </div>
+
+          {/* H1 */}
+          <h1 className="font-['DM_Serif_Display'] text-[26px] leading-tight mb-1" style={{ color: 'white' }}>
             {data.from} to {data.to} Cab
           </h1>
-          <p className="text-blue-300 text-sm mb-4">
-            From{' '}
-            <span className="text-white font-bold text-xl">
+
+          {/* Fare hero */}
+          <div className="flex items-baseline gap-2 mb-3">
+            <span className="text-slate-400 text-sm">from</span>
+            <span className="text-white font-black text-4xl tracking-tight">
               ₹{cheapestFare.toLocaleString('en-IN')}
             </span>
-            {' '}· Fixed fare · No hidden charges
-          </p>
+          </div>
+
+          {/* Route meta pills */}
+          <div className="flex gap-2 mb-5 flex-wrap">
+            <span className="flex items-center gap-1 bg-white/8 border border-white/10 rounded-full px-2.5 py-1 text-[11px] text-slate-300">
+              <Clock className="w-3 h-3 text-slate-400" />
+              {data.duration}
+            </span>
+            <span className="flex items-center gap-1 bg-white/8 border border-white/10 rounded-full px-2.5 py-1 text-[11px] text-slate-300">
+              <MapPin className="w-3 h-3 text-slate-400" />
+              {data.distance} km
+            </span>
+            <span className="flex items-center gap-1 bg-white/8 border border-white/10 rounded-full px-2.5 py-1 text-[11px] text-slate-300">
+              <Shield className="w-3 h-3 text-green-400" />
+              Fixed fare
+            </span>
+          </div>
 
           {/* Trip type toggle */}
-          <div className="inline-flex bg-slate-800 rounded-xl p-1 gap-1">
+          <div className="inline-flex bg-white/8 border border-white/10 rounded-2xl p-1 gap-1">
             <button
               onClick={() => setIsRoundTrip(false)}
-              className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
-                !isRoundTrip
-                  ? 'bg-blue-600 text-white shadow'
-                  : 'text-slate-400 hover:text-white'
+              className={`px-5 py-2 rounded-xl text-xs font-bold transition-all ${
+                !isRoundTrip ? 'bg-blue-600 text-white shadow-lg shadow-blue-900' : 'text-slate-400'
               }`}
             >
               One Way
             </button>
             <button
               onClick={() => setIsRoundTrip(true)}
-              className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
-                isRoundTrip
-                  ? 'bg-blue-600 text-white shadow'
-                  : 'text-slate-400 hover:text-white'
+              className={`px-5 py-2 rounded-xl text-xs font-bold transition-all ${
+                isRoundTrip ? 'bg-blue-600 text-white shadow-lg shadow-blue-900' : 'text-slate-400'
               }`}
             >
               Round Trip
@@ -216,147 +231,190 @@ export default function GoLanding() {
           </div>
         </section>
 
+        {/* ── Trust strip ─────────────────────────────────────────────────── */}
+        <div className="bg-green-600 px-4 py-2.5 flex items-center justify-center gap-4 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+          {['Verified drivers', 'Fixed price', '10% advance only', '★ 4.9 rated'].map((t, i) => (
+            <span key={i} className="flex items-center gap-1.5 text-white text-[11px] font-semibold whitespace-nowrap shrink-0">
+              <Check className="w-3 h-3" />
+              {t}
+            </span>
+          ))}
+        </div>
+
         {/* ── Fleet cards ─────────────────────────────────────────────────── */}
-        <section id="fleet-section" className="px-4 py-5 space-y-3">
-          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">
-            Select your car
-          </h2>
-          {displayCars.map(car => {
-            const fare = calcFare(car.pricePerKm, data.distance, isRoundTrip, car.driverCharges ?? '250')
-            const isExpanded = expandedCar === car.id
-            return (
-              <div
-                key={car.id}
-                className={`rounded-2xl border transition-all ${
-                  isExpanded
-                    ? 'border-blue-400 shadow-md shadow-blue-100'
-                    : 'border-slate-200'
-                }`}
-              >
-                {/* Card header */}
-                <button
-                  className="w-full flex items-center gap-3 p-4 text-left"
-                  onClick={() => handleSelectCar(car.id)}
+        <section id="fleet-section" className="px-4 pt-5 pb-3">
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3">Choose your car</p>
+          <div className="space-y-3">
+            {displayCars.map((car, idx) => {
+              const fare = calcFare(car.pricePerKm, data.distance, isRoundTrip, car.driverCharges ?? '250')
+              const isExpanded = expandedCar === car.id
+              const isBest = idx === 0
+              return (
+                <div
+                  key={car.id}
+                  className={`rounded-2xl overflow-hidden transition-all duration-200 ${
+                    isExpanded
+                      ? 'ring-2 ring-blue-500 shadow-lg shadow-blue-100'
+                      : 'shadow-sm shadow-slate-200'
+                  } bg-white`}
                 >
-                  <img
-                    src={car.imageUrl}
-                    alt={car.name}
-                    className="w-20 h-14 object-contain rounded-lg bg-slate-50 shrink-0"
-                    onError={(e) => { (e.target as HTMLImageElement).src = '/cars/swift-dzire.jpg' }}
-                    loading="lazy"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-semibold text-slate-900 text-sm">{car.name}</span>
-                      {car.rating && (
-                        <span className="flex items-center gap-0.5 text-[10px] text-amber-600 font-medium">
-                          <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
-                          {car.rating}
-                        </span>
-                      )}
+                  {/* Best value ribbon */}
+                  {isBest && (
+                    <div className="bg-gradient-to-r from-green-500 to-emerald-500 px-4 py-1.5 flex items-center gap-2">
+                      <span className="text-white text-[10px] font-black uppercase tracking-widest">Best Value</span>
+                      <span className="text-green-100 text-[10px]">— lowest fare for this route</span>
                     </div>
-                    <div className="text-xs text-slate-500 mt-0.5">
-                      {car.seats} seater · ₹{parseFloat(car.pricePerKm)}/km
-                    </div>
-                  </div>
-                  <div className="shrink-0 text-right">
-                    <div className="font-bold text-blue-700 text-base leading-tight">
-                      ₹{fare.toLocaleString('en-IN')}
-                    </div>
-                    <div className="text-[10px] text-slate-400">
-                      {isRoundTrip ? 'round trip' : 'one way'}
-                    </div>
-                    <div className={`text-[10px] font-semibold mt-1 transition-colors ${isExpanded ? 'text-blue-600' : 'text-slate-400'}`}>
-                      {isExpanded ? 'Close ✕' : 'Select →'}
-                    </div>
-                  </div>
-                </button>
+                  )}
 
-                {/* Inline booking panel */}
-                {isExpanded && (
-                  <div ref={expandRef} className="border-t border-slate-100 p-4 bg-blue-50/50">
-                    <p className="text-xs font-semibold text-slate-700 mb-3">
-                      Confirm details to continue booking
-                    </p>
-                    <div className="space-y-2.5">
-                      <input
-                        type="date"
-                        value={formDate}
-                        min={getTomorrow()}
-                        onChange={e => setFormDate(e.target.value)}
-                        className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  {/* Card body */}
+                  <button
+                    className="w-full flex items-center gap-3 px-4 py-3.5 text-left"
+                    onClick={() => handleSelectCar(car.id)}
+                  >
+                    <div className="w-[88px] h-16 rounded-xl bg-slate-50 shrink-0 flex items-center justify-center overflow-hidden border border-slate-100">
+                      <img
+                        src={car.imageUrl}
+                        alt={car.name}
+                        className="w-full h-full object-contain p-1"
+                        onError={(e) => { (e.target as HTMLImageElement).src = '/cars/swift-dzire.jpg' }}
+                        loading="lazy"
                       />
-                      <input
-                        type="text"
-                        placeholder="Your name"
-                        value={formName}
-                        onChange={e => setFormName(e.target.value)}
-                        className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                      <input
-                        type="tel"
-                        inputMode="numeric"
-                        placeholder="10-digit mobile number"
-                        value={formPhone}
-                        maxLength={10}
-                        onChange={e => setFormPhone(e.target.value.replace(/\D/g, ''))}
-                        className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                      <button
-                        onClick={() => handleBookingSubmit(car)}
-                        disabled={!formDate || formPhone.length < 10}
-                        className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl text-sm flex items-center justify-center gap-2 transition-colors"
-                      >
-                        Continue to book {car.name}
-                        <ArrowRight className="w-4 h-4" />
-                      </button>
-                      <p className="text-[10px] text-slate-400 text-center">
-                        Pay just 10% (₹{Math.round(fare * 0.1).toLocaleString('en-IN')}) to confirm · Balance on trip day
-                      </p>
                     </div>
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </section>
 
-        {/* ── Trust row ───────────────────────────────────────────────────── */}
-        <section className="bg-green-50 border-y border-green-100 px-4 py-4">
-          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-            {[
-              'Verified drivers',
-              'Fixed fare guarantee',
-              'Pay only 10% advance',
-              '★ 4.9 · 500+ trips',
-            ].map(item => (
-              <div key={item} className="flex items-center gap-2 text-green-800 text-xs font-medium">
-                <Check className="w-3.5 h-3.5 text-green-600 shrink-0" />
-                {item}
-              </div>
-            ))}
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold text-slate-900 text-sm leading-tight">{car.name}</div>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-xs text-slate-400">{car.seats} seater</span>
+                        {car.rating && (
+                          <span className="flex items-center gap-0.5 text-[11px] text-amber-500 font-semibold">
+                            <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                            {car.rating}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[11px] text-slate-400 mt-0.5">₹{parseFloat(car.pricePerKm)}/km</div>
+                    </div>
+
+                    <div className="shrink-0 text-right">
+                      <div className="font-black text-blue-700 text-lg leading-tight">
+                        ₹{fare.toLocaleString('en-IN')}
+                      </div>
+                      <div className="text-[10px] text-slate-400 mb-2">
+                        {isRoundTrip ? 'round trip' : 'one way'}
+                      </div>
+                      <div className={`text-[11px] font-bold px-3 py-1 rounded-full border transition-all ${
+                        isExpanded
+                          ? 'bg-blue-600 text-white border-blue-600'
+                          : 'bg-white text-blue-600 border-blue-200'
+                      }`}>
+                        {isExpanded ? 'Close' : 'Select'}
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Inline booking panel */}
+                  {isExpanded && (
+                    <div ref={expandRef} className="border-t border-slate-100 bg-slate-50">
+                      <div className="px-4 pt-4 pb-5 space-y-3">
+                        <p className="text-xs font-bold text-slate-600 uppercase tracking-wide">
+                          Complete your booking
+                        </p>
+
+                        {/* Date */}
+                        <div>
+                          <label className="text-[11px] text-slate-500 font-medium mb-1 block">Travel date</label>
+                          <input
+                            type="date"
+                            value={formDate}
+                            min={getTomorrow()}
+                            onChange={e => setFormDate(e.target.value)}
+                            className="w-full border border-slate-200 rounded-xl px-3.5 py-3 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-medium"
+                          />
+                        </div>
+
+                        {/* Name */}
+                        <div>
+                          <label className="text-[11px] text-slate-500 font-medium mb-1 block">Your name</label>
+                          <input
+                            type="text"
+                            placeholder="Enter your name"
+                            value={formName}
+                            onChange={e => setFormName(e.target.value)}
+                            className="w-full border border-slate-200 rounded-xl px-3.5 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </div>
+
+                        {/* Phone */}
+                        <div>
+                          <label className="text-[11px] text-slate-500 font-medium mb-1 block">Mobile number</label>
+                          <input
+                            type="tel"
+                            inputMode="numeric"
+                            placeholder="10-digit number"
+                            value={formPhone}
+                            maxLength={10}
+                            onChange={e => setFormPhone(e.target.value.replace(/\D/g, ''))}
+                            className="w-full border border-slate-200 rounded-xl px-3.5 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </div>
+
+                        {/* Submit */}
+                        <button
+                          onClick={() => handleBookingSubmit(car)}
+                          disabled={!formDate || formPhone.length < 10}
+                          className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-xl text-sm flex items-center justify-center gap-2 transition-colors shadow-md shadow-blue-200"
+                        >
+                          Book {car.name} — ₹{fare.toLocaleString('en-IN')}
+                          <ArrowRight className="w-4 h-4" />
+                        </button>
+
+                        <div className="flex items-center justify-center gap-3 text-[10px] text-slate-400">
+                          <span className="flex items-center gap-1"><Check className="w-2.5 h-2.5 text-green-500" />Pay ₹{Math.round(fare * 0.1).toLocaleString('en-IN')} now</span>
+                          <span>·</span>
+                          <span className="flex items-center gap-1"><Check className="w-2.5 h-2.5 text-green-500" />Balance on trip day</span>
+                          <span>·</span>
+                          <span className="flex items-center gap-1"><Check className="w-2.5 h-2.5 text-green-500" />Free cancellation</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         </section>
 
+        {/* ── WhatsApp CTA ────────────────────────────────────────────────── */}
+        <section className="px-4 py-4" data-wa-cta-section>
+          <a
+            href={waUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => track('lp_whatsapp_click', { route })}
+            className="flex items-center justify-center gap-2.5 w-full text-white font-bold py-4 rounded-2xl text-sm active:scale-[0.98] transition-transform shadow-lg shadow-green-200"
+            style={{ background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)' }}
+          >
+            <MessageCircle className="w-5 h-5" />
+            Book on WhatsApp instead
+          </a>
+          <p className="text-center text-[11px] text-slate-400 mt-2">Prefer to chat? We reply in under 5 minutes.</p>
+        </section>
+
         {/* ── Micro FAQ ───────────────────────────────────────────────────── */}
-        <section className="px-4 py-6">
-          <h2 className="text-sm font-bold text-slate-900 mb-3">Quick answers</h2>
+        <section className="px-4 py-4">
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3">Quick answers</p>
           <div className="space-y-2">
-            {microFaqs.map((faq, i) => (
-              <div key={i} className="border border-slate-200 rounded-xl overflow-hidden">
+            {data.faqs.slice(0, 3).map((faq, i) => (
+              <div key={i} className="bg-white rounded-2xl overflow-hidden shadow-sm shadow-slate-100">
                 <button
-                  className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left"
+                  className="w-full flex items-center justify-between gap-3 px-4 py-3.5 text-left"
                   onClick={() => setFaqOpen(prev => prev === i ? null : i)}
                 >
                   <span className="text-sm font-medium text-slate-900 leading-snug">{faq.q}</span>
-                  <ChevronDown
-                    className={`w-4 h-4 text-slate-400 shrink-0 transition-transform duration-200 ${
-                      faqOpen === i ? 'rotate-180' : ''
-                    }`}
-                  />
+                  <ChevronDown className={`w-4 h-4 text-slate-400 shrink-0 transition-transform duration-200 ${faqOpen === i ? 'rotate-180' : ''}`} />
                 </button>
                 {faqOpen === i && (
-                  <div className="px-4 pb-3 pt-2 text-xs text-slate-600 leading-relaxed border-t border-slate-100">
+                  <div className="px-4 pb-4 text-xs text-slate-500 leading-relaxed border-t border-slate-100 pt-3">
                     {faq.a}
                   </div>
                 )}
@@ -365,29 +423,12 @@ export default function GoLanding() {
           </div>
         </section>
 
-        {/* ── WhatsApp CTA ────────────────────────────────────────────────── */}
-        <section className="px-4 pb-8" data-wa-cta-section>
-          <a
-            href={waUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => track('lp_whatsapp_click', { route })}
-            className="flex items-center justify-center gap-2 w-full bg-[#25D366] text-white font-semibold py-4 rounded-2xl text-sm shadow-lg shadow-green-200 active:scale-[0.98] transition-transform"
-          >
-            <MessageCircle className="w-5 h-5" />
-            Book on WhatsApp
-          </a>
-          <p className="text-center text-xs text-slate-400 mt-2">Our team responds in &lt; 5 minutes</p>
-        </section>
-
         {/* ── Slim footer ─────────────────────────────────────────────────── */}
-        <footer className="border-t border-slate-100 px-4 py-4 pb-28">
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-slate-400">© EasyOutstation · easyoutstation.com</p>
-            <div className="flex gap-3">
-              <a href="/terms" className="text-xs text-slate-400 hover:text-slate-600">Terms</a>
-              <a href="/privacy" className="text-xs text-slate-400 hover:text-slate-600">Privacy</a>
-            </div>
+        <footer className="px-4 py-5 pb-32 flex items-center justify-between">
+          <p className="text-[11px] text-slate-400">© EasyOutstation · easyoutstation.com</p>
+          <div className="flex gap-3">
+            <a href="/terms" className="text-[11px] text-slate-400">Terms</a>
+            <a href="/privacy" className="text-[11px] text-slate-400">Privacy</a>
           </div>
         </footer>
       </main>
@@ -395,15 +436,15 @@ export default function GoLanding() {
       {/* ── Sticky bottom bar ───────────────────────────────────────────── */}
       {cheapestCar && (
         <div
-          className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-[0_-4px_20px_rgba(0,0,0,0.10)]"
+          className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-[0_-8px_32px_rgba(0,0,0,0.12)]"
           style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
         >
           <div className="flex items-center gap-3 px-4 py-3">
             <div className="flex-1 min-w-0">
-              <div className="text-xs text-slate-500 leading-tight truncate">
-                Best price · {cheapestCar.name}
+              <div className="text-[11px] text-slate-400 leading-tight">
+                {cheapestCar.name} · {isRoundTrip ? 'Round trip' : 'One way'}
               </div>
-              <div className="font-bold text-slate-900 text-base leading-tight">
+              <div className="font-black text-slate-900 text-xl leading-tight">
                 ₹{cheapestFare.toLocaleString('en-IN')}
               </div>
             </div>
@@ -413,10 +454,11 @@ export default function GoLanding() {
                 const el = document.getElementById('fleet-section')
                 if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
               }}
-              className="shrink-0 flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-sm rounded-xl px-5 transition-colors"
-              style={{ minHeight: 48, whiteSpace: 'nowrap' }}
+              className="shrink-0 flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-sm rounded-xl px-6 shadow-md shadow-blue-200 transition-colors"
+              style={{ minHeight: 48 }}
             >
-              Book Now <ArrowRight className="w-4 h-4 shrink-0" />
+              Book Now
+              <ArrowRight className="w-4 h-4 shrink-0" />
             </button>
           </div>
         </div>
