@@ -358,13 +358,20 @@ export default function CarsPage() {
 
   const filterProps = { category, setCategory: handleCategoryChange, seats, setSeats, priceRange, setPriceRange, hasActiveFilters, clearFilters, maxPrice: MAX_PRICE_KM };
 
-  const quoteViewedRef = useRef(false);
+  const quoteViewedRef = useRef('');
   useEffect(() => {
-    if (quoteViewedRef.current || !distanceKm || !toCity || displayCars.length === 0) return;
+    if (!toCity || displayCars.length === 0) return;
+    const routeKey = `${toCity}:${distanceKm}:${tripTypeParam}`;
+    if (quoteViewedRef.current === routeKey) return;
     const cheapestCar = displayCars[0];
-    const fare = calcFare(cheapestCar.pricePerKm, cheapestCar.seats, cheapestCar.driverCharges ?? "250");
-    if (!fare) return;
-    quoteViewedRef.current = true;
+    // Calculate fare inline so it works even when distanceKm=0 (OSRM hasn't responded yet)
+    const rate = parseFloat(cheapestCar.pricePerKm);
+    const dc = parseFloat(cheapestCar.driverCharges ?? '250');
+    const billed = Math.max(distanceKm || 0, 80);
+    const rawFare = tripTypeParam === 'one_way'
+      ? Math.round(rate * billed * 1.25 + dc)
+      : Math.round(rate * billed * 2 + dc * 2);
+    quoteViewedRef.current = routeKey;
     const cabTypeMap: Record<string, string> = { sedan: 'Sedan', muv: 'MUV', suv: 'SUV', premium: 'Premium', luxury: 'Luxury', tempo: 'Tempo', bus: 'Bus', electric: 'Electric' };
     (window as any).dataLayer = (window as any).dataLayer || [];
     const returnType = tripTypeParam === 'one_way' ? 'none'
@@ -378,12 +385,12 @@ export default function CarsPage() {
       return_date: returnDateParam || null,
       trip_type: tripTypeParam,
       return_type: returnType,
-      quoted_fare: applyDiscount(fare),
+      quoted_fare: applyDiscount(rawFare),
       cab_type_shown: cabTypeMap[cheapestCar.category] ?? 'Sedan',
       distance_km: distanceKm || undefined,
       trip_duration_days: tripDays > 1 ? tripDays : undefined,
     });
-  }, [cars, distanceKm]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [cars, distanceKm, toCity]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="min-h-screen bg-slate-50">
