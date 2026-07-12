@@ -26,6 +26,7 @@ const CorporatePortal = lazy(() => import('./pages/CorporatePortal'))
 const Driver = lazy(() => import('./pages/Driver'))
 const Vendor = lazy(() => import('./pages/Vendor'))
 const Go = lazy(() => import('./pages/Go'))
+const GoLanding = lazy(() => import('./pages/GoLanding'))
 import { trpc } from './providers/trpc'
 import { useAuth } from './hooks/useAuth'
 import { usePushNotifications } from './hooks/usePushNotifications'
@@ -159,6 +160,7 @@ export default function App() {
           <Route path="/corporate-portal" element={<CorporatePortal />} />
           <Route path="/driver" element={<Driver />} />
           <Route path="/vendor" element={<Vendor />} />
+          <Route path="/go/:route" element={<GoLanding />} />
           <Route path="/go" element={<Go />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
