@@ -5,8 +5,6 @@ import { trpc } from '@/providers/trpc'
 import { Phone, MessageCircle, Check, ChevronDown, ArrowRight, Star, Shield, Clock, MapPin } from 'lucide-react'
 import { ROUTES } from '@/data/routes'
 
-// ── Types ──────────────────────────────────────────────────────────────────────
-
 type Car = {
   id: number
   name: string
@@ -19,10 +17,9 @@ type Car = {
   isAvailable?: boolean | null
 }
 
-// ── Constants ──────────────────────────────────────────────────────────────────
-
 const FALLBACK_CARS: Car[] = [
-  { id: 1, name: "Swift Dzire", category: "sedan", seats: 5, pricePerKm: "13.00", driverCharges: "250.00", imageUrl: "/cars/swift-dzire.jpg", rating: "4.5" },
+  { id: 1, name: "Swift Dzire", category: "sedan", seats: 4, pricePerKm: "13.00", driverCharges: "250.00", imageUrl: "/cars/swift-dzire.jpg", rating: "4.5" },
+  { id: 3, name: "Honda Amaze", category: "sedan", seats: 4, pricePerKm: "13.00", driverCharges: "250.00", imageUrl: "/cars/honda-amaze.jpg", rating: "4.5" },
   { id: 4, name: "Maruti Ertiga", category: "muv", seats: 6, pricePerKm: "15.00", driverCharges: "250.00", imageUrl: "/cars/maruti-ertiga.jpg", rating: "4.7" },
   { id: 5, name: "Toyota Innova", category: "muv", seats: 6, pricePerKm: "19.00", driverCharges: "250.00", imageUrl: "/cars/toyota-innova.jpg", rating: "4.8" },
   { id: 6, name: "Toyota Innova Crysta", category: "premium", seats: 6, pricePerKm: "20.00", driverCharges: "250.00", imageUrl: "/cars/toyota-innova-crysta.jpg", rating: "4.9" },
@@ -30,8 +27,6 @@ const FALLBACK_CARS: Car[] = [
 ]
 
 const WA_NUMBER = "918796564111"
-
-// ── Helpers ────────────────────────────────────────────────────────────────────
 
 function calcFare(pricePerKm: string, distance: number, isRoundTrip: boolean, driverCharges = "250"): number {
   const rate = parseFloat(pricePerKm)
@@ -59,14 +54,11 @@ function getTomorrow(): string {
   return d.toISOString().split('T')[0]
 }
 
-// ── Component ──────────────────────────────────────────────────────────────────
-
 export default function GoLanding() {
   const { route } = useParams<{ route: string }>()
   const navigate = useNavigate()
   const data = ROUTES[route ?? '']
 
-  // gclid + UTM capture
   useEffect(() => {
     try {
       const p = new URLSearchParams(window.location.search)
@@ -145,108 +137,130 @@ export default function GoLanding() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-white">
 
-      {/* ── Slim header ────────────────────────────────────────────────────── */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-slate-100 h-12 flex items-center justify-between px-4">
-        <a href="/" className="flex items-center gap-2" aria-label="EasyOutstation home">
-          <img src="/logo-icon.png" alt="EasyOutstation" className="h-7 w-auto" />
-          <span className="font-bold text-slate-900 text-sm">EasyOutstation</span>
+      {/* ── Header ──────────────────────────────────────────────────────── */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-slate-100 h-14 flex items-center justify-between px-4">
+        <a href="/" className="flex items-center gap-2.5" aria-label="EasyOutstation home">
+          <img src="/logo-icon.png" alt="EasyOutstation" className="h-9 w-9 rounded-lg object-contain" />
+          <span className="font-bold text-slate-900 text-base">EasyOutstation</span>
         </a>
         <a
           href="tel:+918796564111"
           onClick={() => track('lp_call_click', { route })}
-          className="flex items-center gap-1.5 bg-blue-600 text-white text-xs font-bold px-3.5 py-2 rounded-full shadow-sm shadow-blue-200"
+          className="flex items-center gap-2 bg-blue-600 text-white text-sm font-bold px-4 py-2.5 rounded-full shadow-sm"
         >
-          <Phone className="w-3 h-3" />
+          <Phone className="w-3.5 h-3.5" />
           Call to Book
         </a>
       </header>
 
-      <main className="pt-12">
+      <main className="pt-14">
 
-        {/* ── Hero ────────────────────────────────────────────────────────── */}
-        <section style={{ background: 'linear-gradient(145deg, #0f172a 0%, #1e3a5f 60%, #0f172a 100%)' }} className="px-4 pt-5 pb-4">
+        {/* ── Hero (white) ─────────────────────────────────────────────── */}
+        <section className="bg-white px-4 pt-5 pb-4">
 
-          {/* Route breadcrumb */}
-          <div className="flex items-center gap-1.5 mb-3">
-            <div className="flex items-center gap-1 bg-white/10 rounded-full px-2.5 py-1">
-              <MapPin className="w-3 h-3 text-blue-300" />
-              <span className="text-[11px] text-blue-200 font-medium">{data.from}</span>
+          {/* Route pills */}
+          <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-1.5 bg-blue-50 rounded-full px-3 py-1.5">
+              <MapPin className="w-3.5 h-3.5 text-blue-500" />
+              <span className="text-sm text-slate-700 font-medium">{data.from}</span>
             </div>
-            <ArrowRight className="w-3 h-3 text-slate-500" />
-            <div className="flex items-center gap-1 bg-white/10 rounded-full px-2.5 py-1">
-              <MapPin className="w-3 h-3 text-blue-300" />
-              <span className="text-[11px] text-blue-200 font-medium">{data.to}</span>
+            <ArrowRight className="w-4 h-4 text-slate-400" />
+            <div className="flex items-center gap-1.5 bg-blue-50 rounded-full px-3 py-1.5">
+              <MapPin className="w-3.5 h-3.5 text-blue-500" />
+              <span className="text-sm text-slate-700 font-medium">{data.to}</span>
             </div>
           </div>
 
           {/* H1 */}
-          <h1 className="font-['DM_Serif_Display'] text-[24px] leading-tight mb-1" style={{ color: 'white' }}>
+          <h1 className="text-[28px] font-extrabold text-slate-900 leading-tight mb-3">
             {data.from} to {data.to} Cab
           </h1>
 
-          {/* Fare hero */}
-          <div className="flex items-baseline gap-2 mb-3">
-            <span className="text-slate-400 text-sm">from</span>
-            <span className="text-white font-black text-4xl tracking-tight">
+          {/* Fare */}
+          <div className="flex items-baseline gap-2.5 mb-5">
+            <span className="text-slate-400 text-base font-medium">from</span>
+            <span className="text-slate-900 font-black text-4xl tracking-tight">
               ₹{cheapestFare.toLocaleString('en-IN')}
             </span>
           </div>
 
-          {/* Route meta pills */}
-          <div className="flex gap-2 flex-wrap">
-            <span className="flex items-center gap-1 bg-white/8 border border-white/10 rounded-full px-2.5 py-1 text-[11px] text-slate-300">
-              <Clock className="w-3 h-3 text-slate-400" />
-              {data.duration}
-            </span>
-            <span className="flex items-center gap-1 bg-white/8 border border-white/10 rounded-full px-2.5 py-1 text-[11px] text-slate-300">
-              <MapPin className="w-3 h-3 text-slate-400" />
-              {data.distance} km
-            </span>
-            <span className="flex items-center gap-1 bg-white/8 border border-white/10 rounded-full px-2.5 py-1 text-[11px] text-slate-300">
-              <Shield className="w-3 h-3 text-green-400" />
-              Fixed fare
-            </span>
+          {/* 3 stat cards */}
+          <div className="grid grid-cols-3 gap-2.5">
+            <div className="border border-slate-200 rounded-xl p-3">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Clock className="w-4 h-4 text-blue-500" />
+                <span className="text-sm font-bold text-slate-900">{data.duration}</span>
+              </div>
+              <span className="text-[11px] text-slate-400">Duration</span>
+            </div>
+            <div className="border border-slate-200 rounded-xl p-3">
+              <div className="flex items-center gap-1.5 mb-1">
+                <MapPin className="w-4 h-4 text-blue-500" />
+                <span className="text-sm font-bold text-slate-900">{data.distance} km</span>
+              </div>
+              <span className="text-[11px] text-slate-400">Distance</span>
+            </div>
+            <div className="border border-slate-200 rounded-xl p-3">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Shield className="w-4 h-4 text-green-500" />
+                <span className="text-sm font-bold text-slate-900">Fixed fare</span>
+              </div>
+              <span className="text-[11px] text-slate-400">No hidden charges</span>
+            </div>
           </div>
         </section>
 
-        {/* ── Trip type toggle (white bar) ─────────────────────────────────── */}
-        <div className="bg-white border-b border-slate-100 px-4 py-3 flex items-center gap-2">
-          <span className="text-xs text-slate-400 font-medium mr-1">Trip type:</span>
-          <div className="inline-flex bg-slate-100 rounded-xl p-1 gap-1">
-            <button
-              onClick={() => setIsRoundTrip(false)}
-              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                !isRoundTrip ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400'
-              }`}
-            >
-              One Way
-            </button>
-            <button
-              onClick={() => setIsRoundTrip(true)}
-              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                isRoundTrip ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400'
-              }`}
-            >
-              Round Trip
-            </button>
+        {/* ── Trip type selector ───────────────────────────────────────── */}
+        <div className="bg-white border-y border-slate-100 px-4 py-3">
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-slate-400 font-medium shrink-0">Trip type</span>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setIsRoundTrip(false)}
+                className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-all ${
+                  !isRoundTrip
+                    ? 'border-blue-500 text-blue-600 bg-white shadow-sm'
+                    : 'border-slate-200 text-slate-400 bg-white'
+                }`}
+              >
+                One Way
+              </button>
+              <button
+                onClick={() => setIsRoundTrip(true)}
+                className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-all ${
+                  isRoundTrip
+                    ? 'border-blue-500 text-blue-600 bg-white shadow-sm'
+                    : 'border-slate-200 text-slate-400 bg-white'
+                }`}
+              >
+                Round Trip
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* ── Trust strip ─────────────────────────────────────────────────── */}
-        <div className="bg-green-600 px-4 py-2.5 flex items-center justify-center gap-4 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-          {['Verified drivers', 'Fixed price', '10% advance only', '★ 4.9 rated'].map((t, i) => (
-            <span key={i} className="flex items-center gap-1.5 text-white text-[11px] font-semibold whitespace-nowrap shrink-0">
-              <Check className="w-3 h-3" />
-              {t}
-            </span>
-          ))}
+        {/* ── Trust strip ──────────────────────────────────────────────── */}
+        <div className="bg-white border-b border-slate-100 px-4 py-3 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+          <div className="flex items-center gap-4 flex-nowrap min-w-max">
+            {[
+              { icon: <Check className="w-3.5 h-3.5 text-green-500" />, label: 'Verified drivers' },
+              { icon: <Check className="w-3.5 h-3.5 text-green-500" />, label: 'Fixed price' },
+              { icon: <Check className="w-3.5 h-3.5 text-green-500" />, label: '10% advance only' },
+              { icon: <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />, label: '4.9 rating' },
+            ].map((item, i) => (
+              <div key={i} className="flex items-center gap-1.5 shrink-0">
+                {item.icon}
+                <span className="text-xs text-slate-600 font-medium">{item.label}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* ── Fleet cards ─────────────────────────────────────────────────── */}
-        <section id="fleet-section" className="px-4 pt-5 pb-3">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3">Choose your car</p>
+        {/* ── Fleet cards ─────────────────────────────────────────────── */}
+        <section id="fleet-section" className="bg-white px-4 pt-5 pb-3">
+          <h2 className="text-base font-bold text-slate-900 mb-3">Choose your car</h2>
           <div className="space-y-3">
             {displayCars.map((car, idx) => {
               const fare = calcFare(car.pricePerKm, data.distance, isRoundTrip, car.driverCharges ?? '250')
@@ -255,75 +269,78 @@ export default function GoLanding() {
               return (
                 <div
                   key={car.id}
-                  className={`rounded-2xl overflow-hidden transition-all duration-200 ${
-                    isExpanded
-                      ? 'ring-2 ring-blue-500 shadow-lg shadow-blue-100'
-                      : 'shadow-sm shadow-slate-200'
-                  } bg-white`}
+                  className={`rounded-2xl border overflow-hidden transition-all ${
+                    isExpanded ? 'border-blue-400 shadow-md shadow-blue-50' : 'border-slate-200'
+                  }`}
                 >
-                  {/* Best value ribbon */}
+                  {/* Best value header */}
                   {isBest && (
-                    <div className="bg-gradient-to-r from-green-500 to-emerald-500 px-4 py-1.5 flex items-center gap-2">
-                      <span className="text-white text-[10px] font-black uppercase tracking-widest">Best Value</span>
-                      <span className="text-green-100 text-[10px]">— lowest fare for this route</span>
+                    <div className="flex items-center gap-2.5 px-4 py-2 bg-white border-b border-slate-100">
+                      <span className="bg-green-500 text-white text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg">
+                        Best Value
+                      </span>
+                      <span className="text-green-600 text-xs font-medium">Lowest fare for this route</span>
                     </div>
                   )}
 
-                  {/* Card body */}
+                  {/* Card row */}
                   <button
-                    className="w-full flex items-center gap-3 px-4 py-3.5 text-left"
+                    className="w-full flex items-center gap-3 px-4 py-3.5 text-left bg-white"
                     onClick={() => handleSelectCar(car.id)}
                   >
-                    <div className="w-[88px] h-16 rounded-xl bg-slate-50 shrink-0 flex items-center justify-center overflow-hidden border border-slate-100">
+                    {/* Car image */}
+                    <div className="w-24 h-16 shrink-0 flex items-center justify-center">
                       <img
                         src={car.imageUrl}
                         alt={car.name}
-                        className="w-full h-full object-contain p-1"
+                        className="w-full h-full object-contain"
                         onError={(e) => { (e.target as HTMLImageElement).src = '/cars/swift-dzire.jpg' }}
                         loading="lazy"
                       />
                     </div>
 
+                    {/* Car info */}
                     <div className="flex-1 min-w-0">
-                      <div className="font-bold text-slate-900 text-sm leading-tight">{car.name}</div>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-xs text-slate-400">{car.seats} seater</span>
+                      <div className="font-bold text-slate-900 text-sm mb-0.5">{car.name}</div>
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className="text-xs text-slate-500">{car.seats} seater</span>
                         {car.rating && (
-                          <span className="flex items-center gap-0.5 text-[11px] text-amber-500 font-semibold">
-                            <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                          <span className="flex items-center gap-0.5 text-xs text-amber-500 font-semibold">
+                            <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
                             {car.rating}
                           </span>
                         )}
                       </div>
-                      <div className="text-[11px] text-slate-400 mt-0.5">₹{parseFloat(car.pricePerKm)}/km</div>
+                      <div className="text-xs text-slate-400">₹{parseFloat(car.pricePerKm)}/km</div>
                     </div>
 
-                    <div className="shrink-0 text-right">
-                      <div className="font-black text-blue-700 text-lg leading-tight">
-                        ₹{fare.toLocaleString('en-IN')}
+                    {/* Fare + select */}
+                    <div className="shrink-0 text-right flex flex-col items-end gap-1.5">
+                      <div>
+                        <div className="font-black text-slate-900 text-lg leading-tight">
+                          ₹{fare.toLocaleString('en-IN')}
+                        </div>
+                        <div className="text-[11px] text-slate-400">
+                          {isRoundTrip ? 'round trip' : 'one way'}
+                        </div>
                       </div>
-                      <div className="text-[10px] text-slate-400 mb-2">
-                        {isRoundTrip ? 'round trip' : 'one way'}
-                      </div>
-                      <div className={`text-[11px] font-bold px-3 py-1 rounded-full border transition-all ${
+                      <div className={`text-xs font-semibold px-3.5 py-1.5 rounded-full border transition-all ${
                         isExpanded
                           ? 'bg-blue-600 text-white border-blue-600'
-                          : 'bg-white text-blue-600 border-blue-200'
+                          : 'bg-white text-blue-600 border-blue-300'
                       }`}>
                         {isExpanded ? 'Close' : 'Select'}
                       </div>
                     </div>
                   </button>
 
-                  {/* Inline booking panel */}
+                  {/* Inline booking form */}
                   {isExpanded && (
-                    <div ref={expandRef} className="border-t border-slate-100 bg-slate-50">
-                      <div className="px-4 pt-4 pb-5 space-y-3">
-                        <p className="text-xs font-bold text-slate-600 uppercase tracking-wide">
-                          Complete your booking
-                        </p>
-
-                        {/* Date */}
+                    <div ref={expandRef} className="border-t border-slate-100 bg-slate-50 px-4 pt-4 pb-5">
+                      <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">
+                        Complete your booking
+                      </p>
+                      <div className="space-y-2.5">
                         <div>
                           <label className="text-[11px] text-slate-500 font-medium mb-1 block">Travel date</label>
                           <input
@@ -331,11 +348,9 @@ export default function GoLanding() {
                             value={formDate}
                             min={getTomorrow()}
                             onChange={e => setFormDate(e.target.value)}
-                            className="w-full border border-slate-200 rounded-xl px-3.5 py-3 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-medium"
+                            className="w-full border border-slate-200 rounded-xl px-3.5 py-3 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           />
                         </div>
-
-                        {/* Name */}
                         <div>
                           <label className="text-[11px] text-slate-500 font-medium mb-1 block">Your name</label>
                           <input
@@ -346,8 +361,6 @@ export default function GoLanding() {
                             className="w-full border border-slate-200 rounded-xl px-3.5 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           />
                         </div>
-
-                        {/* Phone */}
                         <div>
                           <label className="text-[11px] text-slate-500 font-medium mb-1 block">Mobile number</label>
                           <input
@@ -360,24 +373,17 @@ export default function GoLanding() {
                             className="w-full border border-slate-200 rounded-xl px-3.5 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           />
                         </div>
-
-                        {/* Submit */}
                         <button
                           onClick={() => handleBookingSubmit(car)}
                           disabled={!formDate || formPhone.length < 10}
-                          className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-xl text-sm flex items-center justify-center gap-2 transition-colors shadow-md shadow-blue-200"
+                          className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-xl text-sm flex items-center justify-center gap-2 transition-colors"
                         >
-                          Book {car.name} — ₹{fare.toLocaleString('en-IN')}
+                          Book {car.name} — ₹{calcFare(car.pricePerKm, data.distance, isRoundTrip, car.driverCharges ?? '250').toLocaleString('en-IN')}
                           <ArrowRight className="w-4 h-4" />
                         </button>
-
-                        <div className="flex items-center justify-center gap-3 text-[10px] text-slate-400">
-                          <span className="flex items-center gap-1"><Check className="w-2.5 h-2.5 text-green-500" />Pay ₹{Math.round(fare * 0.1).toLocaleString('en-IN')} now</span>
-                          <span>·</span>
-                          <span className="flex items-center gap-1"><Check className="w-2.5 h-2.5 text-green-500" />Balance on trip day</span>
-                          <span>·</span>
-                          <span className="flex items-center gap-1"><Check className="w-2.5 h-2.5 text-green-500" />Free cancellation</span>
-                        </div>
+                        <p className="text-center text-[10px] text-slate-400">
+                          Pay ₹{Math.round(calcFare(car.pricePerKm, data.distance, isRoundTrip, car.driverCharges ?? '250') * 0.1).toLocaleString('en-IN')} now · Balance on trip day · Free cancellation
+                        </p>
                       </div>
                     </div>
                   )}
@@ -387,28 +393,28 @@ export default function GoLanding() {
           </div>
         </section>
 
-        {/* ── WhatsApp CTA ────────────────────────────────────────────────── */}
+        {/* ── WhatsApp CTA ─────────────────────────────────────────────── */}
         <section className="px-4 py-4" data-wa-cta-section>
           <a
             href={waUrl}
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => track('lp_whatsapp_click', { route })}
-            className="flex items-center justify-center gap-2.5 w-full text-white font-bold py-4 rounded-2xl text-sm active:scale-[0.98] transition-transform shadow-lg shadow-green-200"
+            className="flex items-center justify-center gap-2.5 w-full text-white font-bold py-4 rounded-2xl text-sm active:scale-[0.98] transition-transform"
             style={{ background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)' }}
           >
             <MessageCircle className="w-5 h-5" />
-            Book on WhatsApp instead
+            Book on WhatsApp
           </a>
           <p className="text-center text-[11px] text-slate-400 mt-2">Prefer to chat? We reply in under 5 minutes.</p>
         </section>
 
-        {/* ── Micro FAQ ───────────────────────────────────────────────────── */}
-        <section className="px-4 py-4">
+        {/* ── Micro FAQ ────────────────────────────────────────────────── */}
+        <section className="px-4 pb-4">
           <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3">Quick answers</p>
           <div className="space-y-2">
             {data.faqs.slice(0, 3).map((faq, i) => (
-              <div key={i} className="bg-white rounded-2xl overflow-hidden shadow-sm shadow-slate-100">
+              <div key={i} className="border border-slate-200 rounded-2xl overflow-hidden bg-white">
                 <button
                   className="w-full flex items-center justify-between gap-3 px-4 py-3.5 text-left"
                   onClick={() => setFaqOpen(prev => prev === i ? null : i)}
@@ -426,8 +432,8 @@ export default function GoLanding() {
           </div>
         </section>
 
-        {/* ── Slim footer ─────────────────────────────────────────────────── */}
-        <footer className="px-4 py-5 pb-32 flex items-center justify-between">
+        {/* ── Footer ───────────────────────────────────────────────────── */}
+        <footer className="px-4 py-5 pb-32 flex items-center justify-between border-t border-slate-100">
           <p className="text-[11px] text-slate-400">© EasyOutstation · easyoutstation.com</p>
           <div className="flex gap-3">
             <a href="/terms" className="text-[11px] text-slate-400">Terms</a>
@@ -436,15 +442,24 @@ export default function GoLanding() {
         </footer>
       </main>
 
-      {/* ── Sticky bottom bar ───────────────────────────────────────────── */}
+      {/* ── Sticky bottom bar ────────────────────────────────────────── */}
       {cheapestCar && (
         <div
-          className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-[0_-8px_32px_rgba(0,0,0,0.12)]"
+          className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-[0_-4px_24px_rgba(0,0,0,0.10)]"
           style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
         >
           <div className="flex items-center gap-3 px-4 py-3">
+            {/* Car thumbnail */}
+            <div className="w-12 h-9 shrink-0 flex items-center justify-center">
+              <img
+                src={cheapestCar.imageUrl}
+                alt={cheapestCar.name}
+                className="w-full h-full object-contain"
+                onError={(e) => { (e.target as HTMLImageElement).src = '/cars/swift-dzire.jpg' }}
+              />
+            </div>
             <div className="flex-1 min-w-0">
-              <div className="text-[11px] text-slate-400 leading-tight">
+              <div className="text-[11px] text-slate-400 leading-tight truncate">
                 {cheapestCar.name} · {isRoundTrip ? 'Round trip' : 'One way'}
               </div>
               <div className="font-black text-slate-900 text-xl leading-tight">
@@ -454,10 +469,9 @@ export default function GoLanding() {
             <button
               onClick={() => {
                 handleSelectCar(cheapestCar.id)
-                const el = document.getElementById('fleet-section')
-                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                document.getElementById('fleet-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
               }}
-              className="shrink-0 flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-sm rounded-xl px-6 shadow-md shadow-blue-200 transition-colors"
+              className="shrink-0 flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-sm rounded-2xl px-5 transition-colors"
               style={{ minHeight: 48 }}
             >
               Book Now
