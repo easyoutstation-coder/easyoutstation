@@ -864,7 +864,9 @@ export default function BookingPage() {
             <span className="text-slate-300">·</span>
             <span className="text-slate-500">{effectiveFromCity} → {effectiveToCity}</span>
           </div>
-          <div className="text-base font-bold text-blue-700">₹{totalPrice.toLocaleString("en-IN")}</div>
+          <div className="text-base font-bold text-blue-700">
+            {finalDistance > 0 ? `₹${totalPrice.toLocaleString("en-IN")}` : `₹${pricePerKm}/km`}
+          </div>
         </div>
 
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8">
@@ -1410,16 +1412,23 @@ export default function BookingPage() {
                   {!isRentalMode && (
                     <>
                       <Separator />
-                      <div className="bg-primary/5 rounded-xl p-3">
-                        <div className="text-xs text-muted-foreground mb-1">
-                          {tripType === "round_trip" ? "Round Trip Total" : "One Way Total"}
+                      {finalDistance > 0 ? (
+                        <div className="bg-primary/5 rounded-xl p-3">
+                          <div className="text-xs text-muted-foreground mb-1">
+                            {tripType === "round_trip" ? "Round Trip Total" : "One Way Total"}
+                          </div>
+                          <div className="text-2xl font-bold text-primary">₹{(resumeBookingId > 0 && resumeBooking ? totalPrice : basePrice + totalDriverCharges).toLocaleString("en-IN")}</div>
+                          <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                            <div>₹{pricePerKm}/km × {billedKm} km</div>
+                            <div>Driver: ₹{totalDriverCharges} · Tolls: at actuals</div>
+                          </div>
                         </div>
-                        <div className="text-2xl font-bold text-primary">₹{(resumeBookingId > 0 && resumeBooking ? totalPrice : basePrice + totalDriverCharges).toLocaleString("en-IN")}</div>
-                        <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
-                          <div>₹{pricePerKm}/km × {billedKm} km</div>
-                          <div>Driver: ₹{totalDriverCharges} · Tolls: at actuals</div>
+                      ) : (
+                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800">
+                          <div className="font-semibold mb-1">Fare calculated automatically</div>
+                          Enter your exact pickup &amp; drop addresses above — total will appear here.
                         </div>
-                      </div>
+                      )}
                     </>
                   )}
                   <div className="space-y-2 text-xs text-muted-foreground">
