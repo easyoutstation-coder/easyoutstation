@@ -180,7 +180,7 @@ export default function HeroSection() {
   const [returnOpen, setReturnOpen] = useState(false);
   const [pickupTime, setPickupTime] = useState("08:00");
   const [returnTime, setReturnTime] = useState("08:00");
-  const [tripType, setTripType] = useState("round_trip");
+  const [tripType, setTripType] = useState("one_way");
   const [sameDayReturn, setSameDayReturn] = useState(false);
   const [rentalHours, setRentalHours] = useState(RENTAL_MIN_HOURS);
 
@@ -371,6 +371,15 @@ export default function HeroSection() {
                 <span className="px-2.5 py-1 rounded-full bg-green-50 border border-green-200 text-xs font-semibold text-green-700 shrink-0 ml-2">
                   ₹0 Fee
                 </span>
+              </div>
+
+              {/* Trust strip — fix 2 */}
+              <div className="flex items-center justify-center gap-3 mb-4 py-2 rounded-xl bg-green-50 border border-green-100 text-[11px] text-green-800 font-medium">
+                <span className="flex items-center gap-1"><CheckCircle className="w-3 h-3 shrink-0" />Verified drivers</span>
+                <span className="text-green-200">·</span>
+                <span className="flex items-center gap-1"><CheckCircle className="w-3 h-3 shrink-0" />Fixed price</span>
+                <span className="text-green-200">·</span>
+                <span className="flex items-center gap-1">⭐ 4.9 rated</span>
               </div>
 
               <div className="space-y-4">
@@ -765,6 +774,36 @@ export default function HeroSection() {
                         : "See Available Vehicles & Fares"}
                   <ArrowRight className="w-4 h-4" />
                 </Button>
+
+                {/* Fix 4: no service fee */}
+                <p className="text-center text-[11px] text-slate-400 -mt-1">Book direct — no service fee · no markup</p>
+
+                {/* Fix 3: popular route fare hints */}
+                {!isRental && !isTour && (
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Popular routes</p>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {[
+                        { to: "Manali", km: 540, tripType: "round_trip" },
+                        { to: "Shimla", km: 350, tripType: "round_trip" },
+                        { to: "Jaipur", km: 280, tripType: "one_way" },
+                        { to: "Rishikesh", km: 250, tripType: "round_trip" },
+                      ].map(({ to, km, tripType: rt }) => {
+                        const fare = Math.round(km * 13 * 1.25 + 250);
+                        return (
+                          <button
+                            key={to}
+                            onClick={() => navigate(`/cars?from=Delhi&to=${to}&distance=${km}&tripType=${rt}`)}
+                            className="flex items-center justify-between px-3 py-2 rounded-xl bg-slate-50 hover:bg-blue-50 border border-slate-100 hover:border-blue-200 transition-colors text-left"
+                          >
+                            <span className="text-xs font-medium text-slate-700 truncate mr-1">Delhi→{to}</span>
+                            <span className="text-xs font-bold text-blue-600 shrink-0">₹{fare.toLocaleString("en-IN")}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 {/* Referral pill */}
                 <Link to="/referral" className="flex items-center justify-center gap-2 w-full py-2 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 hover:border-blue-300 transition-colors group">

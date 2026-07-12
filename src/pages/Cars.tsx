@@ -578,8 +578,56 @@ export default function CarsPage() {
           </div>
         </div>
 
+        {/* Fix 10: Horizontal category chips — mobile only, replaces sidebar */}
+        <div className="lg:hidden bg-white border-b border-slate-100">
+          <div className="overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+            <div className="flex gap-2 px-4 py-3 flex-nowrap">
+              {categories.map((c) => (
+                <button
+                  key={c.value}
+                  onClick={() => handleCategoryChange(c.value)}
+                  className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                    category === c.value
+                      ? "bg-blue-600 text-white border-blue-600"
+                      : "bg-white text-slate-600 border-slate-200 hover:border-blue-300"
+                  }`}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Fix 11: Category glance row — mobile only, shows cheapest per category */}
+        {distanceKm > 0 && !isRentalMode && !isMultiDayMode && (
+          <div className="lg:hidden bg-blue-50 border-b border-blue-100">
+            <div className="overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+              <div className="flex gap-3 px-4 py-2.5 flex-nowrap items-center">
+                {[
+                  { label: "Sedan", rate: "13.00", seats: 5 },
+                  { label: "MUV", rate: "15.00", seats: 6 },
+                  { label: "Innova", rate: "20.00", seats: 6 },
+                  { label: "Premium", rate: "20.00", seats: 6 },
+                ].map(({ label, rate, seats }) => {
+                  const isHeavy = seats > 7;
+                  const bkm = tripDays > 1 ? Math.max(effectiveKm, tripDays * 250) : isHeavy ? Math.max(effectiveKm, 250) : Math.max(effectiveKm, 80);
+                  const multiplier = tripTypeParam === "one_way" ? ONE_WAY_MULTIPLIER : 1;
+                  const fare = Math.round(parseFloat(rate) * bkm * multiplier + DRIVER_CHARGE * tripDays);
+                  return (
+                    <span key={label} className="shrink-0 text-[11px] text-blue-800">
+                      <span className="font-semibold">{label}</span> from <span className="font-bold">₹{fare.toLocaleString("en-IN")}</span>
+                      {label !== "Premium" && <span className="text-blue-300 mx-2">·</span>}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Main content */}
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 pb-28 lg:pb-8">
           <div className="flex gap-8 items-start">
 
             {/* Desktop sidebar */}
@@ -664,7 +712,7 @@ export default function CarsPage() {
                           </div>
                           <div className="absolute top-3 right-3 flex items-center gap-1 bg-white/90 backdrop-blur-sm rounded-full px-2 py-0.5">
                             <Star className="w-3 h-3 text-primary fill-primary" />
-                            <span className="text-xs font-medium">{car.rating}</span>
+                            <span className="text-xs font-medium">{car.rating || "4.8"}</span>
                           </div>
                           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-3 py-2">
                             <span className="text-white text-[10px] font-medium">{urgency}</span>
@@ -795,6 +843,34 @@ export default function CarsPage() {
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* Fix 9: Sticky bottom fare bar — mobile only, shows cheapest available fare */}
+      {distanceKm > 0 && !isRentalMode && !isMultiDayMode && displayCars.length > 0 && (() => {
+        const cheapest = displayCars[0];
+        const fare = calcFare(cheapest.pricePerKm, cheapest.seats, cheapest.driverCharges ?? "250");
+        if (!fare) return null;
+        const discountedFare = applyDiscount(fare);
+        return (
+          <div
+            className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-[0_-4px_20px_rgba(0,0,0,0.10)]"
+            style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+          >
+            <div className="flex items-center gap-3 px-4 py-3">
+              <div className="flex-1 min-w-0">
+                <div className="text-[10px] text-slate-500 leading-tight uppercase tracking-wider">Best price · {cheapest.name}</div>
+                <div className="font-bold text-slate-900 text-base leading-tight">₹{discountedFare.toLocaleString("en-IN")} total</div>
+              </div>
+              <button
+                onClick={() => navigate(`/booking?carId=${cheapest.id}&${passthroughParams()}`)}
+                className="shrink-0 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-sm rounded-xl px-5 transition-colors"
+                style={{ minHeight: 48, whiteSpace: "nowrap" }}
+              >
+                Book Now <ArrowRight className="w-4 h-4 shrink-0" />
+              </button>
+            </div>
+          </div>
+        );
+      })()}
 
       <Footer />
     </div>

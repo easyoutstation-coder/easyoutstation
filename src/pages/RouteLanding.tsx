@@ -13,6 +13,7 @@ const ROUTES: Record<string, {
   fare: { min: number; max: number }; toll: number;
   highlights: string[]; faqs: { q: string; a: string }[];
   description: string;
+  defaultTripType?: 'one_way' | 'round_trip';
 }> = {
   "delhi-to-manali": {
     from: "Delhi", to: "Manali", distance: 540, duration: "12-14 hours",
@@ -532,6 +533,15 @@ export default function RouteLanding() {
   const lm = getLandmark(data?.to ?? "");
   const guidePost = blogPosts.find((p) => p.route.routeSlug === route);
 
+  // Fix 8: round-trip default for getaway destinations
+  const ROUND_TRIP_DESTINATIONS = new Set([
+    'manali', 'shimla', 'mussoorie', 'nainital', 'rishikesh', 'haridwar', 'dharamshala',
+    'kashmir', 'vaishno devi', 'corbett', 'kasauli', 'dalhousie', 'spiti', 'leh', 'kasol',
+    'lansdowne', 'kedarnath', 'mount abu', 'jodhpur', 'udaipur', 'pushkar', 'jaipur',
+    'agra', 'mathura', 'vrindavan', 'amritsar', 'ayodhya', 'banaras', 'prayagraj',
+  ]);
+  const defaultTripType = data && ROUND_TRIP_DESTINATIONS.has(data.to.toLowerCase()) ? 'round_trip' : 'one_way';
+
   const canonicalUrl = `https://www.easyoutstation.com/cab/${route ?? ""}`;
   const pageTitle = data
     ? `${data.from} to ${data.to} Cab | ₹${data.fare.min.toLocaleString("en-IN")} · Verified Drivers | EasyOutstation`
@@ -609,33 +619,31 @@ export default function RouteLanding() {
             <div className="font-bold text-slate-900 text-base leading-tight">₹{data.fare.min.toLocaleString("en-IN")}</div>
           </div>
           <button
-            onClick={() => navigate(`/cars?from=${data.from}&to=${data.to}&distance=${data.distance}`)}
+            onClick={() => navigate(`/cars?from=${data.from}&to=${data.to}&distance=${data.distance}&tripType=${defaultTripType}`)}
             className="shrink-0 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold text-sm rounded-xl px-5 transition-colors"
             style={{ minHeight: 48, whiteSpace: "nowrap" }}
           >
-            Book Now <ArrowRight className="w-4 h-4 shrink-0" />
+            Continue <ArrowRight className="w-4 h-4 shrink-0" />
           </button>
         </div>
       </div>
 
       <main className="pt-20">
-        {/* Hero — landmark photo background */}
-        <div className="relative overflow-hidden bg-slate-900">
-          {/* Image in normal flow — same pattern as homepage cards (works with Unsplash CDN) */}
+        {/* Hero — landmark photo background (Fix 6: image absolute so content drives height, no overflow clip) */}
+        <div className="relative bg-slate-900" style={{ minHeight: "clamp(380px, 65vw, 520px)" }}>
           {lm && (
             <img
               src={lm.image}
               alt={lm.landmark}
-              className="w-full object-cover"
-              style={{ height: "clamp(260px, 55vw, 480px)", objectPosition: lm.objectPosition }}
+              className="absolute inset-0 w-full h-full object-cover"
+              style={{ objectPosition: lm.objectPosition }}
               onError={(e) => { (e.target as HTMLImageElement).src = "/hero-bg.jpg"; }}
             />
           )}
-          {!lm && <div style={{ height: "clamp(260px, 55vw, 480px)" }} />}
           {/* Dark overlay */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/55 to-black/78" />
-          {/* Text centered over image */}
-          <div className="absolute inset-0 flex items-center justify-center px-4 py-10">
+          {/* Text — relative so it drives the container height */}
+          <div className="relative flex items-center justify-center px-4 py-16" style={{ minHeight: "inherit" }}>
             <div className="text-white text-center max-w-4xl w-full">
               <div className="flex items-center justify-center gap-2 text-blue-300 text-sm font-medium mb-4" style={{ textShadow: "0 1px 6px rgba(0,0,0,0.8)" }}>
                 <MapPin className="w-4 h-4" />
@@ -651,7 +659,7 @@ export default function RouteLanding() {
                 <div className="flex items-center gap-2"><Shield className="w-4 h-4 text-green-400" />Verified Drivers</div>
               </div>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" onClick={() => navigate(`/cars?from=${data.from}&to=${data.to}&distance=${data.distance}`)}
+                <Button size="lg" onClick={() => navigate(`/cars?from=${data.from}&to=${data.to}&distance=${data.distance}&tripType=${defaultTripType}`)}
                   className="bg-blue-600 hover:bg-blue-700 text-white px-8 h-12 text-base gap-2">
                   Book Now — From ₹{data.fare.min.toLocaleString("en-IN")} <ArrowRight className="w-4 h-4" />
                 </Button>

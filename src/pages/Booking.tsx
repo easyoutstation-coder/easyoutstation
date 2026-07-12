@@ -873,18 +873,30 @@ export default function BookingPage() {
             <ArrowLeft className="w-4 h-4" />
             Change vehicle or route
           </button>
-          {/* Steps */}
-          <div className="flex items-center justify-center gap-2 mb-8">
-            {steps.map((step, idx) => (
-              <div key={step.id} className="flex items-center gap-2">
-                <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                  currentStep === step.id ? "bg-primary text-white shadow-md" :
-                  currentStep > step.id ? "bg-green-100 text-green-700" : "bg-white text-muted-foreground border"
+          {/* Fix 13: Numbered 4-step progress stepper */}
+          <div className="flex items-center justify-center gap-0 mb-8 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+            {[
+              { num: "01", label: "Trip", done: true, active: false },
+              { num: "02", label: "Vehicle", done: true, active: false },
+              { num: "03", label: "Details", done: currentStep === 3, active: currentStep < 3 },
+              { num: "04", label: "Confirm", done: false, active: currentStep === 3 },
+            ].map((s, idx) => (
+              <div key={s.num} className="flex items-center shrink-0">
+                <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                  s.done
+                    ? "bg-green-100 text-green-700"
+                    : s.active
+                      ? "bg-blue-600 text-white shadow-md"
+                      : "bg-white text-slate-400 border border-slate-200"
                 }`}>
-                  {currentStep > step.id ? <Check className="w-4 h-4" /> : <step.icon className="w-4 h-4" />}
-                  <span className="hidden sm:inline">{step.label}</span>
+                  {s.done
+                    ? <Check className="w-3 h-3 shrink-0" />
+                    : <span className="font-bold tabular-nums">{s.num}</span>}
+                  <span>{s.label}</span>
                 </div>
-                {idx < steps.length - 1 && <div className={`w-8 h-0.5 ${currentStep > step.id ? "bg-green-400" : "bg-slate-200"}`} />}
+                {idx < 3 && (
+                  <div className={`w-6 sm:w-8 h-0.5 shrink-0 ${s.done ? "bg-green-400" : "bg-slate-200"}`} />
+                )}
               </div>
             ))}
           </div>

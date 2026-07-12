@@ -53,7 +53,7 @@ export default function WhatsAppFloat() {
   if (!floatVisible) return null;
 
   return (
-    <div className="fixed bottom-20 right-5 z-40 flex flex-col items-end gap-2 md:bottom-8 md:right-8">
+    <div className="fixed bottom-24 right-4 z-40 flex flex-col items-end gap-2 md:bottom-8 md:right-8">
       {/* Tooltip */}
       {showTooltip && (
         <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-xl animate-slide-up max-w-[220px]">
