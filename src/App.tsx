@@ -160,7 +160,7 @@ export default function App() {
           <Route path="/corporate-portal" element={<CorporatePortal />} />
           <Route path="/driver" element={<Driver />} />
           <Route path="/vendor" element={<Vendor />} />
-          <Route path="/go/:route" element={<GoLanding />} />
+          <Route path="/cab/:route/paid" element={<GoLanding />} />
           <Route path="/go" element={<Go />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
