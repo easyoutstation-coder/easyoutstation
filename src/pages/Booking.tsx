@@ -548,8 +548,11 @@ export default function BookingPage() {
     : 'overnight';
 
   const fireBookingStarted = () => {
+    const sessionKey = 'eo_bs_fired';
+    try { if (sessionStorage.getItem(sessionKey)) return; } catch {}
     if (bookingStartedFiredRef.current) return;
     bookingStartedFiredRef.current = true;
+    try { sessionStorage.setItem(sessionKey, '1'); } catch {}
     (window as any).dataLayer = (window as any).dataLayer || [];
     (window as any).dataLayer.push({
       event: 'booking_started',
@@ -558,6 +561,7 @@ export default function BookingPage() {
       trip_type: tripType,
       return_type: getReturnType(),
       vehicle_name: effectiveCar?.name ?? '',
+      page_variant: 'site',
     });
   };
 
@@ -667,6 +671,11 @@ export default function BookingPage() {
             travel_date: pickupDate ? format(pickupDate, 'yyyy-MM-dd') : '',
             return_type: getReturnType(),
             advance_paid: 0,
+            page_variant: 'site',
+          });
+          // PII in a separate push — consumed by Enhanced Conversions tag only, excluded from GA4
+          (window as any).dataLayer.push({
+            event: 'booking_submitted_pii',
             customer_email: customerEmail,
             customer_phone: `+91${customerPhone}`,
           });
@@ -734,6 +743,11 @@ export default function BookingPage() {
                 travel_date: pickupDate ? format(pickupDate, 'yyyy-MM-dd') : '',
                 return_type: getReturnType(),
                 advance_paid: Math.max(100, Math.round(totalPrice * 0.1)),
+                page_variant: 'site',
+              });
+              // PII in a separate push — consumed by Enhanced Conversions tag only, excluded from GA4
+              (window as any).dataLayer.push({
+                event: 'booking_submitted_pii',
                 customer_email: customerEmail,
                 customer_phone: `+91${customerPhone}`,
               });
@@ -1347,16 +1361,22 @@ export default function BookingPage() {
                         {formError}
                       </div>
                     )}
+                    {!isRentalMode && finalDistance === 0 && (
+                      <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-800 text-sm px-4 py-3 rounded-xl">
+                        <AlertCircle className="w-4 h-4 shrink-0" />
+                        Enter your exact pickup address to see your fare.
+                      </div>
+                    )}
                     <div className="flex justify-between">
                       <Button variant="outline" onClick={handleBack} disabled={currentStep === 1} className="gap-2">
                         <ArrowLeft className="w-4 h-4" /> Back
                       </Button>
                     {currentStep < 3 ? (
-                      <Button onClick={handleNext} className="bg-primary gap-2">
+                      <Button onClick={handleNext} disabled={!isRentalMode && finalDistance === 0} className="bg-primary gap-2">
                         Continue <ArrowRight className="w-4 h-4" />
                       </Button>
                     ) : (
-                      <Button onClick={handleSubmit} disabled={isSubmitting} className="bg-primary gap-1.5">
+                      <Button onClick={handleSubmit} disabled={isSubmitting || (!isRentalMode && finalDistance === 0)} className="bg-primary gap-1.5">
                         {isSubmitting
                           ? <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</>
                           : <><span className="hidden sm:inline">Pay ₹{Math.max(100, Math.round(totalPrice * 0.1)).toLocaleString("en-IN")} & Confirm</span><span className="sm:hidden">Pay ₹{Math.max(100, Math.round(totalPrice * 0.1)).toLocaleString("en-IN")}</span><Check className="w-4 h-4" /></>

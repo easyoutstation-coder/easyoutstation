@@ -761,18 +761,22 @@ export default function HeroSection() {
                   </p>
                 )}
 
-                <Button onClick={isTour ? handleTourSearch : isRental ? handleRentalSearch : handleSearch}
+                <Button
+                  onClick={isTour ? handleTourSearch : isRental ? handleRentalSearch : handleSearch}
+                  disabled={!isRental && !isTour && isCalc}
                   className={`w-full h-12 text-white font-semibold text-sm gap-2 shadow-sm transition-all ${isTour ? "bg-violet-600 hover:bg-violet-700" : "bg-blue-600 hover:bg-blue-700"}`}>
-                  {isTour
-                    ? tourFareMin
-                      ? `See Tour Vehicles · ₹${tourFareMin.toLocaleString("en-IN")}–₹${tourFareMax?.toLocaleString("en-IN")} (${tourDays}d)`
-                      : "See Tour Vehicles & Fares"
-                    : isRental
-                      ? `See Rental Vehicles · from ₹${(RENTAL_BANDS[0].hourly * rentalHours).toLocaleString("en-IN")}`
-                      : displayFareMin
-                        ? `See Vehicles · ₹${displayFareMin.toLocaleString("en-IN")}–₹${displayFareMax?.toLocaleString("en-IN")}${tripDays > 1 ? ` (${tripDays}d)` : ""}`
-                        : "See Available Vehicles & Fares"}
-                  <ArrowRight className="w-4 h-4" />
+                  {!isRental && !isTour && isCalc
+                    ? <><Loader2 className="w-4 h-4 animate-spin" /> Calculating route...</>
+                    : isTour
+                      ? tourFareMin
+                        ? `See Tour Vehicles · ₹${tourFareMin.toLocaleString("en-IN")}–₹${tourFareMax?.toLocaleString("en-IN")} (${tourDays}d)`
+                        : "See Tour Vehicles & Fares"
+                      : isRental
+                        ? `See Rental Vehicles · from ₹${(RENTAL_BANDS[0].hourly * rentalHours).toLocaleString("en-IN")}`
+                        : displayFareMin
+                          ? `See Vehicles · ₹${displayFareMin.toLocaleString("en-IN")}–₹${displayFareMax?.toLocaleString("en-IN")}${tripDays > 1 ? ` (${tripDays}d)` : ""}`
+                          : "See Available Vehicles & Fares"}
+                  {(!isCalc || isRental || isTour) && <ArrowRight className="w-4 h-4" />}
                 </Button>
 
                 {/* Fix 4: no service fee */}

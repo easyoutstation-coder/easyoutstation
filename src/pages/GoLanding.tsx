@@ -77,6 +77,8 @@ export default function GoLanding() {
   const [formPhone, setFormPhone] = useState('')
   const [faqOpen, setFaqOpen] = useState<number | null>(null)
   const expandRef = useRef<HTMLDivElement>(null)
+  const quoteViewedRef = useRef(false)
+  const bookingStartedRef = useRef(false)
 
   const { data: liveCars } = trpc.car.list.useQuery(undefined, { staleTime: 5 * 60 * 1000 })
 
@@ -86,6 +88,7 @@ export default function GoLanding() {
       : 'EasyOutstation — Outstation Cabs',
     description: data?.description ?? 'Book outstation cabs from Delhi at fixed fares.',
     noindex: true,
+    canonical: data ? `https://www.easyoutstation.com/cab/${route}` : undefined,
   })
 
   useEffect(() => {
@@ -111,6 +114,44 @@ export default function GoLanding() {
 
   const waText = encodeURIComponent(`Hi, I want to book a ${data.from} to ${data.to} cab. Can you help me?`)
   const waUrl = `https://wa.me/${WA_NUMBER}?text=${waText}`
+
+  // Fix 2a: quote_viewed — fire once after fare resolves, never on toggle
+  useEffect(() => {
+    if (quoteViewedRef.current || !cheapestCar) return
+    quoteViewedRef.current = true
+    const dl = (window as any).dataLayer = (window as any).dataLayer || []
+    dl.push({
+      event: 'quote_viewed',
+      origin: data.from,
+      destination: data.to,
+      travel_date: null,
+      return_date: null,
+      trip_type: isRoundTrip ? 'round_trip' : 'one_way',
+      quoted_fare: cheapestFare,
+      cab_type_shown: cheapestCar.category === 'sedan' ? 'Sedan' : cheapestCar.category === 'muv' ? 'MUV' : cheapestCar.category === 'premium' ? 'Premium' : 'Luxury',
+      distance_km: data.distance,
+      page_variant: 'paid_lp',
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cheapestCar])
+
+  // Fix 2b: booking_started — once per session across both LP and main wizard
+  function fireBookingStarted(car: Car) {
+    const sessionKey = 'eo_bs_fired'
+    try { if (sessionStorage.getItem(sessionKey)) return } catch {}
+    if (bookingStartedRef.current) return
+    bookingStartedRef.current = true
+    try { sessionStorage.setItem(sessionKey, '1') } catch {}
+    const dl = (window as any).dataLayer = (window as any).dataLayer || []
+    dl.push({
+      event: 'booking_started',
+      route: `${data.from}-${data.to}`,
+      cab_type: car.category === 'sedan' ? 'Sedan' : car.category === 'muv' ? 'MUV' : car.category === 'premium' ? 'Premium' : 'Luxury',
+      trip_type: isRoundTrip ? 'round_trip' : 'one_way',
+      vehicle_name: car.name,
+      page_variant: 'paid_lp',
+    })
+  }
 
   function handleSelectCar(carId: number) {
     const car = displayCars.find(c => c.id === carId)
@@ -345,7 +386,7 @@ export default function GoLanding() {
                             type="date"
                             value={formDate}
                             min={getTomorrow()}
-                            onChange={e => setFormDate(e.target.value)}
+                            onChange={e => { fireBookingStarted(car); setFormDate(e.target.value) }}
                             className="w-full border border-slate-200 rounded-xl px-3.5 py-3 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           />
                         </div>
@@ -355,7 +396,7 @@ export default function GoLanding() {
                             type="text"
                             placeholder="Enter your name"
                             value={formName}
-                            onChange={e => setFormName(e.target.value)}
+                            onChange={e => { fireBookingStarted(car); setFormName(e.target.value) }}
                             className="w-full border border-slate-200 rounded-xl px-3.5 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           />
                         </div>
@@ -367,7 +408,7 @@ export default function GoLanding() {
                             placeholder="10-digit number"
                             value={formPhone}
                             maxLength={10}
-                            onChange={e => setFormPhone(e.target.value.replace(/\D/g, ''))}
+                            onChange={e => { fireBookingStarted(car); setFormPhone(e.target.value.replace(/\D/g, '')) }}
                             className="w-full border border-slate-200 rounded-xl px-3.5 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           />
                         </div>

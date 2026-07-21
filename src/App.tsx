@@ -92,10 +92,9 @@ function SiteGate({ children }: { children: React.ReactNode }) {
   // Scroll to top on page navigation, but skip if navigating to a hash anchor
   useEffect(() => {
     if (!hash) window.scrollTo(0, 0);
-    // Fire GA4 page_view on every SPA navigation (gtag send_page_view only fires on hard load)
-    if (typeof (window as any).gtag === 'function') {
-      (window as any).gtag('config', 'G-7KVH5V164G', { page_path: pathname });
-    }
+    // Fire GA4 page_view on every SPA navigation via GTM dataLayer
+    const dl = (window as any).dataLayer = (window as any).dataLayer || [];
+    dl.push({ event: 'page_view', page_path: pathname });
   }, [pathname, hash])
 
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin'
