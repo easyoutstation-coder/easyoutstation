@@ -4,6 +4,7 @@ import { useSeo } from '@/hooks/useSeo'
 import { trpc } from '@/providers/trpc'
 import { Phone, MessageCircle, Check, ChevronDown, ArrowRight, Star, Shield, Clock, MapPin } from 'lucide-react'
 import { ROUTES } from '@/data/routes'
+import { FALLBACK_CARS as ALL_FALLBACK_CARS } from '@/data/carRates'
 
 type Car = {
   id: number
@@ -17,14 +18,9 @@ type Car = {
   isAvailable?: boolean | null
 }
 
-const FALLBACK_CARS: Car[] = [
-  { id: 1, name: "Swift Dzire", category: "sedan", seats: 4, pricePerKm: "13.00", driverCharges: "250.00", imageUrl: "/cars/swift-dzire.jpg", rating: "4.5" },
-  { id: 3, name: "Honda Amaze", category: "sedan", seats: 4, pricePerKm: "13.00", driverCharges: "250.00", imageUrl: "/cars/honda-amaze.jpg", rating: "4.5" },
-  { id: 4, name: "Maruti Ertiga", category: "muv", seats: 6, pricePerKm: "16.00", driverCharges: "250.00", imageUrl: "/cars/maruti-ertiga.jpg", rating: "4.7" },
-  { id: 5, name: "Toyota Innova", category: "muv", seats: 6, pricePerKm: "20.00", driverCharges: "250.00", imageUrl: "/cars/toyota-innova.jpg", rating: "4.8" },
-  { id: 6, name: "Toyota Innova Crysta", category: "premium", seats: 6, pricePerKm: "21.00", driverCharges: "250.00", imageUrl: "/cars/toyota-innova-crysta.jpg", rating: "4.9" },
-  { id: 8, name: "Toyota Innova Hycross", category: "luxury", seats: 6, pricePerKm: "23.00", driverCharges: "250.00", imageUrl: "/cars/toyota-innova-hycross.jpg", rating: "4.95" },
-]
+const FALLBACK_CARS: Car[] = ALL_FALLBACK_CARS
+  .filter(c => ["sedan", "muv", "premium", "luxury"].includes(c.category))
+  .slice(0, 6)
 
 const WA_NUMBER = "918796564111"
 

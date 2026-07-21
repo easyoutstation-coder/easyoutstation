@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router";
 import { vehicleToBand, rentalFare, RENTAL_BANDS } from "@/lib/rental";
 import { trpc } from "@/providers/trpc";
+import { FALLBACK_CARS } from "@/data/carRates";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -322,26 +323,7 @@ export default function CarsPage() {
     seats !== "all" ||
     searchQuery;
 
-  const fallbackCars = [
-    { id: 1, name: "Swift Dzire", brand: "Maruti Suzuki", category: "sedan", seats: 5, pricePerKm: "13.00", rating: "4.50", reviewCount: 128, imageUrl: "/cars/swift-dzire.jpg", isAvailable: true, description: "Budget-friendly sedan ideal for couples and small families", fuelType: "diesel", transmission: "manual" },
-    { id: 3, name: "Honda Amaze", brand: "Honda", category: "sedan", seats: 5, pricePerKm: "13.00", rating: "4.50", reviewCount: 72, imageUrl: "/cars/honda-amaze.jpg", isAvailable: true, description: "Compact sedan with comfortable interiors. Toll, parking & state taxes at actuals.", fuelType: "petrol", transmission: "manual" },
-    { id: 2, name: "Toyota Etios", brand: "Toyota", category: "sedan", seats: 5, pricePerKm: "13.00", rating: "4.60", reviewCount: 96, imageUrl: "/cars/toyota-etios.jpg", isAvailable: true, description: "Reliable sedan with Toyota's legendary durability", fuelType: "diesel", transmission: "manual" },
-    { id: 4, name: "Maruti Ertiga", brand: "Maruti Suzuki", category: "muv", seats: 6, pricePerKm: "16.00", rating: "4.70", reviewCount: 215, imageUrl: "/cars/maruti-ertiga.jpg", isAvailable: true, description: "Spacious MUV perfect for family trips", fuelType: "petrol", transmission: "manual" },
-    { id: 5, name: "Toyota Innova", brand: "Toyota", category: "muv", seats: 6, pricePerKm: "20.00", rating: "4.80", reviewCount: 342, imageUrl: "/cars/toyota-innova.jpg", isAvailable: true, description: "The iconic Indian family vehicle", fuelType: "diesel", transmission: "manual" },
-    { id: 18, name: "Tata Hexa", brand: "Tata", category: "muv", seats: 7, pricePerKm: "20.00", rating: "4.65", reviewCount: 28, imageUrl: "/cars/tata-hexa.jpg", isAvailable: true, description: "Powerful 6+1 seater MUV with bold design and VARICOR diesel engine. Ideal for family outstation trips.", fuelType: "diesel", transmission: "manual" },
-    { id: 6, name: "Toyota Innova Crysta", brand: "Toyota", category: "premium", seats: 6, pricePerKm: "21.00", rating: "4.90", reviewCount: 456, imageUrl: "/cars/toyota-innova-crysta.jpg", isAvailable: true, description: "Premium MPV with luxurious interiors", fuelType: "diesel", transmission: "automatic" },
-    { id: 7, name: "Kia Carens", brand: "Kia", category: "premium", seats: 6, pricePerKm: "17.00", rating: "4.75", reviewCount: 89, imageUrl: "/cars/kia-carens.jpg", isAvailable: true, description: "Modern premium MPV with advanced features", fuelType: "petrol", transmission: "automatic" },
-    { id: 8, name: "Toyota Innova Hycross", brand: "Toyota", category: "luxury", seats: 6, pricePerKm: "23.00", rating: "4.95", reviewCount: 67, imageUrl: "/cars/toyota-innova-hycross.jpg", isAvailable: true, description: "Flagship luxury hybrid MPV", fuelType: "hybrid", transmission: "automatic" },
-    { id: 9, name: "Tempo Traveller Maharaja (12 Seater)", brand: "Force Motors", category: "tempo", seats: 12, pricePerKm: "28.00", driverCharges: "500.00", rating: "4.70", reviewCount: 45, imageUrl: "/cars/tempo-traveller-maharaja.jpg", isAvailable: true, description: "Luxury 1x1 Maharaja recliner seats. Perfect for group outstation travel. Toll, parking & state taxes charged at actuals.", fuelType: "diesel", transmission: "manual" },
-    { id: 10, name: "Tempo Traveller (16-19 Seater)", brand: "Force Motors", category: "tempo", seats: 19, pricePerKm: "30.00", driverCharges: "500.00", rating: "4.65", reviewCount: 38, imageUrl: "/cars/tempo-traveller-pushback.jpg", isAvailable: true, description: "Seats up to 19 passengers with 2x1 pushback recliner seats. Toll, parking & state taxes charged at actuals.", fuelType: "diesel", transmission: "manual" },
-    { id: 11, name: "Force Urbania", brand: "Force Motors", category: "tempo", seats: 17, pricePerKm: "35.00", driverCharges: "500.00", rating: "4.80", reviewCount: 29, imageUrl: "/cars/force-urbania.jpg", isAvailable: true, description: "Premium Force Urbania luxury van with plush seating. Toll, parking & state taxes charged at actuals.", fuelType: "diesel", transmission: "manual" },
-    { id: 12, name: "Mini Luxury Bus (27 Seater)", brand: "Eicher / Tata / Bharat Benz", category: "bus", seats: 27, pricePerKm: "45.00", driverCharges: "500.00", rating: "4.60", reviewCount: 22, imageUrl: "/cars/mini-bus-27.jpg", isAvailable: true, description: "AC 27-seater luxury mini bus. Brand assigned on availability. Toll, parking & state taxes charged at actuals.", fuelType: "diesel", transmission: "manual" },
-    { id: 13, name: "Luxury Bus (35-41 Seater)", brand: "Eicher / Tata / Bharat Benz", category: "bus", seats: 41, pricePerKm: "50.00", driverCharges: "500.00", rating: "4.62", reviewCount: 18, imageUrl: "/cars/luxury-bus-35.jpg", isAvailable: true, description: "AC 35 to 41-seater luxury bus. Brand assigned on availability. Toll, parking & state taxes charged at actuals.", fuelType: "diesel", transmission: "manual" },
-    { id: 14, name: "Luxury Bus (45 Seater)", brand: "Eicher / Tata / Bharat Benz", category: "bus", seats: 45, pricePerKm: "55.00", driverCharges: "500.00", rating: "4.58", reviewCount: 15, imageUrl: "/cars/luxury-bus-45.jpg", isAvailable: true, description: "AC 45-seater luxury bus. Brand assigned on availability. Toll, parking & state taxes charged at actuals.", fuelType: "diesel", transmission: "manual" },
-    { id: 15, name: "Luxury Bus (49 Seater)", brand: "Eicher / Tata / Bharat Benz", category: "bus", seats: 49, pricePerKm: "60.00", driverCharges: "500.00", rating: "4.55", reviewCount: 12, imageUrl: "/cars/luxury-bus-49.jpg", isAvailable: true, description: "AC 49-seater luxury bus. Brand assigned on availability. Toll, parking & state taxes charged at actuals.", fuelType: "diesel", transmission: "manual" },
-    { id: 16, name: "BYD eMax 7", brand: "BYD", category: "electric", seats: 7, pricePerKm: "15.00", rating: "4.75", reviewCount: 18, imageUrl: "/cars/byd-emax7.jpg", isAvailable: true, description: "Zero-emission 7-seater electric MPV. As per availability. Toll, parking & state taxes charged at actuals.", fuelType: "electric", transmission: "automatic" },
-    { id: 17, name: "BYD Atto 3", brand: "BYD", category: "electric", seats: 5, pricePerKm: "15.00", rating: "4.70", reviewCount: 14, imageUrl: "/cars/byd-atto3.jpg", isAvailable: true, description: "Zero-emission electric SUV with premium interiors. As per availability. Toll, parking & state taxes charged at actuals.", fuelType: "electric", transmission: "automatic" },
-  ];
+  const fallbackCars = FALLBACK_CARS;
 
   const displayCars = (cars ?? fallbackCars)
     .filter(c => !isRentalMode || c.seats <= 7)
@@ -763,8 +745,8 @@ export default function CarsPage() {
                                 );
                               })() : (
                                 <>
-                                  <div className="text-lg font-bold text-slate-300">—</div>
-                                  <div className="text-xs text-slate-400">Add route for fare</div>
+                                  <div className="text-lg font-bold text-blue-700">₹{car.pricePerKm}/km</div>
+                                  <div className="text-xs text-slate-400">Enter route for total</div>
                                 </>
                               )}
                             </div>
