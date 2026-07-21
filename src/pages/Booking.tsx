@@ -975,7 +975,6 @@ export default function BookingPage() {
                             type="time"
                             value={pickupTime}
                             onChange={(e) => setPickupTime(e.target.value)}
-                            onFocus={fireBookingStarted}
                             className="w-full px-3 py-2.5 rounded-xl border border-input bg-white text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
                           />
                         </div>

@@ -386,7 +386,7 @@ export default function GoLanding() {
                             type="date"
                             value={formDate}
                             min={getTomorrow()}
-                            onChange={e => { fireBookingStarted(car); setFormDate(e.target.value) }}
+                            onChange={e => setFormDate(e.target.value)}
                             className="w-full border border-slate-200 rounded-xl px-3.5 py-3 text-sm text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           />
                         </div>
