@@ -269,8 +269,9 @@ export default function CarsPage() {
     } else if (tripDays > 1) billedKm = Math.max(effectiveKm, tripDays * 250);
     else if (isHeavy) billedKm = Math.max(effectiveKm, 250);
     else billedKm = Math.max(effectiveKm, 80);
-    // No 1.25× multiplier for multi-day tours or round trips
-    const multiplier = tripTypeParam === "one_way" ? ONE_WAY_MULTIPLIER : 1;
+    // 1.25× only when actual distance ≥ 80km (compensates driver's empty return on outstation trips)
+    // Short trips where only the 80km minimum applies use multiplier 1
+    const multiplier = tripTypeParam === "one_way" && effectiveKm >= 80 ? ONE_WAY_MULTIPLIER : 1;
     return Math.round(parseFloat(pricePerKm) * billedKm * multiplier + parseFloat(driverCharges || "250") * tripDays);
   };
 
@@ -279,7 +280,8 @@ export default function CarsPage() {
     if (!distanceKm) return null;
     const isHeavy = carSeats > 7;
     const billedKm = isHeavy ? Math.max(distanceKm, 250) : Math.max(distanceKm, 80);
-    return Math.round(parseFloat(pricePerKm) * billedKm * ONE_WAY_MULTIPLIER + parseFloat(driverCharges || "250"));
+    const owMultiplier = distanceKm >= 80 ? ONE_WAY_MULTIPLIER : 1;
+    return Math.round(parseFloat(pricePerKm) * billedKm * owMultiplier + parseFloat(driverCharges || "250"));
   };
 
   const billedKmFor = (carSeats: number) => {
@@ -601,7 +603,7 @@ export default function CarsPage() {
                 ].map(({ label, rate, seats }) => {
                   const isHeavy = seats > 7;
                   const bkm = tripDays > 1 ? Math.max(effectiveKm, tripDays * 250) : isHeavy ? Math.max(effectiveKm, 250) : Math.max(effectiveKm, 80);
-                  const multiplier = tripTypeParam === "one_way" ? ONE_WAY_MULTIPLIER : 1;
+                  const multiplier = tripTypeParam === "one_way" && distanceKm >= 80 ? ONE_WAY_MULTIPLIER : 1;
                   const fare = Math.round(parseFloat(rate) * bkm * multiplier + DRIVER_CHARGE * tripDays);
                   return (
                     <span key={label} className="shrink-0 text-[11px] text-blue-800">

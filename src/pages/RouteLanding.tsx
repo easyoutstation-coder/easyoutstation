@@ -177,7 +177,8 @@ export default function RouteLanding() {
               const rate = parseFloat(car.pricePerKm);
               const driverCharge = parseFloat(car.driverCharges ?? "250");
               const billedKm = Math.max(data.distance, 80);
-              const oneway = Math.round(rate * billedKm * 1.25 + driverCharge);
+              const owMultiplier = data.distance >= 80 ? 1.25 : 1;
+              const oneway = Math.round(rate * billedKm * owMultiplier + driverCharge);
               const roundtrip = Math.round(rate * billedKm * 2 + driverCharge * 2);
               return (
                 <div key={car.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">

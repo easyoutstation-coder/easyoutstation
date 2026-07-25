@@ -28,9 +28,11 @@ function calcFare(pricePerKm: string, distance: number, isRoundTrip: boolean, dr
   const rate = parseFloat(pricePerKm)
   const dc = parseFloat(driverCharges || "250")
   const billedKm = Math.max(distance, 80)
+  // 1.25× only for actual outstation distances (≥80km); short trips billed at 1×
+  const owMultiplier = distance >= 80 ? 1.25 : 1
   return isRoundTrip
     ? Math.round(rate * billedKm * 2 + dc * 2)
-    : Math.round(rate * billedKm * 1.25 + dc)
+    : Math.round(rate * billedKm * owMultiplier + dc)
 }
 
 function track(event: string, params?: Record<string, unknown>) {
