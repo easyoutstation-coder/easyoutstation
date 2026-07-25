@@ -314,7 +314,7 @@ export default function BookingPage() {
                 {effectiveCar.imageUrl && <img src={effectiveCar.imageUrl} alt={effectiveCar.name} className="w-16 h-12 object-cover rounded-lg" />}
                 <div className="flex-1">
                   <div className="font-semibold text-slate-900">{effectiveCar.name}</div>
-                  <div className="text-sm text-slate-500">{effectiveFromCity} → {effectiveToCity} · ₹{((parseFloat(effectiveCar?.pricePerKm || "20") * defaultDistance) + 250).toLocaleString("en-IN")}</div>
+                  <div className="text-sm text-slate-500">{effectiveFromCity} → {effectiveToCity}{defaultDistance > 0 ? ` · ₹${(Math.round(parseFloat(effectiveCar?.pricePerKm || "13") * Math.max(defaultDistance, 80) * (paramTripType === "one_way" ? 1.25 : 1) + 250)).toLocaleString("en-IN")}` : ""}</div>
                 </div>
                 <button onClick={() => navigate(-1)} className="text-xs text-blue-600 hover:underline">Change</button>
               </div>
